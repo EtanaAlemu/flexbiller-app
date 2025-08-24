@@ -31,7 +31,9 @@ class _AccountsSearchWidgetState extends State<AccountsSearchWidget> {
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
       if (searchKey.isEmpty) {
         // If search is empty, load all accounts
-        context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+        context.read<AccountsBloc>().add(
+          const LoadAccounts(AccountsQueryParams()),
+        );
       } else {
         // Search accounts by search key
         context.read<AccountsBloc>().add(SearchAccounts(searchKey));

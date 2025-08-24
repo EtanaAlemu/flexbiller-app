@@ -285,3 +285,52 @@ class DeleteMultipleAccountCustomFields extends AccountsEvent {
   @override
   List<Object?> get props => [accountId, customFieldIds];
 }
+
+class LoadAccountEmails extends AccountsEvent {
+  final String accountId;
+
+  const LoadAccountEmails(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class RefreshAccountEmails extends AccountsEvent {
+  final String accountId;
+
+  const RefreshAccountEmails(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class CreateAccountEmail extends AccountsEvent {
+  final String accountId;
+  final String email;
+
+  const CreateAccountEmail(this.accountId, this.email);
+
+  @override
+  List<Object?> get props => [accountId, email];
+}
+
+class UpdateAccountEmail extends AccountsEvent {
+  final String accountId;
+  final String emailId;
+  final String email;
+
+  const UpdateAccountEmail(this.accountId, this.emailId, this.email);
+
+  @override
+  List<Object?> get props => [accountId, emailId, email];
+}
+
+class DeleteAccountEmail extends AccountsEvent {
+  final String accountId;
+  final String emailId;
+
+  const DeleteAccountEmail(this.accountId, this.emailId);
+
+  @override
+  List<Object?> get props => [accountId, emailId];
+}

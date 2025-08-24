@@ -4,6 +4,7 @@ import '../../domain/entities/accounts_query_params.dart';
 import '../../domain/entities/account_timeline.dart';
 import '../../domain/entities/account_tag.dart';
 import '../../domain/entities/account_custom_field.dart';
+import '../../domain/entities/account_email.dart';
 
 abstract class AccountsState extends Equatable {
   const AccountsState();
@@ -700,4 +701,133 @@ class MultipleCustomFieldsDeletionFailure extends AccountsState {
 
   @override
   List<Object?> get props => [message, accountId, customFieldIds];
+}
+
+class AccountEmailsLoading extends AccountsState {
+  final String accountId;
+
+  const AccountEmailsLoading(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AccountEmailsLoaded extends AccountsState {
+  final String accountId;
+  final List<AccountEmail> emails;
+
+  const AccountEmailsLoaded(this.accountId, this.emails);
+
+  @override
+  List<Object?> get props => [accountId, emails];
+}
+
+class AccountEmailsFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AccountEmailsFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
+}
+
+class AccountEmailCreating extends AccountsState {
+  final String accountId;
+  final String email;
+
+  const AccountEmailCreating(this.accountId, this.email);
+
+  @override
+  List<Object?> get props => [accountId, email];
+}
+
+class AccountEmailCreated extends AccountsState {
+  final String accountId;
+  final AccountEmail email;
+
+  const AccountEmailCreated(this.accountId, this.email);
+
+  @override
+  List<Object?> get props => [accountId, email];
+}
+
+class AccountEmailCreationFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final String email;
+
+  const AccountEmailCreationFailure(this.message, this.accountId, this.email);
+
+  @override
+  List<Object?> get props => [message, accountId, email];
+}
+
+class AccountEmailUpdating extends AccountsState {
+  final String accountId;
+  final String emailId;
+  final String email;
+
+  const AccountEmailUpdating(this.accountId, this.emailId, this.email);
+
+  @override
+  List<Object?> get props => [accountId, emailId, email];
+}
+
+class AccountEmailUpdated extends AccountsState {
+  final String accountId;
+  final AccountEmail email;
+
+  const AccountEmailUpdated(this.accountId, this.email);
+
+  @override
+  List<Object?> get props => [accountId, email];
+}
+
+class AccountEmailUpdateFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final String emailId;
+  final String email;
+
+  const AccountEmailUpdateFailure(
+    this.message,
+    this.accountId,
+    this.emailId,
+    this.email,
+  );
+
+  @override
+  List<Object?> get props => [message, accountId, emailId, email];
+}
+
+class AccountEmailDeleting extends AccountsState {
+  final String accountId;
+  final String emailId;
+
+  const AccountEmailDeleting(this.accountId, this.emailId);
+
+  @override
+  List<Object?> get props => [accountId, emailId];
+}
+
+class AccountEmailDeleted extends AccountsState {
+  final String accountId;
+  final String emailId;
+
+  const AccountEmailDeleted(this.accountId, this.emailId);
+
+  @override
+  List<Object?> get props => [accountId, emailId];
+}
+
+class AccountEmailDeletionFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final String emailId;
+
+  const AccountEmailDeletionFailure(this.message, this.accountId, this.emailId);
+
+  @override
+  List<Object?> get props => [message, accountId, emailId];
 }

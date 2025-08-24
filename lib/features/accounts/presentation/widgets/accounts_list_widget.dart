@@ -43,7 +43,9 @@ class AccountsListWidget extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+                    context.read<AccountsBloc>().add(
+                      const LoadAccounts(AccountsQueryParams()),
+                    );
                   },
                   child: const Text('Retry'),
                 ),
@@ -81,7 +83,12 @@ class AccountsListWidget extends StatelessWidget {
             );
           }
 
-          return _buildAccountsList(context, state.accounts, state.hasReachedMax, state.currentOffset);
+          return _buildAccountsList(
+            context,
+            state.accounts,
+            state.hasReachedMax,
+            state.currentOffset,
+          );
         }
 
         if (state is AccountsSearching) {
@@ -109,7 +116,9 @@ class AccountsListWidget extends StatelessWidget {
                   Icon(
                     Icons.search_off,
                     size: 64,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.5),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -125,7 +134,9 @@ class AccountsListWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+                      context.read<AccountsBloc>().add(
+                        const LoadAccounts(AccountsQueryParams()),
+                      );
                     },
                     child: const Text('View All Accounts'),
                   ),
@@ -147,7 +158,9 @@ class AccountsListWidget extends StatelessWidget {
                     const Spacer(),
                     TextButton(
                       onPressed: () {
-                        context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+                        context.read<AccountsBloc>().add(
+                          const LoadAccounts(AccountsQueryParams()),
+                        );
                       },
                       child: const Text('View All'),
                     ),
@@ -166,7 +179,9 @@ class AccountsListWidget extends StatelessWidget {
                         account: account,
                         onAccountDeleted: () {
                           // Refresh the accounts list after deletion
-                          context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+                          context.read<AccountsBloc>().add(
+                            const LoadAccounts(AccountsQueryParams()),
+                          );
                         },
                       ),
                     );
@@ -239,7 +254,12 @@ class AccountsListWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountsList(BuildContext context, List<Account> accounts, bool hasReachedMax, int currentOffset) {
+  Widget _buildAccountsList(
+    BuildContext context,
+    List<Account> accounts,
+    bool hasReachedMax,
+    int currentOffset,
+  ) {
     return Column(
       children: [
         Padding(
@@ -255,10 +275,7 @@ class AccountsListWidget extends StatelessWidget {
                 TextButton(
                   onPressed: () {
                     context.read<AccountsBloc>().add(
-                      LoadMoreAccounts(
-                        offset: currentOffset,
-                        limit: 20,
-                      ),
+                      LoadMoreAccounts(offset: currentOffset, limit: 20),
                     );
                   },
                   child: const Text('Load More'),
@@ -273,9 +290,7 @@ class AccountsListWidget extends StatelessWidget {
             },
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount:
-                  accounts.length +
-                  (hasReachedMax == false ? 1 : 0),
+              itemCount: accounts.length + (hasReachedMax == false ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index == accounts.length) {
                   return const Padding(

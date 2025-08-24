@@ -20,9 +20,11 @@ import '../../domain/usecases/update_account_custom_field_usecase.dart';
 import '../../domain/usecases/update_multiple_account_custom_fields_usecase.dart';
 import '../../domain/usecases/delete_account_custom_field_usecase.dart';
 import '../../domain/usecases/delete_multiple_account_custom_fields_usecase.dart';
+import '../../domain/usecases/get_account_emails_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
+import '../../domain/repositories/account_emails_repository.dart';
 import 'accounts_event.dart';
 import 'accounts_state.dart';
 
@@ -46,9 +48,11 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final UpdateMultipleAccountCustomFieldsUseCase _updateMultipleAccountCustomFieldsUseCase;
   final DeleteAccountCustomFieldUseCase _deleteAccountCustomFieldUseCase;
   final DeleteMultipleAccountCustomFieldsUseCase _deleteMultipleAccountCustomFieldsUseCase;
+  final GetAccountEmailsUseCase _getAccountEmailsUseCase;
   final AccountsRepository _accountsRepository;
   final AccountTagsRepository _accountTagsRepository;
   final AccountCustomFieldsRepository _accountCustomFieldsRepository;
+  final AccountEmailsRepository _accountEmailsRepository;
 
   AccountsBloc({
     required GetAccountsUseCase getAccountsUseCase,
@@ -69,9 +73,11 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required UpdateMultipleAccountCustomFieldsUseCase updateMultipleAccountCustomFieldsUseCase,
     required DeleteAccountCustomFieldUseCase deleteAccountCustomFieldUseCase,
     required DeleteMultipleAccountCustomFieldsUseCase deleteMultipleAccountCustomFieldsUseCase,
+    required GetAccountEmailsUseCase getAccountEmailsUseCase,
     required AccountsRepository accountsRepository,
     required AccountTagsRepository accountTagsRepository,
     required AccountCustomFieldsRepository accountCustomFieldsRepository,
+    required AccountEmailsRepository accountEmailsRepository,
   })  : _getAccountsUseCase = getAccountsUseCase,
         _searchAccountsUseCase = searchAccountsUseCase,
         _getAccountByIdUseCase = getAccountByIdUseCase,
@@ -90,9 +96,11 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         _updateMultipleAccountCustomFieldsUseCase = updateMultipleAccountCustomFieldsUseCase,
         _deleteAccountCustomFieldUseCase = deleteAccountCustomFieldUseCase,
         _deleteMultipleAccountCustomFieldsUseCase = deleteMultipleAccountCustomFieldsUseCase,
+        _getAccountEmailsUseCase = getAccountEmailsUseCase,
         _accountsRepository = accountsRepository,
         _accountTagsRepository = accountTagsRepository,
         _accountCustomFieldsRepository = accountCustomFieldsRepository,
+        _accountEmailsRepository = accountEmailsRepository,
         super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
     on<SearchAccounts>(_onSearchAccounts);
@@ -124,6 +132,11 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<UpdateMultipleAccountCustomFields>(_onUpdateMultipleAccountCustomFields);
     on<DeleteAccountCustomField>(_onDeleteAccountCustomField);
     on<DeleteMultipleAccountCustomFields>(_onDeleteMultipleAccountCustomFields);
+    on<LoadAccountEmails>(_onLoadAccountEmails);
+    on<RefreshAccountEmails>(_onRefreshAccountEmails);
+    on<CreateAccountEmail>(_onCreateAccountEmail);
+    on<UpdateAccountEmail>(_onUpdateAccountEmail);
+    on<DeleteAccountEmail>(_onDeleteAccountEmail);
   }
 
   Future<void> _onLoadAccounts(
@@ -653,6 +666,78 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(MultipleCustomFieldsDeleted(event.accountId, event.customFieldIds));
     } catch (e) {
       emit(MultipleCustomFieldsDeletionFailure(e.toString(), event.accountId, event.customFieldIds));
+    }
+  }
+
+  Future<void> _onLoadAccountEmails(
+    LoadAccountEmails event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountEmailsLoading(event.accountId));
+      final emails = await _accountEmailsRepository.getAccountEmails(event.accountId);
+      emit(AccountEmailsLoaded(event.accountId, emails));
+    } catch (e) {
+      emit(AccountEmailsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onRefreshAccountEmails(
+    RefreshAccountEmails event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountEmailsLoading(event.accountId));
+      final emails = await _accountEmailsRepository.getAccountEmails(event.accountId);
+      emit(AccountEmailsLoaded(event.accountId, emails));
+    } catch (e) {
+      emit(AccountEmailsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onCreateAccountEmail(
+    CreateAccountEmail event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountEmailCreating(event.accountId, event.email));
+      final createdEmail = await _accountEmailsRepository.createAccountEmail(
+        event.accountId,
+        event.email,
+      );
+      emit(AccountEmailCreated(event.accountId, createdEmail));
+    } catch (e) {
+      emit(AccountEmailCreationFailure(e.toString(), event.accountId, event.email));
+    }
+  }
+
+  Future<void> _onUpdateAccountEmail(
+    UpdateAccountEmail event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountEmailUpdating(event.accountId, event.emailId, event.email));
+      final updatedEmail = await _accountEmailsRepository.updateAccountEmail(
+        event.accountId,
+        event.emailId,
+        event.email,
+      );
+      emit(AccountEmailUpdated(event.accountId, updatedEmail));
+    } catch (e) {
+      emit(AccountEmailUpdateFailure(e.toString(), event.accountId, event.emailId, event.email));
+    }
+  }
+
+  Future<void> _onDeleteAccountEmail(
+    DeleteAccountEmail event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountEmailDeleting(event.accountId, event.emailId));
+      await _accountEmailsRepository.deleteAccountEmail(event.accountId, event.emailId);
+      emit(AccountEmailDeleted(event.accountId, event.emailId));
+    } catch (e) {
+      emit(AccountEmailDeletionFailure(e.toString(), event.accountId, event.emailId));
     }
   }
 }
