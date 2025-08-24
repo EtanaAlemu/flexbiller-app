@@ -133,7 +133,16 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // The allTags endpoint returns a different structure than other endpoints
+        if (responseData['tags'] != null) {
+          final List<dynamic> tagsData = responseData['tags'] as List<dynamic>;
+          return tagsData
+              .map(
+                (tag) => AccountTagModel.fromJson(tag as Map<String, dynamic>),
+              )
+              .toList();
+        } else if (responseData['success'] == true && responseData['data'] != null) {
+          // Fallback to standard response structure
           final List<dynamic> tagsData = responseData['data'] as List<dynamic>;
           return tagsData
               .map(

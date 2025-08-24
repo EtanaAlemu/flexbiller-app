@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/account_tag.dart';
+import '../../domain/entities/account_timeline.dart';
 
 part 'account_tag_model.g.dart';
 
@@ -104,9 +105,87 @@ class AccountTagAssignmentModel {
       tagId: tagDefinitionId,
       tagName: tagDefinitionName,
       tagColor: null, // Not provided by API
-      tagIcon: null,  // Not provided by API
+      tagIcon: null, // Not provided by API
       assignedAt: DateTime.now(), // Not provided by API
       assignedBy: 'System', // Not provided by API
     );
   }
+}
+
+// New model for enhanced tag structure with tagDefinition
+@JsonSerializable()
+class AccountTagWithDefinitionModel {
+  final String tagId;
+  final String objectType;
+  final String objectId;
+  final String tagDefinitionId;
+  final String tagDefinitionName;
+  final List<dynamic> auditLogs;
+  final TagDefinitionModel tagDefinition;
+
+  const AccountTagWithDefinitionModel({
+    required this.tagId,
+    required this.objectType,
+    required this.objectId,
+    required this.tagDefinitionId,
+    required this.tagDefinitionName,
+    required this.auditLogs,
+    required this.tagDefinition,
+  });
+
+  factory AccountTagWithDefinitionModel.fromJson(Map<String, dynamic> json) =>
+      _$AccountTagWithDefinitionModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AccountTagWithDefinitionModelToJson(this);
+
+  // Convert to the standard AccountTagModel for backward compatibility
+  AccountTagModel toAccountTagModel() {
+    return AccountTagModel(
+      id: tagDefinition.id,
+      name: tagDefinition.name,
+      description: tagDefinition.description,
+      color: null, // Not provided by API
+      icon: null,  // Not provided by API
+      createdAt: DateTime.now(), // Not provided by API
+      updatedAt: DateTime.now(), // Not provided by API
+      createdBy: 'System', // Not provided by API
+      isActive: true, // Not provided by API
+    );
+  }
+
+  // Convert to AccountTagAssignmentModel for backward compatibility
+  AccountTagAssignmentModel toAccountTagAssignmentModel() {
+    return AccountTagAssignmentModel(
+      tagId: tagId,
+      objectType: objectType,
+      objectId: objectId,
+      tagDefinitionId: tagDefinitionId,
+      tagDefinitionName: tagDefinitionName,
+      auditLogs: auditLogs,
+    );
+  }
+}
+
+@JsonSerializable()
+class TagDefinitionModel {
+  final String id;
+  final bool isControlTag;
+  final String name;
+  final String description;
+  final List<String> applicableObjectTypes;
+  final List<dynamic> auditLogs;
+
+  const TagDefinitionModel({
+    required this.id,
+    required this.isControlTag,
+    required this.name,
+    required this.description,
+    required this.applicableObjectTypes,
+    required this.auditLogs,
+  });
+
+  factory TagDefinitionModel.fromJson(Map<String, dynamic> json) =>
+      _$TagDefinitionModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$TagDefinitionModelToJson(this);
 }

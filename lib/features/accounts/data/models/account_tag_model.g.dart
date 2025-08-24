@@ -53,3 +53,51 @@ Map<String, dynamic> _$AccountTagAssignmentModelToJson(
   'tagDefinitionName': instance.tagDefinitionName,
   'auditLogs': instance.auditLogs,
 };
+
+AccountTagWithDefinitionModel _$AccountTagWithDefinitionModelFromJson(
+  Map<String, dynamic> json,
+) => AccountTagWithDefinitionModel(
+  tagId: json['tagId'] as String,
+  objectType: json['objectType'] as String,
+  objectId: json['objectId'] as String,
+  tagDefinitionId: json['tagDefinitionId'] as String,
+  tagDefinitionName: json['tagDefinitionName'] as String,
+  auditLogs: json['auditLogs'] as List<dynamic>,
+  tagDefinition: TagDefinitionModel.fromJson(
+    json['tagDefinition'] as Map<String, dynamic>,
+  ),
+);
+
+Map<String, dynamic> _$AccountTagWithDefinitionModelToJson(
+  AccountTagWithDefinitionModel instance,
+) => <String, dynamic>{
+  'tagId': instance.tagId,
+  'objectType': instance.objectType,
+  'objectId': instance.objectId,
+  'tagDefinitionId': instance.tagDefinitionId,
+  'tagDefinitionName': instance.tagDefinitionName,
+  'auditLogs': instance.auditLogs,
+  'tagDefinition': instance.tagDefinition,
+};
+
+TagDefinitionModel _$TagDefinitionModelFromJson(Map<String, dynamic> json) =>
+    TagDefinitionModel(
+      id: json['id'] as String,
+      isControlTag: json['isControlTag'] as bool,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      applicableObjectTypes: (json['applicableObjectTypes'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      auditLogs: json['auditLogs'] as List<dynamic>,
+    );
+
+Map<String, dynamic> _$TagDefinitionModelToJson(TagDefinitionModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'isControlTag': instance.isControlTag,
+      'name': instance.name,
+      'description': instance.description,
+      'applicableObjectTypes': instance.applicableObjectTypes,
+      'auditLogs': instance.auditLogs,
+    };
