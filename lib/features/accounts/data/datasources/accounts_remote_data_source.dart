@@ -57,6 +57,17 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
           'Forbidden: Insufficient permissions to access accounts',
         );
       } else if (e.response?.statusCode == 500) {
+        // Handle 500 error which might indicate server issues
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+          final details = responseData['details'];
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Resource not found');
+            }
+          }
+        }
         throw ServerException('Server error while fetching accounts');
       } else {
         throw NetworkException('Network error: ${e.message}');
@@ -98,6 +109,17 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 404) {
         throw ValidationException('Account not found');
       } else if (e.response?.statusCode == 500) {
+        // Handle 500 error which might indicate account doesn't exist
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+          final details = responseData['details'];
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Account not found');
+            }
+          }
+        }
         throw ServerException('Server error while fetching account');
       } else {
         throw NetworkException('Network error: ${e.message}');
@@ -141,6 +163,17 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
           'Forbidden: Insufficient permissions to access accounts',
         );
       } else if (e.response?.statusCode == 500) {
+        // Handle 500 error which might indicate server issues
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+          final details = responseData['details'];
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Resource not found');
+            }
+          }
+        }
         throw ServerException('Server error while searching accounts');
       } else {
         throw NetworkException('Network error: ${e.message}');
@@ -184,6 +217,17 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 409) {
         throw ValidationException('Account already exists');
       } else if (e.response?.statusCode == 500) {
+        // Handle 500 error which might indicate server issues
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+          final details = responseData['details'];
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Resource not found');
+            }
+          }
+        }
         throw ServerException('Server error while creating account');
       } else {
         throw NetworkException('Network error: ${e.message}');
@@ -230,6 +274,17 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 404) {
         throw ValidationException('Account not found');
       } else if (e.response?.statusCode == 500) {
+        // Handle 500 error which might indicate server issues
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+          final details = responseData['details'];
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Account not found');
+            }
+          }
+        }
         throw ServerException('Server error while updating account');
       } else {
         throw NetworkException('Network error: ${e.message}');
@@ -261,6 +316,17 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 404) {
         throw ValidationException('Account not found');
       } else if (e.response?.statusCode == 500) {
+        // Handle 500 error which might indicate server issues
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+          final details = responseData['details'];
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Account not found');
+            }
+          }
+        }
         throw ServerException('Server error while deleting account');
       } else {
         throw NetworkException('Network error: ${e.message}');
