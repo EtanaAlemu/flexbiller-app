@@ -6,6 +6,7 @@ import '../../domain/entities/account_tag.dart';
 import '../../domain/entities/account_custom_field.dart';
 import '../../domain/entities/account_email.dart';
 import '../../domain/entities/account_blocking_state.dart';
+import '../../domain/entities/account_invoice_payment.dart';
 
 abstract class AccountsState extends Equatable {
   const AccountsState();
@@ -857,6 +858,35 @@ class AccountBlockingStatesFailure extends AccountsState {
   final String accountId;
 
   const AccountBlockingStatesFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
+}
+
+class AccountInvoicePaymentsLoading extends AccountsState {
+  final String accountId;
+
+  const AccountInvoicePaymentsLoading(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AccountInvoicePaymentsLoaded extends AccountsState {
+  final String accountId;
+  final List<AccountInvoicePayment> invoicePayments;
+
+  const AccountInvoicePaymentsLoaded(this.accountId, this.invoicePayments);
+
+  @override
+  List<Object?> get props => [accountId, invoicePayments];
+}
+
+class AccountInvoicePaymentsFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AccountInvoicePaymentsFailure(this.message, this.accountId);
 
   @override
   List<Object?> get props => [message, accountId];

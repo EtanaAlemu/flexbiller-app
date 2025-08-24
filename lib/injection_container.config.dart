@@ -26,6 +26,8 @@ import 'features/accounts/data/datasources/account_custom_fields_remote_data_sou
     as _i608;
 import 'features/accounts/data/datasources/account_emails_remote_data_source.dart'
     as _i606;
+import 'features/accounts/data/datasources/account_invoice_payments_remote_data_source.dart'
+    as _i976;
 import 'features/accounts/data/datasources/account_tags_remote_data_source.dart'
     as _i569;
 import 'features/accounts/data/datasources/account_timeline_remote_data_source.dart'
@@ -38,6 +40,8 @@ import 'features/accounts/data/repositories/account_custom_fields_repository_imp
     as _i762;
 import 'features/accounts/data/repositories/account_emails_repository_impl.dart'
     as _i31;
+import 'features/accounts/data/repositories/account_invoice_payments_repository_impl.dart'
+    as _i636;
 import 'features/accounts/data/repositories/account_tags_repository_impl.dart'
     as _i813;
 import 'features/accounts/data/repositories/account_timeline_repository_impl.dart'
@@ -50,6 +54,8 @@ import 'features/accounts/domain/repositories/account_custom_fields_repository.d
     as _i221;
 import 'features/accounts/domain/repositories/account_emails_repository.dart'
     as _i330;
+import 'features/accounts/domain/repositories/account_invoice_payments_repository.dart'
+    as _i378;
 import 'features/accounts/domain/repositories/account_tags_repository.dart'
     as _i363;
 import 'features/accounts/domain/repositories/account_timeline_repository.dart'
@@ -75,6 +81,8 @@ import 'features/accounts/domain/usecases/get_account_custom_fields_usecase.dart
     as _i397;
 import 'features/accounts/domain/usecases/get_account_emails_usecase.dart'
     as _i334;
+import 'features/accounts/domain/usecases/get_account_invoice_payments_usecase.dart'
+    as _i584;
 import 'features/accounts/domain/usecases/get_account_tags_usecase.dart'
     as _i227;
 import 'features/accounts/domain/usecases/get_account_timeline_usecase.dart'
@@ -128,6 +136,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i817.AccountTimelineRemoteDataSource>(
     () => _i817.AccountTimelineRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
+  gh.factory<_i976.AccountInvoicePaymentsRemoteDataSource>(
+    () => _i976.AccountInvoicePaymentsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
   gh.factory<_i45.DioClient>(
     () => _i45.DioClient(gh<_i558.FlutterSecureStorage>()),
@@ -205,6 +216,11 @@ _i174.GetIt $initGetIt(
       gh<_i842.JwtService>(),
     ),
   );
+  gh.factory<_i378.AccountInvoicePaymentsRepository>(
+    () => _i636.AccountInvoicePaymentsRepositoryImpl(
+      gh<_i976.AccountInvoicePaymentsRemoteDataSource>(),
+    ),
+  );
   gh.factory<_i334.GetAccountEmailsUseCase>(
     () => _i334.GetAccountEmailsUseCase(gh<_i330.AccountEmailsRepository>()),
   );
@@ -277,6 +293,11 @@ _i174.GetIt $initGetIt(
       resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
     ),
   );
+  gh.factory<_i584.GetAccountInvoicePaymentsUseCase>(
+    () => _i584.GetAccountInvoicePaymentsUseCase(
+      gh<_i378.AccountInvoicePaymentsRepository>(),
+    ),
+  );
   gh.factory<_i795.AccountsBloc>(
     () => _i795.AccountsBloc(
       getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
@@ -308,6 +329,8 @@ _i174.GetIt $initGetIt(
       getAccountEmailsUseCase: gh<_i334.GetAccountEmailsUseCase>(),
       getAccountBlockingStatesUseCase:
           gh<_i729.GetAccountBlockingStatesUseCase>(),
+      getAccountInvoicePaymentsUseCase:
+          gh<_i584.GetAccountInvoicePaymentsUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),

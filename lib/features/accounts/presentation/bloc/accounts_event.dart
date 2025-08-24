@@ -352,3 +352,21 @@ class RefreshAccountBlockingStates extends AccountsEvent {
   @override
   List<Object?> get props => [accountId];
 }
+
+class LoadAccountInvoicePayments extends AccountsEvent {
+  final String accountId;
+
+  const LoadAccountInvoicePayments(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class RefreshAccountInvoicePayments extends AccountsEvent {
+  final String accountId;
+
+  const RefreshAccountInvoicePayments(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
