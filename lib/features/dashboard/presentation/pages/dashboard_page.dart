@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../accounts/presentation/pages/accounts_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -8,109 +10,93 @@ class DashboardPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              // TODO: Implement logout
-            },
-          ),
-        ],
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Welcome to FlexBiller',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Your billing dashboard is ready!',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+            const SizedBox(height: 8),
+            Text(
+              'Manage your billing and accounts efficiently',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
             const SizedBox(height: 32),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Quick Actions',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                children: [
+                  _buildFeatureCard(
+                    context,
+                    icon: Icons.account_balance,
+                    title: 'Accounts',
+                    subtitle: 'Manage customer accounts',
+                    color: AppTheme.getSuccessColor(
+                      Theme.of(context).brightness,
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              // TODO: Navigate to create bill
-                            },
-                            icon: const Icon(Icons.add),
-                            label: const Text('Create Bill'),
-                          ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AccountsPage(),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              // TODO: Navigate to view bills
-                            },
-                            icon: const Icon(Icons.list),
-                            label: const Text('View Bills'),
-                          ),
+                      );
+                    },
+                  ),
+                  _buildFeatureCard(
+                    context,
+                    icon: Icons.receipt_long,
+                    title: 'Billing',
+                    subtitle: 'Create and manage invoices',
+                    color: Colors.blue,
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Billing feature - Coming Soon!'),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Recent Activity',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const ListTile(
-                      leading: Icon(Icons.receipt, color: Colors.green),
-                      title: Text('Bill Created'),
-                      subtitle: Text('Electricity Bill - \$150.00'),
-                      trailing: Text('2 hours ago'),
-                    ),
-                    const ListTile(
-                      leading: Icon(Icons.payment, color: Colors.blue),
-                      title: Text('Payment Received'),
-                      subtitle: Text('Water Bill - \$75.00'),
-                      trailing: Text('1 day ago'),
-                    ),
-                  ],
-                ),
+                      );
+                    },
+                  ),
+                  _buildFeatureCard(
+                    context,
+                    icon: Icons.payment,
+                    title: 'Payments',
+                    subtitle: 'Track payment transactions',
+                    color: Colors.orange,
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Payments feature - Coming Soon!'),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildFeatureCard(
+                    context,
+                    icon: Icons.analytics,
+                    title: 'Reports',
+                    subtitle: 'View business analytics',
+                    color: Colors.purple,
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Reports feature - Coming Soon!'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ],
@@ -118,5 +104,48 @@ class DashboardPage extends StatelessWidget {
       ),
     );
   }
-}
 
+  Widget _buildFeatureCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 4,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 48, color: color),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.7),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

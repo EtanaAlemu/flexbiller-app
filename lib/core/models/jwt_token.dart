@@ -36,7 +36,8 @@ class JwtToken {
     required this.isAnonymous,
   });
 
-  factory JwtToken.fromJson(Map<String, dynamic> json) => _$JwtTokenFromJson(json);
+  factory JwtToken.fromJson(Map<String, dynamic> json) =>
+      _$JwtTokenFromJson(json);
   Map<String, dynamic> toJson() => _$JwtTokenToJson(this);
 
   // Helper methods
@@ -45,7 +46,8 @@ class JwtToken {
     return exp < now;
   }
 
-  DateTime get expirationDate => DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+  DateTime get expirationDate =>
+      DateTime.fromMillisecondsSinceEpoch(exp * 1000);
   DateTime get issuedAtDate => DateTime.fromMillisecondsSinceEpoch(iat * 1000);
 
   String get fullName => '${userMetadata.firstName} ${userMetadata.lastName}';
@@ -74,7 +76,8 @@ class AppMetadata {
     required this.roleId,
   });
 
-  factory AppMetadata.fromJson(Map<String, dynamic> json) => _$AppMetadataFromJson(json);
+  factory AppMetadata.fromJson(Map<String, dynamic> json) =>
+      _$AppMetadataFromJson(json);
   Map<String, dynamic> toJson() => _$AppMetadataToJson(this);
 }
 
@@ -100,7 +103,8 @@ class UserMetadata {
     required this.tenantId,
   });
 
-  factory UserMetadata.fromJson(Map<String, dynamic> json) => _$UserMetadataFromJson(json);
+  factory UserMetadata.fromJson(Map<String, dynamic> json) =>
+      _$UserMetadataFromJson(json);
   Map<String, dynamic> toJson() => _$UserMetadataToJson(this);
 }
 
@@ -118,7 +122,8 @@ class UserMetadataDetails {
     required this.position,
   });
 
-  factory UserMetadataDetails.fromJson(Map<String, dynamic> json) => _$UserMetadataDetailsFromJson(json);
+  factory UserMetadataDetails.fromJson(Map<String, dynamic> json) =>
+      _$UserMetadataDetailsFromJson(json);
   Map<String, dynamic> toJson() => _$UserMetadataDetailsToJson(this);
 }
 
@@ -127,13 +132,11 @@ class Amr {
   final String method;
   final int timestamp;
 
-  Amr({
-    required this.method,
-    required this.timestamp,
-  });
+  Amr({required this.method, required this.timestamp});
 
   factory Amr.fromJson(Map<String, dynamic> json) => _$AmrFromJson(json);
   Map<String, dynamic> toJson() => _$AmrToJson(this);
 
-  DateTime get timestampDate => DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+  DateTime get timestampDate =>
+      DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
 }

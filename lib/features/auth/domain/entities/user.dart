@@ -7,7 +7,7 @@ class User extends Equatable {
   final String role;
   final DateTime createdAt;
   final DateTime updatedAt;
-  
+
   // JWT Token related fields
   final String? phone;
   final String? tenantId;
@@ -67,10 +67,10 @@ class User extends Equatable {
     String? sessionId,
     bool? isAnonymous,
   }) {
-    final name = firstName != null && lastName != null 
-        ? '$firstName $lastName' 
+    final name = firstName != null && lastName != null
+        ? '$firstName $lastName'
         : email.split('@').first;
-    
+
     return User(
       id: id,
       email: email,
@@ -174,7 +174,11 @@ class User extends Equatable {
   // Helper methods
   bool get isTenantAdmin => role.toUpperCase() == 'TENANT_ADMIN';
   bool get isEasyBillAdmin => role.toUpperCase() == 'EASYBILL_ADMIN';
-  bool get hasApiCredentials => apiKey != null && apiKey!.isNotEmpty && apiSecret != null && apiSecret!.isNotEmpty;
-  String get displayName => firstName != null && lastName != null ? '$firstName $lastName' : name;
+  bool get hasApiCredentials =>
+      apiKey != null &&
+      apiKey!.isNotEmpty &&
+      apiSecret != null &&
+      apiSecret!.isNotEmpty;
+  String get displayName =>
+      firstName != null && lastName != null ? '$firstName $lastName' : name;
 }
-

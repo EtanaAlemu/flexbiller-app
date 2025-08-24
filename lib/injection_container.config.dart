@@ -20,6 +20,15 @@ import 'core/network/network_info.dart' as _i75;
 import 'core/services/database_service.dart' as _i916;
 import 'core/services/jwt_service.dart' as _i842;
 import 'core/services/secure_storage_service.dart' as _i493;
+import 'features/accounts/data/datasources/accounts_remote_data_source.dart'
+    as _i852;
+import 'features/accounts/data/repositories/accounts_repository_impl.dart'
+    as _i395;
+import 'features/accounts/domain/repositories/accounts_repository.dart' as _i42;
+import 'features/accounts/domain/usecases/get_account_by_id_usecase.dart'
+    as _i400;
+import 'features/accounts/domain/usecases/get_accounts_usecase.dart' as _i684;
+import 'features/accounts/presentation/bloc/accounts_bloc.dart' as _i795;
 import 'features/auth/data/datasources/auth_remote_data_source.dart' as _i767;
 import 'features/auth/data/repositories/auth_repository_impl.dart' as _i111;
 import 'features/auth/domain/repositories/auth_repository.dart' as _i1015;
@@ -42,20 +51,39 @@ _i174.GetIt $initGetIt(
   gh.factory<_i75.NetworkInfoImpl>(() => _i75.NetworkInfoImpl());
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
+  gh.factory<_i852.AccountsRemoteDataSource>(
+    () => _i852.AccountsRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
   gh.factory<_i45.DioClient>(
     () => _i45.DioClient(gh<_i558.FlutterSecureStorage>()),
   );
   gh.factory<_i767.AuthRemoteDataSource>(
     () => _i767.AuthRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
+  gh.factory<_i42.AccountsRepository>(
+    () => _i395.AccountsRepositoryImpl(gh<_i852.AccountsRemoteDataSource>()),
+  );
   gh.factory<_i493.SecureStorageService>(
     () => _i493.SecureStorageService(gh<_i558.FlutterSecureStorage>()),
+  );
+  gh.factory<_i400.GetAccountByIdUseCase>(
+    () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
+  );
+  gh.factory<_i684.GetAccountsUseCase>(
+    () => _i684.GetAccountsUseCase(gh<_i42.AccountsRepository>()),
   );
   gh.factory<_i1015.AuthRepository>(
     () => _i111.AuthRepositoryImpl(
       gh<_i767.AuthRemoteDataSource>(),
       gh<_i493.SecureStorageService>(),
       gh<_i842.JwtService>(),
+    ),
+  );
+  gh.factory<_i795.AccountsBloc>(
+    () => _i795.AccountsBloc(
+      getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
+      getAccountByIdUseCase: gh<_i400.GetAccountByIdUseCase>(),
+      accountsRepository: gh<_i42.AccountsRepository>(),
     ),
   );
   gh.factory<_i993.ForgotPasswordUseCase>(
