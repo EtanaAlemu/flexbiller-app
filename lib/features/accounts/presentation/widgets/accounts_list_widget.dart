@@ -5,6 +5,7 @@ import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
 import '../../domain/entities/account.dart';
+import '../../domain/entities/accounts_query_params.dart';
 import 'account_card_widget.dart';
 
 class AccountsListWidget extends StatelessWidget {
@@ -42,7 +43,7 @@ class AccountsListWidget extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    context.read<AccountsBloc>().add(const LoadAccounts());
+                    context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
                   },
                   child: const Text('Retry'),
                 ),
@@ -80,6 +81,59 @@ class AccountsListWidget extends StatelessWidget {
             );
           }
 
+          return _buildAccountsList(context, state.accounts, state.hasReachedMax, state.currentOffset);
+        }
+
+        if (state is AccountsSearching) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'Searching for "${state.searchKey}"...',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (state is AccountsSearchResults) {
+          if (state.accounts.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No accounts found',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No accounts match your search for "${state.searchKey}"',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+                    },
+                    child: const Text('View All Accounts'),
+                  ),
+                ],
+              ),
+            );
+          }
+
           return Column(
             children: [
               Padding(
@@ -87,56 +141,36 @@ class AccountsListWidget extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(
-                      '${state.accounts.length} accounts',
+                      '${state.accounts.length} search results for "${state.searchKey}"',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const Spacer(),
-                    if (state.hasReachedMax == false)
-                      TextButton(
-                        onPressed: () {
-                          context.read<AccountsBloc>().add(
-                            LoadMoreAccounts(
-                              offset: state.currentOffset,
-                              limit: 20,
-                            ),
-                          );
-                        },
-                        child: const Text('Load More'),
-                      ),
+                    TextButton(
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+                      },
+                      child: const Text('View All'),
+                    ),
                   ],
                 ),
               ),
               Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<AccountsBloc>().add(const RefreshAccounts());
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  itemCount: state.accounts.length,
+                  itemBuilder: (context, index) {
+                    final account = state.accounts[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: AccountCardWidget(
+                        account: account,
+                        onAccountDeleted: () {
+                          // Refresh the accounts list after deletion
+                          context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+                        },
+                      ),
+                    );
                   },
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount:
-                        state.accounts.length +
-                        (state.hasReachedMax == false ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == state.accounts.length) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
-
-                      final account = state.accounts[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: AccountCardWidget(
-                          account: account,
-                          onAccountDeleted: () {
-                            // Refresh the accounts list after deletion
-                            context.read<AccountsBloc>().add(const RefreshAccounts());
-                          },
-                        ),
-                      );
-                    },
-                  ),
                 ),
               ),
             ],
@@ -202,6 +236,70 @@ class AccountsListWidget extends StatelessWidget {
 
         return const Center(child: Text('No accounts to display'));
       },
+    );
+  }
+
+  Widget _buildAccountsList(BuildContext context, List<Account> accounts, bool hasReachedMax, int currentOffset) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Text(
+                '${accounts.length} accounts',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const Spacer(),
+              if (hasReachedMax == false)
+                TextButton(
+                  onPressed: () {
+                    context.read<AccountsBloc>().add(
+                      LoadMoreAccounts(
+                        offset: currentOffset,
+                        limit: 20,
+                      ),
+                    );
+                  },
+                  child: const Text('Load More'),
+                ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              context.read<AccountsBloc>().add(const RefreshAccounts());
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              itemCount:
+                  accounts.length +
+                  (hasReachedMax == false ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == accounts.length) {
+                  return const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                final account = accounts[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: AccountCardWidget(
+                    account: account,
+                    onAccountDeleted: () {
+                      // Refresh the accounts list after deletion
+                      context.read<AccountsBloc>().add(const RefreshAccounts());
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

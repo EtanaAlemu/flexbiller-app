@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import '../../domain/entities/account.dart';
 import '../../domain/entities/accounts_query_params.dart';
 import '../../domain/usecases/get_accounts_usecase.dart';
+import '../../domain/usecases/search_accounts_usecase.dart';
 import '../../domain/usecases/get_account_by_id_usecase.dart';
 import '../../domain/usecases/create_account_usecase.dart';
 import '../../domain/usecases/update_account_usecase.dart';
@@ -28,6 +29,7 @@ import 'accounts_state.dart';
 @injectable
 class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final GetAccountsUseCase _getAccountsUseCase;
+  final SearchAccountsUseCase _searchAccountsUseCase;
   final GetAccountByIdUseCase _getAccountByIdUseCase;
   final CreateAccountUseCase _createAccountUseCase;
   final UpdateAccountUseCase _updateAccountUseCase;
@@ -50,6 +52,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
 
   AccountsBloc({
     required GetAccountsUseCase getAccountsUseCase,
+    required SearchAccountsUseCase searchAccountsUseCase,
     required GetAccountByIdUseCase getAccountByIdUseCase,
     required CreateAccountUseCase createAccountUseCase,
     required UpdateAccountUseCase updateAccountUseCase,
@@ -70,6 +73,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required AccountTagsRepository accountTagsRepository,
     required AccountCustomFieldsRepository accountCustomFieldsRepository,
   })  : _getAccountsUseCase = getAccountsUseCase,
+        _searchAccountsUseCase = searchAccountsUseCase,
         _getAccountByIdUseCase = getAccountByIdUseCase,
         _createAccountUseCase = createAccountUseCase,
         _updateAccountUseCase = updateAccountUseCase,
@@ -91,9 +95,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         _accountCustomFieldsRepository = accountCustomFieldsRepository,
         super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
+    on<SearchAccounts>(_onSearchAccounts);
     on<RefreshAccounts>(_onRefreshAccounts);
     on<LoadMoreAccounts>(_onLoadMoreAccounts);
-    on<SearchAccounts>(_onSearchAccounts);
     on<FilterAccountsByCompany>(_onFilterAccountsByCompany);
     on<FilterAccountsByBalance>(_onFilterAccountsByBalance);
     on<ClearFilters>(_onClearFilters);
@@ -127,10 +131,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
-      emit(AccountsLoading());
-
+      emit(AccountsLoading(event.params));
       final accounts = await _getAccountsUseCase(event.params);
-
       emit(
         AccountsLoaded(
           accounts: accounts,
@@ -186,39 +188,23 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     try {
       final currentState = state;
       if (currentState is AccountsLoaded) {
-        emit(AccountsLoadingMore(currentState.accounts));
-
-        final params = AccountsQueryParams(
-          offset: event.offset,
-          limit: event.limit,
+        final nextParams = AccountsQueryParams(
+          offset: currentState.currentOffset + currentState.accounts.length,
+          limit: 20,
         );
-
-        final newAccounts = await _getAccountsUseCase(params);
-
-        if (newAccounts.isEmpty) {
-          emit(currentState.copyWith(hasReachedMax: true));
-        } else {
-          final allAccounts = [...currentState.accounts, ...newAccounts];
-          emit(
-            AccountsLoaded(
-              accounts: allAccounts,
-              currentOffset: event.offset + event.limit,
-              totalCount: allAccounts.length,
-              hasReachedMax: newAccounts.length < event.limit,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      final currentState = state;
-      if (currentState is AccountsLoadingMore) {
+        emit(AccountsLoadingMore(currentState.accounts));
+        final moreAccounts = await _getAccountsUseCase(nextParams);
+        final allAccounts = [...currentState.accounts, ...moreAccounts];
         emit(
-          AccountsFailure(
-            e.toString(),
-            previousAccounts: currentState.accounts,
+          currentState.copyWith(
+            accounts: allAccounts,
+            currentOffset: nextParams.offset,
+            hasReachedMax: moreAccounts.length < 20,
           ),
         );
       }
+    } catch (e) {
+      emit(AccountsFailure(e.toString()));
     }
   }
 
@@ -227,48 +213,11 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
-      final currentState = state;
-      if (currentState is AccountsLoaded) {
-        emit(AccountsSearching(currentState.accounts, event.query));
-
-        if (event.query.isEmpty) {
-          // If search query is empty, reload all accounts
-          final accounts = await _getAccountsUseCase(
-            const AccountsQueryParams(),
-          );
-          emit(
-            AccountsLoaded(
-              accounts: accounts,
-              currentOffset: 0,
-              totalCount: accounts.length,
-              hasReachedMax: accounts.length < 100,
-            ),
-          );
-        } else {
-          // Search accounts
-          final searchResults = await _accountsRepository.searchAccounts(
-            event.query,
-          );
-          emit(
-            AccountsLoaded(
-              accounts: searchResults,
-              currentOffset: 0,
-              totalCount: searchResults.length,
-              hasReachedMax: true, // Search results are not paginated
-            ),
-          );
-        }
-      }
+      emit(AccountsSearching(event.searchKey));
+      final accounts = await _searchAccountsUseCase(event.searchKey);
+      emit(AccountsSearchResults(accounts, event.searchKey));
     } catch (e) {
-      final currentState = state;
-      if (currentState is AccountsSearching) {
-        emit(
-          AccountsFailure(
-            e.toString(),
-            previousAccounts: currentState.accounts,
-          ),
-        );
-      }
+      emit(AccountsFailure(e.toString()));
     }
   }
 
@@ -350,7 +299,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
-      emit(AccountsLoading());
+      emit(AccountsLoading(const AccountsQueryParams()));
 
       final accounts = await _getAccountsUseCase(const AccountsQueryParams());
 

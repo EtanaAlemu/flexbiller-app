@@ -68,6 +68,8 @@ import 'features/accounts/domain/usecases/get_all_tags_for_account_usecase.dart'
     as _i384;
 import 'features/accounts/domain/usecases/remove_multiple_tags_from_account_usecase.dart'
     as _i582;
+import 'features/accounts/domain/usecases/search_accounts_usecase.dart'
+    as _i266;
 import 'features/accounts/domain/usecases/update_account_custom_field_usecase.dart'
     as _i734;
 import 'features/accounts/domain/usecases/update_account_usecase.dart' as _i651;
@@ -161,6 +163,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i823.DeleteAccountUseCase>(
     () => _i823.DeleteAccountUseCase(gh<_i42.AccountsRepository>()),
   );
+  gh.factory<_i266.SearchAccountsUseCase>(
+    () => _i266.SearchAccountsUseCase(gh<_i42.AccountsRepository>()),
+  );
   gh.factory<_i1015.AuthRepository>(
     () => _i111.AuthRepositoryImpl(
       gh<_i767.AuthRemoteDataSource>(),
@@ -235,6 +240,7 @@ _i174.GetIt $initGetIt(
   gh.factory<_i795.AccountsBloc>(
     () => _i795.AccountsBloc(
       getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
+      searchAccountsUseCase: gh<_i266.SearchAccountsUseCase>(),
       getAccountByIdUseCase: gh<_i400.GetAccountByIdUseCase>(),
       createAccountUseCase: gh<_i968.CreateAccountUseCase>(),
       updateAccountUseCase: gh<_i651.UpdateAccountUseCase>(),

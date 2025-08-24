@@ -5,8 +5,11 @@ abstract class AccountsRepository {
   /// Get list of accounts with optional filtering and pagination
   Future<List<Account>> getAccounts(AccountsQueryParams params);
 
-  /// Get a specific account by ID
-  Future<Account> getAccountById(String accountId);
+  /// Get a single account by ID
+  Future<Account> getAccountById(String id);
+
+  /// Search accounts by search key
+  Future<List<Account>> searchAccounts(String searchKey);
 
   /// Create a new account
   Future<Account> createAccount(Account account);
@@ -16,9 +19,6 @@ abstract class AccountsRepository {
 
   /// Delete an account
   Future<void> deleteAccount(String accountId);
-
-  /// Search accounts by name, email, or company
-  Future<List<Account>> searchAccounts(String query);
 
   /// Get accounts with balance above a certain threshold
   Future<List<Account>> getAccountsWithBalance(double minBalance);

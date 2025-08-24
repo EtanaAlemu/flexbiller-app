@@ -12,7 +12,7 @@ abstract class AccountsEvent extends Equatable {
 class LoadAccounts extends AccountsEvent {
   final AccountsQueryParams params;
 
-  const LoadAccounts({this.params = const AccountsQueryParams()});
+  const LoadAccounts(this.params);
 
   @override
   List<Object?> get props => [params];
@@ -38,12 +38,12 @@ class LoadMoreAccounts extends AccountsEvent {
 }
 
 class SearchAccounts extends AccountsEvent {
-  final String query;
+  final String searchKey;
 
-  const SearchAccounts(this.query);
+  const SearchAccounts(this.searchKey);
 
   @override
-  List<Object?> get props => [query];
+  List<Object?> get props => [searchKey];
 }
 
 class FilterAccountsByCompany extends AccountsEvent {

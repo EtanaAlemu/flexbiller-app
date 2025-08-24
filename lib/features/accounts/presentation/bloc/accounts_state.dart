@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/account.dart';
+import '../../domain/entities/accounts_query_params.dart';
 import '../../domain/entities/account_timeline.dart';
 import '../../domain/entities/account_tag.dart';
 import '../../domain/entities/account_custom_field.dart';
@@ -13,7 +14,14 @@ abstract class AccountsState extends Equatable {
 
 class AccountsInitial extends AccountsState {}
 
-class AccountsLoading extends AccountsState {}
+class AccountsLoading extends AccountsState {
+  final AccountsQueryParams params;
+
+  const AccountsLoading(this.params);
+
+  @override
+  List<Object?> get props => [params];
+}
 
 class AccountsLoaded extends AccountsState {
   final List<Account> accounts;
@@ -70,13 +78,22 @@ class AccountsLoadingMore extends AccountsState {
 }
 
 class AccountsSearching extends AccountsState {
-  final List<Account> accounts;
-  final String query;
+  final String searchKey;
 
-  const AccountsSearching(this.accounts, this.query);
+  const AccountsSearching(this.searchKey);
 
   @override
-  List<Object?> get props => [accounts, query];
+  List<Object?> get props => [searchKey];
+}
+
+class AccountsSearchResults extends AccountsState {
+  final List<Account> accounts;
+  final String searchKey;
+
+  const AccountsSearchResults(this.accounts, this.searchKey);
+
+  @override
+  List<Object?> get props => [accounts, searchKey];
 }
 
 class AccountsFiltered extends AccountsState {
@@ -640,7 +657,11 @@ class CustomFieldDeletionFailure extends AccountsState {
   final String accountId;
   final String customFieldId;
 
-  const CustomFieldDeletionFailure(this.message, this.accountId, this.customFieldId);
+  const CustomFieldDeletionFailure(
+    this.message,
+    this.accountId,
+    this.customFieldId,
+  );
 
   @override
   List<Object?> get props => [message, accountId, customFieldId];

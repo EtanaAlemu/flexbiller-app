@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
+import '../../domain/entities/accounts_query_params.dart';
 
 class AccountsSearchWidget extends StatefulWidget {
   const AccountsSearchWidget({Key? key}) : super(key: key);
@@ -22,19 +23,25 @@ class _AccountsSearchWidgetState extends State<AccountsSearchWidget> {
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
+  void _onSearchChanged(String searchKey) {
     // Cancel previous timer
     _debounceTimer?.cancel();
 
     // Set new timer for debouncing
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      context.read<AccountsBloc>().add(SearchAccounts(query));
+      if (searchKey.isEmpty) {
+        // If search is empty, load all accounts
+        context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+      } else {
+        // Search accounts by search key
+        context.read<AccountsBloc>().add(SearchAccounts(searchKey));
+      }
     });
   }
 
   void _clearSearch() {
     _searchController.clear();
-    context.read<AccountsBloc>().add(const SearchAccounts(''));
+    context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
   }
 
   @override

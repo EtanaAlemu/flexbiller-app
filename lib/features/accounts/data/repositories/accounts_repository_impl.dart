@@ -22,9 +22,9 @@ class AccountsRepositoryImpl implements AccountsRepository {
   }
 
   @override
-  Future<Account> getAccountById(String accountId) async {
+  Future<Account> getAccountById(String id) async {
     try {
-      final accountModel = await _remoteDataSource.getAccountById(accountId);
+      final accountModel = await _remoteDataSource.getAccountById(id);
       return accountModel.toEntity();
     } catch (e) {
       rethrow;
@@ -63,18 +63,10 @@ class AccountsRepositoryImpl implements AccountsRepository {
   }
 
   @override
-  Future<List<Account>> searchAccounts(String query) async {
+  Future<List<Account>> searchAccounts(String searchKey) async {
     try {
-      // For now, we'll fetch all accounts and filter locally
-      // In a real app, you might have a dedicated search endpoint
-      final allAccounts = await getAccounts(const AccountsQueryParams());
-      final lowercaseQuery = query.toLowerCase();
-
-      return allAccounts.where((account) {
-        return account.name.toLowerCase().contains(lowercaseQuery) ||
-            account.email.toLowerCase().contains(lowercaseQuery) ||
-            account.company.toLowerCase().contains(lowercaseQuery);
-      }).toList();
+      final accountModels = await _remoteDataSource.searchAccounts(searchKey);
+      return accountModels.map((model) => model.toEntity()).toList();
     } catch (e) {
       rethrow;
     }

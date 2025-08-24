@@ -8,6 +8,7 @@ import '../../domain/entities/accounts_query_params.dart';
 abstract class AccountsRemoteDataSource {
   Future<List<AccountModel>> getAccounts(AccountsQueryParams params);
   Future<AccountModel> getAccountById(String accountId);
+  Future<List<AccountModel>> searchAccounts(String searchKey);
   Future<AccountModel> createAccount(AccountModel account);
   Future<AccountModel> updateAccount(AccountModel account);
   Future<void> deleteAccount(String accountId);
@@ -98,6 +99,49 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
         throw ValidationException('Account not found');
       } else if (e.response?.statusCode == 500) {
         throw ServerException('Server error while fetching account');
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<List<AccountModel>> searchAccounts(String searchKey) async {
+    try {
+      final response = await _dio.get('/accounts/search', queryParameters: {'searchKey': searchKey});
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final List<dynamic> accountsData =
+              responseData['data'] as List<dynamic>;
+          return accountsData
+              .map(
+                (item) => AccountModel.fromJson(item as Map<String, dynamic>),
+              )
+              .toList();
+        } else {
+          throw ServerException(
+            responseData['message'] ?? 'Failed to search accounts',
+          );
+        }
+      } else {
+        throw ServerException(
+          'Failed to search accounts: ${response.statusCode}',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized access to accounts');
+      } else if (e.response?.statusCode == 403) {
+        throw AuthException(
+          'Forbidden: Insufficient permissions to access accounts',
+        );
+      } else if (e.response?.statusCode == 500) {
+        throw ServerException('Server error while searching accounts');
       } else {
         throw NetworkException('Network error: ${e.message}');
       }
