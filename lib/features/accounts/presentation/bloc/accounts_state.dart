@@ -580,6 +580,41 @@ class CustomFieldUpdateFailure extends AccountsState {
   List<Object?> get props => [message, accountId, customFieldId, name, value];
 }
 
+class MultipleCustomFieldsUpdating extends AccountsState {
+  final String accountId;
+  final List<Map<String, dynamic>> customFields;
+
+  const MultipleCustomFieldsUpdating(this.accountId, this.customFields);
+
+  @override
+  List<Object?> get props => [accountId, customFields];
+}
+
+class MultipleCustomFieldsUpdated extends AccountsState {
+  final String accountId;
+  final List<AccountCustomField> customFields;
+
+  const MultipleCustomFieldsUpdated(this.accountId, this.customFields);
+
+  @override
+  List<Object?> get props => [accountId, customFields];
+}
+
+class MultipleCustomFieldsUpdateFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final List<Map<String, dynamic>> customFields;
+
+  const MultipleCustomFieldsUpdateFailure(
+    this.message,
+    this.accountId,
+    this.customFields,
+  );
+
+  @override
+  List<Object?> get props => [message, accountId, customFields];
+}
+
 class CustomFieldDeleting extends AccountsState {
   final String accountId;
   final String customFieldId;

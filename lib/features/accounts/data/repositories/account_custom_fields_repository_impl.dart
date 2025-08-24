@@ -80,6 +80,22 @@ class AccountCustomFieldsRepositoryImpl implements AccountCustomFieldsRepository
   }
 
   @override
+  Future<List<AccountCustomField>> updateMultipleCustomFields(
+    String accountId,
+    List<Map<String, dynamic>> customFields,
+  ) async {
+    try {
+      final customFieldsModels = await _remoteDataSource.updateMultipleCustomFields(
+        accountId,
+        customFields,
+      );
+      return customFieldsModels.map((field) => field.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> deleteCustomField(String accountId, String customFieldId) async {
     try {
       await _remoteDataSource.deleteCustomField(accountId, customFieldId);

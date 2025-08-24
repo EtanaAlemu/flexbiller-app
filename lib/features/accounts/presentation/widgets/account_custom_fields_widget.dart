@@ -74,6 +74,12 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                   Row(
                     children: [
                       IconButton(
+                        icon: const Icon(Icons.edit_note),
+                        onPressed: () => _showEditMultipleCustomFieldsDialog(context, state.customFields),
+                        tooltip: 'Edit Multiple Fields',
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      IconButton(
                         icon: const Icon(Icons.add_circle_outline),
                         onPressed: () => _showAddMultipleCustomFieldsDialog(context),
                         tooltip: 'Add Multiple Fields',
@@ -464,6 +470,118 @@ class AccountCustomFieldsWidget extends StatelessWidget {
             child: const Text('Update'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditMultipleCustomFieldsDialog(BuildContext context, List<AccountCustomField> customFields) {
+    final List<Map<String, dynamic>> fieldControllers = customFields.map((field) => {
+      'customFieldId': field.customFieldId,
+      'name': TextEditingController(text: field.name),
+      'value': TextEditingController(text: field.value),
+    }).toList();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Edit Multiple Custom Fields'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ...fieldControllers.map((controllers) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Field ID: ${controllers['customFieldId']}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: controllers['name'] as TextEditingController,
+                              decoration: const InputDecoration(
+                                labelText: 'Field Name',
+                                hintText: 'Enter field name',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: controllers['value'] as TextEditingController,
+                              decoration: const InputDecoration(
+                                labelText: 'Field Value',
+                                hintText: 'Enter field value',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                )),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final updatedFields = <Map<String, dynamic>>[];
+                bool hasValidFields = false;
+
+                for (final controllers in fieldControllers) {
+                  final customFieldId = controllers['customFieldId'] as String;
+                  final name = (controllers['name'] as TextEditingController).text.trim();
+                  final value = (controllers['value'] as TextEditingController).text.trim();
+                  
+                  if (name.isNotEmpty && value.isNotEmpty) {
+                    updatedFields.add({
+                      'customFieldId': customFieldId,
+                      'name': name,
+                      'value': value,
+                    });
+                    hasValidFields = true;
+                  }
+                }
+
+                if (hasValidFields) {
+                  Navigator.of(context).pop();
+                  if (updatedFields.length == 1) {
+                    // Single field - use single update
+                    final field = updatedFields.first;
+                    context.read<AccountsBloc>().add(
+                          UpdateAccountCustomField(
+                            accountId,
+                            field['customFieldId'] as String,
+                            field['name'] as String,
+                            field['value'] as String,
+                          ),
+                        );
+                  } else {
+                    // Multiple fields - use bulk update
+                    context.read<AccountsBloc>().add(
+                          UpdateMultipleAccountCustomFields(accountId, updatedFields),
+                        );
+                  }
+                }
+              },
+              child: const Text('Update Fields'),
+            ),
+          ],
+        ),
       ),
     );
   }

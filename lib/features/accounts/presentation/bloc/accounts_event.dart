@@ -256,6 +256,16 @@ class UpdateAccountCustomField extends AccountsEvent {
   List<Object?> get props => [accountId, customFieldId, name, value];
 }
 
+class UpdateMultipleAccountCustomFields extends AccountsEvent {
+  final String accountId;
+  final List<Map<String, dynamic>> customFields;
+
+  const UpdateMultipleAccountCustomFields(this.accountId, this.customFields);
+
+  @override
+  List<Object?> get props => [accountId, customFields];
+}
+
 class DeleteAccountCustomField extends AccountsEvent {
   final String accountId;
   final String customFieldId;

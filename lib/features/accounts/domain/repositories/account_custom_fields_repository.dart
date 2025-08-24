@@ -28,6 +28,12 @@ abstract class AccountCustomFieldsRepository {
     String value,
   );
 
+  /// Update multiple custom fields for an account
+  Future<List<AccountCustomField>> updateMultipleCustomFields(
+    String accountId,
+    List<Map<String, dynamic>> customFields,
+  );
+
   /// Delete a custom field
   Future<void> deleteCustomField(String accountId, String customFieldId);
 
