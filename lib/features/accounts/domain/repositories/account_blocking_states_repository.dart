@@ -16,6 +16,7 @@ abstract class AccountBlockingStatesRepository {
     bool isBlockEntitlement,
     bool isBlockBilling,
     DateTime effectiveDate,
+    String type,
   );
 
   /// Update an existing blocking state

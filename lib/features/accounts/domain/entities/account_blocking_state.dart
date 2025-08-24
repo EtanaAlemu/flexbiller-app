@@ -7,6 +7,7 @@ class AccountBlockingState extends Equatable {
   final bool isBlockEntitlement;
   final bool isBlockBilling;
   final DateTime effectiveDate;
+  final String type;
 
   const AccountBlockingState({
     required this.stateName,
@@ -15,6 +16,7 @@ class AccountBlockingState extends Equatable {
     required this.isBlockEntitlement,
     required this.isBlockBilling,
     required this.effectiveDate,
+    required this.type,
   });
 
   @override
@@ -25,6 +27,7 @@ class AccountBlockingState extends Equatable {
         isBlockEntitlement,
         isBlockBilling,
         effectiveDate,
+        type,
       ];
 
   AccountBlockingState copyWith({
@@ -34,6 +37,7 @@ class AccountBlockingState extends Equatable {
     bool? isBlockEntitlement,
     bool? isBlockBilling,
     DateTime? effectiveDate,
+    String? type,
   }) {
     return AccountBlockingState(
       stateName: stateName ?? this.stateName,
@@ -42,6 +46,7 @@ class AccountBlockingState extends Equatable {
       isBlockEntitlement: isBlockEntitlement ?? this.isBlockEntitlement,
       isBlockBilling: isBlockBilling ?? this.isBlockBilling,
       effectiveDate: effectiveDate ?? this.effectiveDate,
+      type: type ?? this.type,
     );
   }
 }

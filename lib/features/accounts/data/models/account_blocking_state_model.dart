@@ -16,6 +16,7 @@ class AccountBlockingStateModel {
   final bool isBlockBilling;
   @JsonKey(name: 'effectiveDate')
   final DateTime effectiveDate;
+  final String type;
 
   const AccountBlockingStateModel({
     required this.stateName,
@@ -24,6 +25,7 @@ class AccountBlockingStateModel {
     required this.isBlockEntitlement,
     required this.isBlockBilling,
     required this.effectiveDate,
+    required this.type,
   });
 
   factory AccountBlockingStateModel.fromJson(Map<String, dynamic> json) =>
@@ -39,6 +41,7 @@ class AccountBlockingStateModel {
       isBlockEntitlement: entity.isBlockEntitlement,
       isBlockBilling: entity.isBlockBilling,
       effectiveDate: entity.effectiveDate,
+      type: entity.type,
     );
   }
 
@@ -50,6 +53,7 @@ class AccountBlockingStateModel {
       isBlockEntitlement: isBlockEntitlement,
       isBlockBilling: isBlockBilling,
       effectiveDate: effectiveDate,
+      type: type,
     );
   }
 }

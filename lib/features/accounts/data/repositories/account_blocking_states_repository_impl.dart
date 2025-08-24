@@ -38,6 +38,7 @@ class AccountBlockingStatesRepositoryImpl implements AccountBlockingStatesReposi
     bool isBlockEntitlement,
     bool isBlockBilling,
     DateTime effectiveDate,
+    String type,
   ) async {
     try {
       final blockingStateModel = await _remoteDataSource.createAccountBlockingState(
@@ -48,6 +49,7 @@ class AccountBlockingStatesRepositoryImpl implements AccountBlockingStatesReposi
         isBlockEntitlement,
         isBlockBilling,
         effectiveDate,
+        type,
       );
       return blockingStateModel.toEntity();
     } catch (e) {

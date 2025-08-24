@@ -15,6 +15,7 @@ AccountBlockingStateModel _$AccountBlockingStateModelFromJson(
   isBlockEntitlement: json['isBlockEntitlement'] as bool,
   isBlockBilling: json['isBlockBilling'] as bool,
   effectiveDate: DateTime.parse(json['effectiveDate'] as String),
+  type: json['type'] as String,
 );
 
 Map<String, dynamic> _$AccountBlockingStateModelToJson(
@@ -26,4 +27,5 @@ Map<String, dynamic> _$AccountBlockingStateModelToJson(
   'isBlockEntitlement': instance.isBlockEntitlement,
   'isBlockBilling': instance.isBlockBilling,
   'effectiveDate': instance.effectiveDate.toIso8601String(),
+  'type': instance.type,
 };

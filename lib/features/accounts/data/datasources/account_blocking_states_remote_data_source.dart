@@ -14,6 +14,7 @@ abstract class AccountBlockingStatesRemoteDataSource {
     bool isBlockEntitlement,
     bool isBlockBilling,
     DateTime effectiveDate,
+    String type,
   );
   Future<AccountBlockingStateModel> updateAccountBlockingState(
     String accountId,
@@ -130,6 +131,7 @@ class AccountBlockingStatesRemoteDataSourceImpl implements AccountBlockingStates
     bool isBlockEntitlement,
     bool isBlockBilling,
     DateTime effectiveDate,
+    String type,
   ) async {
     try {
       final response = await _dio.post(
@@ -140,22 +142,22 @@ class AccountBlockingStatesRemoteDataSourceImpl implements AccountBlockingStates
           'isBlockChange': isBlockChange,
           'isBlockEntitlement': isBlockEntitlement,
           'isBlockBilling': isBlockBilling,
-          'effectiveDate': effectiveDate.toIso8601String(),
+          'type': type,
         },
       );
 
       if (response.statusCode == 201) {
-        final responseData = response.data;
-
-        if (responseData['success'] == true && responseData['data'] != null) {
-          return AccountBlockingStateModel.fromJson(
-            responseData['data'] as Map<String, dynamic>,
-          );
-        } else {
-          throw ServerException(
-            responseData['message'] ?? 'Failed to create account blocking state',
-          );
-        }
+        // Since the API returns 201 for successful creation but doesn't return the created data,
+        // we'll create a model with the provided data
+        return AccountBlockingStateModel(
+          stateName: stateName,
+          service: service,
+          isBlockChange: isBlockChange,
+          isBlockEntitlement: isBlockEntitlement,
+          isBlockBilling: isBlockBilling,
+          effectiveDate: effectiveDate,
+          type: type,
+        );
       } else {
         throw ServerException('Failed to create account blocking state: ${response.statusCode}');
       }
