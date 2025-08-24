@@ -20,6 +20,8 @@ import 'core/network/network_info.dart' as _i75;
 import 'core/services/database_service.dart' as _i916;
 import 'core/services/jwt_service.dart' as _i842;
 import 'core/services/secure_storage_service.dart' as _i493;
+import 'features/accounts/data/datasources/account_blocking_states_remote_data_source.dart'
+    as _i819;
 import 'features/accounts/data/datasources/account_custom_fields_remote_data_source.dart'
     as _i608;
 import 'features/accounts/data/datasources/account_emails_remote_data_source.dart'
@@ -30,6 +32,8 @@ import 'features/accounts/data/datasources/account_timeline_remote_data_source.d
     as _i817;
 import 'features/accounts/data/datasources/accounts_remote_data_source.dart'
     as _i852;
+import 'features/accounts/data/repositories/account_blocking_states_repository_impl.dart'
+    as _i552;
 import 'features/accounts/data/repositories/account_custom_fields_repository_impl.dart'
     as _i762;
 import 'features/accounts/data/repositories/account_emails_repository_impl.dart'
@@ -40,6 +44,8 @@ import 'features/accounts/data/repositories/account_timeline_repository_impl.dar
     as _i735;
 import 'features/accounts/data/repositories/accounts_repository_impl.dart'
     as _i395;
+import 'features/accounts/domain/repositories/account_blocking_states_repository.dart'
+    as _i696;
 import 'features/accounts/domain/repositories/account_custom_fields_repository.dart'
     as _i221;
 import 'features/accounts/domain/repositories/account_emails_repository.dart'
@@ -61,6 +67,8 @@ import 'features/accounts/domain/usecases/delete_account_custom_field_usecase.da
 import 'features/accounts/domain/usecases/delete_account_usecase.dart' as _i823;
 import 'features/accounts/domain/usecases/delete_multiple_account_custom_fields_usecase.dart'
     as _i82;
+import 'features/accounts/domain/usecases/get_account_blocking_states_usecase.dart'
+    as _i729;
 import 'features/accounts/domain/usecases/get_account_by_id_usecase.dart'
     as _i400;
 import 'features/accounts/domain/usecases/get_account_custom_fields_usecase.dart'
@@ -124,6 +132,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i45.DioClient>(
     () => _i45.DioClient(gh<_i558.FlutterSecureStorage>()),
   );
+  gh.factory<_i819.AccountBlockingStatesRemoteDataSource>(
+    () => _i819.AccountBlockingStatesRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
   gh.factory<_i363.AccountTagsRepository>(
     () => _i813.AccountTagsRepositoryImpl(
       gh<_i569.AccountTagsRemoteDataSource>(),
@@ -143,6 +154,11 @@ _i174.GetIt $initGetIt(
   gh.factory<_i330.AccountEmailsRepository>(
     () => _i31.AccountEmailsRepositoryImpl(
       gh<_i606.AccountEmailsRemoteDataSource>(),
+    ),
+  );
+  gh.factory<_i696.AccountBlockingStatesRepository>(
+    () => _i552.AccountBlockingStatesRepositoryImpl(
+      gh<_i819.AccountBlockingStatesRemoteDataSource>(),
     ),
   );
   gh.factory<_i493.SecureStorageService>(
@@ -232,6 +248,11 @@ _i174.GetIt $initGetIt(
       gh<_i221.AccountCustomFieldsRepository>(),
     ),
   );
+  gh.factory<_i729.GetAccountBlockingStatesUseCase>(
+    () => _i729.GetAccountBlockingStatesUseCase(
+      gh<_i696.AccountBlockingStatesRepository>(),
+    ),
+  );
   gh.factory<_i993.ForgotPasswordUseCase>(
     () => _i993.ForgotPasswordUseCase(gh<_i1015.AuthRepository>()),
   );
@@ -285,6 +306,8 @@ _i174.GetIt $initGetIt(
       deleteMultipleAccountCustomFieldsUseCase:
           gh<_i82.DeleteMultipleAccountCustomFieldsUseCase>(),
       getAccountEmailsUseCase: gh<_i334.GetAccountEmailsUseCase>(),
+      getAccountBlockingStatesUseCase:
+          gh<_i729.GetAccountBlockingStatesUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),

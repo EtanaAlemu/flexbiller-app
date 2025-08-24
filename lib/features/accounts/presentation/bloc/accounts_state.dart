@@ -5,6 +5,7 @@ import '../../domain/entities/account_timeline.dart';
 import '../../domain/entities/account_tag.dart';
 import '../../domain/entities/account_custom_field.dart';
 import '../../domain/entities/account_email.dart';
+import '../../domain/entities/account_blocking_state.dart';
 
 abstract class AccountsState extends Equatable {
   const AccountsState();
@@ -830,4 +831,33 @@ class AccountEmailDeletionFailure extends AccountsState {
 
   @override
   List<Object?> get props => [message, accountId, emailId];
+}
+
+class AccountBlockingStatesLoading extends AccountsState {
+  final String accountId;
+
+  const AccountBlockingStatesLoading(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AccountBlockingStatesLoaded extends AccountsState {
+  final String accountId;
+  final List<AccountBlockingState> blockingStates;
+
+  const AccountBlockingStatesLoaded(this.accountId, this.blockingStates);
+
+  @override
+  List<Object?> get props => [accountId, blockingStates];
+}
+
+class AccountBlockingStatesFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AccountBlockingStatesFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
 }

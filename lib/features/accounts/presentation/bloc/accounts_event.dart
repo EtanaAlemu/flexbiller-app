@@ -334,3 +334,21 @@ class DeleteAccountEmail extends AccountsEvent {
   @override
   List<Object?> get props => [accountId, emailId];
 }
+
+class LoadAccountBlockingStates extends AccountsEvent {
+  final String accountId;
+
+  const LoadAccountBlockingStates(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class RefreshAccountBlockingStates extends AccountsEvent {
+  final String accountId;
+
+  const RefreshAccountBlockingStates(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}

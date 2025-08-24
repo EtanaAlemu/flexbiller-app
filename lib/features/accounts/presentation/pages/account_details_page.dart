@@ -11,6 +11,7 @@ import '../widgets/account_timeline_widget.dart';
 import '../widgets/account_tags_widget.dart';
 import '../widgets/account_custom_fields_widget.dart';
 import '../widgets/account_emails_widget.dart';
+import '../widgets/account_blocking_states_widget.dart';
 import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
@@ -28,7 +29,8 @@ class AccountDetailsPage extends StatelessWidget {
         ..add(LoadAccountTags(accountId))
         ..add(LoadAllTagsForAccount(accountId))
         ..add(LoadAccountCustomFields(accountId))
-        ..add(LoadAccountEmails(accountId)),
+        ..add(LoadAccountEmails(accountId))
+        ..add(LoadAccountBlockingStates(accountId)),
       child: AccountDetailsView(accountId: accountId),
     );
   }
@@ -162,7 +164,7 @@ class AccountDetailsView extends StatelessWidget {
                   children: [
                     // Account Details Tabs
                     DefaultTabController(
-                      length: 5, // Changed from 4 to 5
+                      length: 6, // Changed from 5 to 6
                       child: Column(
                         children: [
                           TabBar(
@@ -171,7 +173,8 @@ class AccountDetailsView extends StatelessWidget {
                               Tab(text: 'Timeline'),
                               Tab(text: 'Tags'),
                               Tab(text: 'Custom Fields'),
-                              Tab(text: 'Emails'), // Added
+                              Tab(text: 'Emails'),
+                              Tab(text: 'Blocking States'), // Added
                             ],
                             labelColor: Theme.of(context).colorScheme.primary,
                             unselectedLabelColor: Theme.of(
@@ -196,6 +199,8 @@ class AccountDetailsView extends StatelessWidget {
                                 AccountCustomFieldsWidget(accountId: accountId),
                                 // Emails Tab
                                 AccountEmailsWidget(accountId: accountId),
+                                // Blocking States Tab
+                                AccountBlockingStatesWidget(accountId: accountId),
                               ],
                             ),
                           ),

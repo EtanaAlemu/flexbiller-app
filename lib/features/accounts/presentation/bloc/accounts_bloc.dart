@@ -21,6 +21,7 @@ import '../../domain/usecases/update_multiple_account_custom_fields_usecase.dart
 import '../../domain/usecases/delete_account_custom_field_usecase.dart';
 import '../../domain/usecases/delete_multiple_account_custom_fields_usecase.dart';
 import '../../domain/usecases/get_account_emails_usecase.dart';
+import '../../domain/usecases/get_account_blocking_states_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
@@ -49,6 +50,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final DeleteAccountCustomFieldUseCase _deleteAccountCustomFieldUseCase;
   final DeleteMultipleAccountCustomFieldsUseCase _deleteMultipleAccountCustomFieldsUseCase;
   final GetAccountEmailsUseCase _getAccountEmailsUseCase;
+  final GetAccountBlockingStatesUseCase _getAccountBlockingStatesUseCase;
   final AccountsRepository _accountsRepository;
   final AccountTagsRepository _accountTagsRepository;
   final AccountCustomFieldsRepository _accountCustomFieldsRepository;
@@ -74,6 +76,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required DeleteAccountCustomFieldUseCase deleteAccountCustomFieldUseCase,
     required DeleteMultipleAccountCustomFieldsUseCase deleteMultipleAccountCustomFieldsUseCase,
     required GetAccountEmailsUseCase getAccountEmailsUseCase,
+    required GetAccountBlockingStatesUseCase getAccountBlockingStatesUseCase,
     required AccountsRepository accountsRepository,
     required AccountTagsRepository accountTagsRepository,
     required AccountCustomFieldsRepository accountCustomFieldsRepository,
@@ -97,6 +100,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         _deleteAccountCustomFieldUseCase = deleteAccountCustomFieldUseCase,
         _deleteMultipleAccountCustomFieldsUseCase = deleteMultipleAccountCustomFieldsUseCase,
         _getAccountEmailsUseCase = getAccountEmailsUseCase,
+        _getAccountBlockingStatesUseCase = getAccountBlockingStatesUseCase,
         _accountsRepository = accountsRepository,
         _accountTagsRepository = accountTagsRepository,
         _accountCustomFieldsRepository = accountCustomFieldsRepository,
@@ -137,6 +141,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<CreateAccountEmail>(_onCreateAccountEmail);
     on<UpdateAccountEmail>(_onUpdateAccountEmail);
     on<DeleteAccountEmail>(_onDeleteAccountEmail);
+    on<LoadAccountBlockingStates>(_onLoadAccountBlockingStates);
+    on<RefreshAccountBlockingStates>(_onRefreshAccountBlockingStates);
   }
 
   Future<void> _onLoadAccounts(
@@ -738,6 +744,32 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(AccountEmailDeleted(event.accountId, event.emailId));
     } catch (e) {
       emit(AccountEmailDeletionFailure(e.toString(), event.accountId, event.emailId));
+    }
+  }
+
+  Future<void> _onLoadAccountBlockingStates(
+    LoadAccountBlockingStates event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountBlockingStatesLoading(event.accountId));
+      final blockingStates = await _getAccountBlockingStatesUseCase(event.accountId);
+      emit(AccountBlockingStatesLoaded(event.accountId, blockingStates));
+    } catch (e) {
+      emit(AccountBlockingStatesFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onRefreshAccountBlockingStates(
+    RefreshAccountBlockingStates event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountBlockingStatesLoading(event.accountId));
+      final blockingStates = await _getAccountBlockingStatesUseCase(event.accountId);
+      emit(AccountBlockingStatesLoaded(event.accountId, blockingStates));
+    } catch (e) {
+      emit(AccountBlockingStatesFailure(e.toString(), event.accountId));
     }
   }
 }
