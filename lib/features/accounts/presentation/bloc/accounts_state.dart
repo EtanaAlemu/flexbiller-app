@@ -144,3 +144,23 @@ class AccountCreationFailure extends AccountsState {
   @override
   List<Object?> get props => [message];
 }
+
+class AccountUpdating extends AccountsState {}
+
+class AccountUpdated extends AccountsState {
+  final Account account;
+
+  const AccountUpdated(this.account);
+
+  @override
+  List<Object?> get props => [account];
+}
+
+class AccountUpdateFailure extends AccountsState {
+  final String message;
+
+  const AccountUpdateFailure(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

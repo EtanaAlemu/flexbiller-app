@@ -84,6 +84,46 @@ class Account extends Equatable {
 
   String get formattedBalance => '\$${balance.toStringAsFixed(2)}';
   String get formattedCba => '\$${cba.toStringAsFixed(2)}';
+
+  Account copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? currency,
+    String? timeZone,
+    String? address1,
+    String? address2,
+    String? company,
+    String? city,
+    String? state,
+    String? country,
+    String? phone,
+    String? notes,
+    String? externalKey,
+    double? balance,
+    double? cba,
+    List<AuditLog>? auditLogs,
+  }) {
+    return Account(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      currency: currency ?? this.currency,
+      timeZone: timeZone ?? this.timeZone,
+      address1: address1 ?? this.address1,
+      address2: address2 ?? this.address2,
+      company: company ?? this.company,
+      city: city ?? this.city,
+      state: state ?? this.state,
+      country: country ?? this.country,
+      phone: phone ?? this.phone,
+      notes: notes ?? this.notes,
+      externalKey: externalKey ?? this.externalKey,
+      balance: balance ?? this.balance,
+      cba: cba ?? this.cba,
+      auditLogs: auditLogs ?? this.auditLogs,
+    );
+  }
 }
 
 class AuditLog extends Equatable {

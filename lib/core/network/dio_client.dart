@@ -10,31 +10,37 @@ import '../errors/exceptions.dart';
 class DioClient {
   final Dio _dio;
   final FlutterSecureStorage _secureStorage;
-  
+
   DioClient(this._secureStorage)
-      : _dio = Dio(BaseOptions(
+    : _dio = Dio(
+        BaseOptions(
           baseUrl: AppConstants.baseUrl,
-          connectTimeout: Duration(milliseconds: AppConstants.connectionTimeout),
+          connectTimeout: Duration(
+            milliseconds: AppConstants.connectionTimeout,
+          ),
           receiveTimeout: Duration(milliseconds: AppConstants.receiveTimeout),
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-        )) {
+        ),
+      ) {
     _setupInterceptors();
   }
-  
+
   Dio get dio => _dio;
-  
+
   void _setupInterceptors() {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           // Add auth token if available
-          final token = await _secureStorage.read(key: AppConstants.authTokenKey);
+          final token = await _secureStorage.read(
+            key: AppConstants.authTokenKey,
+          );
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
-            
+
             // Add API key and secret from JWT metadata if available
             try {
               final decodedToken = JwtDecoder.decode(token);
@@ -42,7 +48,7 @@ class DioClient {
               if (userMetadata != null) {
                 final apiKey = userMetadata['api_key'];
                 final apiSecret = userMetadata['api_secret'];
-                
+
                 if (apiKey != null && apiKey.isNotEmpty) {
                   options.headers['api_key'] = apiKey;
                 }
@@ -62,27 +68,38 @@ class DioClient {
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
             // Token expired, try to refresh
-            final refreshToken = await _secureStorage.read(key: AppConstants.refreshTokenKey);
+            final refreshToken = await _secureStorage.read(
+              key: AppConstants.refreshTokenKey,
+            );
             if (refreshToken != null) {
               try {
                 final response = await _dio.post(
                   ApiEndpoints.refreshToken,
                   data: {'refreshToken': refreshToken},
                 );
-                
+
                 if (response.statusCode == 200) {
                   final responseData = response.data;
-                  if (responseData['success'] == true && responseData['data'] != null) {
+                  if (responseData['success'] == true &&
+                      responseData['data'] != null) {
                     final newToken = responseData['data']['access_token'];
-                    final newRefreshToken = responseData['data']['refresh_token'];
-                    
+                    final newRefreshToken =
+                        responseData['data']['refresh_token'];
+
                     // Store new tokens
-                    await _secureStorage.write(key: AppConstants.authTokenKey, value: newToken);
-                    await _secureStorage.write(key: AppConstants.refreshTokenKey, value: newRefreshToken);
-                    
+                    await _secureStorage.write(
+                      key: AppConstants.authTokenKey,
+                      value: newToken,
+                    );
+                    await _secureStorage.write(
+                      key: AppConstants.refreshTokenKey,
+                      value: newRefreshToken,
+                    );
+
                     // Retry original request with new token
-                    error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-                    
+                    error.requestOptions.headers['Authorization'] =
+                        'Bearer $newToken';
+
                     // Add API key and secret from new token
                     try {
                       final decodedToken = JwtDecoder.decode(newToken);
@@ -90,19 +107,22 @@ class DioClient {
                       if (userMetadata != null) {
                         final apiKey = userMetadata['api_key'];
                         final apiSecret = userMetadata['api_secret'];
-                        
+
                         if (apiKey != null && apiKey.isNotEmpty) {
                           error.requestOptions.headers['api_key'] = apiKey;
                         }
                         if (apiSecret != null && apiSecret.isNotEmpty) {
-                          error.requestOptions.headers['api_secret'] = apiSecret;
+                          error.requestOptions.headers['api_secret'] =
+                              apiSecret;
                         }
                       }
                     } catch (e) {
                       // JWT decode failed, continue without API headers
                     }
-                    
-                    final retryResponse = await _dio.fetch(error.requestOptions);
+
+                    final retryResponse = await _dio.fetch(
+                      error.requestOptions,
+                    );
                     return handler.resolve(retryResponse);
                   }
                 }
@@ -119,7 +139,7 @@ class DioClient {
               }
             }
           }
-          
+
           return handler.next(error);
         },
       ),

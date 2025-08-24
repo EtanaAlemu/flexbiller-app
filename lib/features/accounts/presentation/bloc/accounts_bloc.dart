@@ -5,6 +5,7 @@ import '../../domain/entities/accounts_query_params.dart';
 import '../../domain/usecases/get_accounts_usecase.dart';
 import '../../domain/usecases/get_account_by_id_usecase.dart';
 import '../../domain/usecases/create_account_usecase.dart';
+import '../../domain/usecases/update_account_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import 'accounts_event.dart';
 import 'accounts_state.dart';
@@ -14,16 +15,19 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final GetAccountsUseCase _getAccountsUseCase;
   final GetAccountByIdUseCase _getAccountByIdUseCase;
   final CreateAccountUseCase _createAccountUseCase;
+  final UpdateAccountUseCase _updateAccountUseCase;
   final AccountsRepository _accountsRepository;
 
   AccountsBloc({
     required GetAccountsUseCase getAccountsUseCase,
     required GetAccountByIdUseCase getAccountByIdUseCase,
     required CreateAccountUseCase createAccountUseCase,
+    required UpdateAccountUseCase updateAccountUseCase,
     required AccountsRepository accountsRepository,
   }) : _getAccountsUseCase = getAccountsUseCase,
        _getAccountByIdUseCase = getAccountByIdUseCase,
        _createAccountUseCase = createAccountUseCase,
+       _updateAccountUseCase = updateAccountUseCase,
        _accountsRepository = accountsRepository,
        super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
@@ -35,6 +39,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<ClearFilters>(_onClearFilters);
     on<LoadAccountDetails>(_onLoadAccountDetails);
     on<CreateAccount>(_onCreateAccount);
+    on<UpdateAccount>(_onUpdateAccount);
   }
 
   Future<void> _onLoadAccounts(
@@ -309,6 +314,21 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(AccountCreated(newAccount));
     } catch (e) {
       emit(AccountCreationFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateAccount(
+    UpdateAccount event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountUpdating());
+
+      final updatedAccount = await _updateAccountUseCase(event.account);
+
+      emit(AccountUpdated(updatedAccount));
+    } catch (e) {
+      emit(AccountUpdateFailure(e.toString()));
     }
   }
 }

@@ -29,6 +29,7 @@ import 'features/accounts/domain/usecases/create_account_usecase.dart' as _i968;
 import 'features/accounts/domain/usecases/get_account_by_id_usecase.dart'
     as _i400;
 import 'features/accounts/domain/usecases/get_accounts_usecase.dart' as _i684;
+import 'features/accounts/domain/usecases/update_account_usecase.dart' as _i651;
 import 'features/accounts/presentation/bloc/accounts_bloc.dart' as _i795;
 import 'features/auth/data/datasources/auth_remote_data_source.dart' as _i767;
 import 'features/auth/data/repositories/auth_repository_impl.dart' as _i111;
@@ -76,6 +77,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i968.CreateAccountUseCase>(
     () => _i968.CreateAccountUseCase(gh<_i42.AccountsRepository>()),
   );
+  gh.factory<_i651.UpdateAccountUseCase>(
+    () => _i651.UpdateAccountUseCase(gh<_i42.AccountsRepository>()),
+  );
   gh.factory<_i1015.AuthRepository>(
     () => _i111.AuthRepositoryImpl(
       gh<_i767.AuthRemoteDataSource>(),
@@ -88,6 +92,7 @@ _i174.GetIt $initGetIt(
       getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
       getAccountByIdUseCase: gh<_i400.GetAccountByIdUseCase>(),
       createAccountUseCase: gh<_i968.CreateAccountUseCase>(),
+      updateAccountUseCase: gh<_i651.UpdateAccountUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
     ),
   );

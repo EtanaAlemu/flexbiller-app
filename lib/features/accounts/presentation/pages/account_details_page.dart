@@ -4,17 +4,20 @@ import '../../../../core/theme/app_theme.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
+import '../widgets/edit_account_form.dart';
 import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
   final String accountId;
 
-  const AccountDetailsPage({Key? key, required this.accountId}) : super(key: key);
+  const AccountDetailsPage({Key? key, required this.accountId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<AccountsBloc>()..add(LoadAccountDetails(accountId)),
+      create: (context) =>
+          getIt<AccountsBloc>()..add(LoadAccountDetails(accountId)),
       child: AccountDetailsView(accountId: accountId),
     );
   }
@@ -23,71 +26,80 @@ class AccountDetailsPage extends StatelessWidget {
 class AccountDetailsView extends StatelessWidget {
   final String accountId;
 
-  const AccountDetailsView({Key? key, required this.accountId}) : super(key: key);
+  const AccountDetailsView({Key? key, required this.accountId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Account Details'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              // TODO: Navigate to edit account page
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Edit Account - Coming Soon!')),
-              );
-            },
-            tooltip: 'Edit Account',
-          ),
-        ],
-      ),
-      body: BlocBuilder<AccountsBloc, AccountsState>(
-        builder: (context, state) {
-          if (state is AccountDetailsLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+    return BlocBuilder<AccountsBloc, AccountsState>(
+      builder: (context, state) {
+        if (state is AccountDetailsLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (state is AccountDetailsFailure) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load account details',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    state.message,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<AccountsBloc>().add(LoadAccountDetails(accountId));
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
+        if (state is AccountDetailsFailure) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load account details',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  state.message,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<AccountsBloc>().add(
+                      LoadAccountDetails(accountId),
+                    );
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
 
-          if (state is AccountDetailsLoaded) {
-            final account = state.account;
-            return SingleChildScrollView(
+        if (state is AccountDetailsLoaded) {
+          final account = state.account;
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Account Details'),
+              backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditAccountForm(
+                          account: account,
+                          onAccountUpdated: () {
+                            // Refresh account details after update
+                            context.read<AccountsBloc>().add(LoadAccountDetails(accountId));
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  tooltip: 'Edit Account',
+                ),
+              ],
+            ),
+            body: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,8 +116,10 @@ class AccountDetailsView extends StatelessWidget {
                     children: [
                       _buildInfoRow('Name', account.name),
                       _buildInfoRow('Email', account.email),
-                      if (account.phone.isNotEmpty) _buildInfoRow('Phone', account.phone),
-                      if (account.company.isNotEmpty) _buildInfoRow('Company', account.company),
+                      if (account.phone.isNotEmpty)
+                        _buildInfoRow('Phone', account.phone),
+                      if (account.company.isNotEmpty)
+                        _buildInfoRow('Company', account.company),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -117,11 +131,16 @@ class AccountDetailsView extends StatelessWidget {
                       title: 'Location Information',
                       icon: Icons.location_on,
                       children: [
-                        if (account.address1.isNotEmpty) _buildInfoRow('Address Line 1', account.address1),
-                        if (account.address2.isNotEmpty) _buildInfoRow('Address Line 2', account.address2),
-                        if (account.city.isNotEmpty) _buildInfoRow('City', account.city),
-                        if (account.state.isNotEmpty) _buildInfoRow('State/Province', account.state),
-                        if (account.country.isNotEmpty) _buildInfoRow('Country', account.country),
+                        if (account.address1.isNotEmpty)
+                          _buildInfoRow('Address Line 1', account.address1),
+                        if (account.address2.isNotEmpty)
+                          _buildInfoRow('Address Line 2', account.address2),
+                        if (account.city.isNotEmpty)
+                          _buildInfoRow('City', account.city),
+                        if (account.state.isNotEmpty)
+                          _buildInfoRow('State/Province', account.state),
+                        if (account.country.isNotEmpty)
+                          _buildInfoRow('Country', account.country),
                       ],
                     ),
                   const SizedBox(height: 16),
@@ -134,7 +153,8 @@ class AccountDetailsView extends StatelessWidget {
                     children: [
                       _buildInfoRow('Currency', account.currency),
                       _buildInfoRow('Time Zone', account.timeZone),
-                      if (account.externalKey.isNotEmpty) _buildInfoRow('External Key', account.externalKey),
+                      if (account.externalKey.isNotEmpty)
+                        _buildInfoRow('External Key', account.externalKey),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -145,8 +165,16 @@ class AccountDetailsView extends StatelessWidget {
                     title: 'Financial Information',
                     icon: Icons.account_balance_wallet,
                     children: [
-                      _buildBalanceRow('Balance', account.balance, account.formattedBalance),
-                      _buildBalanceRow('CBA', account.cba, account.formattedCba),
+                      _buildBalanceRow(
+                        'Balance',
+                        account.balance,
+                        account.formattedBalance,
+                      ),
+                      _buildBalanceRow(
+                        'CBA',
+                        account.cba,
+                        account.formattedCba,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -157,9 +185,7 @@ class AccountDetailsView extends StatelessWidget {
                       context,
                       title: 'Additional Information',
                       icon: Icons.note,
-                      children: [
-                        _buildInfoRow('Notes', account.notes),
-                      ],
+                      children: [_buildInfoRow('Notes', account.notes)],
                     ),
                   const SizedBox(height: 16),
 
@@ -170,19 +196,19 @@ class AccountDetailsView extends StatelessWidget {
                       title: 'Audit Logs',
                       icon: Icons.history,
                       children: [
-                        ...account.auditLogs.map((log) => _buildAuditLogItem(context, log)),
+                        ...account.auditLogs.map(
+                          (log) => _buildAuditLogItem(context, log),
+                        ),
                       ],
                     ),
                 ],
               ),
-            );
-          }
-
-          return const Center(
-            child: Text('No account details to display'),
+            ),
           );
-        },
-      ),
+        }
+
+        return const Center(child: Text('No account details to display'));
+      },
     );
   }
 
@@ -197,7 +223,7 @@ class AccountDetailsView extends StatelessWidget {
               radius: 30,
               backgroundColor: Theme.of(context).colorScheme.primary,
               child: Text(
-                account.displayName.isNotEmpty 
+                account.displayName.isNotEmpty
                     ? account.displayName[0].toUpperCase()
                     : account.email[0].toUpperCase(),
                 style: const TextStyle(
@@ -223,7 +249,9 @@ class AccountDetailsView extends StatelessWidget {
                     Text(
                       account.company,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                   ],
@@ -232,21 +260,28 @@ class AccountDetailsView extends StatelessWidget {
                     children: [
                       if (account.hasBalance) ...[
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: account.balance > 0 
+                            color: account.balance > 0
                                 ? Colors.green.withOpacity(0.1)
                                 : Colors.red.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: account.balance > 0 ? Colors.green : Colors.red,
+                              color: account.balance > 0
+                                  ? Colors.green
+                                  : Colors.red,
                               width: 1,
                             ),
                           ),
                           child: Text(
                             'Balance: ${account.formattedBalance}',
                             style: TextStyle(
-                              color: account.balance > 0 ? Colors.green : Colors.red,
+                              color: account.balance > 0
+                                  ? Colors.green
+                                  : Colors.red,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -255,7 +290,10 @@ class AccountDetailsView extends StatelessWidget {
                       ],
                       if (account.hasCba) ...[
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.blue.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(16),
@@ -333,9 +371,7 @@ class AccountDetailsView extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w400,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w400),
             ),
           ),
         ],
@@ -364,7 +400,11 @@ class AccountDetailsView extends StatelessWidget {
               formattedAmount,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: amount > 0 ? Colors.green : amount < 0 ? Colors.red : Colors.grey,
+                color: amount > 0
+                    ? Colors.green
+                    : amount < 0
+                    ? Colors.red
+                    : Colors.grey,
               ),
             ),
           ),
@@ -404,10 +444,7 @@ class AccountDetailsView extends StatelessWidget {
               if (log.changeDate != null)
                 Text(
                   _formatDate(log.changeDate),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
             ],
           ),
@@ -415,18 +452,12 @@ class AccountDetailsView extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Changed by: ${log.changedBy}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
           if (log.comments != null && log.comments.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(
-              log.comments,
-              style: const TextStyle(fontSize: 12),
-            ),
+            Text(log.comments, style: const TextStyle(fontSize: 12)),
           ],
         ],
       ),
