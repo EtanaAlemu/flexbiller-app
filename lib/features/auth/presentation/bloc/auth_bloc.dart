@@ -1,21 +1,27 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/usecases/login_usecase.dart';
+import '../../domain/usecases/forgot_password_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 @injectable
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase _loginUseCase;
+  final ForgotPasswordUseCase _forgotPasswordUseCase;
   
-  AuthBloc({required LoginUseCase loginUseCase})
-      : _loginUseCase = loginUseCase,
+  AuthBloc({
+    required LoginUseCase loginUseCase,
+    required ForgotPasswordUseCase forgotPasswordUseCase,
+  })  : _loginUseCase = loginUseCase,
+        _forgotPasswordUseCase = forgotPasswordUseCase,
         super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
     on<LogoutRequested>(_onLogoutRequested);
     on<CheckAuthStatus>(_onCheckAuthStatus);
     on<RefreshTokenRequested>(_onRefreshTokenRequested);
+    on<ForgotPasswordRequested>(_onForgotPasswordRequested);
   }
   
   Future<void> _onLoginRequested(
@@ -90,6 +96,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthUnauthenticated());
     } catch (e) {
       emit(AuthFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onForgotPasswordRequested(
+    ForgotPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(ForgotPasswordLoading());
+    try {
+      await _forgotPasswordUseCase(event.email);
+      emit(ForgotPasswordSuccess(
+        'Password reset email sent successfully. Please check your email.',
+      ));
+    } catch (e) {
+      emit(ForgotPasswordFailure(e.toString()));
     }
   }
 }

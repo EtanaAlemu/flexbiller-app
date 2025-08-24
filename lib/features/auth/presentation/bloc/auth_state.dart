@@ -20,3 +20,17 @@ class AuthFailure extends AuthState {
 
 class AuthUnauthenticated extends AuthState {}
 
+class ForgotPasswordLoading extends AuthState {}
+
+class ForgotPasswordSuccess extends AuthState {
+  final String message;
+  
+  ForgotPasswordSuccess(this.message);
+}
+
+class ForgotPasswordFailure extends AuthState {
+  final String message;
+  
+  ForgotPasswordFailure(this.message);
+}
+

@@ -25,3 +25,9 @@ class CheckAuthStatus extends AuthEvent {}
 
 class RefreshTokenRequested extends AuthEvent {}
 
+class ForgotPasswordRequested extends AuthEvent {
+  final String email;
+  
+  ForgotPasswordRequested({required this.email});
+}
+

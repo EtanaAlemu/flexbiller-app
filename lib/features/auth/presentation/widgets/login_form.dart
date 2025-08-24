@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
+import '../pages/forgot_password_page.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({Key? key}) : super(key: key);
@@ -142,6 +143,20 @@ class _LoginFormState extends State<LoginForm> {
             },
             child: const Text(
               'Don\'t have an account? Sign up',
+              style: TextStyle(color: Colors.blue),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ForgotPasswordPage(),
+                ),
+              );
+            },
+            child: const Text(
+              'Forgot Password?',
               style: TextStyle(color: Colors.blue),
             ),
           ),

@@ -9,6 +9,7 @@ abstract class AuthRemoteDataSource {
   Future<AuthResponse> register(String email, String password, String name);
   Future<void> logout();
   Future<void> refreshToken(String refreshToken);
+  Future<void> forgotPassword(String email);
 }
 
 @Injectable(as: AuthRemoteDataSource)
@@ -161,6 +162,57 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } on DioException catch (e) {
       throw AuthException('Token refresh failed: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> forgotPassword(String email) async {
+    try {
+      final response = await dio.post(
+        '/auth/forgot-password',
+        data: {
+          'email': email,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final apiResponse = ApiResponse<Map<String, dynamic>>.fromJson(
+          response.data,
+          (json) => json,
+        );
+
+        if (apiResponse.success) {
+          // Password reset email sent successfully
+          return;
+        } else {
+          throw ServerException(
+            apiResponse.message ?? 'Failed to send password reset email',
+            response.statusCode,
+          );
+        }
+      } else {
+        throw ServerException(
+          'Password reset failed with status: ${response.statusCode}',
+          response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        throw ValidationException('Invalid email address');
+      } else if (e.response?.statusCode == 404) {
+        throw AuthException('Email not found');
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Request timeout');
+      } else {
+        throw ServerException(
+          e.message ?? 'Network error occurred',
+          e.response?.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
     }
   }
 }

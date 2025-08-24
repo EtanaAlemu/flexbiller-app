@@ -70,4 +70,13 @@ class AuthRepositoryImpl implements AuthRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<void> forgotPassword(String email) async {
+    try {
+      await _remoteDataSource.forgotPassword(email);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

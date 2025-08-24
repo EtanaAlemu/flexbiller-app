@@ -27,7 +27,9 @@ class ApiResponse<T> {
     return ApiResponse<T>(
       success: json['success'] as bool,
       code: json['code'] as int?,
-      data: json['data'] != null ? fromJsonT(json['data'] as Map<String, dynamic>) : null,
+      data: json['data'] != null
+          ? fromJsonT(json['data'] as Map<String, dynamic>)
+          : null,
       error: json['error'] as String?,
       message: json['message'] as String?,
       details: json['details'] as Map<String, dynamic>?,
@@ -35,11 +37,11 @@ class ApiResponse<T> {
   }
 
   Map<String, dynamic> toJson(Object? Function(T value) toJsonT) => {
-        'success': success,
-        'code': code,
-        'data': data != null ? toJsonT(data!) : null,
-        'error': error,
-        'message': message,
-        'details': details,
-      };
+    'success': success,
+    'code': code,
+    'data': data != null ? toJsonT(data!) : null,
+    'error': error,
+    'message': message,
+    'details': details,
+  };
 }

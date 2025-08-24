@@ -22,6 +22,7 @@ import 'core/services/secure_storage_service.dart' as _i493;
 import 'features/auth/data/datasources/auth_remote_data_source.dart' as _i767;
 import 'features/auth/data/repositories/auth_repository_impl.dart' as _i111;
 import 'features/auth/domain/repositories/auth_repository.dart' as _i1015;
+import 'features/auth/domain/usecases/forgot_password_usecase.dart' as _i993;
 import 'features/auth/domain/usecases/login_usecase.dart' as _i206;
 import 'features/auth/presentation/bloc/auth_bloc.dart' as _i363;
 
@@ -53,7 +54,10 @@ _i174.GetIt $initGetIt(
     () => _i206.LoginUseCase(gh<_i1015.AuthRepository>()),
   );
   gh.factory<_i363.AuthBloc>(
-    () => _i363.AuthBloc(loginUseCase: gh<_i206.LoginUseCase>()),
+    () => _i363.AuthBloc(
+      loginUseCase: gh<_i206.LoginUseCase>(),
+      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
+    ),
   );
   return getIt;
 }
