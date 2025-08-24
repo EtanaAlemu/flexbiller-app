@@ -14,6 +14,12 @@ abstract class AccountCustomFieldsRepository {
     String value,
   );
 
+  /// Create multiple custom fields for an account
+  Future<List<AccountCustomField>> createMultipleCustomFields(
+    String accountId,
+    List<Map<String, String>> customFields,
+  );
+
   /// Update an existing custom field
   Future<AccountCustomField> updateCustomField(
     String accountId,

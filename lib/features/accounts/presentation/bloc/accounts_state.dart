@@ -488,10 +488,50 @@ class CustomFieldCreationFailure extends AccountsState {
   final String name;
   final String value;
 
-  const CustomFieldCreationFailure(this.message, this.accountId, this.name, this.value);
+  const CustomFieldCreationFailure(
+    this.message,
+    this.accountId,
+    this.name,
+    this.value,
+  );
 
   @override
   List<Object?> get props => [message, accountId, name, value];
+}
+
+class MultipleCustomFieldsCreating extends AccountsState {
+  final String accountId;
+  final List<Map<String, String>> customFields;
+
+  const MultipleCustomFieldsCreating(this.accountId, this.customFields);
+
+  @override
+  List<Object?> get props => [accountId, customFields];
+}
+
+class MultipleCustomFieldsCreated extends AccountsState {
+  final String accountId;
+  final List<AccountCustomField> customFields;
+
+  const MultipleCustomFieldsCreated(this.accountId, this.customFields);
+
+  @override
+  List<Object?> get props => [accountId, customFields];
+}
+
+class MultipleCustomFieldsCreationFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final List<Map<String, String>> customFields;
+
+  const MultipleCustomFieldsCreationFailure(
+    this.message,
+    this.accountId,
+    this.customFields,
+  );
+
+  @override
+  List<Object?> get props => [message, accountId, customFields];
 }
 
 class CustomFieldUpdating extends AccountsState {
@@ -500,7 +540,12 @@ class CustomFieldUpdating extends AccountsState {
   final String name;
   final String value;
 
-  const CustomFieldUpdating(this.accountId, this.customFieldId, this.name, this.value);
+  const CustomFieldUpdating(
+    this.accountId,
+    this.customFieldId,
+    this.name,
+    this.value,
+  );
 
   @override
   List<Object?> get props => [accountId, customFieldId, name, value];
@@ -560,7 +605,11 @@ class CustomFieldDeletionFailure extends AccountsState {
   final String accountId;
   final String customFieldId;
 
-  const CustomFieldDeletionFailure(this.message, this.accountId, this.customFieldId);
+  const CustomFieldDeletionFailure(
+    this.message,
+    this.accountId,
+    this.customFieldId,
+  );
 
   @override
   List<Object?> get props => [message, accountId, customFieldId];

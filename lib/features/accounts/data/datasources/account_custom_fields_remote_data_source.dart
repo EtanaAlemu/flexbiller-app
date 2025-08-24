@@ -11,6 +11,10 @@ abstract class AccountCustomFieldsRemoteDataSource {
     String name,
     String value,
   );
+  Future<List<AccountCustomFieldModel>> createMultipleCustomFields(
+    String accountId,
+    List<Map<String, String>> customFields,
+  );
   Future<AccountCustomFieldModel> updateCustomField(
     String accountId,
     String customFieldId,
@@ -126,22 +130,35 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
     try {
       final response = await _dio.post(
         '/accounts/$accountId/customFields',
-        data: {
-          'name': name,
-          'value': value,
-        },
+        data: [
+          {
+            'name': name,
+            'value': value,
+          },
+        ],
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final responseData = response.data;
-
-        if (responseData['success'] == true && responseData['data'] != null) {
-          return AccountCustomFieldModel.fromJson(
-            responseData['data'] as Map<String, dynamic>,
-          );
-        } else {
-          throw ServerException('Failed to create custom field: ${response.statusCode}');
-        }
+      if (response.statusCode == 201) {
+        // Since the API returns 201 for successful creation but doesn't return the created field data,
+        // we'll create a model with the provided data and a generated ID
+        // In a real scenario, the API might return the created field data
+        return AccountCustomFieldModel(
+          customFieldId: DateTime.now().millisecondsSinceEpoch.toString(), // Temporary ID
+          name: name,
+          value: value,
+          auditLogs: [
+            CustomFieldAuditLogModel(
+              changeType: 'INSERT',
+              changeDate: DateTime.now(),
+              changedBy: 'Current User', // This would come from user context
+              reasonCode: null,
+              comments: null,
+              objectType: null,
+              objectId: null,
+              userToken: null,
+            ),
+          ],
+        );
       } else {
         throw ServerException('Failed to create custom field: ${response.statusCode}');
       }
@@ -161,6 +178,58 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         throw NetworkException('No internet connection');
       } else {
         throw ServerException('Failed to create custom field: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<List<AccountCustomFieldModel>> createMultipleCustomFields(
+    String accountId,
+    List<Map<String, String>> customFields,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/accounts/$accountId/customFields/bulk',
+        data: customFields,
+      );
+
+      if (response.statusCode == 201) {
+        final responseData = response.data;
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final List<dynamic> createdFieldsData = responseData['data'] as List<dynamic>;
+          return createdFieldsData
+              .map(
+                (field) => AccountCustomFieldModel.fromJson(
+                  field as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+        } else {
+          throw ServerException(
+            responseData['message'] ?? 'Failed to create multiple custom fields',
+          );
+        }
+      } else {
+        throw ServerException('Failed to create multiple custom fields: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized to create multiple custom fields');
+      } else if (e.response?.statusCode == 403) {
+        throw AuthException(
+          'Forbidden: Insufficient permissions to create multiple custom fields',
+        );
+      } else if (e.response?.statusCode == 400) {
+        throw ValidationException('Invalid custom field data for bulk creation');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout while creating multiple custom fields');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('No internet connection');
+      } else {
+        throw ServerException('Failed to create multiple custom fields: ${e.message}');
       }
     } catch (e) {
       throw ServerException('Unexpected error: ${e.toString()}');

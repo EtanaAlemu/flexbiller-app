@@ -14,6 +14,7 @@ import '../../domain/usecases/assign_multiple_tags_to_account_usecase.dart';
 import '../../domain/usecases/remove_multiple_tags_from_account_usecase.dart';
 import '../../domain/usecases/get_account_custom_fields_usecase.dart';
 import '../../domain/usecases/create_account_custom_field_usecase.dart';
+import '../../domain/usecases/create_multiple_account_custom_fields_usecase.dart';
 import '../../domain/usecases/update_account_custom_field_usecase.dart';
 import '../../domain/usecases/delete_account_custom_field_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
@@ -36,6 +37,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final RemoveMultipleTagsFromAccountUseCase _removeMultipleTagsFromAccountUseCase;
   final GetAccountCustomFieldsUseCase _getAccountCustomFieldsUseCase;
   final CreateAccountCustomFieldUseCase _createAccountCustomFieldUseCase;
+  final CreateMultipleAccountCustomFieldsUseCase _createMultipleAccountCustomFieldsUseCase;
   final UpdateAccountCustomFieldUseCase _updateAccountCustomFieldUseCase;
   final DeleteAccountCustomFieldUseCase _deleteAccountCustomFieldUseCase;
   final AccountsRepository _accountsRepository;
@@ -55,6 +57,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required RemoveMultipleTagsFromAccountUseCase removeMultipleTagsFromAccountUseCase,
     required GetAccountCustomFieldsUseCase getAccountCustomFieldsUseCase,
     required CreateAccountCustomFieldUseCase createAccountCustomFieldUseCase,
+    required CreateMultipleAccountCustomFieldsUseCase createMultipleAccountCustomFieldsUseCase,
     required UpdateAccountCustomFieldUseCase updateAccountCustomFieldUseCase,
     required DeleteAccountCustomFieldUseCase deleteAccountCustomFieldUseCase,
     required AccountsRepository accountsRepository,
@@ -72,6 +75,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         _removeMultipleTagsFromAccountUseCase = removeMultipleTagsFromAccountUseCase,
         _getAccountCustomFieldsUseCase = getAccountCustomFieldsUseCase,
         _createAccountCustomFieldUseCase = createAccountCustomFieldUseCase,
+        _createMultipleAccountCustomFieldsUseCase = createMultipleAccountCustomFieldsUseCase,
         _updateAccountCustomFieldUseCase = updateAccountCustomFieldUseCase,
         _deleteAccountCustomFieldUseCase = deleteAccountCustomFieldUseCase,
         _accountsRepository = accountsRepository,
@@ -103,6 +107,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<LoadAccountCustomFields>(_onLoadAccountCustomFields);
     on<RefreshAccountCustomFields>(_onRefreshAccountCustomFields);
     on<CreateAccountCustomField>(_onCreateAccountCustomField);
+    on<CreateMultipleAccountCustomFields>(_onCreateMultipleAccountCustomFields);
     on<UpdateAccountCustomField>(_onUpdateAccountCustomField);
     on<DeleteAccountCustomField>(_onDeleteAccountCustomField);
   }
@@ -610,6 +615,22 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(CustomFieldCreated(event.accountId, createdCustomField));
     } catch (e) {
       emit(CustomFieldCreationFailure(e.toString(), event.accountId, event.name, event.value));
+    }
+  }
+
+  Future<void> _onCreateMultipleAccountCustomFields(
+    CreateMultipleAccountCustomFields event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(MultipleCustomFieldsCreating(event.accountId, event.customFields));
+      final createdCustomFields = await _accountCustomFieldsRepository.createMultipleCustomFields(
+        event.accountId,
+        event.customFields,
+      );
+      emit(MultipleCustomFieldsCreated(event.accountId, createdCustomFields));
+    } catch (e) {
+      emit(MultipleCustomFieldsCreationFailure(e.toString(), event.accountId, event.customFields));
     }
   }
 

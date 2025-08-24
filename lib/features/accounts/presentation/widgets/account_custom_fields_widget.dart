@@ -71,10 +71,20 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () => _showAddCustomFieldDialog(context),
-                    tooltip: 'Add Custom Field',
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        onPressed: () => _showAddMultipleCustomFieldsDialog(context),
+                        tooltip: 'Add Multiple Fields',
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () => _showAddCustomFieldDialog(context),
+                        tooltip: 'Add Custom Field',
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -296,6 +306,110 @@ class AccountCustomFieldsWidget extends StatelessWidget {
             child: const Text('Add'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAddMultipleCustomFieldsDialog(BuildContext context) {
+    final List<Map<String, TextEditingController>> fieldControllers = [
+      {'name': TextEditingController(), 'value': TextEditingController()},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Add Multiple Custom Fields'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ...fieldControllers.map((controllers) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: controllers['name']!,
+                          decoration: const InputDecoration(
+                            labelText: 'Field Name',
+                            hintText: 'Enter field name',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: controllers['value']!,
+                          decoration: const InputDecoration(
+                            labelText: 'Field Value',
+                            hintText: 'Enter field value',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      fieldControllers.add({
+                        'name': TextEditingController(),
+                        'value': TextEditingController(),
+                      });
+                    });
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Another Field'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final customFields = <Map<String, String>>[];
+                bool hasValidFields = false;
+
+                for (final controllers in fieldControllers) {
+                  final name = controllers['name']!.text.trim();
+                  final value = controllers['value']!.text.trim();
+                  if (name.isNotEmpty && value.isNotEmpty) {
+                    customFields.add({'name': name, 'value': value});
+                    hasValidFields = true;
+                  }
+                }
+
+                if (hasValidFields) {
+                  Navigator.of(context).pop();
+                  if (customFields.length == 1) {
+                    // Single field - use single creation
+                    final field = customFields.first;
+                    context.read<AccountsBloc>().add(
+                          CreateAccountCustomField(
+                            accountId,
+                            field['name']!,
+                            field['value']!,
+                          ),
+                        );
+                  } else {
+                    // Multiple fields - use bulk creation
+                    context.read<AccountsBloc>().add(
+                          CreateMultipleAccountCustomFields(accountId, customFields),
+                        );
+                  }
+                }
+              },
+              child: const Text('Add Fields'),
+            ),
+          ],
+        ),
       ),
     );
   }
