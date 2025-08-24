@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../injection_container.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../bloc/auth_bloc.dart';
-import '../bloc/auth_event.dart';
-import '../bloc/auth_state.dart';
-import 'reset_password_page.dart';
+import '../pages/reset_password_page.dart';
+import '../../../../injection_container.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({Key? key}) : super(key: key);
@@ -26,9 +25,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
-        ForgotPasswordRequested(
-          email: _emailController.text.trim(),
-        ),
+        ForgotPasswordRequested(email: _emailController.text.trim()),
       );
     }
   }
@@ -72,11 +69,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(
-                      Icons.lock_reset,
-                      size: 100,
-                      color: Colors.blue,
-                    ),
+                    const Icon(Icons.lock_reset, size: 100, color: Colors.blue),
                     const SizedBox(height: 32),
                     const Text(
                       'Reset Your Password',
@@ -90,10 +83,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     const SizedBox(height: 16),
                     const Text(
                       'Enter your email address and we\'ll send you a link to reset your password.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
@@ -110,7 +100,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                        if (!RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        ).hasMatch(value)) {
                           return 'Please enter a valid email';
                         }
                         return null;
@@ -118,9 +110,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     const SizedBox(height: 24),
                     if (state is ForgotPasswordLoading)
-                      const Center(
-                        child: CircularProgressIndicator(),
-                      )
+                      const Center(child: CircularProgressIndicator())
                     else
                       ElevatedButton(
                         onPressed: _submitForm,

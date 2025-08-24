@@ -19,8 +19,7 @@ class AuthResponse {
     required this.user,
   });
 
-  factory AuthResponse.fromJson(Map<String, dynamic> json) =>
-      _$AuthResponseFromJson(json);
+  factory AuthResponse.fromJson(Map<String, dynamic> json) => _$AuthResponseFromJson(json);
   Map<String, dynamic> toJson() => _$AuthResponseToJson(this);
 }
 
@@ -50,8 +49,7 @@ class UserModel {
     required this.metadata,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      _$UserModelFromJson(json);
+  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
 
   User toEntity() {
@@ -60,8 +58,37 @@ class UserModel {
       email: email,
       name: '$firstName $lastName',
       role: role,
-      createdAt: DateTime.now(), // API doesn't provide this
-      updatedAt: DateTime.now(), // API doesn't provide this
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      phone: phone,
+      tenantId: tenantId,
+      roleId: roleId,
+      firstName: firstName,
+      lastName: lastName,
+      company: metadata['company'] as String?,
+      department: metadata['department'] as String?,
+      location: metadata['location'] as String?,
+      position: metadata['position'] as String?,
+    );
+  }
+
+  // Factory method to create User from JWT token data
+  factory UserModel.fromJwtData(Map<String, dynamic> jwtData) {
+    final userMetadata = jwtData['user_metadata'] as Map<String, dynamic>? ?? {};
+    final appMetadata = jwtData['app_metadata'] as Map<String, dynamic>? ?? {};
+    final metadata = userMetadata['metadata'] as Map<String, dynamic>? ?? {};
+    
+    return UserModel(
+      id: jwtData['sub'] as String? ?? '',
+      email: jwtData['email'] as String? ?? '',
+      phone: jwtData['phone'] as String? ?? '',
+      firstName: userMetadata['firstName'] as String? ?? '',
+      lastName: userMetadata['lastName'] as String? ?? '',
+      username: userMetadata['username'] as String? ?? '',
+      roleId: userMetadata['role_id'] as String? ?? appMetadata['role_id'] as String? ?? '',
+      tenantId: userMetadata['tenant_id'] as String? ?? '',
+      role: appMetadata['role'] as String? ?? jwtData['role'] as String? ?? '',
+      metadata: metadata,
     );
   }
 }

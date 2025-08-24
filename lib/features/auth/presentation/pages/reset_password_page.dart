@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../injection_container.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../bloc/auth_bloc.dart';
-import '../bloc/auth_event.dart';
-import '../bloc/auth_state.dart';
+import '../../../../injection_container.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   final String? token;
-  
+
   const ResetPasswordPage({Key? key, this.token}) : super(key: key);
 
   @override
@@ -87,11 +86,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(
-                      Icons.lock_reset,
-                      size: 80,
-                      color: Colors.blue,
-                    ),
+                    const Icon(Icons.lock_reset, size: 80, color: Colors.blue),
                     const SizedBox(height: 24),
                     const Text(
                       'Reset Your Password',
@@ -104,10 +99,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     const SizedBox(height: 16),
                     const Text(
                       'Enter the reset token from your email and choose a new password.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
@@ -172,7 +164,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           ),
                           onPressed: () {
                             setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
+                              _obscureConfirmPassword =
+                                  !_obscureConfirmPassword;
                             });
                           },
                         ),

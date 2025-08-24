@@ -1,3 +1,5 @@
+part of 'auth_bloc.dart';
+
 abstract class AuthEvent {}
 
 class LoginRequested extends AuthEvent {
@@ -45,8 +47,5 @@ class ResetPasswordRequested extends AuthEvent {
   final String token;
   final String newPassword;
 
-  ResetPasswordRequested({
-    required this.token,
-    required this.newPassword,
-  });
+  ResetPasswordRequested({required this.token, required this.newPassword});
 }

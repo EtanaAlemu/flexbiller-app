@@ -1,10 +1,26 @@
-import '../../domain/entities/user.dart';
+part of 'auth_bloc.dart';
 
 abstract class AuthState {}
 
 class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
+
+class LoginLoading extends AuthState {}
+
+class LoginSuccess extends AuthState {
+  final User user;
+
+  LoginSuccess(this.user);
+}
+
+class LoginFailure extends AuthState {
+  final String title;
+  final String message;
+  final bool isWebOnlyUser;
+
+  LoginFailure(this.title, this.message, {this.isWebOnlyUser = false});
+}
 
 class AuthSuccess extends AuthState {
   final User user;

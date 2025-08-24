@@ -1,11 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/forgot_password_usecase.dart';
 import '../../domain/usecases/change_password_usecase.dart';
 import '../../domain/usecases/reset_password_usecase.dart';
-import 'auth_event.dart';
-import 'auth_state.dart';
+import '../../../../core/errors/exceptions.dart';
+
+part 'auth_event.dart';
+part 'auth_state.dart';
 
 @injectable
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
@@ -25,10 +28,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
        _resetPasswordUseCase = resetPasswordUseCase,
        super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
-    on<RegisterRequested>(_onRegisterRequested);
-    on<LogoutRequested>(_onLogoutRequested);
-    on<CheckAuthStatus>(_onCheckAuthStatus);
-    on<RefreshTokenRequested>(_onRefreshTokenRequested);
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<ChangePasswordRequested>(_onChangePasswordRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
@@ -38,12 +37,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     LoginRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthLoading());
+    emit(LoginLoading());
     try {
       final user = await _loginUseCase(event.email, event.password);
-      emit(AuthSuccess(user));
+      emit(LoginSuccess(user));
+    } on AuthException catch (e) {
+      // Handle specific EASYBILL_ADMIN restriction
+      if (e.message.contains('EASYBILL_ADMIN users must use the web version')) {
+        emit(
+          LoginFailure(
+            'Access Restricted',
+            'EASYBILL_ADMIN users must use the web version. Please login at the web portal.',
+            isWebOnlyUser: true,
+          ),
+        );
+      } else {
+        emit(LoginFailure('Authentication Failed', e.message));
+      }
     } catch (e) {
-      emit(AuthFailure(e.toString()));
+      emit(LoginFailure('Error', e.toString()));
     }
   }
 

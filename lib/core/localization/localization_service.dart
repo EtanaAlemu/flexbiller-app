@@ -4,18 +4,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocalizationService {
   static const String _languageKey = 'language_code';
   static const String _countryKey = 'country_code';
-  
+
   static const String defaultLanguageCode = 'en';
   static const String defaultCountryCode = '';
-  
-  static Locale _currentLocale = const Locale(defaultLanguageCode, defaultCountryCode);
-  
+
+  static Locale _currentLocale = const Locale(
+    defaultLanguageCode,
+    defaultCountryCode,
+  );
+
   static Locale get currentLocale => _currentLocale;
-  
+
   static Future<void> initialize() async {
     await _loadSavedLocale();
   }
-  
+
   static Future<void> _loadSavedLocale() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -26,12 +29,12 @@ class LocalizationService {
       _currentLocale = const Locale(defaultLanguageCode, defaultCountryCode);
     }
   }
-  
+
   static Future<void> setLocale(Locale locale) async {
     if (_currentLocale == locale) return;
-    
+
     _currentLocale = locale;
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_languageKey, locale.languageCode);
@@ -40,19 +43,22 @@ class LocalizationService {
       // Ignore storage errors
     }
   }
-  
-  static Future<void> setLanguage(String languageCode, [String? countryCode]) async {
+
+  static Future<void> setLanguage(
+    String languageCode, [
+    String? countryCode,
+  ]) async {
     await setLocale(Locale(languageCode, countryCode));
   }
-  
+
   static Future<void> resetToDefault() async {
     await setLocale(const Locale(defaultLanguageCode, defaultCountryCode));
   }
-  
+
   static bool isEnglish() {
     return _currentLocale.languageCode == 'en';
   }
-  
+
   static String getLanguageName(String languageCode) {
     switch (languageCode) {
       case 'en':
@@ -69,7 +75,7 @@ class LocalizationService {
         return languageCode.toUpperCase();
     }
   }
-  
+
   static String getCurrentLanguageName() {
     return getLanguageName(_currentLocale.languageCode);
   }

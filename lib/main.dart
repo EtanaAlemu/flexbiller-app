@@ -11,19 +11,19 @@ import 'core/localization/app_strings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize services
   await LocalizationService.initialize();
-  
+
   // Configure dependency injection
   di.configureDependencies();
-  
+
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   runApp(const MyApp());
 }
 
@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            
+
             // Localization
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocalesList,
@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
             localeResolutionCallback: (locale, supportedLocales) {
               return AppLocalizations.getSupportedLocale(locale);
             },
-            
+
             home: const LoginPage(),
             debugShowCheckedModeBanner: false,
           );

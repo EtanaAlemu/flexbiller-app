@@ -18,6 +18,7 @@ import 'core/injection/injection_module.dart' as _i670;
 import 'core/network/dio_client.dart' as _i45;
 import 'core/network/network_info.dart' as _i75;
 import 'core/services/database_service.dart' as _i916;
+import 'core/services/jwt_service.dart' as _i842;
 import 'core/services/secure_storage_service.dart' as _i493;
 import 'features/auth/data/datasources/auth_remote_data_source.dart' as _i767;
 import 'features/auth/data/repositories/auth_repository_impl.dart' as _i111;
@@ -36,6 +37,7 @@ _i174.GetIt $initGetIt(
 }) {
   final gh = _i526.GetItHelper(getIt, environment, environmentFilter);
   final injectionModule = _$InjectionModule();
+  gh.factory<_i842.JwtService>(() => _i842.JwtService());
   gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
   gh.factory<_i75.NetworkInfoImpl>(() => _i75.NetworkInfoImpl());
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
@@ -53,6 +55,7 @@ _i174.GetIt $initGetIt(
     () => _i111.AuthRepositoryImpl(
       gh<_i767.AuthRemoteDataSource>(),
       gh<_i493.SecureStorageService>(),
+      gh<_i842.JwtService>(),
     ),
   );
   gh.factory<_i993.ForgotPasswordUseCase>(

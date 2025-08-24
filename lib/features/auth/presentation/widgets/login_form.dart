@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../injection_container.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../bloc/auth_bloc.dart';
-import '../bloc/auth_event.dart';
-import '../bloc/auth_state.dart';
 import '../pages/forgot_password_page.dart';
 import '../pages/change_password_page.dart';
+import '../../../../injection_container.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({Key? key}) : super(key: key);
@@ -48,21 +46,56 @@ class _LoginFormState extends State<LoginForm> {
       create: (context) => getIt<AuthBloc>(),
       child: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: theme.colorScheme.error,
-              ),
-            );
-          } else if (state is AuthSuccess) {
+          if (state is LoginSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(AppStrings.successLogin),
-                backgroundColor: AppTheme.getSuccessColor(theme.brightness),
+                backgroundColor: AppTheme.getSuccessColor(
+                  Theme.of(context).brightness,
+                ),
               ),
             );
-            // TODO: Navigate to dashboard
+            // Navigate to dashboard or home page
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          } else if (state is LoginFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      state.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(state.message),
+                    if (state.isWebOnlyUser) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.web, color: Colors.blue),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Please use the web version for EASYBILL_ADMIN access',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+                backgroundColor: state.isWebOnlyUser
+                    ? Colors.orange.withOpacity(0.1)
+                    : Theme.of(context).colorScheme.errorContainer,
+                duration: const Duration(seconds: 8),
+              ),
+            );
           }
         },
         builder: (context, state) {
@@ -161,7 +194,10 @@ class _LoginFormState extends State<LoginForm> {
                   onPressed: _submitForm,
                   child: Text(
                     AppStrings.loginButton,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
