@@ -35,7 +35,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
 
         if (apiResponse.success && apiResponse.data != null) {
-          return apiResponse.data!;
+          // Check if the nested data also indicates success
+          if (apiResponse.data!.success) {
+            return apiResponse.data!;
+          } else {
+            throw ServerException(
+              'Login failed: ${apiResponse.message}',
+              response.statusCode,
+            );
+          }
         } else {
           throw ServerException(
             apiResponse.message ?? 'Login failed',
@@ -87,7 +95,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
 
         if (apiResponse.success && apiResponse.data != null) {
-          return apiResponse.data!;
+          // Check if the nested data also indicates success
+          if (apiResponse.data!.success) {
+            return apiResponse.data!;
+          } else {
+            throw ServerException(
+              'Registration failed: ${apiResponse.message}',
+              response.statusCode,
+            );
+          }
         } else {
           throw ServerException(
             apiResponse.message ?? 'Registration failed',

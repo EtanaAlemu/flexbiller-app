@@ -59,7 +59,7 @@ class _LoginFormState extends State<LoginForm> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Use your actual credentials to login',
+            'Test with: techtcoder1237@gmail.com / Tcoder@123',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey,
