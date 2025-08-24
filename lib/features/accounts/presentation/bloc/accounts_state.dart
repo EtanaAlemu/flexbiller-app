@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/account.dart';
+import '../../domain/entities/account_timeline.dart';
+import '../../domain/entities/account_tag.dart';
 
 abstract class AccountsState extends Equatable {
   const AccountsState();
@@ -184,4 +186,124 @@ class AccountDeletionFailure extends AccountsState {
 
   @override
   List<Object?> get props => [message, accountId];
+}
+
+class AccountTimelineLoading extends AccountsState {
+  final String accountId;
+
+  const AccountTimelineLoading(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AccountTimelineLoaded extends AccountsState {
+  final String accountId;
+  final List<TimelineEvent> events;
+
+  const AccountTimelineLoaded(this.accountId, this.events);
+
+  @override
+  List<Object?> get props => [accountId, events];
+}
+
+class AccountTimelineFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AccountTimelineFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
+}
+
+class AccountTagsLoading extends AccountsState {
+  final String accountId;
+
+  const AccountTagsLoading(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AccountTagsLoaded extends AccountsState {
+  final String accountId;
+  final List<AccountTagAssignment> tags;
+
+  const AccountTagsLoaded(this.accountId, this.tags);
+
+  @override
+  List<Object?> get props => [accountId, tags];
+}
+
+class AccountTagsFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AccountTagsFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
+}
+
+class TagAssigning extends AccountsState {
+  final String accountId;
+  final String tagId;
+
+  const TagAssigning(this.accountId, this.tagId);
+
+  @override
+  List<Object?> get props => [accountId, tagId];
+}
+
+class TagAssigned extends AccountsState {
+  final String accountId;
+  final AccountTagAssignment tag;
+
+  const TagAssigned(this.accountId, this.tag);
+
+  @override
+  List<Object?> get props => [accountId, tag];
+}
+
+class TagAssignmentFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final String tagId;
+
+  const TagAssignmentFailure(this.message, this.accountId, this.tagId);
+
+  @override
+  List<Object?> get props => [message, accountId, tagId];
+}
+
+class TagRemoving extends AccountsState {
+  final String accountId;
+  final String tagId;
+
+  const TagRemoving(this.accountId, this.tagId);
+
+  @override
+  List<Object?> get props => [accountId, tagId];
+}
+
+class TagRemoved extends AccountsState {
+  final String accountId;
+  final String tagId;
+
+  const TagRemoved(this.accountId, this.tagId);
+
+  @override
+  List<Object?> get props => [accountId, tagId];
+}
+
+class TagRemovalFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final String tagId;
+
+  const TagRemovalFailure(this.message, this.accountId, this.tagId);
+
+  @override
+  List<Object?> get props => [message, accountId, tagId];
 }

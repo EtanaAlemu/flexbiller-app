@@ -101,3 +101,59 @@ class DeleteAccount extends AccountsEvent {
   @override
   List<Object?> get props => [accountId];
 }
+
+class LoadAccountTimeline extends AccountsEvent {
+  final String accountId;
+
+  const LoadAccountTimeline(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class RefreshAccountTimeline extends AccountsEvent {
+  final String accountId;
+
+  const RefreshAccountTimeline(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class LoadAccountTags extends AccountsEvent {
+  final String accountId;
+
+  const LoadAccountTags(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class RefreshAccountTags extends AccountsEvent {
+  final String accountId;
+
+  const RefreshAccountTags(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AssignTagToAccount extends AccountsEvent {
+  final String accountId;
+  final String tagId;
+
+  const AssignTagToAccount(this.accountId, this.tagId);
+
+  @override
+  List<Object?> get props => [accountId, tagId];
+}
+
+class RemoveTagFromAccount extends AccountsEvent {
+  final String accountId;
+  final String tagId;
+
+  const RemoveTagFromAccount(this.accountId, this.tagId);
+
+  @override
+  List<Object?> get props => [accountId, tagId];
+}

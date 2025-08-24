@@ -7,7 +7,10 @@ import '../../domain/usecases/get_account_by_id_usecase.dart';
 import '../../domain/usecases/create_account_usecase.dart';
 import '../../domain/usecases/update_account_usecase.dart';
 import '../../domain/usecases/delete_account_usecase.dart';
+import '../../domain/usecases/get_account_timeline_usecase.dart';
+import '../../domain/usecases/get_account_tags_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
+import '../../domain/repositories/account_tags_repository.dart';
 import 'accounts_event.dart';
 import 'accounts_state.dart';
 
@@ -18,7 +21,10 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final CreateAccountUseCase _createAccountUseCase;
   final UpdateAccountUseCase _updateAccountUseCase;
   final DeleteAccountUseCase _deleteAccountUseCase;
+  final GetAccountTimelineUseCase _getAccountTimelineUseCase;
+  final GetAccountTagsUseCase _getAccountTagsUseCase;
   final AccountsRepository _accountsRepository;
+  final AccountTagsRepository _accountTagsRepository;
 
   AccountsBloc({
     required GetAccountsUseCase getAccountsUseCase,
@@ -26,14 +32,20 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required CreateAccountUseCase createAccountUseCase,
     required UpdateAccountUseCase updateAccountUseCase,
     required DeleteAccountUseCase deleteAccountUseCase,
+    required GetAccountTimelineUseCase getAccountTimelineUseCase,
+    required GetAccountTagsUseCase getAccountTagsUseCase,
     required AccountsRepository accountsRepository,
-  }) : _getAccountsUseCase = getAccountsUseCase,
-       _getAccountByIdUseCase = getAccountByIdUseCase,
-       _createAccountUseCase = createAccountUseCase,
-       _updateAccountUseCase = updateAccountUseCase,
-       _deleteAccountUseCase = deleteAccountUseCase,
-       _accountsRepository = accountsRepository,
-       super(AccountsInitial()) {
+    required AccountTagsRepository accountTagsRepository,
+  })  : _getAccountsUseCase = getAccountsUseCase,
+        _getAccountByIdUseCase = getAccountByIdUseCase,
+        _createAccountUseCase = createAccountUseCase,
+        _updateAccountUseCase = updateAccountUseCase,
+        _deleteAccountUseCase = deleteAccountUseCase,
+        _getAccountTimelineUseCase = getAccountTimelineUseCase,
+        _getAccountTagsUseCase = getAccountTagsUseCase,
+        _accountsRepository = accountsRepository,
+        _accountTagsRepository = accountTagsRepository,
+        super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
     on<RefreshAccounts>(_onRefreshAccounts);
     on<LoadMoreAccounts>(_onLoadMoreAccounts);
@@ -45,6 +57,12 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<CreateAccount>(_onCreateAccount);
     on<UpdateAccount>(_onUpdateAccount);
     on<DeleteAccount>(_onDeleteAccount);
+    on<LoadAccountTimeline>(_onLoadAccountTimeline);
+    on<RefreshAccountTimeline>(_onRefreshAccountTimeline);
+    on<LoadAccountTags>(_onLoadAccountTags);
+    on<RefreshAccountTags>(_onRefreshAccountTags);
+    on<AssignTagToAccount>(_onAssignTagToAccount);
+    on<RemoveTagFromAccount>(_onRemoveTagFromAccount);
   }
 
   Future<void> _onLoadAccounts(
@@ -343,12 +361,94 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(AccountDeleting());
-
       await _deleteAccountUseCase(event.accountId);
-
       emit(AccountDeleted(event.accountId));
     } catch (e) {
       emit(AccountDeletionFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onLoadAccountTimeline(
+    LoadAccountTimeline event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountTimelineLoading(event.accountId));
+      final timeline = await _getAccountTimelineUseCase(event.accountId);
+      emit(AccountTimelineLoaded(event.accountId, timeline.events));
+    } catch (e) {
+      emit(AccountTimelineFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onRefreshAccountTimeline(
+    RefreshAccountTimeline event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountTimelineLoading(event.accountId));
+      final timeline = await _getAccountTimelineUseCase(event.accountId);
+      emit(AccountTimelineLoaded(event.accountId, timeline.events));
+    } catch (e) {
+      emit(AccountTimelineFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onLoadAccountTags(
+    LoadAccountTags event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountTagsLoading(event.accountId));
+      final tags = await _getAccountTagsUseCase(event.accountId);
+      emit(AccountTagsLoaded(event.accountId, tags));
+    } catch (e) {
+      emit(AccountTagsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onRefreshAccountTags(
+    RefreshAccountTags event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountTagsLoading(event.accountId));
+      final tags = await _getAccountTagsUseCase(event.accountId);
+      emit(AccountTagsLoaded(event.accountId, tags));
+    } catch (e) {
+      emit(AccountTagsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onAssignTagToAccount(
+    AssignTagToAccount event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(TagAssigning(event.accountId, event.tagId));
+      final assignedTag = await _accountTagsRepository.assignTagToAccount(
+        event.accountId,
+        event.tagId,
+      );
+      emit(TagAssigned(event.accountId, assignedTag));
+    } catch (e) {
+      emit(TagAssignmentFailure(e.toString(), event.accountId, event.tagId));
+    }
+  }
+
+  Future<void> _onRemoveTagFromAccount(
+    RemoveTagFromAccount event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(TagRemoving(event.accountId, event.tagId));
+      await _accountTagsRepository.removeTagFromAccount(
+        event.accountId,
+        event.tagId,
+      );
+      emit(TagRemoved(event.accountId, event.tagId));
+    } catch (e) {
+      emit(TagRemovalFailure(e.toString(), event.accountId, event.tagId));
     }
   }
 }

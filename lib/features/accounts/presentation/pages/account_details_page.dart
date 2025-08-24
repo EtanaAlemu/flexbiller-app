@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../domain/entities/account.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
 import '../widgets/edit_account_form.dart';
 import '../widgets/delete_account_dialog.dart';
+import '../widgets/account_timeline_widget.dart';
+import '../widgets/account_tags_widget.dart';
 import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
@@ -17,8 +20,10 @@ class AccountDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          getIt<AccountsBloc>()..add(LoadAccountDetails(accountId)),
+      create: (context) => getIt<AccountsBloc>()
+        ..add(LoadAccountDetails(accountId))
+        ..add(LoadAccountTimeline(accountId))
+        ..add(LoadAccountTags(accountId)),
       child: AccountDetailsView(accountId: accountId),
     );
   }
@@ -124,103 +129,38 @@ class AccountDetailsView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Account Header
-                  _buildAccountHeader(context, account),
-                  const SizedBox(height: 24),
-
-                  // Basic Information
-                  _buildSectionCard(
-                    context,
-                    title: 'Basic Information',
-                    icon: Icons.person,
-                    children: [
-                      _buildInfoRow('Name', account.name),
-                      _buildInfoRow('Email', account.email),
-                      if (account.phone.isNotEmpty)
-                        _buildInfoRow('Phone', account.phone),
-                      if (account.company.isNotEmpty)
-                        _buildInfoRow('Company', account.company),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Location Information
-                  if (account.fullAddress.isNotEmpty)
-                    _buildSectionCard(
-                      context,
-                      title: 'Location Information',
-                      icon: Icons.location_on,
+                  // Account Details Tabs
+                  DefaultTabController(
+                    length: 3,
+                    child: Column(
                       children: [
-                        if (account.address1.isNotEmpty)
-                          _buildInfoRow('Address Line 1', account.address1),
-                        if (account.address2.isNotEmpty)
-                          _buildInfoRow('Address Line 2', account.address2),
-                        if (account.city.isNotEmpty)
-                          _buildInfoRow('City', account.city),
-                        if (account.state.isNotEmpty)
-                          _buildInfoRow('State/Province', account.state),
-                        if (account.country.isNotEmpty)
-                          _buildInfoRow('Country', account.country),
-                      ],
-                    ),
-                  const SizedBox(height: 16),
-
-                  // Account Settings
-                  _buildSectionCard(
-                    context,
-                    title: 'Account Settings',
-                    icon: Icons.settings,
-                    children: [
-                      _buildInfoRow('Currency', account.currency),
-                      _buildInfoRow('Time Zone', account.timeZone),
-                      if (account.externalKey.isNotEmpty)
-                        _buildInfoRow('External Key', account.externalKey),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Financial Information
-                  _buildSectionCard(
-                    context,
-                    title: 'Financial Information',
-                    icon: Icons.account_balance_wallet,
-                    children: [
-                      _buildBalanceRow(
-                        'Balance',
-                        account.balance,
-                        account.formattedBalance,
-                      ),
-                      _buildBalanceRow(
-                        'CBA',
-                        account.cba,
-                        account.formattedCba,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Additional Information
-                  if (account.notes.isNotEmpty)
-                    _buildSectionCard(
-                      context,
-                      title: 'Additional Information',
-                      icon: Icons.note,
-                      children: [_buildInfoRow('Notes', account.notes)],
-                    ),
-                  const SizedBox(height: 16),
-
-                  // Audit Logs
-                  if (account.auditLogs.isNotEmpty)
-                    _buildSectionCard(
-                      context,
-                      title: 'Audit Logs',
-                      icon: Icons.history,
-                      children: [
-                        ...account.auditLogs.map(
-                          (log) => _buildAuditLogItem(context, log),
+                        TabBar(
+                          tabs: const [
+                            Tab(text: 'Details'),
+                            Tab(text: 'Timeline'),
+                            Tab(text: 'Tags'),
+                          ],
+                          labelColor: Theme.of(context).colorScheme.primary,
+                          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          indicatorColor: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 600, // Fixed height for tabs
+                          child: TabBarView(
+                            children: [
+                              // Details Tab
+                              _buildAccountDetailsTab(context, account),
+                              // Timeline Tab
+                              AccountTimelineWidget(accountId: accountId),
+                              // Tags Tab
+                              AccountTagsWidget(accountId: accountId),
+                            ],
+                          ),
                         ),
                       ],
                     ),
+                  ),
                 ],
               ),
             ),
@@ -517,5 +457,112 @@ class AccountDetailsView extends StatelessWidget {
     } catch (e) {
       return dateString;
     }
+  }
+
+  Widget _buildAccountDetailsTab(BuildContext context, Account account) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Account Header
+          _buildAccountHeader(context, account),
+          const SizedBox(height: 24),
+
+          // Basic Information
+          _buildSectionCard(
+            context,
+            title: 'Basic Information',
+            icon: Icons.person,
+            children: [
+              _buildInfoRow('Name', account.name),
+              _buildInfoRow('Email', account.email),
+              if (account.phone.isNotEmpty)
+                _buildInfoRow('Phone', account.phone),
+              if (account.company.isNotEmpty)
+                _buildInfoRow('Company', account.company),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Location Information
+          if (account.fullAddress.isNotEmpty)
+            _buildSectionCard(
+              context,
+              title: 'Location Information',
+              icon: Icons.location_on,
+              children: [
+                if (account.address1.isNotEmpty)
+                  _buildInfoRow('Address Line 1', account.address1),
+                if (account.address2.isNotEmpty)
+                  _buildInfoRow('Address Line 2', account.address2),
+                if (account.city.isNotEmpty)
+                  _buildInfoRow('City', account.city),
+                if (account.state.isNotEmpty)
+                  _buildInfoRow('State/Province', account.state),
+                if (account.country.isNotEmpty)
+                  _buildInfoRow('Country', account.country),
+              ],
+            ),
+          const SizedBox(height: 16),
+
+          // Account Settings
+          _buildSectionCard(
+            context,
+            title: 'Account Settings',
+            icon: Icons.settings,
+            children: [
+              _buildInfoRow('Currency', account.currency),
+              _buildInfoRow('Time Zone', account.timeZone),
+              if (account.externalKey.isNotEmpty)
+                _buildInfoRow('External Key', account.externalKey),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Financial Information
+          _buildSectionCard(
+            context,
+            title: 'Financial Information',
+            icon: Icons.account_balance_wallet,
+            children: [
+              _buildBalanceRow(
+                'Balance',
+                account.balance,
+                account.formattedBalance,
+              ),
+              _buildBalanceRow(
+                'CBA',
+                account.cba,
+                account.formattedCba,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Additional Information
+          if (account.notes.isNotEmpty)
+            _buildSectionCard(
+              context,
+              title: 'Additional Information',
+              icon: Icons.note,
+              children: [_buildInfoRow('Notes', account.notes)],
+            ),
+          const SizedBox(height: 16),
+
+          // Audit Logs
+          if (account.auditLogs.isNotEmpty)
+            _buildSectionCard(
+              context,
+              title: 'Audit Logs',
+              icon: Icons.history,
+              children: [
+                ...account.auditLogs.map(
+                  (log) => _buildAuditLogItem(context, log),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
   }
 }
