@@ -101,3 +101,21 @@ Map<String, dynamic> _$TagDefinitionModelToJson(TagDefinitionModel instance) =>
       'applicableObjectTypes': instance.applicableObjectTypes,
       'auditLogs': instance.auditLogs,
     };
+
+AccountTagAssignmentResponseModel _$AccountTagAssignmentResponseModelFromJson(
+  Map<String, dynamic> json,
+) => AccountTagAssignmentResponseModel(
+  accountId: json['accountId'] as String,
+  tagDefIds: (json['tagDefIds'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  addedAt: json['addedAt'] as String,
+);
+
+Map<String, dynamic> _$AccountTagAssignmentResponseModelToJson(
+  AccountTagAssignmentResponseModel instance,
+) => <String, dynamic>{
+  'accountId': instance.accountId,
+  'tagDefIds': instance.tagDefIds,
+  'addedAt': instance.addedAt,
+};

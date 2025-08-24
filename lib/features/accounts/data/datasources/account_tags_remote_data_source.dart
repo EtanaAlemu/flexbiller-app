@@ -368,14 +368,13 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> tagsData = responseData['data'] as List<dynamic>;
-          return tagsData
-              .map(
-                (tag) => AccountTagAssignmentModel.fromJson(
-                  tag as Map<String, dynamic>,
-                ),
-              )
-              .toList();
+          // The API returns a confirmation response, not the actual tag objects
+          final assignmentResponse = AccountTagAssignmentResponseModel.fromJson(
+            responseData['data'] as Map<String, dynamic>,
+          );
+          
+          // Convert to AccountTagAssignmentModel for backward compatibility
+          return assignmentResponse.toAccountTagAssignmentModels();
         } else {
           throw ServerException(
             responseData['message'] ??
@@ -398,6 +397,19 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         throw ValidationException('Account not found');
       } else if (e.response?.statusCode == 400) {
         throw ValidationException('Invalid tag assignment data');
+      } else if (e.response?.statusCode == 500) {
+        // Handle 500 error which might indicate tag definition issues
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+          final details = responseData['details'];
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("does not exist")) {
+              throw ValidationException('One or more tag definitions do not exist');
+            }
+          }
+        }
+        throw ServerException('Server error while assigning tags to account');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException(

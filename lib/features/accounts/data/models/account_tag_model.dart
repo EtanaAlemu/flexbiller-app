@@ -145,7 +145,7 @@ class AccountTagWithDefinitionModel {
       name: tagDefinition.name,
       description: tagDefinition.description,
       color: null, // Not provided by API
-      icon: null,  // Not provided by API
+      icon: null, // Not provided by API
       createdAt: DateTime.now(), // Not provided by API
       updatedAt: DateTime.now(), // Not provided by API
       createdBy: 'System', // Not provided by API
@@ -188,4 +188,35 @@ class TagDefinitionModel {
       _$TagDefinitionModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$TagDefinitionModelToJson(this);
+}
+
+// Model for tag assignment response (when adding tags to account)
+@JsonSerializable()
+class AccountTagAssignmentResponseModel {
+  final String accountId;
+  final List<String> tagDefIds;
+  final String addedAt;
+
+  const AccountTagAssignmentResponseModel({
+    required this.accountId,
+    required this.tagDefIds,
+    required this.addedAt,
+  });
+
+  factory AccountTagAssignmentResponseModel.fromJson(Map<String, dynamic> json) =>
+      _$AccountTagAssignmentResponseModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AccountTagAssignmentResponseModelToJson(this);
+
+  // Convert to AccountTagAssignmentModel for backward compatibility
+  List<AccountTagAssignmentModel> toAccountTagAssignmentModels() {
+    return tagDefIds.map((tagDefId) => AccountTagAssignmentModel(
+      tagId: '', // Not provided in response
+      objectType: 'ACCOUNT',
+      objectId: accountId,
+      tagDefinitionId: tagDefId,
+      tagDefinitionName: '', // Not provided in response
+      auditLogs: [],
+    )).toList();
+  }
 }
