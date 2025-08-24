@@ -59,7 +59,8 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 500) {
         // Handle 500 error which might indicate server issues
         final responseData = e.response?.data;
-        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+        if (responseData != null &&
+            responseData['error'] == 'CONNECTION_ERROR') {
           final details = responseData['details'];
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
@@ -87,8 +88,9 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
 
         if (responseData['success'] == true && responseData['data'] != null) {
           final data = responseData['data'] as Map<String, dynamic>;
-          
-          // Handle nested response structure
+
+          // For get operations, the account data is directly in the data field
+          // Handle nested response structure (for create operations)
           if (data['success'] == true && data['accountData'] != null) {
             return AccountModel.fromJson(
               data['accountData'] as Map<String, dynamic>,
@@ -99,7 +101,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
               data['accountData'] as Map<String, dynamic>,
             );
           } else {
-            // Try to parse the data directly as account data
+            // For get operations, parse the data directly as account data
             return AccountModel.fromJson(data);
           }
         } else {
@@ -124,7 +126,8 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 500) {
         // Handle 500 error which might indicate account doesn't exist
         final responseData = e.response?.data;
-        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+        if (responseData != null &&
+            responseData['error'] == 'CONNECTION_ERROR') {
           final details = responseData['details'];
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
@@ -145,7 +148,10 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
   @override
   Future<List<AccountModel>> searchAccounts(String searchKey) async {
     try {
-      final response = await _dio.get('/accounts/search', queryParameters: {'searchKey': searchKey});
+      final response = await _dio.get(
+        '/accounts/search',
+        queryParameters: {'searchKey': searchKey},
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -178,7 +184,8 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 500) {
         // Handle 500 error which might indicate server issues
         final responseData = e.response?.data;
-        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+        if (responseData != null &&
+            responseData['error'] == 'CONNECTION_ERROR') {
           final details = responseData['details'];
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
@@ -206,7 +213,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
 
         if (responseData['success'] == true && responseData['data'] != null) {
           final data = responseData['data'] as Map<String, dynamic>;
-          
+
           // Handle nested response structure
           if (data['success'] == true && data['accountData'] != null) {
             return AccountModel.fromJson(
@@ -245,7 +252,8 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 500) {
         // Handle 500 error which might indicate server issues
         final responseData = e.response?.data;
-        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+        if (responseData != null &&
+            responseData['error'] == 'CONNECTION_ERROR') {
           final details = responseData['details'];
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
@@ -276,8 +284,9 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
 
         if (responseData['success'] == true && responseData['data'] != null) {
           final data = responseData['data'] as Map<String, dynamic>;
-          
-          // Handle nested response structure
+
+          // For update operations, the account data is directly in the data field
+          // Handle nested response structure (for create operations)
           if (data['success'] == true && data['accountData'] != null) {
             return AccountModel.fromJson(
               data['accountData'] as Map<String, dynamic>,
@@ -288,7 +297,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
               data['accountData'] as Map<String, dynamic>,
             );
           } else {
-            // Try to parse the data directly as account data
+            // For update operations, parse the data directly as account data
             return AccountModel.fromJson(data);
           }
         } else {
@@ -315,7 +324,8 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 500) {
         // Handle 500 error which might indicate server issues
         final responseData = e.response?.data;
-        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+        if (responseData != null &&
+            responseData['error'] == 'CONNECTION_ERROR') {
           final details = responseData['details'];
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
@@ -357,7 +367,8 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 500) {
         // Handle 500 error which might indicate server issues
         final responseData = e.response?.data;
-        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+        if (responseData != null &&
+            responseData['error'] == 'CONNECTION_ERROR') {
           final details = responseData['details'];
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
