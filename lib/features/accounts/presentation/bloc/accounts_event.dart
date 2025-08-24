@@ -204,3 +204,54 @@ class RefreshAllTagsForAccount extends AccountsEvent {
   @override
   List<Object?> get props => [accountId];
 }
+
+class LoadAccountCustomFields extends AccountsEvent {
+  final String accountId;
+
+  const LoadAccountCustomFields(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class RefreshAccountCustomFields extends AccountsEvent {
+  final String accountId;
+
+  const RefreshAccountCustomFields(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class CreateAccountCustomField extends AccountsEvent {
+  final String accountId;
+  final String name;
+  final String value;
+
+  const CreateAccountCustomField(this.accountId, this.name, this.value);
+
+  @override
+  List<Object?> get props => [accountId, name, value];
+}
+
+class UpdateAccountCustomField extends AccountsEvent {
+  final String accountId;
+  final String customFieldId;
+  final String name;
+  final String value;
+
+  const UpdateAccountCustomField(this.accountId, this.customFieldId, this.name, this.value);
+
+  @override
+  List<Object?> get props => [accountId, customFieldId, name, value];
+}
+
+class DeleteAccountCustomField extends AccountsEvent {
+  final String accountId;
+  final String customFieldId;
+
+  const DeleteAccountCustomField(this.accountId, this.customFieldId);
+
+  @override
+  List<Object?> get props => [accountId, customFieldId];
+}

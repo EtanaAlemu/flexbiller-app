@@ -12,7 +12,7 @@ AccountTimelineModel _$AccountTimelineModelFromJson(
   id: json['id'] as String,
   accountId: json['accountId'] as String,
   events: (json['events'] as List<dynamic>)
-      .map((e) => TimelineEvent.fromJson(e as Map<String, dynamic>))
+      .map((e) => TimelineEventModel.fromJson(e as Map<String, dynamic>))
       .toList(),
   createdAt: DateTime.parse(json['createdAt'] as String),
   updatedAt: DateTime.parse(json['updatedAt'] as String),

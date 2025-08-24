@@ -4,13 +4,19 @@ import '../../domain/entities/account_timeline.dart';
 part 'account_timeline_model.g.dart';
 
 @JsonSerializable()
-class AccountTimelineModel extends AccountTimeline {
+class AccountTimelineModel {
+  final String id;
+  final String accountId;
+  final List<TimelineEventModel> events;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
   const AccountTimelineModel({
-    required super.id,
-    required super.accountId,
-    required super.events,
-    required super.createdAt,
-    required super.updatedAt,
+    required this.id,
+    required this.accountId,
+    required this.events,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory AccountTimelineModel.fromJson(Map<String, dynamic> json) =>
@@ -22,7 +28,9 @@ class AccountTimelineModel extends AccountTimeline {
     return AccountTimelineModel(
       id: entity.id,
       accountId: entity.accountId,
-      events: entity.events.map((e) => TimelineEventModel.fromEntity(e)).toList(),
+      events: entity.events
+          .map((e) => TimelineEventModel.fromEntity(e))
+          .toList(),
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     );
@@ -40,19 +48,31 @@ class AccountTimelineModel extends AccountTimeline {
 }
 
 @JsonSerializable()
-class TimelineEventModel extends TimelineEvent {
+class TimelineEventModel {
+  final String id;
+  final String eventType;
+  final String title;
+  final String description;
+  final DateTime timestamp;
+  final String? userId;
+  final String? userName;
+  final String? userEmail;
+  final Map<String, dynamic>? metadata;
+  final String? icon;
+  final String? color;
+
   const TimelineEventModel({
-    required super.id,
-    required super.eventType,
-    required super.title,
-    required super.description,
-    required super.timestamp,
-    super.userId,
-    super.userName,
-    super.userEmail,
-    super.metadata,
-    super.icon,
-    super.color,
+    required this.id,
+    required this.eventType,
+    required this.title,
+    required this.description,
+    required this.timestamp,
+    this.userId,
+    this.userName,
+    this.userEmail,
+    this.metadata,
+    this.icon,
+    this.color,
   });
 
   factory TimelineEventModel.fromJson(Map<String, dynamic> json) =>

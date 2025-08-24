@@ -4,17 +4,27 @@ import '../../domain/entities/account_tag.dart';
 part 'account_tag_model.g.dart';
 
 @JsonSerializable()
-class AccountTagModel extends AccountTag {
+class AccountTagModel {
+  final String id;
+  final String name;
+  final String? description;
+  final String? color;
+  final String? icon;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String createdBy;
+  final bool isActive;
+
   const AccountTagModel({
-    required super.id,
-    required super.name,
-    super.description,
-    super.color,
-    super.icon,
-    required super.createdAt,
-    required super.updatedAt,
-    required super.createdBy,
-    super.isActive,
+    required this.id,
+    required this.name,
+    this.description,
+    this.color,
+    this.icon,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.createdBy,
+    this.isActive = true,
   });
 
   factory AccountTagModel.fromJson(Map<String, dynamic> json) =>
@@ -52,16 +62,25 @@ class AccountTagModel extends AccountTag {
 }
 
 @JsonSerializable()
-class AccountTagAssignmentModel extends AccountTagAssignment {
+class AccountTagAssignmentModel {
+  final String id;
+  final String accountId;
+  final String tagId;
+  final String tagName;
+  final String? tagColor;
+  final String? tagIcon;
+  final DateTime assignedAt;
+  final String assignedBy;
+
   const AccountTagAssignmentModel({
-    required super.id,
-    required super.accountId,
-    required super.tagId,
-    required super.tagName,
-    super.tagColor,
-    super.tagIcon,
-    required super.assignedAt,
-    required super.assignedBy,
+    required this.id,
+    required this.accountId,
+    required this.tagId,
+    required this.tagName,
+    this.tagColor,
+    this.tagIcon,
+    required this.assignedAt,
+    required this.assignedBy,
   });
 
   factory AccountTagAssignmentModel.fromJson(Map<String, dynamic> json) =>

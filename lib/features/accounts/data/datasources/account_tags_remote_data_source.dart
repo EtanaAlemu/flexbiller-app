@@ -19,7 +19,10 @@ abstract class AccountTagsRemoteDataSource {
     List<String> tagIds,
   );
   Future<void> removeTagFromAccount(String accountId, String tagId);
-  Future<void> removeMultipleTagsFromAccount(String accountId, List<String> tagIds);
+  Future<void> removeMultipleTagsFromAccount(
+    String accountId,
+    List<String> tagIds,
+  );
 }
 
 @Injectable(as: AccountTagsRemoteDataSource)
@@ -441,13 +444,14 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   }
 
   @override
-  Future<void> removeMultipleTagsFromAccount(String accountId, List<String> tagIds) async {
+  Future<void> removeMultipleTagsFromAccount(
+    String accountId,
+    List<String> tagIds,
+  ) async {
     try {
       final response = await _dio.delete(
         '/accounts/$accountId/tags',
-        data: {
-          'tagDefIds': tagIds,
-        },
+        data: {'tagDefIds': tagIds},
       );
 
       if (response.statusCode != 200 && response.statusCode != 204) {
@@ -468,7 +472,9 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         throw ValidationException('Invalid tag removal data');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while removing multiple tags');
+        throw NetworkException(
+          'Connection timeout while removing multiple tags',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {

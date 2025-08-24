@@ -1,9 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part 'account_timeline.g.dart';
-
-@JsonSerializable()
 class AccountTimeline extends Equatable {
   final String id;
   final String accountId;
@@ -39,7 +35,6 @@ class AccountTimeline extends Equatable {
   }
 }
 
-@JsonSerializable()
 class TimelineEvent extends Equatable {
   final String id;
   final String eventType;
@@ -69,18 +64,18 @@ class TimelineEvent extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        eventType,
-        title,
-        description,
-        timestamp,
-        userId,
-        userName,
-        userEmail,
-        metadata,
-        icon,
-        color,
-      ];
+    id,
+    eventType,
+    title,
+    description,
+    timestamp,
+    userId,
+    userName,
+    userEmail,
+    metadata,
+    icon,
+    color,
+  ];
 
   // Helper getters
   bool get isUserAction => userId != null;
@@ -88,7 +83,7 @@ class TimelineEvent extends Equatable {
   String get formattedTimestamp {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
     } else if (difference.inHours > 0) {

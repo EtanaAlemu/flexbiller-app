@@ -9,6 +9,7 @@ import '../widgets/edit_account_form.dart';
 import '../widgets/delete_account_dialog.dart';
 import '../widgets/account_timeline_widget.dart';
 import '../widgets/account_tags_widget.dart';
+import '../widgets/account_custom_fields_widget.dart';
 import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
@@ -24,7 +25,8 @@ class AccountDetailsPage extends StatelessWidget {
         ..add(LoadAccountDetails(accountId))
         ..add(LoadAccountTimeline(accountId))
         ..add(LoadAccountTags(accountId))
-        ..add(LoadAllTagsForAccount(accountId)),
+        ..add(LoadAllTagsForAccount(accountId))
+        ..add(LoadAccountCustomFields(accountId)),
       child: AccountDetailsView(accountId: accountId),
     );
   }
@@ -87,9 +89,14 @@ class AccountDetailsView extends StatelessWidget {
                   state is TagRemoved ||
                   state is MultipleTagsAssigned ||
                   state is MultipleTagsRemoved ||
-                  state is AllTagsRemoved) {
+                  state is AllTagsRemoved ||
+                  state is CustomFieldCreated ||
+                  state is CustomFieldUpdated ||
+                  state is CustomFieldDeleted) {
                 // Refresh tags after assignment/removal
                 context.read<AccountsBloc>().add(LoadAccountTags(accountId));
+                // Refresh custom fields after creation/update/deletion
+                context.read<AccountsBloc>().add(LoadAccountCustomFields(accountId));
               }
             },
             child: Scaffold(
@@ -143,7 +150,7 @@ class AccountDetailsView extends StatelessWidget {
                   children: [
                     // Account Details Tabs
                     DefaultTabController(
-                      length: 3,
+                      length: 4,
                       child: Column(
                         children: [
                           TabBar(
@@ -151,6 +158,7 @@ class AccountDetailsView extends StatelessWidget {
                               Tab(text: 'Details'),
                               Tab(text: 'Timeline'),
                               Tab(text: 'Tags'),
+                              Tab(text: 'Custom Fields'),
                             ],
                             labelColor: Theme.of(context).colorScheme.primary,
                             unselectedLabelColor: Theme.of(
@@ -171,6 +179,8 @@ class AccountDetailsView extends StatelessWidget {
                                 AccountTimelineWidget(accountId: accountId),
                                 // Tags Tab
                                 AccountTagsWidget(accountId: accountId),
+                                // Custom Fields Tab
+                                AccountCustomFieldsWidget(accountId: accountId),
                               ],
                             ),
                           ),
