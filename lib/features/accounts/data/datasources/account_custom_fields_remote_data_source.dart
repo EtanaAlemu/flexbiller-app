@@ -26,6 +26,7 @@ abstract class AccountCustomFieldsRemoteDataSource {
     List<Map<String, dynamic>> customFields,
   );
   Future<void> deleteCustomField(String accountId, String customFieldId);
+  Future<void> deleteMultipleCustomFields(String accountId, List<String> customFieldIds);
 }
 
 @Injectable(as: AccountCustomFieldsRemoteDataSource)
@@ -362,9 +363,17 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
   @override
   Future<void> deleteCustomField(String accountId, String customFieldId) async {
     try {
-      final response = await _dio.delete('/accounts/$accountId/customFields/$customFieldId');
+      final response = await _dio.delete(
+        '/accounts/$accountId/customFields',
+        queryParameters: {
+          'customField': customFieldId,
+        },
+      );
 
-      if (response.statusCode != 200 && response.statusCode != 204) {
+      if (response.statusCode == 204) {
+        // Successfully deleted - no content returned
+        return;
+      } else {
         throw ServerException('Failed to delete custom field: ${response.statusCode}');
       }
     } on DioException catch (e) {
@@ -383,6 +392,44 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         throw NetworkException('No internet connection');
       } else {
         throw ServerException('Failed to delete custom field: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> deleteMultipleCustomFields(String accountId, List<String> customFieldIds) async {
+    try {
+      final response = await _dio.delete(
+        '/accounts/$accountId/customFields/bulk',
+        queryParameters: {
+          'customFieldIds': customFieldIds.join(','),
+        },
+      );
+
+      if (response.statusCode == 204) {
+        // Successfully deleted - no content returned
+        return;
+      } else {
+        throw ServerException('Failed to delete multiple custom fields: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized to delete multiple custom fields');
+      } else if (e.response?.statusCode == 403) {
+        throw AuthException(
+          'Forbidden: Insufficient permissions to delete multiple custom fields',
+        );
+      } else if (e.response?.statusCode == 400) {
+        throw ValidationException('Invalid custom field IDs for bulk deletion');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout while deleting multiple custom fields');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('No internet connection');
+      } else {
+        throw ServerException('Failed to delete multiple custom fields: ${e.message}');
       }
     } catch (e) {
       throw ServerException('Unexpected error: ${e.toString()}');

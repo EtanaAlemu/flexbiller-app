@@ -105,6 +105,15 @@ class AccountCustomFieldsRepositoryImpl implements AccountCustomFieldsRepository
   }
 
   @override
+  Future<void> deleteMultipleCustomFields(String accountId, List<String> customFieldIds) async {
+    try {
+      await _remoteDataSource.deleteMultipleCustomFields(accountId, customFieldIds);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<List<AccountCustomField>> getCustomFieldsByName(
     String accountId,
     String name,

@@ -275,3 +275,13 @@ class DeleteAccountCustomField extends AccountsEvent {
   @override
   List<Object?> get props => [accountId, customFieldId];
 }
+
+class DeleteMultipleAccountCustomFields extends AccountsEvent {
+  final String accountId;
+  final List<String> customFieldIds;
+
+  const DeleteMultipleAccountCustomFields(this.accountId, this.customFieldIds);
+
+  @override
+  List<Object?> get props => [accountId, customFieldIds];
+}

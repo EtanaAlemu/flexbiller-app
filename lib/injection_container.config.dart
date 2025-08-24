@@ -53,6 +53,8 @@ import 'features/accounts/domain/usecases/create_multiple_account_custom_fields_
 import 'features/accounts/domain/usecases/delete_account_custom_field_usecase.dart'
     as _i336;
 import 'features/accounts/domain/usecases/delete_account_usecase.dart' as _i823;
+import 'features/accounts/domain/usecases/delete_multiple_account_custom_fields_usecase.dart'
+    as _i82;
 import 'features/accounts/domain/usecases/get_account_by_id_usecase.dart'
     as _i400;
 import 'features/accounts/domain/usecases/get_account_custom_fields_usecase.dart'
@@ -201,6 +203,11 @@ _i174.GetIt $initGetIt(
       gh<_i221.AccountCustomFieldsRepository>(),
     ),
   );
+  gh.factory<_i82.DeleteMultipleAccountCustomFieldsUseCase>(
+    () => _i82.DeleteMultipleAccountCustomFieldsUseCase(
+      gh<_i221.AccountCustomFieldsRepository>(),
+    ),
+  );
   gh.factory<_i993.ForgotPasswordUseCase>(
     () => _i993.ForgotPasswordUseCase(gh<_i1015.AuthRepository>()),
   );
@@ -250,6 +257,8 @@ _i174.GetIt $initGetIt(
           gh<_i435.UpdateMultipleAccountCustomFieldsUseCase>(),
       deleteAccountCustomFieldUseCase:
           gh<_i336.DeleteAccountCustomFieldUseCase>(),
+      deleteMultipleAccountCustomFieldsUseCase:
+          gh<_i82.DeleteMultipleAccountCustomFieldsUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),

@@ -37,6 +37,9 @@ abstract class AccountCustomFieldsRepository {
   /// Delete a custom field
   Future<void> deleteCustomField(String accountId, String customFieldId);
 
+  /// Delete multiple custom fields for an account
+  Future<void> deleteMultipleCustomFields(String accountId, List<String> customFieldIds);
+
   /// Get custom fields by name (search)
   Future<List<AccountCustomField>> getCustomFieldsByName(
     String accountId,

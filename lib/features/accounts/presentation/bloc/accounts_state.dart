@@ -640,12 +640,43 @@ class CustomFieldDeletionFailure extends AccountsState {
   final String accountId;
   final String customFieldId;
 
-  const CustomFieldDeletionFailure(
-    this.message,
-    this.accountId,
-    this.customFieldId,
-  );
+  const CustomFieldDeletionFailure(this.message, this.accountId, this.customFieldId);
 
   @override
   List<Object?> get props => [message, accountId, customFieldId];
+}
+
+class MultipleCustomFieldsDeleting extends AccountsState {
+  final String accountId;
+  final List<String> customFieldIds;
+
+  const MultipleCustomFieldsDeleting(this.accountId, this.customFieldIds);
+
+  @override
+  List<Object?> get props => [accountId, customFieldIds];
+}
+
+class MultipleCustomFieldsDeleted extends AccountsState {
+  final String accountId;
+  final List<String> customFieldIds;
+
+  const MultipleCustomFieldsDeleted(this.accountId, this.customFieldIds);
+
+  @override
+  List<Object?> get props => [accountId, customFieldIds];
+}
+
+class MultipleCustomFieldsDeletionFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final List<String> customFieldIds;
+
+  const MultipleCustomFieldsDeletionFailure(
+    this.message,
+    this.accountId,
+    this.customFieldIds,
+  );
+
+  @override
+  List<Object?> get props => [message, accountId, customFieldIds];
 }

@@ -74,6 +74,12 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                   Row(
                     children: [
                       IconButton(
+                        icon: const Icon(Icons.delete_sweep),
+                        onPressed: () => _showDeleteMultipleCustomFieldsDialog(context, state.customFields),
+                        tooltip: 'Delete Multiple Fields',
+                        color: Colors.red[400],
+                      ),
+                      IconButton(
                         icon: const Icon(Icons.edit_note),
                         onPressed: () => _showEditMultipleCustomFieldsDialog(context, state.customFields),
                         tooltip: 'Edit Multiple Fields',
@@ -613,6 +619,76 @@ class AccountCustomFieldsWidget extends StatelessWidget {
             child: const Text('Delete'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showDeleteMultipleCustomFieldsDialog(BuildContext context, List<AccountCustomField> customFields) {
+    final List<String> selectedFieldIds = <String>[];
+    final List<AccountCustomField> availableFields = List.from(customFields);
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Delete Multiple Custom Fields'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Select the custom fields you want to delete:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                ...availableFields.map((field) => CheckboxListTile(
+                  title: Text(field.name),
+                  subtitle: Text('Value: ${field.value}'),
+                  value: selectedFieldIds.contains(field.customFieldId),
+                  onChanged: (bool? value) {
+                    setState(() {
+                      if (value == true) {
+                        selectedFieldIds.add(field.customFieldId);
+                      } else {
+                        selectedFieldIds.remove(field.customFieldId);
+                      }
+                    });
+                  },
+                )),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: selectedFieldIds.isEmpty
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      if (selectedFieldIds.length == 1) {
+                        // Single field - use single delete
+                        context.read<AccountsBloc>().add(
+                              DeleteAccountCustomField(accountId, selectedFieldIds.first),
+                            );
+                      } else {
+                        // Multiple fields - use bulk delete
+                        context.read<AccountsBloc>().add(
+                              DeleteMultipleAccountCustomFields(accountId, selectedFieldIds),
+                            );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Delete ${selectedFieldIds.length} Field${selectedFieldIds.length == 1 ? '' : 's'}'),
+            ),
+          ],
+        ),
       ),
     );
   }

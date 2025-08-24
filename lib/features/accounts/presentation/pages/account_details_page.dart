@@ -94,7 +94,8 @@ class AccountDetailsView extends StatelessWidget {
                   state is CustomFieldUpdated ||
                   state is CustomFieldDeleted ||
                   state is MultipleCustomFieldsCreated ||
-                  state is MultipleCustomFieldsUpdated) {
+                  state is MultipleCustomFieldsUpdated ||
+                  state is MultipleCustomFieldsDeleted) {
                 // Refresh tags after assignment/removal
                 context.read<AccountsBloc>().add(LoadAccountTags(accountId));
                 // Refresh custom fields after creation/update/deletion
