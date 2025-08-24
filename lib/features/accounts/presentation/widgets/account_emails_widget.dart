@@ -222,7 +222,7 @@ class AccountEmailsWidget extends StatelessWidget {
               if (emailController.text.isNotEmpty) {
                 Navigator.of(context).pop();
                 context.read<AccountsBloc>().add(
-                      UpdateAccountEmail(accountId, email.accountId, emailController.text.trim()),
+                      UpdateAccountEmail(accountId, email.email, emailController.text.trim()), // Use email address instead of accountId
                     );
               }
             },
@@ -250,7 +250,7 @@ class AccountEmailsWidget extends StatelessWidget {
             onPressed: () {
               Navigator.of(context).pop();
               context.read<AccountsBloc>().add(
-                    DeleteAccountEmail(accountId, email.accountId),
+                    DeleteAccountEmail(accountId, email.email), // Use email address instead of accountId
                   );
             },
             style: ElevatedButton.styleFrom(

@@ -151,7 +151,7 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
   Future<AccountEmailModel> updateAccountEmail(String accountId, String emailId, String email) async {
     try {
       final response = await _dio.put(
-        '/accounts/$accountId/emails/$emailId',
+        '/accounts/$accountId/emails/$emailId', // emailId is actually the email address
         data: {'email': email},
       );
 
@@ -175,7 +175,7 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
       } else if (e.response?.statusCode == 400) {
         throw ValidationException('Invalid email data');
       } else if (e.response?.statusCode == 404) {
-        throw ValidationException('Account email not found');
+        throw ValidationException('Account or email not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException('Connection timeout while updating account email');
@@ -194,8 +194,8 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
     try {
       final response = await _dio.delete('/accounts/$accountId/emails/$emailId');
 
-      if (response.statusCode == 204) {
-        // Successfully deleted - no content returned
+      if (response.statusCode == 200) {
+        // Successfully deleted - API returns 200 with success message
         return;
       } else {
         throw ServerException('Failed to delete account email: ${response.statusCode}');
@@ -208,7 +208,7 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
           'Forbidden: Insufficient permissions to delete account email',
         );
       } else if (e.response?.statusCode == 404) {
-        throw ValidationException('Account email not found');
+        throw ValidationException('Account or email not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException('Connection timeout while deleting account email');
