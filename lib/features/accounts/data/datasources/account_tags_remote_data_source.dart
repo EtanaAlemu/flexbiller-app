@@ -19,6 +19,7 @@ abstract class AccountTagsRemoteDataSource {
     List<String> tagIds,
   );
   Future<void> removeTagFromAccount(String accountId, String tagId);
+  Future<void> removeMultipleTagsFromAccount(String accountId, List<String> tagIds);
 }
 
 @Injectable(as: AccountTagsRemoteDataSource)
@@ -294,7 +295,9 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
     try {
       final response = await _dio.post(
         '/accounts/$accountId/tags',
-        data: {'tagDefIds': [tagId]},
+        data: {
+          'tagDefIds': [tagId],
+        },
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -363,7 +366,8 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to assign multiple tags to account',
+            responseData['message'] ??
+                'Failed to assign multiple tags to account',
           );
         }
       } else {
@@ -384,7 +388,9 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         throw ValidationException('Invalid tag assignment data');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while assigning multiple tags');
+        throw NetworkException(
+          'Connection timeout while assigning multiple tags',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -398,7 +404,12 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   @override
   Future<void> removeTagFromAccount(String accountId, String tagId) async {
     try {
-      final response = await _dio.delete('/accounts/$accountId/tags/$tagId');
+      final response = await _dio.delete(
+        '/accounts/$accountId/tags',
+        data: {
+          'tagDefIds': [tagId],
+        },
+      );
 
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw ServerException(
@@ -414,6 +425,8 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         );
       } else if (e.response?.statusCode == 404) {
         throw ValidationException('Account or tag assignment not found');
+      } else if (e.response?.statusCode == 400) {
+        throw ValidationException('Invalid tag removal data');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException('Connection timeout while removing tag');
@@ -421,6 +434,45 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         throw NetworkException('No internet connection');
       } else {
         throw ServerException('Failed to remove tag: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> removeMultipleTagsFromAccount(String accountId, List<String> tagIds) async {
+    try {
+      final response = await _dio.delete(
+        '/accounts/$accountId/tags',
+        data: {
+          'tagDefIds': tagIds,
+        },
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw ServerException(
+          'Failed to remove multiple tags from account: ${response.statusCode}',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized to remove multiple tags');
+      } else if (e.response?.statusCode == 403) {
+        throw AuthException(
+          'Forbidden: Insufficient permissions to remove multiple tags',
+        );
+      } else if (e.response?.statusCode == 404) {
+        throw ValidationException('Account not found');
+      } else if (e.response?.statusCode == 400) {
+        throw ValidationException('Invalid tag removal data');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout while removing multiple tags');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('No internet connection');
+      } else {
+        throw ServerException('Failed to remove multiple tags: ${e.message}');
       }
     } catch (e) {
       throw ServerException('Unexpected error: ${e.toString()}');

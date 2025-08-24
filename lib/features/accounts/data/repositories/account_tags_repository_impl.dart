@@ -115,6 +115,15 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
   }
 
   @override
+  Future<void> removeMultipleTagsFromAccount(String accountId, List<String> tagIds) async {
+    try {
+      await _remoteDataSource.removeMultipleTagsFromAccount(accountId, tagIds);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<List<String>> getAccountsByTag(String tagId) async {
     try {
       // This would require a separate API endpoint

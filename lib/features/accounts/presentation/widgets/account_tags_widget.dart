@@ -72,10 +72,21 @@ class AccountTagsWidget extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () => _showAddTagDialog(context),
-                    tooltip: 'Add Tag',
+                  Row(
+                    children: [
+                      if (state.tags.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: () => _showRemoveAllTagsDialog(context),
+                          tooltip: 'Remove All Tags',
+                          color: Colors.red[400],
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () => _showAddTagDialog(context),
+                        tooltip: 'Add Tag',
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -161,13 +172,13 @@ class AccountTagsWidget extends StatelessWidget {
         if (selectedTagIds.length == 1) {
           // Single tag assignment
           context.read<AccountsBloc>().add(
-                AssignTagToAccount(accountId, selectedTagIds.first),
-              );
+            AssignTagToAccount(accountId, selectedTagIds.first),
+          );
         } else {
           // Multiple tag assignment
           context.read<AccountsBloc>().add(
-                AssignMultipleTagsToAccount(accountId, selectedTagIds),
-              );
+            AssignMultipleTagsToAccount(accountId, selectedTagIds),
+          );
         }
       }
     });
@@ -198,6 +209,37 @@ class AccountTagsWidget extends StatelessWidget {
               foregroundColor: Colors.white,
             ),
             child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRemoveAllTagsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove All Tags'),
+        content: Text(
+          'Are you sure you want to remove all tags from this account?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.read<AccountsBloc>().add(
+                RemoveAllTagsFromAccount(accountId),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Remove All'),
           ),
         ],
       ),
@@ -276,8 +318,8 @@ class _AddTagDialogState extends State<AddTagDialog> {
               ElevatedButton(
                 onPressed: () {
                   context.read<AccountsBloc>().add(
-                        RefreshAllTagsForAccount(widget.accountId),
-                      );
+                    RefreshAllTagsForAccount(widget.accountId),
+                  );
                 },
                 child: const Text('Retry'),
               ),
@@ -360,7 +402,9 @@ class _AddTagDialogState extends State<AddTagDialog> {
                         Navigator.of(context).pop(selectedTagIds.toList());
                       }
                     : null,
-                child: Text('Add ${selectedTagIds.length} Tag${selectedTagIds.length == 1 ? '' : 's'}'),
+                child: Text(
+                  'Add ${selectedTagIds.length} Tag${selectedTagIds.length == 1 ? '' : 's'}',
+                ),
               ),
             ],
           );

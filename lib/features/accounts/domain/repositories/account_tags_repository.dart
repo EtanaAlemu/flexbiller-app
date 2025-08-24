@@ -34,6 +34,9 @@ abstract class AccountTagsRepository {
   /// Remove a tag from an account
   Future<void> removeTagFromAccount(String accountId, String tagId);
   
+  /// Remove multiple tags from an account
+  Future<void> removeMultipleTagsFromAccount(String accountId, List<String> tagIds);
+  
   /// Get accounts by tag
   Future<List<String>> getAccountsByTag(String tagId);
 }

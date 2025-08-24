@@ -333,7 +333,46 @@ class MultipleTagsAssignmentFailure extends AccountsState {
   final String accountId;
   final List<String> tagIds;
 
-  const MultipleTagsAssignmentFailure(this.message, this.accountId, this.tagIds);
+  const MultipleTagsAssignmentFailure(
+    this.message,
+    this.accountId,
+    this.tagIds,
+  );
+
+  @override
+  List<Object?> get props => [message, accountId, tagIds];
+}
+
+class MultipleTagsRemoving extends AccountsState {
+  final String accountId;
+  final List<String> tagIds;
+
+  const MultipleTagsRemoving(this.accountId, this.tagIds);
+
+  @override
+  List<Object?> get props => [accountId, tagIds];
+}
+
+class MultipleTagsRemoved extends AccountsState {
+  final String accountId;
+  final List<String> tagIds;
+
+  const MultipleTagsRemoved(this.accountId, this.tagIds);
+
+  @override
+  List<Object?> get props => [accountId, tagIds];
+}
+
+class MultipleTagsRemovalFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final List<String> tagIds;
+
+  const MultipleTagsRemovalFailure(
+    this.message,
+    this.accountId,
+    this.tagIds,
+  );
 
   @override
   List<Object?> get props => [message, accountId, tagIds];
@@ -363,6 +402,34 @@ class AllTagsForAccountFailure extends AccountsState {
   final String accountId;
 
   const AllTagsForAccountFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
+}
+
+class AllTagsRemoving extends AccountsState {
+  final String accountId;
+
+  const AllTagsRemoving(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AllTagsRemoved extends AccountsState {
+  final String accountId;
+
+  const AllTagsRemoved(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AllTagsRemovalFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AllTagsRemovalFailure(this.message, this.accountId);
 
   @override
   List<Object?> get props => [message, accountId];

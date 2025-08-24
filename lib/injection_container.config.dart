@@ -50,6 +50,8 @@ import 'features/accounts/domain/usecases/get_account_timeline_usecase.dart'
 import 'features/accounts/domain/usecases/get_accounts_usecase.dart' as _i684;
 import 'features/accounts/domain/usecases/get_all_tags_for_account_usecase.dart'
     as _i384;
+import 'features/accounts/domain/usecases/remove_multiple_tags_from_account_usecase.dart'
+    as _i582;
 import 'features/accounts/domain/usecases/update_account_usecase.dart' as _i651;
 import 'features/accounts/presentation/bloc/accounts_bloc.dart' as _i795;
 import 'features/auth/data/datasources/auth_remote_data_source.dart' as _i767;
@@ -111,6 +113,11 @@ _i174.GetIt $initGetIt(
       gh<_i363.AccountTagsRepository>(),
     ),
   );
+  gh.factory<_i582.RemoveMultipleTagsFromAccountUseCase>(
+    () => _i582.RemoveMultipleTagsFromAccountUseCase(
+      gh<_i363.AccountTagsRepository>(),
+    ),
+  );
   gh.factory<_i400.GetAccountByIdUseCase>(
     () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
   );
@@ -154,6 +161,14 @@ _i174.GetIt $initGetIt(
     () =>
         _i711.GetAccountTimelineUseCase(gh<_i446.AccountTimelineRepository>()),
   );
+  gh.factory<_i363.AuthBloc>(
+    () => _i363.AuthBloc(
+      loginUseCase: gh<_i206.LoginUseCase>(),
+      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
+      changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
+      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
+    ),
+  );
   gh.factory<_i795.AccountsBloc>(
     () => _i795.AccountsBloc(
       getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
@@ -166,16 +181,10 @@ _i174.GetIt $initGetIt(
       getAllTagsForAccountUseCase: gh<_i384.GetAllTagsForAccountUseCase>(),
       assignMultipleTagsToAccountUseCase:
           gh<_i377.AssignMultipleTagsToAccountUseCase>(),
+      removeMultipleTagsFromAccountUseCase:
+          gh<_i582.RemoveMultipleTagsFromAccountUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
-    ),
-  );
-  gh.factory<_i363.AuthBloc>(
-    () => _i363.AuthBloc(
-      loginUseCase: gh<_i206.LoginUseCase>(),
-      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
-      changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
-      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
     ),
   );
   return getIt;
