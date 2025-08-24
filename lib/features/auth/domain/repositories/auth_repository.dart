@@ -10,5 +10,5 @@ abstract class AuthRepository {
   Future<bool> isAuthenticated();
   Future<AuthResponse> refreshToken();
   Future<void> forgotPassword(String email);
+  Future<void> changePassword(String oldPassword, String newPassword);
 }
-

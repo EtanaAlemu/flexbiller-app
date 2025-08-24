@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/forgot_password_usecase.dart';
+import '../../domain/usecases/change_password_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -9,21 +10,25 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase _loginUseCase;
   final ForgotPasswordUseCase _forgotPasswordUseCase;
-  
+  final ChangePasswordUseCase _changePasswordUseCase;
+
   AuthBloc({
     required LoginUseCase loginUseCase,
     required ForgotPasswordUseCase forgotPasswordUseCase,
-  })  : _loginUseCase = loginUseCase,
-        _forgotPasswordUseCase = forgotPasswordUseCase,
-        super(AuthInitial()) {
+    required ChangePasswordUseCase changePasswordUseCase,
+  }) : _loginUseCase = loginUseCase,
+       _forgotPasswordUseCase = forgotPasswordUseCase,
+       _changePasswordUseCase = changePasswordUseCase,
+       super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
     on<LogoutRequested>(_onLogoutRequested);
     on<CheckAuthStatus>(_onCheckAuthStatus);
     on<RefreshTokenRequested>(_onRefreshTokenRequested);
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
+    on<ChangePasswordRequested>(_onChangePasswordRequested);
   }
-  
+
   Future<void> _onLoginRequested(
     LoginRequested event,
     Emitter<AuthState> emit,
@@ -36,7 +41,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthFailure(e.toString()));
     }
   }
-  
+
   Future<void> _onRegisterRequested(
     RegisterRequested event,
     Emitter<AuthState> emit,
@@ -51,7 +56,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthFailure(e.toString()));
     }
   }
-  
+
   Future<void> _onLogoutRequested(
     LogoutRequested event,
     Emitter<AuthState> emit,
@@ -65,7 +70,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthFailure(e.toString()));
     }
   }
-  
+
   Future<void> _onCheckAuthStatus(
     CheckAuthStatus event,
     Emitter<AuthState> emit,
@@ -84,7 +89,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthFailure(e.toString()));
     }
   }
-  
+
   Future<void> _onRefreshTokenRequested(
     RefreshTokenRequested event,
     Emitter<AuthState> emit,
@@ -106,11 +111,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(ForgotPasswordLoading());
     try {
       await _forgotPasswordUseCase(event.email);
-      emit(ForgotPasswordSuccess(
-        'Password reset email sent successfully. Please check your email.',
-      ));
+      emit(
+        ForgotPasswordSuccess(
+          'Password reset email sent successfully. Please check your email.',
+        ),
+      );
     } catch (e) {
       emit(ForgotPasswordFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onChangePasswordRequested(
+    ChangePasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(ChangePasswordLoading());
+    try {
+      await _changePasswordUseCase(event.oldPassword, event.newPassword);
+      emit(
+        ChangePasswordSuccess(
+          'Password changed successfully. Please log in with your new password.',
+        ),
+      );
+    } catch (e) {
+      emit(ChangePasswordFailure(e.toString()));
     }
   }
 }

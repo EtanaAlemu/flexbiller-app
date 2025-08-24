@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../pages/forgot_password_page.dart';
+import '../pages/change_password_page.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({Key? key}) : super(key: key);
@@ -43,11 +44,7 @@ class _LoginFormState extends State<LoginForm> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(
-            Icons.account_circle,
-            size: 100,
-            color: Colors.blue,
-          ),
+          const Icon(Icons.account_circle, size: 100, color: Colors.blue),
           const SizedBox(height: 32),
           const Text(
             'Welcome to FlexBiller',
@@ -61,10 +58,7 @@ class _LoginFormState extends State<LoginForm> {
           const SizedBox(height: 8),
           const Text(
             'Test with: techtcoder1237@gmail.com / Tcoder@123',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -81,7 +75,9 @@ class _LoginFormState extends State<LoginForm> {
               if (value == null || value.isEmpty) {
                 return 'Please enter your email';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              if (!RegExp(
+                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+              ).hasMatch(value)) {
                 return 'Please enter a valid email';
               }
               return null;
@@ -130,10 +126,7 @@ class _LoginFormState extends State<LoginForm> {
             ),
             child: const Text(
               'Login',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(height: 16),
@@ -160,9 +153,22 @@ class _LoginFormState extends State<LoginForm> {
               style: TextStyle(color: Colors.blue),
             ),
           ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ChangePasswordPage(),
+                ),
+              );
+            },
+            child: const Text(
+              'Change Password',
+              style: TextStyle(color: Colors.blue),
+            ),
+          ),
         ],
       ),
     );
   }
 }
-

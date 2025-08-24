@@ -85,11 +85,11 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       // Call remote data source to refresh token
       final authResponse = await _remoteDataSource.refreshToken(refreshToken);
-      
+
       // Store new tokens
       await _secureStorage.saveAuthToken(authResponse.accessToken);
       await _secureStorage.saveRefreshToken(authResponse.refreshToken);
-      
+
       return authResponse;
     } catch (e) {
       rethrow;
@@ -100,6 +100,15 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> forgotPassword(String email) async {
     try {
       await _remoteDataSource.forgotPassword(email);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    try {
+      await _remoteDataSource.changePassword(oldPassword, newPassword);
     } catch (e) {
       rethrow;
     }

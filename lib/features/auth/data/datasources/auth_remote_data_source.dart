@@ -10,6 +10,7 @@ abstract class AuthRemoteDataSource {
   Future<void> logout();
   Future<AuthResponse> refreshToken(String refreshToken);
   Future<void> forgotPassword(String email);
+  Future<void> changePassword(String oldPassword, String newPassword);
 }
 
 @Injectable(as: AuthRemoteDataSource)
@@ -256,6 +257,66 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw ValidationException('Invalid email address');
       } else if (e.response?.statusCode == 404) {
         throw AuthException('Email not found');
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Request timeout');
+      } else {
+        throw ServerException(
+          e.message ?? 'Network error occurred',
+          e.response?.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    try {
+      final response = await dio.post(
+        '/auth/change-password',
+        data: {'oldPassword': oldPassword, 'newPassword': newPassword},
+      );
+
+      if (response.statusCode == 200) {
+        final apiResponse = ApiResponse<Map<String, dynamic>>.fromJson(
+          response.data,
+          (json) => json,
+        );
+
+        if (apiResponse.success) {
+          // Password changed successfully
+          return;
+        } else {
+          throw ServerException(
+            apiResponse.message ?? 'Failed to change password',
+            response.statusCode,
+          );
+        }
+      } else {
+        throw ServerException(
+          'Password change failed with status: ${response.statusCode}',
+          response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        if (e.response?.data?['error'] == 'Unauthorized') {
+          throw AuthException('No authorization token provided');
+        } else {
+          throw AuthException('Invalid or expired token');
+        }
+      } else if (e.response?.statusCode == 400) {
+        throw ValidationException('Invalid password format');
+      } else if (e.response?.statusCode == 500) {
+        final errorData = e.response?.data;
+        if (errorData != null && errorData['error'] == 'CONNECTION_ERROR') {
+          throw AuthException('Current password is incorrect');
+        } else {
+          throw ServerException('Server error occurred');
+        }
       } else if (e.type == DioExceptionType.connectionTimeout) {
         throw NetworkException('Connection timeout');
       } else if (e.type == DioExceptionType.receiveTimeout) {
