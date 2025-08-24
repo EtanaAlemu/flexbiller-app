@@ -87,10 +87,10 @@ class DeleteAccountDialog extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
-                  if (account.company.isNotEmpty) ...[
+                  if (account.company != null && account.company!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'Company: ${account.company}',
+                      'Company: ${account.company!}',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
@@ -118,7 +118,7 @@ class DeleteAccountDialog extends StatelessWidget {
                 onPressed: state is AccountDeleting
                     ? null
                     : () {
-                        context.read<AccountsBloc>().add(DeleteAccount(account.id));
+                        context.read<AccountsBloc>().add(DeleteAccount(account.accountId));
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,

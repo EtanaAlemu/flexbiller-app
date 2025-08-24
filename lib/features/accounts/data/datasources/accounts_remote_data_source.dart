@@ -197,7 +197,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
   Future<AccountModel> updateAccount(AccountModel account) async {
     try {
       final response = await _dio.put(
-        '/accounts/${account.id}',
+        '/accounts/${account.accountId}',
         data: account.toJson(),
       );
 

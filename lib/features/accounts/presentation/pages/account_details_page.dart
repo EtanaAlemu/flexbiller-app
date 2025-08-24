@@ -549,10 +549,10 @@ class AccountDetailsView extends StatelessWidget {
             children: [
               _buildInfoRow('Name', account.name),
               _buildInfoRow('Email', account.email),
-              if (account.phone.isNotEmpty)
-                _buildInfoRow('Phone', account.phone),
-              if (account.company.isNotEmpty)
-                _buildInfoRow('Company', account.company),
+              if (account.phone != null && account.phone!.isNotEmpty)
+                _buildInfoRow('Phone', account.phone!),
+              if (account.company != null && account.company!.isNotEmpty)
+                _buildInfoRow('Company', account.company!),
             ],
           ),
           const SizedBox(height: 16),
@@ -564,16 +564,16 @@ class AccountDetailsView extends StatelessWidget {
               title: 'Location Information',
               icon: Icons.location_on,
               children: [
-                if (account.address1.isNotEmpty)
-                  _buildInfoRow('Address Line 1', account.address1),
-                if (account.address2.isNotEmpty)
-                  _buildInfoRow('Address Line 2', account.address2),
-                if (account.city.isNotEmpty)
-                  _buildInfoRow('City', account.city),
-                if (account.state.isNotEmpty)
-                  _buildInfoRow('State/Province', account.state),
-                if (account.country.isNotEmpty)
-                  _buildInfoRow('Country', account.country),
+                if (account.address1 != null && account.address1!.isNotEmpty)
+                  _buildInfoRow('Address Line 1', account.address1!),
+                if (account.address2 != null && account.address2!.isNotEmpty)
+                  _buildInfoRow('Address Line 2', account.address2!),
+                if (account.city != null && account.city!.isNotEmpty)
+                  _buildInfoRow('City', account.city!),
+                if (account.state != null && account.state!.isNotEmpty)
+                  _buildInfoRow('State/Province', account.state!),
+                if (account.country != null && account.country!.isNotEmpty)
+                  _buildInfoRow('Country', account.country!),
               ],
             ),
           const SizedBox(height: 16),
@@ -603,18 +603,22 @@ class AccountDetailsView extends StatelessWidget {
                 account.balance,
                 account.formattedBalance,
               ),
-              _buildBalanceRow('CBA', account.cba, account.formattedCba),
+              _buildBalanceRow(
+                'CBA', 
+                account.accountCBA ?? 0.0, 
+                account.formattedCba,
+              ),
             ],
           ),
           const SizedBox(height: 16),
 
           // Additional Information
-          if (account.notes.isNotEmpty)
+          if (account.notes != null && account.notes!.isNotEmpty)
             _buildSectionCard(
               context,
               title: 'Additional Information',
               icon: Icons.note,
-              children: [_buildInfoRow('Notes', account.notes)],
+              children: [_buildInfoRow('Notes', account.notes!)],
             ),
           const SizedBox(height: 16),
 

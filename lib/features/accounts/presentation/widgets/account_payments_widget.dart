@@ -9,12 +9,13 @@ import 'create_account_payment_form.dart';
 class AccountPaymentsWidget extends StatelessWidget {
   final String accountId;
 
-  const AccountPaymentsWidget({Key? key, required this.accountId}) : super(key: key);
+  const AccountPaymentsWidget({Key? key, required this.accountId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AccountsBloc, AccountsState>(
-      builder: (context, state) {
+      builder: (context, state) {                                                                                                                       
         if (state is AccountPaymentsLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -43,7 +44,9 @@ class AccountPaymentsWidget extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    context.read<AccountsBloc>().add(LoadAccountPayments(accountId));
+                    context.read<AccountsBloc>().add(
+                      LoadAccountPayments(accountId),
+                    );
                   },
                   child: const Text('Retry'),
                 ),
@@ -67,7 +70,9 @@ class AccountPaymentsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
-                        context.read<AccountsBloc>().add(RefreshAccountPayments(accountId));
+                        context.read<AccountsBloc>().add(
+                          RefreshAccountPayments(accountId),
+                        );
                       },
                       tooltip: 'Refresh Payments',
                     ),
@@ -82,7 +87,9 @@ class AccountPaymentsWidget extends StatelessWidget {
                         Icon(
                           Icons.payment_outlined,
                           size: 64,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.5),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -135,7 +142,7 @@ class AccountPaymentsWidget extends StatelessWidget {
     // For now, we'll show a placeholder. In a real app, you'd get the available payment methods
     // from the account payment methods state or pass them as a parameter
     final availablePaymentMethods = ['placeholder-payment-method-id'];
-    
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => CreateAccountPaymentForm(
@@ -167,23 +174,29 @@ class AccountPaymentsWidget extends StatelessWidget {
                     children: [
                       Text(
                         '${payment.currency} ${payment.amount.toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       Text(
                         payment.paymentType,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
                         ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: _getPaymentStatusColor(payment.paymentStatus).withOpacity(0.2),
+                    color: _getPaymentStatusColor(
+                      payment.paymentStatus,
+                    ).withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -202,7 +215,9 @@ class AccountPaymentsWidget extends StatelessWidget {
                 Icon(
                   Icons.schedule,
                   size: 16,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -214,26 +229,33 @@ class AccountPaymentsWidget extends StatelessWidget {
                   Icon(
                     Icons.check_circle,
                     size: 16,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     'Processed: ${_formatDateTime(payment.processedDate!)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
               ],
             ),
-            if (payment.paymentMethodName != null || payment.paymentMethodType != null) ...[
+            if (payment.paymentMethodName != null ||
+                payment.paymentMethodType != null) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
                   Icon(
                     Icons.payment,
                     size: 16,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
                   ),
                   const SizedBox(width: 4),
                   if (payment.paymentMethodName != null) ...[
@@ -247,14 +269,17 @@ class AccountPaymentsWidget extends StatelessWidget {
                     Text(
                       '(${payment.paymentMethodType})',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ],
                 ],
               ),
             ],
-            if (payment.transactionId != null || payment.referenceNumber != null) ...[
+            if (payment.transactionId != null ||
+                payment.referenceNumber != null) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -262,14 +287,16 @@ class AccountPaymentsWidget extends StatelessWidget {
                     Icon(
                       Icons.receipt,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'TXN: ${payment.transactionId}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'monospace',
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
                     ),
                     const SizedBox(width: 16),
                   ],
@@ -277,14 +304,16 @@ class AccountPaymentsWidget extends StatelessWidget {
                     Icon(
                       Icons.tag,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Ref: ${payment.referenceNumber}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'monospace',
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
                     ),
                   ],
                 ],
@@ -298,7 +327,9 @@ class AccountPaymentsWidget extends StatelessWidget {
                     Icon(
                       Icons.description,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -317,14 +348,18 @@ class AccountPaymentsWidget extends StatelessWidget {
                     Icon(
                       Icons.note,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         payment.notes!,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -344,11 +379,7 @@ class AccountPaymentsWidget extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.undo,
-                      size: 16,
-                      color: Colors.orange,
-                    ),
+                    Icon(Icons.undo, size: 16, color: Colors.orange),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -356,33 +387,31 @@ class AccountPaymentsWidget extends StatelessWidget {
                         children: [
                           Text(
                             'Refunded',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.orange,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                           if (payment.refundedAmount != null) ...[
                             Text(
                               'Amount: ${payment.currency} ${payment.refundedAmount!.toStringAsFixed(2)}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.orange,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: Colors.orange),
                             ),
                           ],
                           if (payment.refundReason != null) ...[
                             Text(
                               'Reason: ${payment.refundReason}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.orange,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: Colors.orange),
                             ),
                           ],
                           if (payment.refundedDate != null) ...[
                             Text(
                               'Date: ${_formatDateTime(payment.refundedDate!)}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.orange,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: Colors.orange),
                             ),
                           ],
                         ],
@@ -399,7 +428,9 @@ class AccountPaymentsWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.error.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Theme.of(context).colorScheme.error.withOpacity(0.3)),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.error.withOpacity(0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -415,24 +446,27 @@ class AccountPaymentsWidget extends StatelessWidget {
                         children: [
                           Text(
                             'Payment Failed',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.error,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                           Text(
                             payment.failureReason!,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
                           ),
                           if (payment.gatewayResponse != null) ...[
                             Text(
                               'Gateway: ${payment.gatewayResponse}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.error,
-                                fontFamily: 'monospace',
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context).colorScheme.error,
+                                    fontFamily: 'monospace',
+                                  ),
                             ),
                           ],
                         ],

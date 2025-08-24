@@ -92,7 +92,8 @@ class AccountsRepositoryImpl implements AccountsRepository {
       return allAccounts
           .where(
             (account) =>
-                account.company.toLowerCase().contains(lowercaseCompany),
+                account.company != null &&
+                account.company!.toLowerCase().contains(lowercaseCompany),
           )
           .toList();
     } catch (e) {

@@ -60,9 +60,9 @@ class AccountCardWidget extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (account.company.isNotEmpty)
+                        if (account.company != null && account.company!.isNotEmpty)
                           Text(
-                            account.company,
+                            account.company!,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   color: Theme.of(
@@ -83,8 +83,8 @@ class AccountCardWidget extends StatelessWidget {
                 _buildInfoRow(Icons.email, account.email),
                 const SizedBox(height: 4),
               ],
-              if (account.phone.isNotEmpty) ...[
-                _buildInfoRow(Icons.phone, account.phone),
+              if (account.phone != null && account.phone!.isNotEmpty) ...[
+                _buildInfoRow(Icons.phone, account.phone!),
                 const SizedBox(height: 4),
               ],
               if (account.fullAddress.isNotEmpty) ...[

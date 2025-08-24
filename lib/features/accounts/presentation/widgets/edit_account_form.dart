@@ -38,23 +38,19 @@ class _EditAccountFormState extends State<EditAccountForm> {
   @override
   void initState() {
     super.initState();
-    _initializeControllers();
-  }
-
-  void _initializeControllers() {
     _nameController = TextEditingController(text: widget.account.name);
     _emailController = TextEditingController(text: widget.account.email);
-    _phoneController = TextEditingController(text: widget.account.phone);
-    _companyController = TextEditingController(text: widget.account.company);
-    _address1Controller = TextEditingController(text: widget.account.address1);
-    _address2Controller = TextEditingController(text: widget.account.address2);
-    _cityController = TextEditingController(text: widget.account.city);
-    _stateController = TextEditingController(text: widget.account.state);
-    _notesController = TextEditingController(text: widget.account.notes);
+    _phoneController = TextEditingController(text: widget.account.phone ?? '');
+    _companyController = TextEditingController(text: widget.account.company ?? '');
+    _address1Controller = TextEditingController(text: widget.account.address1 ?? '');
+    _address2Controller = TextEditingController(text: widget.account.address2 ?? '');
+    _cityController = TextEditingController(text: widget.account.city ?? '');
+    _stateController = TextEditingController(text: widget.account.state ?? '');
+    _notesController = TextEditingController(text: widget.account.notes ?? '');
     
     _selectedCurrency = widget.account.currency;
     _selectedTimeZone = widget.account.timeZone;
-    _selectedCountry = widget.account.country;
+    _selectedCountry = widget.account.country ?? 'US';
   }
 
   @override
@@ -78,14 +74,14 @@ class _EditAccountFormState extends State<EditAccountForm> {
         email: _emailController.text.trim(),
         currency: _selectedCurrency,
         timeZone: _selectedTimeZone,
-        address1: _address1Controller.text.trim(),
-        address2: _address2Controller.text.trim(),
-        company: _companyController.text.trim(),
-        city: _cityController.text.trim(),
-        state: _stateController.text.trim(),
+        address1: _address1Controller.text.trim().isEmpty ? null : _address1Controller.text.trim(),
+        address2: _address2Controller.text.trim().isEmpty ? null : _address2Controller.text.trim(),
+        company: _companyController.text.trim().isEmpty ? null : _companyController.text.trim(),
+        city: _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
+        state: _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
         country: _selectedCountry,
-        phone: _phoneController.text.trim(),
-        notes: _notesController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       );
 
       context.read<AccountsBloc>().add(UpdateAccount(updatedAccount));

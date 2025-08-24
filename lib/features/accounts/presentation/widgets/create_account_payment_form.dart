@@ -16,14 +16,15 @@ class CreateAccountPaymentForm extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<CreateAccountPaymentForm> createState() => _CreateAccountPaymentFormState();
+  State<CreateAccountPaymentForm> createState() =>
+      _CreateAccountPaymentFormState();
 }
 
 class _CreateAccountPaymentFormState extends State<CreateAccountPaymentForm> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   String _selectedPaymentMethodId = '';
   String _selectedTransactionType = 'PURCHASE';
   String _selectedCurrency = 'USD';
@@ -190,9 +191,10 @@ class _CreateAccountPaymentFormState extends State<CreateAccountPaymentForm> {
                                       prefixIcon: Icon(Icons.attach_money),
                                       border: OutlineInputBorder(),
                                     ),
-                                    keyboardType: TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
+                                    keyboardType:
+                                        TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
                                         return 'Please enter an amount';
@@ -259,7 +261,9 @@ class _CreateAccountPaymentFormState extends State<CreateAccountPaymentForm> {
                                   border: OutlineInputBorder(),
                                 ),
                                 child: Text(
-                                  DateFormat('MMM dd, yyyy').format(_selectedDate),
+                                  DateFormat(
+                                    'MMM dd, yyyy',
+                                  ).format(_selectedDate),
                                 ),
                               ),
                             ),
@@ -307,9 +311,12 @@ class _CreateAccountPaymentFormState extends State<CreateAccountPaymentForm> {
                                   labelText: 'Payment Method',
                                   prefixIcon: Icon(Icons.credit_card),
                                   border: OutlineInputBorder(),
-                                  helperText: 'Select the payment method to use',
+                                  helperText:
+                                      'Select the payment method to use',
                                 ),
-                                items: widget.availablePaymentMethods.map((methodId) {
+                                items: widget.availablePaymentMethods.map((
+                                  methodId,
+                                ) {
                                   return DropdownMenuItem(
                                     value: methodId,
                                     child: Text(
@@ -351,7 +358,8 @@ class _CreateAccountPaymentFormState extends State<CreateAccountPaymentForm> {
                                 labelText: 'Description (Optional)',
                                 prefixIcon: Icon(Icons.description),
                                 border: OutlineInputBorder(),
-                                helperText: 'Provide additional details about this payment',
+                                helperText:
+                                    'Provide additional details about this payment',
                               ),
                               maxLines: 3,
                             ),
@@ -369,15 +377,21 @@ class _CreateAccountPaymentFormState extends State<CreateAccountPaymentForm> {
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.payment),
                         label: Text(
                           isLoading ? 'Creating Payment...' : 'Create Payment',
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
                         ),
                       ),
                     ),
