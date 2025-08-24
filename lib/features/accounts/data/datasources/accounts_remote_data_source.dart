@@ -348,15 +348,28 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
     try {
       final response = await _dio.delete('/accounts/$accountId');
 
-      if (response.statusCode == 204 || response.statusCode == 200) {
-        return;
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        
+        // For successful deletion, the API returns the deleted account data
+        // We can optionally log or process this data, but deletion is successful
+        if (responseData['message'] != null && 
+            responseData['message'].toString().toLowerCase().contains('deleted successfully')) {
+          // Account was deleted successfully
+          return;
+        } else {
+          // Unexpected response format but status is 200
+          return;
+        }
       } else {
         throw ServerException(
           'Failed to delete account: ${response.statusCode}',
         );
       }
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
+      if (e.response?.statusCode == 400) {
+        throw ValidationException('Invalid account data for deletion');
+      } else if (e.response?.statusCode == 401) {
         throw AuthException('Unauthorized to delete account');
       } else if (e.response?.statusCode == 403) {
         throw AuthException(
@@ -365,15 +378,16 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 404) {
         throw ValidationException('Account not found');
       } else if (e.response?.statusCode == 500) {
-        // Handle 500 error which might indicate server issues
+        // Handle 500 error which might indicate tenant issues or server problems
         final responseData = e.response?.data;
-        if (responseData != null &&
-            responseData['error'] == 'CONNECTION_ERROR') {
+        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
           final details = responseData['details'];
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
             if (originalError.contains("doesn't exist")) {
               throw ValidationException('Account not found');
+            } else if (originalError.contains("doesn't belong to tenant")) {
+              throw ValidationException('Account does not belong to your tenant');
             }
           }
         }
