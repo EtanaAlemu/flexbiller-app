@@ -32,4 +32,13 @@ abstract class AccountInvoicePaymentsRepository {
 
   /// Get invoice payment statistics for an account
   Future<Map<String, dynamic>> getInvoicePaymentStatistics(String accountId);
+
+  /// Create a new invoice payment for an account
+  Future<AccountInvoicePayment> createInvoicePayment(
+    String accountId,
+    double paymentAmount,
+    String currency,
+    String paymentMethod,
+    String? notes,
+  );
 }

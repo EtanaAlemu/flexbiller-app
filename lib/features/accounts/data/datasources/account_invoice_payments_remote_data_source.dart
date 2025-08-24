@@ -12,6 +12,13 @@ abstract class AccountInvoicePaymentsRemoteDataSource {
   Future<List<AccountInvoicePaymentModel>> getInvoicePaymentsByInvoiceNumber(String accountId, String invoiceNumber);
   Future<List<AccountInvoicePaymentModel>> getInvoicePaymentsWithPagination(String accountId, int page, int pageSize);
   Future<Map<String, dynamic>> getInvoicePaymentStatistics(String accountId);
+  Future<AccountInvoicePaymentModel> createInvoicePayment(
+    String accountId,
+    double paymentAmount,
+    String currency,
+    String paymentMethod,
+    String? notes,
+  );
 }
 
 @Injectable(as: AccountInvoicePaymentsRemoteDataSource)
@@ -374,6 +381,62 @@ class AccountInvoicePaymentsRemoteDataSourceImpl implements AccountInvoicePaymen
         throw NetworkException('No internet connection');
       } else {
         throw ServerException('Failed to fetch invoice payment statistics: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<AccountInvoicePaymentModel> createInvoicePayment(
+    String accountId,
+    double paymentAmount,
+    String currency,
+    String paymentMethod,
+    String? notes,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/accounts/$accountId/invoicePayments',
+        data: {
+          'paymentAmount': paymentAmount,
+          'currency': currency,
+          'paymentMethod': paymentMethod,
+          'notes': notes,
+        },
+      );
+
+      if (response.statusCode == 201) {
+        final responseData = response.data;
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          return AccountInvoicePaymentModel.fromJson(
+            responseData['data'] as Map<String, dynamic>,
+          );
+        } else {
+          throw ServerException(
+            responseData['message'] ?? 'Failed to create invoice payment',
+          );
+        }
+      } else {
+        throw ServerException('Failed to create invoice payment: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized to create invoice payment');
+      } else if (e.response?.statusCode == 403) {
+        throw AuthException(
+          'Forbidden: Insufficient permissions to create invoice payment',
+        );
+      } else if (e.response?.statusCode == 404) {
+        throw ValidationException('Account not found');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout while creating invoice payment');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('No internet connection');
+      } else {
+        throw ServerException('Failed to create invoice payment: ${e.message}');
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');

@@ -95,4 +95,26 @@ class AccountInvoicePaymentsRepositoryImpl implements AccountInvoicePaymentsRepo
       rethrow;
     }
   }
+
+  @override
+  Future<AccountInvoicePayment> createInvoicePayment(
+    String accountId,
+    double paymentAmount,
+    String currency,
+    String paymentMethod,
+    String? notes,
+  ) async {
+    try {
+      final paymentModel = await _remoteDataSource.createInvoicePayment(
+        accountId,
+        paymentAmount,
+        currency,
+        paymentMethod,
+        notes,
+      );
+      return paymentModel.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

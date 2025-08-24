@@ -891,3 +891,32 @@ class AccountInvoicePaymentsFailure extends AccountsState {
   @override
   List<Object?> get props => [message, accountId];
 }
+
+class CreatingInvoicePayment extends AccountsState {
+  final String accountId;
+
+  const CreatingInvoicePayment(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class InvoicePaymentCreated extends AccountsState {
+  final String accountId;
+  final AccountInvoicePayment invoicePayment;
+
+  const InvoicePaymentCreated(this.accountId, this.invoicePayment);
+
+  @override
+  List<Object?> get props => [accountId, invoicePayment];
+}
+
+class CreateInvoicePaymentFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const CreateInvoicePaymentFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
+}

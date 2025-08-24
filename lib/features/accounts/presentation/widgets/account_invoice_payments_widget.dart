@@ -4,6 +4,7 @@ import '../../domain/entities/account_invoice_payment.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
+import 'create_invoice_payment_form.dart';
 
 class AccountInvoicePaymentsWidget extends StatelessWidget {
   final String accountId;
@@ -12,106 +13,125 @@ class AccountInvoicePaymentsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
-      builder: (context, state) {
-        if (state is AccountInvoicePaymentsLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showCreatePaymentForm(context),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        child: const Icon(Icons.add),
+        tooltip: 'Create Invoice Payment',
+      ),
+      body: BlocBuilder<AccountsBloc, AccountsState>(
+        builder: (context, state) {
+          if (state is AccountInvoicePaymentsLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (state is AccountInvoicePaymentsFailure) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load invoice payments',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  state.message,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<AccountsBloc>().add(LoadAccountInvoicePayments(accountId));
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (state is AccountInvoicePaymentsLoaded) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+          if (state is AccountInvoicePaymentsFailure) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(height: 16),
                   Text(
-                    'Invoice Payments (${state.invoicePayments.length})',
+                    'Failed to load invoice payments',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
+                  const SizedBox(height: 8),
+                  Text(
+                    state.message,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
                     onPressed: () {
-                      context.read<AccountsBloc>().add(RefreshAccountInvoicePayments(accountId));
+                      context.read<AccountsBloc>().add(LoadAccountInvoicePayments(accountId));
                     },
-                    tooltip: 'Refresh Invoice Payments',
+                    child: const Text('Retry'),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              if (state.invoicePayments.isEmpty)
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.receipt_long_outlined,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No invoice payments found',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'This account has no invoice payment history',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: state.invoicePayments.length,
-                  itemBuilder: (context, index) {
-                    final payment = state.invoicePayments[index];
-                    return _buildInvoicePaymentCard(context, payment);
-                  },
-                ),
-            ],
-          );
-        }
+            );
+          }
 
-        return const Center(child: Text('No invoice payment data available'));
-      },
+          if (state is AccountInvoicePaymentsLoaded) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Invoice Payments (${state.invoicePayments.length})',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(RefreshAccountInvoicePayments(accountId));
+                      },
+                      tooltip: 'Refresh Invoice Payments',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (state.invoicePayments.isEmpty)
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.receipt_long_outlined,
+                          size: 64,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No invoice payments found',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'This account has no invoice payment history',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _showCreatePaymentForm(context),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Create First Payment'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: state.invoicePayments.length,
+                      itemBuilder: (context, index) {
+                        final payment = state.invoicePayments[index];
+                        return _buildInvoicePaymentCard(context, payment);
+                      },
+                    ),
+                  ),
+              ],
+            );
+          }
+
+          return const Center(child: Text('No invoice payment data available'));
+        },
+      ),
     );
   }
 
@@ -293,5 +313,13 @@ class AccountInvoicePaymentsWidget extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _showCreatePaymentForm(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CreateInvoicePaymentForm(accountId: accountId),
+      ),
+    );
   }
 }
