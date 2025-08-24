@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import '../constants/app_constants.dart';
+import '../constants/api_endpoints.dart';
+import '../errors/exceptions.dart';
 
 @injectable
 class DioClient {
@@ -44,7 +46,7 @@ class DioClient {
             if (refreshToken != null) {
               try {
                 final response = await _dio.post(
-                  '/auth/refresh-token',
+                  ApiEndpoints.refreshToken,
                   data: {'refreshToken': refreshToken},
                 );
                 

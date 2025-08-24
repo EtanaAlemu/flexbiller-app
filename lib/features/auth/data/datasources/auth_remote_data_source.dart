@@ -3,6 +3,8 @@ import 'package:injectable/injectable.dart';
 import '../models/auth_response.dart';
 import '../../../../core/models/api_response.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/dao/auth_dao.dart';
 
 abstract class AuthRemoteDataSource {
   Future<AuthResponse> login(String email, String password);
@@ -24,8 +26,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<AuthResponse> login(String email, String password) async {
     try {
       final response = await dio.post(
-        '/auth/login',
-        data: {'email': email, 'password': password},
+        ApiEndpoints.login,
+        data: AuthDao.loginBody(email, password),
       );
 
       if (response.statusCode == 200) {
@@ -84,8 +86,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   ) async {
     try {
       final response = await dio.post(
-        '/auth/register',
-        data: {'email': email, 'password': password, 'name': name},
+        ApiEndpoints.register,
+        data: AuthDao.registerBody(email, password, name),
       );
 
       if (response.statusCode == 200) {
@@ -120,7 +122,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (e.response?.statusCode == 400) {
         throw ValidationException('Invalid registration data');
       } else if (e.response?.statusCode == 409) {
-        throw ValidationException('User already exists');
+        throw AuthException('User already exists');
       } else if (e.type == DioExceptionType.connectionTimeout) {
         throw NetworkException('Connection timeout');
       } else if (e.type == DioExceptionType.receiveTimeout) {
@@ -139,11 +141,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> logout() async {
     try {
-      final response = await dio.post('/auth/logout');
-
-      // Logout endpoint returns 204 No Content on success
+      final response = await dio.post(ApiEndpoints.logout);
       if (response.statusCode == 204) {
-        return; // Success - no content to parse
+        // Handle 204 No Content
+        return;
       } else if (response.statusCode != 200) {
         throw ServerException(
           'Logout failed with status: ${response.statusCode}',
@@ -152,7 +153,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        throw AuthException('Unauthorized - token may be invalid');
+        throw AuthException('Invalid or expired token');
       } else if (e.type == DioExceptionType.connectionTimeout) {
         throw NetworkException('Connection timeout');
       } else if (e.type == DioExceptionType.receiveTimeout) {
@@ -172,8 +173,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<AuthResponse> refreshToken(String refreshToken) async {
     try {
       final response = await dio.post(
-        '/auth/refresh-token',
-        data: {'refreshToken': refreshToken},
+        ApiEndpoints.refreshToken,
+        data: AuthDao.refreshTokenBody(refreshToken),
       );
 
       if (response.statusCode == 200) {
@@ -228,8 +229,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> forgotPassword(String email) async {
     try {
       final response = await dio.post(
-        '/auth/forgot-password',
-        data: {'email': email},
+        ApiEndpoints.forgotPassword,
+        data: AuthDao.forgotPasswordBody(email),
       );
 
       if (response.statusCode == 200) {
@@ -277,8 +278,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> changePassword(String oldPassword, String newPassword) async {
     try {
       final response = await dio.post(
-        '/auth/change-password',
-        data: {'oldPassword': oldPassword, 'newPassword': newPassword},
+        ApiEndpoints.changePassword,
+        data: AuthDao.changePasswordBody(oldPassword, newPassword),
       );
 
       if (response.statusCode == 200) {
@@ -337,11 +338,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> resetPassword(String token, String newPassword) async {
     try {
       final response = await dio.post(
-        '/auth/reset-password',
-        data: {
-          'token': token,
-          'password': newPassword,
-        },
+        ApiEndpoints.resetPassword,
+        data: AuthDao.resetPasswordBody(token, newPassword),
       );
 
       if (response.statusCode == 200) {
