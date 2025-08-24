@@ -86,9 +86,22 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          return AccountModel.fromJson(
-            responseData['data'] as Map<String, dynamic>,
-          );
+          final data = responseData['data'] as Map<String, dynamic>;
+          
+          // Handle nested response structure
+          if (data['success'] == true && data['accountData'] != null) {
+            return AccountModel.fromJson(
+              data['accountData'] as Map<String, dynamic>,
+            );
+          } else if (data['accountData'] != null) {
+            // Fallback to direct accountData access
+            return AccountModel.fromJson(
+              data['accountData'] as Map<String, dynamic>,
+            );
+          } else {
+            // Try to parse the data directly as account data
+            return AccountModel.fromJson(data);
+          }
         } else {
           throw ServerException(
             responseData['message'] ?? 'Failed to fetch account',
@@ -192,9 +205,22 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          return AccountModel.fromJson(
-            responseData['data'] as Map<String, dynamic>,
-          );
+          final data = responseData['data'] as Map<String, dynamic>;
+          
+          // Handle nested response structure
+          if (data['success'] == true && data['accountData'] != null) {
+            return AccountModel.fromJson(
+              data['accountData'] as Map<String, dynamic>,
+            );
+          } else if (data['accountData'] != null) {
+            // Fallback to direct accountData access
+            return AccountModel.fromJson(
+              data['accountData'] as Map<String, dynamic>,
+            );
+          } else {
+            // Try to parse the data directly as account data
+            return AccountModel.fromJson(data);
+          }
         } else {
           throw ServerException(
             responseData['message'] ?? 'Failed to create account',
@@ -249,9 +275,22 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          return AccountModel.fromJson(
-            responseData['data'] as Map<String, dynamic>,
-          );
+          final data = responseData['data'] as Map<String, dynamic>;
+          
+          // Handle nested response structure
+          if (data['success'] == true && data['accountData'] != null) {
+            return AccountModel.fromJson(
+              data['accountData'] as Map<String, dynamic>,
+            );
+          } else if (data['accountData'] != null) {
+            // Fallback to direct accountData access
+            return AccountModel.fromJson(
+              data['accountData'] as Map<String, dynamic>,
+            );
+          } else {
+            // Try to parse the data directly as account data
+            return AccountModel.fromJson(data);
+          }
         } else {
           throw ServerException(
             responseData['message'] ?? 'Failed to update account',
