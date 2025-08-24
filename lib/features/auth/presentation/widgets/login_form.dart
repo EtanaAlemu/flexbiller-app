@@ -57,6 +57,15 @@ class _LoginFormState extends State<LoginForm> {
             ),
             textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 8),
+          const Text(
+            'Use your actual credentials to login',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 32),
           TextFormField(
             controller: _emailController,

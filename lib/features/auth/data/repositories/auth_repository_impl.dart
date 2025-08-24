@@ -1,46 +1,51 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../datasources/auth_remote_data_source.dart';
 
 @Injectable(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
+  final AuthRemoteDataSource _remoteDataSource;
+
+  AuthRepositoryImpl(this._remoteDataSource);
+
   @override
   Future<User> login(String email, String password) async {
-    // TODO: Implement actual login logic
-    // For now, return a mock user
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-    
-    if (email == 'test@example.com' && password == 'password') {
-      return User(
-        id: '1',
-        email: 'test@example.com',
-        name: 'Test User',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-    } else {
-      throw Exception('Invalid credentials');
+    try {
+      final authResponse = await _remoteDataSource.login(email, password);
+      
+      // Store tokens in secure storage
+      // TODO: Inject SecureStorageService and store tokens
+      
+      return authResponse.user.toEntity();
+    } catch (e) {
+      // Re-throw the exception to be handled by the BLoC
+      rethrow;
     }
   }
 
   @override
   Future<User> register(String email, String password, String name) async {
-    // TODO: Implement actual registration logic
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-    
-    return User(
-      id: '1',
-      email: email,
-      name: name,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+    try {
+      final authResponse = await _remoteDataSource.register(email, password, name);
+      
+      // Store tokens in secure storage
+      // TODO: Inject SecureStorageService and store tokens
+      
+      return authResponse.user.toEntity();
+    } catch (e) {
+      rethrow;
+    }
   }
 
   @override
   Future<void> logout() async {
-    // TODO: Implement logout logic
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      await _remoteDataSource.logout();
+      // TODO: Clear tokens from secure storage
+    } catch (e) {
+      rethrow;
+    }
   }
 
   @override
@@ -57,7 +62,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> refreshToken() async {
-    // TODO: Implement token refresh logic
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      // TODO: Get refresh token from secure storage
+      final refreshToken = 'dummy_token';
+      await _remoteDataSource.refreshToken(refreshToken);
+    } catch (e) {
+      rethrow;
+    }
   }
 }

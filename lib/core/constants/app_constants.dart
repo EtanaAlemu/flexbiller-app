@@ -1,6 +1,6 @@
 class AppConstants {
   // API Configuration
-  static const String baseUrl = 'https://flexbiller.aumtech.org/api';
+  static const String baseUrl = 'https://flexbillerapi.aumtech.org/api';
   static const int connectionTimeout = 5000;
   static const int receiveTimeout = 3000;
   
