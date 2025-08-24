@@ -15,6 +15,7 @@ abstract class AccountPaymentMethodsRemoteDataSource {
   Future<void> deletePaymentMethod(String accountId, String paymentMethodId);
   Future<AccountPaymentMethodModel> deactivatePaymentMethod(String accountId, String paymentMethodId);
   Future<AccountPaymentMethodModel> reactivatePaymentMethod(String accountId, String paymentMethodId);
+  Future<List<AccountPaymentMethodModel>> refreshPaymentMethods(String accountId);
 }
 
 @Injectable(as: AccountPaymentMethodsRemoteDataSource)
@@ -509,6 +510,47 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         throw NetworkException('No internet connection');
       } else {
         throw ServerException('Failed to reactivate payment method: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<List<AccountPaymentMethodModel>> refreshPaymentMethods(String accountId) async {
+    try {
+      final response = await _dio.put('/accounts/$accountId/paymentMethods/refresh');
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final List<dynamic> methodsData = responseData['data'] as List<dynamic>;
+          return methodsData
+              .map((item) => AccountPaymentMethodModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        } else {
+          throw ServerException(
+            responseData['message'] ?? 'Failed to refresh payment methods',
+          );
+        }
+      } else {
+        throw ServerException('Failed to refresh payment methods: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized to refresh payment methods');
+      } else if (e.response?.statusCode == 403) {
+        throw AuthException(
+          'Forbidden: Insufficient permissions to refresh payment methods',
+        );
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout while refreshing payment methods');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('No internet connection');
+      } else {
+        throw ServerException('Failed to refresh payment methods: ${e.message}');
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');

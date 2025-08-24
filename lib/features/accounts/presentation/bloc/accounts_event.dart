@@ -440,3 +440,12 @@ class SetDefaultPaymentMethod extends AccountsEvent {
   @override
   List<Object?> get props => [accountId, paymentMethodId, payAllUnpaidInvoices];
 }
+
+class RefreshPaymentMethods extends AccountsEvent {
+  final String accountId;
+
+  const RefreshPaymentMethods(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}

@@ -143,4 +143,14 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
       rethrow;
     }
   }
+
+  @override
+  Future<List<AccountPaymentMethod>> refreshPaymentMethods(String accountId) async {
+    try {
+      final methodModels = await _remoteDataSource.refreshPaymentMethods(accountId);
+      return methodModels.map((model) => model.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

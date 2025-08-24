@@ -27,6 +27,7 @@ import '../../domain/usecases/create_invoice_payment_usecase.dart';
 import '../../domain/usecases/get_account_audit_logs_usecase.dart';
 import '../../domain/usecases/get_account_payment_methods_usecase.dart';
 import '../../domain/usecases/set_default_payment_method_usecase.dart';
+import '../../domain/usecases/refresh_payment_methods_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
@@ -61,6 +62,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final GetAccountAuditLogsUseCase _getAccountAuditLogsUseCase;
   final GetAccountPaymentMethodsUseCase _getAccountPaymentMethodsUseCase;
   final SetDefaultPaymentMethodUseCase _setDefaultPaymentMethodUseCase;
+  final RefreshPaymentMethodsUseCase _refreshPaymentMethodsUseCase;
   final AccountsRepository _accountsRepository;
   final AccountTagsRepository _accountTagsRepository;
   final AccountCustomFieldsRepository _accountCustomFieldsRepository;
@@ -92,6 +94,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required GetAccountAuditLogsUseCase getAccountAuditLogsUseCase,
     required GetAccountPaymentMethodsUseCase getAccountPaymentMethodsUseCase,
     required SetDefaultPaymentMethodUseCase setDefaultPaymentMethodUseCase,
+    required RefreshPaymentMethodsUseCase refreshPaymentMethodsUseCase,
     required AccountsRepository accountsRepository,
     required AccountTagsRepository accountTagsRepository,
     required AccountCustomFieldsRepository accountCustomFieldsRepository,
@@ -121,6 +124,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         _getAccountAuditLogsUseCase = getAccountAuditLogsUseCase,
         _getAccountPaymentMethodsUseCase = getAccountPaymentMethodsUseCase,
         _setDefaultPaymentMethodUseCase = setDefaultPaymentMethodUseCase,
+        _refreshPaymentMethodsUseCase = refreshPaymentMethodsUseCase,
         _accountsRepository = accountsRepository,
         _accountTagsRepository = accountTagsRepository,
         _accountCustomFieldsRepository = accountCustomFieldsRepository,
@@ -171,6 +175,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<LoadAccountPaymentMethods>(_onLoadAccountPaymentMethods);
     on<RefreshAccountPaymentMethods>(_onRefreshAccountPaymentMethods);
     on<SetDefaultPaymentMethod>(_onSetDefaultPaymentMethod);
+    on<RefreshPaymentMethods>(_onRefreshPaymentMethods);
   }
 
   Future<void> _onLoadAccounts(
@@ -912,6 +917,19 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(DefaultPaymentMethodSet(event.accountId, updatedPaymentMethod));
     } catch (e) {
       emit(SetDefaultPaymentMethodFailure(e.toString(), event.accountId, event.paymentMethodId));
+    }
+  }
+
+  Future<void> _onRefreshPaymentMethods(
+    RefreshPaymentMethods event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(RefreshingPaymentMethods(event.accountId));
+      final paymentMethods = await _refreshPaymentMethodsUseCase(event.accountId);
+      emit(PaymentMethodsRefreshed(event.accountId, paymentMethods));
+    } catch (e) {
+      emit(RefreshPaymentMethodsFailure(e.toString(), event.accountId));
     }
   }
 }

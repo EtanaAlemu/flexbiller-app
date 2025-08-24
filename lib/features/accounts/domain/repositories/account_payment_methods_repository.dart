@@ -46,4 +46,7 @@ abstract class AccountPaymentMethodsRepository {
 
   /// Reactivate a payment method
   Future<AccountPaymentMethod> reactivatePaymentMethod(String accountId, String paymentMethodId);
+
+  /// Refresh payment methods for an account (sync with external processors)
+  Future<List<AccountPaymentMethod>> refreshPaymentMethods(String accountId);
 }

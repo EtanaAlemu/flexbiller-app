@@ -209,13 +209,19 @@ class AccountDetailsView extends StatelessWidget {
                                 // Emails Tab
                                 AccountEmailsWidget(accountId: accountId),
                                 // Blocking States Tab
-                                AccountBlockingStatesWidget(accountId: accountId),
+                                AccountBlockingStatesWidget(
+                                  accountId: accountId,
+                                ),
                                 // Invoice Payments Tab
-                                AccountInvoicePaymentsWidget(accountId: accountId),
+                                AccountInvoicePaymentsWidget(
+                                  accountId: accountId,
+                                ),
                                 // Audit Logs Tab
                                 AccountAuditLogsWidget(accountId: accountId),
                                 // Payment Methods Tab
-                                AccountPaymentMethodsWidget(accountId: accountId),
+                                AccountPaymentMethodsWidget(
+                                  accountId: accountId,
+                                ),
                               ],
                             ),
                           ),

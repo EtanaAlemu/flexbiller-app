@@ -1011,3 +1011,32 @@ class SetDefaultPaymentMethodFailure extends AccountsState {
   @override
   List<Object?> get props => [message, accountId, paymentMethodId];
 }
+
+class RefreshingPaymentMethods extends AccountsState {
+  final String accountId;
+
+  const RefreshingPaymentMethods(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class PaymentMethodsRefreshed extends AccountsState {
+  final String accountId;
+  final List<AccountPaymentMethod> paymentMethods;
+
+  const PaymentMethodsRefreshed(this.accountId, this.paymentMethods);
+
+  @override
+  List<Object?> get props => [accountId, paymentMethods];
+}
+
+class RefreshPaymentMethodsFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const RefreshPaymentMethodsFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
+}

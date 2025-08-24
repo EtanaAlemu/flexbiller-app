@@ -108,6 +108,8 @@ import 'features/accounts/domain/usecases/get_account_timeline_usecase.dart'
 import 'features/accounts/domain/usecases/get_accounts_usecase.dart' as _i684;
 import 'features/accounts/domain/usecases/get_all_tags_for_account_usecase.dart'
     as _i384;
+import 'features/accounts/domain/usecases/refresh_payment_methods_usecase.dart'
+    as _i905;
 import 'features/accounts/domain/usecases/remove_multiple_tags_from_account_usecase.dart'
     as _i582;
 import 'features/accounts/domain/usecases/search_accounts_usecase.dart'
@@ -320,6 +322,11 @@ _i174.GetIt $initGetIt(
       gh<_i845.AccountPaymentMethodsRepository>(),
     ),
   );
+  gh.factory<_i905.RefreshPaymentMethodsUseCase>(
+    () => _i905.RefreshPaymentMethodsUseCase(
+      gh<_i845.AccountPaymentMethodsRepository>(),
+    ),
+  );
   gh.factory<_i993.ForgotPasswordUseCase>(
     () => _i993.ForgotPasswordUseCase(gh<_i1015.AuthRepository>()),
   );
@@ -393,6 +400,7 @@ _i174.GetIt $initGetIt(
           gh<_i600.GetAccountPaymentMethodsUseCase>(),
       setDefaultPaymentMethodUseCase:
           gh<_i580.SetDefaultPaymentMethodUseCase>(),
+      refreshPaymentMethodsUseCase: gh<_i905.RefreshPaymentMethodsUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
