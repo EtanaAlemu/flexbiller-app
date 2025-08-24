@@ -407,3 +407,36 @@ class RefreshAccountAuditLogs extends AccountsEvent {
   @override
   List<Object?> get props => [accountId];
 }
+
+class LoadAccountPaymentMethods extends AccountsEvent {
+  final String accountId;
+
+  const LoadAccountPaymentMethods(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class RefreshAccountPaymentMethods extends AccountsEvent {
+  final String accountId;
+
+  const RefreshAccountPaymentMethods(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class SetDefaultPaymentMethod extends AccountsEvent {
+  final String accountId;
+  final String paymentMethodId;
+  final bool payAllUnpaidInvoices;
+
+  const SetDefaultPaymentMethod({
+    required this.accountId,
+    required this.paymentMethodId,
+    required this.payAllUnpaidInvoices,
+  });
+
+  @override
+  List<Object?> get props => [accountId, paymentMethodId, payAllUnpaidInvoices];
+}

@@ -25,6 +25,8 @@ import '../../domain/usecases/get_account_blocking_states_usecase.dart';
 import '../../domain/usecases/get_account_invoice_payments_usecase.dart';
 import '../../domain/usecases/create_invoice_payment_usecase.dart';
 import '../../domain/usecases/get_account_audit_logs_usecase.dart';
+import '../../domain/usecases/get_account_payment_methods_usecase.dart';
+import '../../domain/usecases/set_default_payment_method_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
@@ -57,6 +59,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final GetAccountInvoicePaymentsUseCase _getAccountInvoicePaymentsUseCase;
   final CreateInvoicePaymentUseCase _createInvoicePaymentUseCase;
   final GetAccountAuditLogsUseCase _getAccountAuditLogsUseCase;
+  final GetAccountPaymentMethodsUseCase _getAccountPaymentMethodsUseCase;
+  final SetDefaultPaymentMethodUseCase _setDefaultPaymentMethodUseCase;
   final AccountsRepository _accountsRepository;
   final AccountTagsRepository _accountTagsRepository;
   final AccountCustomFieldsRepository _accountCustomFieldsRepository;
@@ -86,6 +90,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required GetAccountInvoicePaymentsUseCase getAccountInvoicePaymentsUseCase,
     required CreateInvoicePaymentUseCase createInvoicePaymentUseCase,
     required GetAccountAuditLogsUseCase getAccountAuditLogsUseCase,
+    required GetAccountPaymentMethodsUseCase getAccountPaymentMethodsUseCase,
+    required SetDefaultPaymentMethodUseCase setDefaultPaymentMethodUseCase,
     required AccountsRepository accountsRepository,
     required AccountTagsRepository accountTagsRepository,
     required AccountCustomFieldsRepository accountCustomFieldsRepository,
@@ -113,6 +119,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         _getAccountInvoicePaymentsUseCase = getAccountInvoicePaymentsUseCase,
         _createInvoicePaymentUseCase = createInvoicePaymentUseCase,
         _getAccountAuditLogsUseCase = getAccountAuditLogsUseCase,
+        _getAccountPaymentMethodsUseCase = getAccountPaymentMethodsUseCase,
+        _setDefaultPaymentMethodUseCase = setDefaultPaymentMethodUseCase,
         _accountsRepository = accountsRepository,
         _accountTagsRepository = accountTagsRepository,
         _accountCustomFieldsRepository = accountCustomFieldsRepository,
@@ -160,6 +168,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<CreateInvoicePayment>(_onCreateInvoicePayment);
     on<LoadAccountAuditLogs>(_onLoadAccountAuditLogs);
     on<RefreshAccountAuditLogs>(_onRefreshAccountAuditLogs);
+    on<LoadAccountPaymentMethods>(_onLoadAccountPaymentMethods);
+    on<RefreshAccountPaymentMethods>(_onRefreshAccountPaymentMethods);
+    on<SetDefaultPaymentMethod>(_onSetDefaultPaymentMethod);
   }
 
   Future<void> _onLoadAccounts(
@@ -858,6 +869,49 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(AccountAuditLogsLoaded(event.accountId, auditLogs));
     } catch (e) {
       emit(AccountAuditLogsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onLoadAccountPaymentMethods(
+    LoadAccountPaymentMethods event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountPaymentMethodsLoading(event.accountId));
+      final paymentMethods = await _getAccountPaymentMethodsUseCase(event.accountId);
+      emit(AccountPaymentMethodsLoaded(event.accountId, paymentMethods));
+    } catch (e) {
+      emit(AccountPaymentMethodsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onRefreshAccountPaymentMethods(
+    RefreshAccountPaymentMethods event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountPaymentMethodsLoading(event.accountId));
+      final paymentMethods = await _getAccountPaymentMethodsUseCase(event.accountId);
+      emit(AccountPaymentMethodsLoaded(event.accountId, paymentMethods));
+    } catch (e) {
+      emit(AccountPaymentMethodsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onSetDefaultPaymentMethod(
+    SetDefaultPaymentMethod event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(SettingDefaultPaymentMethod(event.accountId, event.paymentMethodId));
+      final updatedPaymentMethod = await _setDefaultPaymentMethodUseCase(
+        event.accountId,
+        event.paymentMethodId,
+        event.payAllUnpaidInvoices,
+      );
+      emit(DefaultPaymentMethodSet(event.accountId, updatedPaymentMethod));
+    } catch (e) {
+      emit(SetDefaultPaymentMethodFailure(e.toString(), event.accountId, event.paymentMethodId));
     }
   }
 }

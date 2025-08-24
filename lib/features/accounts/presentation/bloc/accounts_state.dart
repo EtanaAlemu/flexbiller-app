@@ -8,6 +8,7 @@ import '../../domain/entities/account_email.dart';
 import '../../domain/entities/account_blocking_state.dart';
 import '../../domain/entities/account_invoice_payment.dart';
 import '../../domain/entities/account_audit_log.dart';
+import '../../domain/entities/account_payment_method.dart';
 
 abstract class AccountsState extends Equatable {
   const AccountsState();
@@ -949,4 +950,64 @@ class AccountAuditLogsFailure extends AccountsState {
 
   @override
   List<Object?> get props => [message, accountId];
+}
+
+class AccountPaymentMethodsLoading extends AccountsState {
+  final String accountId;
+
+  const AccountPaymentMethodsLoading(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AccountPaymentMethodsLoaded extends AccountsState {
+  final String accountId;
+  final List<AccountPaymentMethod> paymentMethods;
+
+  const AccountPaymentMethodsLoaded(this.accountId, this.paymentMethods);
+
+  @override
+  List<Object?> get props => [accountId, paymentMethods];
+}
+
+class AccountPaymentMethodsFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AccountPaymentMethodsFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
+}
+
+class SettingDefaultPaymentMethod extends AccountsState {
+  final String accountId;
+  final String paymentMethodId;
+
+  const SettingDefaultPaymentMethod(this.accountId, this.paymentMethodId);
+
+  @override
+  List<Object?> get props => [accountId, paymentMethodId];
+}
+
+class DefaultPaymentMethodSet extends AccountsState {
+  final String accountId;
+  final AccountPaymentMethod paymentMethod;
+
+  const DefaultPaymentMethodSet(this.accountId, this.paymentMethod);
+
+  @override
+  List<Object?> get props => [accountId, paymentMethod];
+}
+
+class SetDefaultPaymentMethodFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final String paymentMethodId;
+
+  const SetDefaultPaymentMethodFailure(this.message, this.accountId, this.paymentMethodId);
+
+  @override
+  List<Object?> get props => [message, accountId, paymentMethodId];
 }

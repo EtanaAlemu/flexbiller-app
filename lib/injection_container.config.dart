@@ -30,6 +30,8 @@ import 'features/accounts/data/datasources/account_emails_remote_data_source.dar
     as _i606;
 import 'features/accounts/data/datasources/account_invoice_payments_remote_data_source.dart'
     as _i976;
+import 'features/accounts/data/datasources/account_payment_methods_remote_data_source.dart'
+    as _i361;
 import 'features/accounts/data/datasources/account_tags_remote_data_source.dart'
     as _i569;
 import 'features/accounts/data/datasources/account_timeline_remote_data_source.dart'
@@ -46,6 +48,8 @@ import 'features/accounts/data/repositories/account_emails_repository_impl.dart'
     as _i31;
 import 'features/accounts/data/repositories/account_invoice_payments_repository_impl.dart'
     as _i636;
+import 'features/accounts/data/repositories/account_payment_methods_repository_impl.dart'
+    as _i421;
 import 'features/accounts/data/repositories/account_tags_repository_impl.dart'
     as _i813;
 import 'features/accounts/data/repositories/account_timeline_repository_impl.dart'
@@ -62,6 +66,8 @@ import 'features/accounts/domain/repositories/account_emails_repository.dart'
     as _i330;
 import 'features/accounts/domain/repositories/account_invoice_payments_repository.dart'
     as _i378;
+import 'features/accounts/domain/repositories/account_payment_methods_repository.dart'
+    as _i845;
 import 'features/accounts/domain/repositories/account_tags_repository.dart'
     as _i363;
 import 'features/accounts/domain/repositories/account_timeline_repository.dart'
@@ -93,6 +99,8 @@ import 'features/accounts/domain/usecases/get_account_emails_usecase.dart'
     as _i334;
 import 'features/accounts/domain/usecases/get_account_invoice_payments_usecase.dart'
     as _i584;
+import 'features/accounts/domain/usecases/get_account_payment_methods_usecase.dart'
+    as _i600;
 import 'features/accounts/domain/usecases/get_account_tags_usecase.dart'
     as _i227;
 import 'features/accounts/domain/usecases/get_account_timeline_usecase.dart'
@@ -104,6 +112,8 @@ import 'features/accounts/domain/usecases/remove_multiple_tags_from_account_usec
     as _i582;
 import 'features/accounts/domain/usecases/search_accounts_usecase.dart'
     as _i266;
+import 'features/accounts/domain/usecases/set_default_payment_method_usecase.dart'
+    as _i580;
 import 'features/accounts/domain/usecases/update_account_custom_field_usecase.dart'
     as _i734;
 import 'features/accounts/domain/usecases/update_account_usecase.dart' as _i651;
@@ -173,6 +183,9 @@ _i174.GetIt $initGetIt(
     () => _i657.GetAccountAuditLogsUseCase(
       gh<_i271.AccountAuditLogsRepository>(),
     ),
+  );
+  gh.factory<_i361.AccountPaymentMethodsRemoteDataSource>(
+    () => _i361.AccountPaymentMethodsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
   gh.factory<_i767.AuthRemoteDataSource>(
     () => _i767.AuthRemoteDataSourceImpl(gh<_i361.Dio>()),
@@ -244,6 +257,11 @@ _i174.GetIt $initGetIt(
       gh<_i976.AccountInvoicePaymentsRemoteDataSource>(),
     ),
   );
+  gh.factory<_i845.AccountPaymentMethodsRepository>(
+    () => _i421.AccountPaymentMethodsRepositoryImpl(
+      gh<_i361.AccountPaymentMethodsRemoteDataSource>(),
+    ),
+  );
   gh.factory<_i334.GetAccountEmailsUseCase>(
     () => _i334.GetAccountEmailsUseCase(gh<_i330.AccountEmailsRepository>()),
   );
@@ -290,6 +308,16 @@ _i174.GetIt $initGetIt(
   gh.factory<_i729.GetAccountBlockingStatesUseCase>(
     () => _i729.GetAccountBlockingStatesUseCase(
       gh<_i696.AccountBlockingStatesRepository>(),
+    ),
+  );
+  gh.factory<_i580.SetDefaultPaymentMethodUseCase>(
+    () => _i580.SetDefaultPaymentMethodUseCase(
+      gh<_i845.AccountPaymentMethodsRepository>(),
+    ),
+  );
+  gh.factory<_i600.GetAccountPaymentMethodsUseCase>(
+    () => _i600.GetAccountPaymentMethodsUseCase(
+      gh<_i845.AccountPaymentMethodsRepository>(),
     ),
   );
   gh.factory<_i993.ForgotPasswordUseCase>(
@@ -361,6 +389,10 @@ _i174.GetIt $initGetIt(
           gh<_i584.GetAccountInvoicePaymentsUseCase>(),
       createInvoicePaymentUseCase: gh<_i350.CreateInvoicePaymentUseCase>(),
       getAccountAuditLogsUseCase: gh<_i657.GetAccountAuditLogsUseCase>(),
+      getAccountPaymentMethodsUseCase:
+          gh<_i600.GetAccountPaymentMethodsUseCase>(),
+      setDefaultPaymentMethodUseCase:
+          gh<_i580.SetDefaultPaymentMethodUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
