@@ -44,4 +44,16 @@ abstract class AccountPaymentsRepository {
 
   /// Get pending payments for an account
   Future<List<AccountPayment>> getPendingPayments(String accountId);
+
+  /// Create a new payment for an account
+  Future<AccountPayment> createAccountPayment({
+    required String accountId,
+    required String paymentMethodId,
+    required String transactionType,
+    required double amount,
+    required String currency,
+    required DateTime effectiveDate,
+    String? description,
+    Map<String, dynamic>? properties,
+  });
 }

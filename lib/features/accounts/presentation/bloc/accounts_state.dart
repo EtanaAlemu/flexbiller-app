@@ -1070,3 +1070,49 @@ class AccountPaymentsFailure extends AccountsState {
   @override
   List<Object?> get props => [message, accountId];
 }
+
+class CreatingAccountPayment extends AccountsState {
+  final String accountId;
+  final String transactionType;
+  final double amount;
+  final String currency;
+
+  const CreatingAccountPayment(
+    this.accountId,
+    this.transactionType,
+    this.amount,
+    this.currency,
+  );
+
+  @override
+  List<Object?> get props => [accountId, transactionType, amount, currency];
+}
+
+class AccountPaymentCreated extends AccountsState {
+  final String accountId;
+  final AccountPayment payment;
+
+  const AccountPaymentCreated(this.accountId, this.payment);
+
+  @override
+  List<Object?> get props => [accountId, payment];
+}
+
+class CreateAccountPaymentFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final String transactionType;
+  final double amount;
+  final String currency;
+
+  const CreateAccountPaymentFailure(
+    this.message,
+    this.accountId,
+    this.transactionType,
+    this.amount,
+    this.currency,
+  );
+
+  @override
+  List<Object?> get props => [message, accountId, transactionType, amount, currency];
+}

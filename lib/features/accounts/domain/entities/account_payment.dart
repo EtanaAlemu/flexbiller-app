@@ -53,6 +53,33 @@ class AccountPayment extends Equatable {
     this.refundReason,
   });
 
+  /// Factory constructor for creating new payments
+  factory AccountPayment.create({
+    required String accountId,
+    required String paymentMethodId,
+    required String transactionType,
+    required double amount,
+    required String currency,
+    required DateTime effectiveDate,
+    String? description,
+    Map<String, dynamic>? properties,
+  }) {
+    return AccountPayment(
+      id: '', // Will be assigned by the server
+      accountId: accountId,
+      paymentType: transactionType,
+      paymentStatus: 'PENDING', // New payments start as pending
+      amount: amount,
+      currency: currency,
+      paymentMethodId: paymentMethodId,
+      paymentDate: effectiveDate,
+      createdAt: DateTime.now(),
+      isRefunded: false,
+      description: description,
+      metadata: properties,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

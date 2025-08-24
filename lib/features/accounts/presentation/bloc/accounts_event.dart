@@ -467,3 +467,37 @@ class RefreshAccountPayments extends AccountsEvent {
   @override
   List<Object?> get props => [accountId];
 }
+
+class CreateAccountPayment extends AccountsEvent {
+  final String accountId;
+  final String paymentMethodId;
+  final String transactionType;
+  final double amount;
+  final String currency;
+  final DateTime effectiveDate;
+  final String? description;
+  final Map<String, dynamic>? properties;
+
+  const CreateAccountPayment({
+    required this.accountId,
+    required this.paymentMethodId,
+    required this.transactionType,
+    required this.amount,
+    required this.currency,
+    required this.effectiveDate,
+    this.description,
+    this.properties,
+  });
+
+  @override
+  List<Object?> get props => [
+        accountId,
+        paymentMethodId,
+        transactionType,
+        amount,
+        currency,
+        effectiveDate,
+        description,
+        properties,
+      ];
+}

@@ -4,6 +4,7 @@ import '../../domain/entities/account_payment.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
+import 'create_account_payment_form.dart';
 
 class AccountPaymentsWidget extends StatelessWidget {
   final String accountId;
@@ -52,66 +53,96 @@ class AccountPaymentsWidget extends StatelessWidget {
         }
 
         if (state is AccountPaymentsLoaded) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Payments (${state.payments.length})',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () {
-                      context.read<AccountsBloc>().add(RefreshAccountPayments(accountId));
-                    },
-                    tooltip: 'Refresh Payments',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (state.payments.isEmpty)
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.payment_outlined,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No payments found',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'This account has no payment history',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: state.payments.length,
-                    itemBuilder: (context, index) {
-                      final payment = state.payments[index];
-                      return _buildPaymentCard(context, payment);
-                    },
-                  ),
+          return Scaffold(
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Payments (${state.payments.length})',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(RefreshAccountPayments(accountId));
+                      },
+                      tooltip: 'Refresh Payments',
+                    ),
+                  ],
                 ),
-            ],
+                const SizedBox(height: 16),
+                if (state.payments.isEmpty)
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.payment_outlined,
+                          size: 64,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No payments found',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'This account has no payment history',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _showCreatePaymentForm(context),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Create First Payment'),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: state.payments.length,
+                      itemBuilder: (context, index) {
+                        final payment = state.payments[index];
+                        return _buildPaymentCard(context, payment);
+                      },
+                    ),
+                  ),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () => _showCreatePaymentForm(context),
+              icon: const Icon(Icons.add),
+              label: const Text('New Payment'),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            ),
           );
         }
 
         return const Center(child: Text('No payment data available'));
       },
+    );
+  }
+
+  void _showCreatePaymentForm(BuildContext context) {
+    // For now, we'll show a placeholder. In a real app, you'd get the available payment methods
+    // from the account payment methods state or pass them as a parameter
+    final availablePaymentMethods = ['placeholder-payment-method-id'];
+    
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CreateAccountPaymentForm(
+          accountId: accountId,
+          availablePaymentMethods: availablePaymentMethods,
+        ),
+      ),
     );
   }
 

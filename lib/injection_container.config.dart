@@ -83,6 +83,8 @@ import 'features/accounts/domain/usecases/assign_multiple_tags_to_account_usecas
     as _i377;
 import 'features/accounts/domain/usecases/create_account_custom_field_usecase.dart'
     as _i629;
+import 'features/accounts/domain/usecases/create_account_payment_usecase.dart'
+    as _i463;
 import 'features/accounts/domain/usecases/create_account_usecase.dart' as _i968;
 import 'features/accounts/domain/usecases/create_invoice_payment_usecase.dart'
     as _i350;
@@ -175,6 +177,11 @@ _i174.GetIt $initGetIt(
   gh.factory<_i374.GetAccountPaymentsUseCase>(
     () =>
         _i374.GetAccountPaymentsUseCase(gh<_i1054.AccountPaymentsRepository>()),
+  );
+  gh.factory<_i463.CreateAccountPaymentUseCase>(
+    () => _i463.CreateAccountPaymentUseCase(
+      gh<_i1054.AccountPaymentsRepository>(),
+    ),
   );
   gh.factory<_i608.AccountCustomFieldsRemoteDataSource>(
     () => _i608.AccountCustomFieldsRemoteDataSourceImpl(gh<_i361.Dio>()),
@@ -422,6 +429,7 @@ _i174.GetIt $initGetIt(
           gh<_i580.SetDefaultPaymentMethodUseCase>(),
       refreshPaymentMethodsUseCase: gh<_i905.RefreshPaymentMethodsUseCase>(),
       getAccountPaymentsUseCase: gh<_i374.GetAccountPaymentsUseCase>(),
+      createAccountPaymentUseCase: gh<_i463.CreateAccountPaymentUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),

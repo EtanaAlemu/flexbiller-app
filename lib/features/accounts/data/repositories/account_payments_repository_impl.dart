@@ -143,4 +143,32 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<AccountPayment> createAccountPayment({
+    required String accountId,
+    required String paymentMethodId,
+    required String transactionType,
+    required double amount,
+    required String currency,
+    required DateTime effectiveDate,
+    String? description,
+    Map<String, dynamic>? properties,
+  }) async {
+    try {
+      final paymentModel = await _remoteDataSource.createAccountPayment(
+        accountId: accountId,
+        paymentMethodId: paymentMethodId,
+        transactionType: transactionType,
+        amount: amount,
+        currency: currency,
+        effectiveDate: effectiveDate,
+        description: description,
+        properties: properties,
+      );
+      return paymentModel.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

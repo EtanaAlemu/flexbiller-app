@@ -16,6 +16,18 @@ abstract class AccountPaymentsRemoteDataSource {
   Future<List<AccountPaymentModel>> getFailedPayments(String accountId);
   Future<List<AccountPaymentModel>> getSuccessfulPayments(String accountId);
   Future<List<AccountPaymentModel>> getPendingPayments(String accountId);
+
+  /// Create a new payment for an account
+  Future<AccountPaymentModel> createAccountPayment({
+    required String accountId,
+    required String paymentMethodId,
+    required String transactionType,
+    required double amount,
+    required String currency,
+    required DateTime effectiveDate,
+    String? description,
+    Map<String, dynamic>? properties,
+  });
 }
 
 @Injectable(as: AccountPaymentsRemoteDataSource)
@@ -539,6 +551,68 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         throw NetworkException('No internet connection');
       } else {
         throw ServerException('Failed to fetch pending payments: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<AccountPaymentModel> createAccountPayment({
+    required String accountId,
+    required String paymentMethodId,
+    required String transactionType,
+    required double amount,
+    required String currency,
+    required DateTime effectiveDate,
+    String? description,
+    Map<String, dynamic>? properties,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/accounts/$accountId/payments',
+        data: {
+          'paymentMethodId': paymentMethodId,
+          'transactionType': transactionType,
+          'amount': amount,
+          'currency': currency,
+          'effectiveDate': effectiveDate.toIso8601String(),
+          if (description != null) 'description': description,
+          if (properties != null) 'properties': properties,
+        },
+      );
+
+      if (response.statusCode == 201) {
+        final responseData = response.data;
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          return AccountPaymentModel.fromJson(
+            responseData['data'] as Map<String, dynamic>,
+          );
+        } else {
+          throw ServerException(
+            responseData['message'] ?? 'Failed to create account payment',
+          );
+        }
+      } else {
+        throw ServerException('Failed to create account payment: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized to create account payment');
+      } else if (e.response?.statusCode == 403) {
+        throw AuthException(
+          'Forbidden: Insufficient permissions to create account payment',
+        );
+      } else if (e.response?.statusCode == 404) {
+        throw ValidationException('Account not found');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout while creating account payment');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('No internet connection');
+      } else {
+        throw ServerException('Failed to create account payment: ${e.message}');
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
