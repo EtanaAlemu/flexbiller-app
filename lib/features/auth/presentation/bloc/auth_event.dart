@@ -40,3 +40,13 @@ class ChangePasswordRequested extends AuthEvent {
     required this.newPassword,
   });
 }
+
+class ResetPasswordRequested extends AuthEvent {
+  final String token;
+  final String newPassword;
+
+  ResetPasswordRequested({
+    required this.token,
+    required this.newPassword,
+  });
+}

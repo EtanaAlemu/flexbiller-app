@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/forgot_password_usecase.dart';
 import '../../domain/usecases/change_password_usecase.dart';
+import '../../domain/usecases/reset_password_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -11,14 +12,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase _loginUseCase;
   final ForgotPasswordUseCase _forgotPasswordUseCase;
   final ChangePasswordUseCase _changePasswordUseCase;
+  final ResetPasswordUseCase _resetPasswordUseCase;
 
   AuthBloc({
     required LoginUseCase loginUseCase,
     required ForgotPasswordUseCase forgotPasswordUseCase,
     required ChangePasswordUseCase changePasswordUseCase,
+    required ResetPasswordUseCase resetPasswordUseCase,
   }) : _loginUseCase = loginUseCase,
        _forgotPasswordUseCase = forgotPasswordUseCase,
        _changePasswordUseCase = changePasswordUseCase,
+       _resetPasswordUseCase = resetPasswordUseCase,
        super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
@@ -27,6 +31,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RefreshTokenRequested>(_onRefreshTokenRequested);
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<ChangePasswordRequested>(_onChangePasswordRequested);
+    on<ResetPasswordRequested>(_onResetPasswordRequested);
   }
 
   Future<void> _onLoginRequested(
@@ -135,6 +140,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
     } catch (e) {
       emit(ChangePasswordFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onResetPasswordRequested(
+    ResetPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(ResetPasswordLoading());
+    try {
+      await _resetPasswordUseCase(event.token, event.newPassword);
+      emit(
+        ResetPasswordSuccess(
+          'Password reset successfully. You can now login with your new password.',
+        ),
+      );
+    } catch (e) {
+      emit(ResetPasswordFailure(e.toString()));
     }
   }
 }

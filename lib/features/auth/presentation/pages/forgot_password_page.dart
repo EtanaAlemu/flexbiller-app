@@ -4,6 +4,7 @@ import '../../../../injection_container.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import 'reset_password_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({Key? key}) : super(key: key);
@@ -149,6 +150,33 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         style: TextStyle(color: Colors.blue),
                       ),
                     ),
+                    if (state is ForgotPasswordSuccess) ...[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Didn\'t receive the email?',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const ResetPasswordPage(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Enter Reset Token Manually',
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

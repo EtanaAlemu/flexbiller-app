@@ -47,3 +47,17 @@ class ChangePasswordFailure extends AuthState {
 
   ChangePasswordFailure(this.message);
 }
+
+class ResetPasswordLoading extends AuthState {}
+
+class ResetPasswordSuccess extends AuthState {
+  final String message;
+
+  ResetPasswordSuccess(this.message);
+}
+
+class ResetPasswordFailure extends AuthState {
+  final String message;
+
+  ResetPasswordFailure(this.message);
+}

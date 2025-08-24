@@ -25,6 +25,7 @@ import 'features/auth/domain/repositories/auth_repository.dart' as _i1015;
 import 'features/auth/domain/usecases/change_password_usecase.dart' as _i890;
 import 'features/auth/domain/usecases/forgot_password_usecase.dart' as _i993;
 import 'features/auth/domain/usecases/login_usecase.dart' as _i206;
+import 'features/auth/domain/usecases/reset_password_usecase.dart' as _i1070;
 import 'features/auth/presentation/bloc/auth_bloc.dart' as _i363;
 
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -63,11 +64,15 @@ _i174.GetIt $initGetIt(
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
   );
+  gh.factory<_i1070.ResetPasswordUseCase>(
+    () => _i1070.ResetPasswordUseCase(gh<_i1015.AuthRepository>()),
+  );
   gh.factory<_i363.AuthBloc>(
     () => _i363.AuthBloc(
       loginUseCase: gh<_i206.LoginUseCase>(),
       forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
       changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
+      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
     ),
   );
   return getIt;

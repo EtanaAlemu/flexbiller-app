@@ -11,6 +11,7 @@ abstract class AuthRemoteDataSource {
   Future<AuthResponse> refreshToken(String refreshToken);
   Future<void> forgotPassword(String email);
   Future<void> changePassword(String oldPassword, String newPassword);
+  Future<void> resetPassword(String token, String newPassword);
 }
 
 @Injectable(as: AuthRemoteDataSource)
@@ -314,6 +315,65 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         final errorData = e.response?.data;
         if (errorData != null && errorData['error'] == 'CONNECTION_ERROR') {
           throw AuthException('Current password is incorrect');
+        } else {
+          throw ServerException('Server error occurred');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Request timeout');
+      } else {
+        throw ServerException(
+          e.message ?? 'Network error occurred',
+          e.response?.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<void> resetPassword(String token, String newPassword) async {
+    try {
+      final response = await dio.post(
+        '/auth/reset-password',
+        data: {
+          'token': token,
+          'password': newPassword,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final apiResponse = ApiResponse<Map<String, dynamic>>.fromJson(
+          response.data,
+          (json) => json,
+        );
+
+        if (apiResponse.success) {
+          // Password reset successfully
+          return;
+        } else {
+          throw ServerException(
+            apiResponse.message ?? 'Failed to reset password',
+            response.statusCode,
+          );
+        }
+      } else {
+        throw ServerException(
+          'Password reset failed with status: ${response.statusCode}',
+          response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Invalid or expired reset token');
+      } else if (e.response?.statusCode == 400) {
+        throw ValidationException('Invalid password format');
+      } else if (e.response?.statusCode == 500) {
+        final errorData = e.response?.data;
+        if (errorData != null && errorData['error'] == 'CONNECTION_ERROR') {
+          throw AuthException('Invalid or expired reset token');
         } else {
           throw ServerException('Server error occurred');
         }
