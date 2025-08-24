@@ -127,7 +127,13 @@ class AccountsListWidget extends StatelessWidget {
                       final account = state.accounts[index];
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
-                        child: AccountCardWidget(account: account),
+                        child: AccountCardWidget(
+                          account: account,
+                          onAccountDeleted: () {
+                            // Refresh the accounts list after deletion
+                            context.read<AccountsBloc>().add(const RefreshAccounts());
+                          },
+                        ),
                       );
                     },
                   ),
@@ -149,7 +155,13 @@ class AccountsListWidget extends StatelessWidget {
                 final account = state.accounts[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: AccountCardWidget(account: account),
+                  child: AccountCardWidget(
+                    account: account,
+                    onAccountDeleted: () {
+                      // Refresh the accounts list after deletion
+                      context.read<AccountsBloc>().add(const RefreshAccounts());
+                    },
+                  ),
                 );
               },
             ),
@@ -175,7 +187,13 @@ class AccountsListWidget extends StatelessWidget {
                 final account = state.accounts[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: AccountCardWidget(account: account),
+                  child: AccountCardWidget(
+                    account: account,
+                    onAccountDeleted: () {
+                      // Refresh the accounts list after deletion
+                      context.read<AccountsBloc>().add(const RefreshAccounts());
+                    },
+                  ),
                 );
               },
             ),

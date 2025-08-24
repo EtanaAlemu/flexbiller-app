@@ -92,3 +92,12 @@ class UpdateAccount extends AccountsEvent {
   @override
   List<Object?> get props => [account];
 }
+
+class DeleteAccount extends AccountsEvent {
+  final String accountId;
+
+  const DeleteAccount(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}

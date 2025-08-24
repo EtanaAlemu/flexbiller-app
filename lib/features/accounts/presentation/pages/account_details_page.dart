@@ -5,6 +5,7 @@ import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
 import '../widgets/edit_account_form.dart';
+import '../widgets/delete_account_dialog.dart';
 import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
@@ -89,13 +90,32 @@ class AccountDetailsView extends StatelessWidget {
                           account: account,
                           onAccountUpdated: () {
                             // Refresh account details after update
-                            context.read<AccountsBloc>().add(LoadAccountDetails(accountId));
+                            context.read<AccountsBloc>().add(
+                              LoadAccountDetails(accountId),
+                            );
                           },
                         ),
                       ),
                     );
                   },
                   tooltip: 'Edit Account',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) => DeleteAccountDialog(
+                        account: account,
+                        onAccountDeleted: () {
+                          Navigator.of(context).pop(); // Close details page
+                          // Navigate back to accounts list
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    );
+                  },
+                  tooltip: 'Delete Account',
                 ),
               ],
             ),

@@ -26,6 +26,7 @@ import 'features/accounts/data/repositories/accounts_repository_impl.dart'
     as _i395;
 import 'features/accounts/domain/repositories/accounts_repository.dart' as _i42;
 import 'features/accounts/domain/usecases/create_account_usecase.dart' as _i968;
+import 'features/accounts/domain/usecases/delete_account_usecase.dart' as _i823;
 import 'features/accounts/domain/usecases/get_account_by_id_usecase.dart'
     as _i400;
 import 'features/accounts/domain/usecases/get_accounts_usecase.dart' as _i684;
@@ -80,20 +81,14 @@ _i174.GetIt $initGetIt(
   gh.factory<_i651.UpdateAccountUseCase>(
     () => _i651.UpdateAccountUseCase(gh<_i42.AccountsRepository>()),
   );
+  gh.factory<_i823.DeleteAccountUseCase>(
+    () => _i823.DeleteAccountUseCase(gh<_i42.AccountsRepository>()),
+  );
   gh.factory<_i1015.AuthRepository>(
     () => _i111.AuthRepositoryImpl(
       gh<_i767.AuthRemoteDataSource>(),
       gh<_i493.SecureStorageService>(),
       gh<_i842.JwtService>(),
-    ),
-  );
-  gh.factory<_i795.AccountsBloc>(
-    () => _i795.AccountsBloc(
-      getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
-      getAccountByIdUseCase: gh<_i400.GetAccountByIdUseCase>(),
-      createAccountUseCase: gh<_i968.CreateAccountUseCase>(),
-      updateAccountUseCase: gh<_i651.UpdateAccountUseCase>(),
-      accountsRepository: gh<_i42.AccountsRepository>(),
     ),
   );
   gh.factory<_i993.ForgotPasswordUseCase>(
@@ -114,6 +109,16 @@ _i174.GetIt $initGetIt(
       forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
       changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
       resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
+    ),
+  );
+  gh.factory<_i795.AccountsBloc>(
+    () => _i795.AccountsBloc(
+      getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
+      getAccountByIdUseCase: gh<_i400.GetAccountByIdUseCase>(),
+      createAccountUseCase: gh<_i968.CreateAccountUseCase>(),
+      updateAccountUseCase: gh<_i651.UpdateAccountUseCase>(),
+      deleteAccountUseCase: gh<_i823.DeleteAccountUseCase>(),
+      accountsRepository: gh<_i42.AccountsRepository>(),
     ),
   );
   return getIt;

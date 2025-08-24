@@ -6,6 +6,7 @@ import '../../domain/usecases/get_accounts_usecase.dart';
 import '../../domain/usecases/get_account_by_id_usecase.dart';
 import '../../domain/usecases/create_account_usecase.dart';
 import '../../domain/usecases/update_account_usecase.dart';
+import '../../domain/usecases/delete_account_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import 'accounts_event.dart';
 import 'accounts_state.dart';
@@ -16,6 +17,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final GetAccountByIdUseCase _getAccountByIdUseCase;
   final CreateAccountUseCase _createAccountUseCase;
   final UpdateAccountUseCase _updateAccountUseCase;
+  final DeleteAccountUseCase _deleteAccountUseCase;
   final AccountsRepository _accountsRepository;
 
   AccountsBloc({
@@ -23,11 +25,13 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required GetAccountByIdUseCase getAccountByIdUseCase,
     required CreateAccountUseCase createAccountUseCase,
     required UpdateAccountUseCase updateAccountUseCase,
+    required DeleteAccountUseCase deleteAccountUseCase,
     required AccountsRepository accountsRepository,
   }) : _getAccountsUseCase = getAccountsUseCase,
        _getAccountByIdUseCase = getAccountByIdUseCase,
        _createAccountUseCase = createAccountUseCase,
        _updateAccountUseCase = updateAccountUseCase,
+       _deleteAccountUseCase = deleteAccountUseCase,
        _accountsRepository = accountsRepository,
        super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
@@ -40,6 +44,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<LoadAccountDetails>(_onLoadAccountDetails);
     on<CreateAccount>(_onCreateAccount);
     on<UpdateAccount>(_onUpdateAccount);
+    on<DeleteAccount>(_onDeleteAccount);
   }
 
   Future<void> _onLoadAccounts(
@@ -329,6 +334,21 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(AccountUpdated(updatedAccount));
     } catch (e) {
       emit(AccountUpdateFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteAccount(
+    DeleteAccount event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountDeleting());
+
+      await _deleteAccountUseCase(event.accountId);
+
+      emit(AccountDeleted(event.accountId));
+    } catch (e) {
+      emit(AccountDeletionFailure(e.toString(), event.accountId));
     }
   }
 }

@@ -164,3 +164,24 @@ class AccountUpdateFailure extends AccountsState {
   @override
   List<Object?> get props => [message];
 }
+
+class AccountDeleting extends AccountsState {}
+
+class AccountDeleted extends AccountsState {
+  final String accountId;
+
+  const AccountDeleted(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AccountDeletionFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AccountDeletionFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
+}

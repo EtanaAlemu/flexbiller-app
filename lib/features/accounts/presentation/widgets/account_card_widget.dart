@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/account.dart';
 import '../pages/account_details_page.dart';
+import '../widgets/delete_account_dialog.dart';
 
 class AccountCardWidget extends StatelessWidget {
   final Account account;
+  final VoidCallback? onAccountDeleted;
 
-  const AccountCardWidget({Key? key, required this.account}) : super(key: key);
+  const AccountCardWidget({
+    Key? key,
+    required this.account,
+    this.onAccountDeleted,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +147,20 @@ class AccountCardWidget extends StatelessWidget {
                     ),
                   ],
                   const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) => DeleteAccountDialog(
+                          account: account,
+                          onAccountDeleted: onAccountDeleted,
+                        ),
+                      );
+                    },
+                    tooltip: 'Delete Account',
+                    color: Colors.red[400],
+                  ),
                   Icon(
                     Icons.chevron_right,
                     color: Theme.of(
