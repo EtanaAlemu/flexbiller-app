@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/accounts_query_params.dart';
+import '../../domain/entities/account.dart';
 
 abstract class AccountsEvent extends Equatable {
   const AccountsEvent();
@@ -72,4 +73,13 @@ class LoadAccountDetails extends AccountsEvent {
 
   @override
   List<Object?> get props => [accountId];
+}
+
+class CreateAccount extends AccountsEvent {
+  final Account account;
+
+  const CreateAccount(this.account);
+
+  @override
+  List<Object?> get props => [account];
 }

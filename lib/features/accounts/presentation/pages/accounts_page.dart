@@ -7,6 +7,7 @@ import '../bloc/accounts_event.dart';
 import '../widgets/accounts_list_widget.dart';
 import '../widgets/accounts_search_widget.dart';
 import '../widgets/accounts_filter_widget.dart';
+import '../widgets/create_account_form.dart';
 import '../../../../injection_container.dart';
 
 class AccountsPage extends StatelessWidget {
@@ -54,9 +55,15 @@ class AccountsView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Navigate to create account page
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Create Account - Coming Soon!')),
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => CreateAccountForm(
+                onAccountCreated: () {
+                  // Refresh the accounts list after creation
+                  context.read<AccountsBloc>().add(const RefreshAccounts());
+                },
+              ),
+            ),
           );
         },
         backgroundColor: AppTheme.getSuccessColor(Theme.of(context).brightness),

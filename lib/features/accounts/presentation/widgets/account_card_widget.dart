@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/account.dart';
+import '../pages/account_details_page.dart';
 
 class AccountCardWidget extends StatelessWidget {
   final Account account;
@@ -14,10 +15,10 @@ class AccountCardWidget extends StatelessWidget {
       margin: EdgeInsets.zero,
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to account details page
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Viewing ${account.displayName} - Coming Soon!'),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AccountDetailsPage(accountId: account.id),
             ),
           );
         },

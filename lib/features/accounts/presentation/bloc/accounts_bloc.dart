@@ -4,6 +4,7 @@ import '../../domain/entities/account.dart';
 import '../../domain/entities/accounts_query_params.dart';
 import '../../domain/usecases/get_accounts_usecase.dart';
 import '../../domain/usecases/get_account_by_id_usecase.dart';
+import '../../domain/usecases/create_account_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import 'accounts_event.dart';
 import 'accounts_state.dart';
@@ -12,14 +13,17 @@ import 'accounts_state.dart';
 class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final GetAccountsUseCase _getAccountsUseCase;
   final GetAccountByIdUseCase _getAccountByIdUseCase;
+  final CreateAccountUseCase _createAccountUseCase;
   final AccountsRepository _accountsRepository;
 
   AccountsBloc({
     required GetAccountsUseCase getAccountsUseCase,
     required GetAccountByIdUseCase getAccountByIdUseCase,
+    required CreateAccountUseCase createAccountUseCase,
     required AccountsRepository accountsRepository,
   }) : _getAccountsUseCase = getAccountsUseCase,
        _getAccountByIdUseCase = getAccountByIdUseCase,
+       _createAccountUseCase = createAccountUseCase,
        _accountsRepository = accountsRepository,
        super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
@@ -30,6 +34,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<FilterAccountsByBalance>(_onFilterAccountsByBalance);
     on<ClearFilters>(_onClearFilters);
     on<LoadAccountDetails>(_onLoadAccountDetails);
+    on<CreateAccount>(_onCreateAccount);
   }
 
   Future<void> _onLoadAccounts(
@@ -289,6 +294,21 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(AccountDetailsLoaded(account));
     } catch (e) {
       emit(AccountDetailsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onCreateAccount(
+    CreateAccount event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountCreating());
+
+      final newAccount = await _createAccountUseCase(event.account);
+
+      emit(AccountCreated(newAccount));
+    } catch (e) {
+      emit(AccountCreationFailure(e.toString()));
     }
   }
 }
