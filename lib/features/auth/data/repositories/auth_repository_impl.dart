@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
+import '../models/auth_response.dart';
 
 @Injectable(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -16,6 +17,8 @@ class AuthRepositoryImpl implements AuthRepository {
       
       // Store tokens in secure storage
       // TODO: Inject SecureStorageService and store tokens
+      // await _secureStorage.write(key: AppConstants.authTokenKey, value: authResponse.accessToken);
+      // await _secureStorage.write(key: AppConstants.refreshTokenKey, value: authResponse.refreshToken);
       
       return authResponse.user.toEntity();
     } catch (e) {
@@ -61,11 +64,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> refreshToken() async {
+  Future<AuthResponse> refreshToken() async {
     try {
       // TODO: Get refresh token from secure storage
       final refreshToken = 'dummy_token';
-      await _remoteDataSource.refreshToken(refreshToken);
+      // Call remote data source to refresh token
+      return await _remoteDataSource.refreshToken(refreshToken);
     } catch (e) {
       rethrow;
     }

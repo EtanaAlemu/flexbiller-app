@@ -44,18 +44,25 @@ class DioClient {
             if (refreshToken != null) {
               try {
                 final response = await _dio.post(
-                  '/auth/refresh',
-                  data: {'refresh_token': refreshToken},
+                  '/auth/refresh-token',
+                  data: {'refreshToken': refreshToken},
                 );
                 
                 if (response.statusCode == 200) {
-                  final newToken = response.data['access_token'];
-                  await _secureStorage.write(key: AppConstants.authTokenKey, value: newToken);
-                  
-                  // Retry original request with new token
-                  error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-                  final retryResponse = await _dio.fetch(error.requestOptions);
-                  return handler.resolve(retryResponse);
+                  final responseData = response.data;
+                  if (responseData['success'] == true && responseData['data'] != null) {
+                    final newToken = responseData['data']['access_token'];
+                    final newRefreshToken = responseData['data']['refresh_token'];
+                    
+                    // Store new tokens
+                    await _secureStorage.write(key: AppConstants.authTokenKey, value: newToken);
+                    await _secureStorage.write(key: AppConstants.refreshTokenKey, value: newRefreshToken);
+                    
+                    // Retry original request with new token
+                    error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+                    final retryResponse = await _dio.fetch(error.requestOptions);
+                    return handler.resolve(retryResponse);
+                  }
                 }
               } catch (refreshError) {
                 // Refresh failed, clear tokens and redirect to login

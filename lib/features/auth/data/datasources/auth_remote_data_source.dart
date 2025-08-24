@@ -8,7 +8,7 @@ abstract class AuthRemoteDataSource {
   Future<AuthResponse> login(String email, String password);
   Future<AuthResponse> register(String email, String password, String name);
   Future<void> logout();
-  Future<void> refreshToken(String refreshToken);
+  Future<AuthResponse> refreshToken(String refreshToken);
   Future<void> forgotPassword(String email);
 }
 
@@ -148,20 +148,60 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> refreshToken(String refreshToken) async {
+  Future<AuthResponse> refreshToken(String refreshToken) async {
     try {
       final response = await dio.post(
-        '/auth/refresh',
+        '/auth/refresh-token',
         data: {
-          'refresh_token': refreshToken,
+          'refreshToken': refreshToken,
         },
       );
 
-      if (response.statusCode != 200) {
-        throw AuthException('Token refresh failed');
+      if (response.statusCode == 200) {
+        final apiResponse = ApiResponse<AuthResponse>.fromJson(
+          response.data,
+          (json) => AuthResponse.fromJson(json),
+        );
+
+        if (apiResponse.success && apiResponse.data != null) {
+          // Check if the nested data also indicates success
+          if (apiResponse.data!.success) {
+            return apiResponse.data!;
+          } else {
+            throw ServerException(
+              'Token refresh failed: ${apiResponse.message}',
+              response.statusCode,
+            );
+          }
+        } else {
+          throw ServerException(
+            apiResponse.message ?? 'Token refresh failed',
+            response.statusCode,
+          );
+        }
+      } else {
+        throw ServerException(
+          'Token refresh failed with status: ${response.statusCode}',
+          response.statusCode,
+        );
       }
     } on DioException catch (e) {
-      throw AuthException('Token refresh failed: ${e.message}');
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Invalid refresh token');
+      } else if (e.response?.statusCode == 400) {
+        throw ValidationException('Invalid refresh token format');
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Request timeout');
+      } else {
+        throw ServerException(
+          e.message ?? 'Network error occurred',
+          e.response?.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
     }
   }
 
