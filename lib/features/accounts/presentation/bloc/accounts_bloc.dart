@@ -9,6 +9,7 @@ import '../../domain/usecases/update_account_usecase.dart';
 import '../../domain/usecases/delete_account_usecase.dart';
 import '../../domain/usecases/get_account_timeline_usecase.dart';
 import '../../domain/usecases/get_account_tags_usecase.dart';
+import '../../domain/usecases/get_all_tags_for_account_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/repositories/account_tags_repository.dart';
 import 'accounts_event.dart';
@@ -23,6 +24,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final DeleteAccountUseCase _deleteAccountUseCase;
   final GetAccountTimelineUseCase _getAccountTimelineUseCase;
   final GetAccountTagsUseCase _getAccountTagsUseCase;
+  final GetAllTagsForAccountUseCase _getAllTagsForAccountUseCase;
   final AccountsRepository _accountsRepository;
   final AccountTagsRepository _accountTagsRepository;
 
@@ -34,6 +36,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required DeleteAccountUseCase deleteAccountUseCase,
     required GetAccountTimelineUseCase getAccountTimelineUseCase,
     required GetAccountTagsUseCase getAccountTagsUseCase,
+    required GetAllTagsForAccountUseCase getAllTagsForAccountUseCase,
     required AccountsRepository accountsRepository,
     required AccountTagsRepository accountTagsRepository,
   })  : _getAccountsUseCase = getAccountsUseCase,
@@ -43,6 +46,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         _deleteAccountUseCase = deleteAccountUseCase,
         _getAccountTimelineUseCase = getAccountTimelineUseCase,
         _getAccountTagsUseCase = getAccountTagsUseCase,
+        _getAllTagsForAccountUseCase = getAllTagsForAccountUseCase,
         _accountsRepository = accountsRepository,
         _accountTagsRepository = accountTagsRepository,
         super(AccountsInitial()) {
@@ -63,6 +67,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<RefreshAccountTags>(_onRefreshAccountTags);
     on<AssignTagToAccount>(_onAssignTagToAccount);
     on<RemoveTagFromAccount>(_onRemoveTagFromAccount);
+    on<LoadAllTagsForAccount>(_onLoadAllTagsForAccount);
+    on<RefreshAllTagsForAccount>(_onRefreshAllTagsForAccount);
   }
 
   Future<void> _onLoadAccounts(
@@ -449,6 +455,32 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(TagRemoved(event.accountId, event.tagId));
     } catch (e) {
       emit(TagRemovalFailure(e.toString(), event.accountId, event.tagId));
+    }
+  }
+
+  Future<void> _onLoadAllTagsForAccount(
+    LoadAllTagsForAccount event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AllTagsForAccountLoading(event.accountId));
+      final tags = await _getAllTagsForAccountUseCase(event.accountId);
+      emit(AllTagsForAccountLoaded(event.accountId, tags));
+    } catch (e) {
+      emit(AllTagsForAccountFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onRefreshAllTagsForAccount(
+    RefreshAllTagsForAccount event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AllTagsForAccountLoading(event.accountId));
+      final tags = await _getAllTagsForAccountUseCase(event.accountId);
+      emit(AllTagsForAccountLoaded(event.accountId, tags));
+    } catch (e) {
+      emit(AllTagsForAccountFailure(e.toString(), event.accountId));
     }
   }
 }

@@ -7,6 +7,9 @@ abstract class AccountTagsRepository {
   /// Get all available tags in the system
   Future<List<AccountTag>> getAllTags();
   
+  /// Get all available tags for a specific account (including unassigned ones)
+  Future<List<AccountTag>> getAllTagsForAccount(String accountId);
+  
   /// Create a new tag
   Future<AccountTag> createTag(AccountTag tag);
   

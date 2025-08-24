@@ -23,7 +23,8 @@ class AccountDetailsPage extends StatelessWidget {
       create: (context) => getIt<AccountsBloc>()
         ..add(LoadAccountDetails(accountId))
         ..add(LoadAccountTimeline(accountId))
-        ..add(LoadAccountTags(accountId)),
+        ..add(LoadAccountTags(accountId))
+        ..add(LoadAllTagsForAccount(accountId)),
       child: AccountDetailsView(accountId: accountId),
     );
   }
@@ -80,88 +81,98 @@ class AccountDetailsView extends StatelessWidget {
 
         if (state is AccountDetailsLoaded) {
           final account = state.account;
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Account Details'),
-              backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditAccountForm(
-                          account: account,
-                          onAccountUpdated: () {
-                            // Refresh account details after update
-                            context.read<AccountsBloc>().add(
-                              LoadAccountDetails(accountId),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                  tooltip: 'Edit Account',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) => DeleteAccountDialog(
-                        account: account,
-                        onAccountDeleted: () {
-                          Navigator.of(context).pop(); // Close details page
-                          // Navigate back to accounts list
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    );
-                  },
-                  tooltip: 'Delete Account',
-                ),
-              ],
-            ),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Account Details Tabs
-                  DefaultTabController(
-                    length: 3,
-                    child: Column(
-                      children: [
-                        TabBar(
-                          tabs: const [
-                            Tab(text: 'Details'),
-                            Tab(text: 'Timeline'),
-                            Tab(text: 'Tags'),
-                          ],
-                          labelColor: Theme.of(context).colorScheme.primary,
-                          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                          indicatorColor: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 600, // Fixed height for tabs
-                          child: TabBarView(
-                            children: [
-                              // Details Tab
-                              _buildAccountDetailsTab(context, account),
-                              // Timeline Tab
-                              AccountTimelineWidget(accountId: accountId),
-                              // Tags Tab
-                              AccountTagsWidget(accountId: accountId),
-                            ],
+          return BlocListener<AccountsBloc, AccountsState>(
+            listener: (context, state) {
+              if (state is TagAssigned || state is TagRemoved) {
+                // Refresh tags after assignment/removal
+                context.read<AccountsBloc>().add(LoadAccountTags(accountId));
+              }
+            },
+            child: Scaffold(
+              appBar: AppBar(
+                title: const Text('Account Details'),
+                backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditAccountForm(
+                            account: account,
+                            onAccountUpdated: () {
+                              // Refresh account details after update
+                              context.read<AccountsBloc>().add(
+                                LoadAccountDetails(accountId),
+                              );
+                            },
                           ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
+                    tooltip: 'Edit Account',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) => DeleteAccountDialog(
+                          account: account,
+                          onAccountDeleted: () {
+                            Navigator.of(context).pop(); // Close details page
+                            // Navigate back to accounts list
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      );
+                    },
+                    tooltip: 'Delete Account',
                   ),
                 ],
+              ),
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Account Details Tabs
+                    DefaultTabController(
+                      length: 3,
+                      child: Column(
+                        children: [
+                          TabBar(
+                            tabs: const [
+                              Tab(text: 'Details'),
+                              Tab(text: 'Timeline'),
+                              Tab(text: 'Tags'),
+                            ],
+                            labelColor: Theme.of(context).colorScheme.primary,
+                            unselectedLabelColor: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.6),
+                            indicatorColor: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 600, // Fixed height for tabs
+                            child: TabBarView(
+                              children: [
+                                // Details Tab
+                                _buildAccountDetailsTab(context, account),
+                                // Timeline Tab
+                                AccountTimelineWidget(accountId: accountId),
+                                // Tags Tab
+                                AccountTagsWidget(accountId: accountId),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -530,11 +541,7 @@ class AccountDetailsView extends StatelessWidget {
                 account.balance,
                 account.formattedBalance,
               ),
-              _buildBalanceRow(
-                'CBA',
-                account.cba,
-                account.formattedCba,
-              ),
+              _buildBalanceRow('CBA', account.cba, account.formattedCba),
             ],
           ),
           const SizedBox(height: 16),

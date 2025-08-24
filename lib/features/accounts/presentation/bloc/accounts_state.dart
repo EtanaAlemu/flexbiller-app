@@ -307,3 +307,32 @@ class TagRemovalFailure extends AccountsState {
   @override
   List<Object?> get props => [message, accountId, tagId];
 }
+
+class AllTagsForAccountLoading extends AccountsState {
+  final String accountId;
+
+  const AllTagsForAccountLoading(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AllTagsForAccountLoaded extends AccountsState {
+  final String accountId;
+  final List<AccountTag> tags;
+
+  const AllTagsForAccountLoaded(this.accountId, this.tags);
+
+  @override
+  List<Object?> get props => [accountId, tags];
+}
+
+class AllTagsForAccountFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AllTagsForAccountFailure(this.message, this.accountId);
+
+  @override
+  List<Object?> get props => [message, accountId];
+}

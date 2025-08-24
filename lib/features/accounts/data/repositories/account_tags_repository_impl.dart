@@ -31,6 +31,16 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
   }
 
   @override
+  Future<List<AccountTag>> getAllTagsForAccount(String accountId) async {
+    try {
+      final tagsModels = await _remoteDataSource.getAllTagsForAccount(accountId);
+      return tagsModels.map((tag) => tag.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<AccountTag> createTag(AccountTag tag) async {
     try {
       // Convert entity to model for API call

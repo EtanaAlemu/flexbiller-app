@@ -6,6 +6,7 @@ import '../models/account_tag_model.dart';
 abstract class AccountTagsRemoteDataSource {
   Future<List<AccountTagAssignmentModel>> getAccountTags(String accountId);
   Future<List<AccountTagModel>> getAllTags();
+  Future<List<AccountTagModel>> getAllTagsForAccount(String accountId);
   Future<AccountTagModel> createTag(AccountTagModel tag);
   Future<AccountTagModel> updateTag(AccountTagModel tag);
   Future<void> deleteTag(String tagId);
@@ -23,7 +24,9 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   AccountTagsRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<List<AccountTagAssignmentModel>> getAccountTags(String accountId) async {
+  Future<List<AccountTagAssignmentModel>> getAccountTags(
+    String accountId,
+  ) async {
     try {
       final response = await _dio.get('/accounts/$accountId/tags');
 
@@ -33,9 +36,11 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> tagsData = responseData['data'] as List<dynamic>;
           return tagsData
-              .map((tag) => AccountTagAssignmentModel.fromJson(
-                    tag as Map<String, dynamic>,
-                  ))
+              .map(
+                (tag) => AccountTagAssignmentModel.fromJson(
+                  tag as Map<String, dynamic>,
+                ),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -80,9 +85,9 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> tagsData = responseData['data'] as List<dynamic>;
           return tagsData
-              .map((tag) => AccountTagModel.fromJson(
-                    tag as Map<String, dynamic>,
-                  ))
+              .map(
+                (tag) => AccountTagModel.fromJson(tag as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -90,9 +95,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
           );
         }
       } else {
-        throw ServerException(
-          'Failed to fetch tags: ${response.statusCode}',
-        );
+        throw ServerException('Failed to fetch tags: ${response.statusCode}');
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -115,12 +118,54 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   }
 
   @override
+  Future<List<AccountTagModel>> getAllTagsForAccount(String accountId) async {
+    try {
+      final response = await _dio.get('/accounts/$accountId/allTags');
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final List<dynamic> tagsData = responseData['data'] as List<dynamic>;
+          return tagsData
+              .map(
+                (tag) => AccountTagModel.fromJson(tag as Map<String, dynamic>),
+              )
+              .toList();
+        } else {
+          throw ServerException(
+            responseData['message'] ?? 'Failed to fetch account tags',
+          );
+        }
+      } else {
+        throw ServerException('Failed to fetch account tags: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized access to account tags');
+      } else if (e.response?.statusCode == 403) {
+        throw AuthException(
+          'Forbidden: Insufficient permissions to access account tags',
+        );
+      } else if (e.response?.statusCode == 404) {
+        throw ValidationException('Account not found');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout while fetching account tags');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('No internet connection');
+      } else {
+        throw ServerException('Failed to fetch account tags: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
   Future<AccountTagModel> createTag(AccountTagModel tag) async {
     try {
-      final response = await _dio.post(
-        '/tags',
-        data: tag.toJson(),
-      );
+      final response = await _dio.post('/tags', data: tag.toJson());
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final responseData = response.data;
@@ -135,9 +180,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
           );
         }
       } else {
-        throw ServerException(
-          'Failed to create tag: ${response.statusCode}',
-        );
+        throw ServerException('Failed to create tag: ${response.statusCode}');
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -164,10 +207,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   @override
   Future<AccountTagModel> updateTag(AccountTagModel tag) async {
     try {
-      final response = await _dio.put(
-        '/tags/${tag.id}',
-        data: tag.toJson(),
-      );
+      final response = await _dio.put('/tags/${tag.id}', data: tag.toJson());
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -182,9 +222,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
           );
         }
       } else {
-        throw ServerException(
-          'Failed to update tag: ${response.statusCode}',
-        );
+        throw ServerException('Failed to update tag: ${response.statusCode}');
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -216,9 +254,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
       final response = await _dio.delete('/tags/$tagId');
 
       if (response.statusCode != 200 && response.statusCode != 204) {
-        throw ServerException(
-          'Failed to delete tag: ${response.statusCode}',
-        );
+        throw ServerException('Failed to delete tag: ${response.statusCode}');
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {

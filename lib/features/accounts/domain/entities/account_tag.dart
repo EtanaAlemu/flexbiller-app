@@ -25,16 +25,16 @@ class AccountTag extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        description,
-        color,
-        icon,
-        createdAt,
-        updatedAt,
-        createdBy,
-        isActive,
-      ];
+    id,
+    name,
+    description,
+    color,
+    icon,
+    createdAt,
+    updatedAt,
+    createdBy,
+    isActive,
+  ];
 
   AccountTag copyWith({
     String? id,
@@ -66,7 +66,7 @@ class AccountTag extends Equatable {
   String get formattedCreatedAt {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
     } else if (difference.inHours > 0) {
@@ -102,15 +102,15 @@ class AccountTagAssignment extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        accountId,
-        tagId,
-        tagName,
-        tagColor,
-        tagIcon,
-        assignedAt,
-        assignedBy,
-      ];
+    id,
+    accountId,
+    tagId,
+    tagName,
+    tagColor,
+    tagIcon,
+    assignedAt,
+    assignedBy,
+  ];
 
   String get displayColor => tagColor ?? '#2196F3';
   String get displayIcon => tagIcon ?? 'label';

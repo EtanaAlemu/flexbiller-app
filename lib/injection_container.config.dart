@@ -46,6 +46,8 @@ import 'features/accounts/domain/usecases/get_account_tags_usecase.dart'
 import 'features/accounts/domain/usecases/get_account_timeline_usecase.dart'
     as _i711;
 import 'features/accounts/domain/usecases/get_accounts_usecase.dart' as _i684;
+import 'features/accounts/domain/usecases/get_all_tags_for_account_usecase.dart'
+    as _i384;
 import 'features/accounts/domain/usecases/update_account_usecase.dart' as _i651;
 import 'features/accounts/presentation/bloc/accounts_bloc.dart' as _i795;
 import 'features/auth/data/datasources/auth_remote_data_source.dart' as _i767;
@@ -98,6 +100,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i227.GetAccountTagsUseCase>(
     () => _i227.GetAccountTagsUseCase(gh<_i363.AccountTagsRepository>()),
+  );
+  gh.factory<_i384.GetAllTagsForAccountUseCase>(
+    () => _i384.GetAllTagsForAccountUseCase(gh<_i363.AccountTagsRepository>()),
   );
   gh.factory<_i400.GetAccountByIdUseCase>(
     () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
@@ -159,6 +164,7 @@ _i174.GetIt $initGetIt(
       deleteAccountUseCase: gh<_i823.DeleteAccountUseCase>(),
       getAccountTimelineUseCase: gh<_i711.GetAccountTimelineUseCase>(),
       getAccountTagsUseCase: gh<_i227.GetAccountTagsUseCase>(),
+      getAllTagsForAccountUseCase: gh<_i384.GetAllTagsForAccountUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
     ),

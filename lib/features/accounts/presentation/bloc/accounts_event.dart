@@ -157,3 +157,21 @@ class RemoveTagFromAccount extends AccountsEvent {
   @override
   List<Object?> get props => [accountId, tagId];
 }
+
+class LoadAllTagsForAccount extends AccountsEvent {
+  final String accountId;
+
+  const LoadAllTagsForAccount(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class RefreshAllTagsForAccount extends AccountsEvent {
+  final String accountId;
+
+  const RefreshAllTagsForAccount(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}

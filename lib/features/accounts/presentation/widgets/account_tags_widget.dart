@@ -8,10 +8,8 @@ import '../bloc/accounts_state.dart';
 class AccountTagsWidget extends StatelessWidget {
   final String accountId;
 
-  const AccountTagsWidget({
-    Key? key,
-    required this.accountId,
-  }) : super(key: key);
+  const AccountTagsWidget({Key? key, required this.accountId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +49,8 @@ class AccountTagsWidget extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     context.read<AccountsBloc>().add(
-                          RefreshAccountTags(accountId),
-                        );
+                      RefreshAccountTags(accountId),
+                    );
                   },
                   child: const Text('Retry'),
                 ),
@@ -89,7 +87,9 @@ class AccountTagsWidget extends StatelessWidget {
                       Icon(
                         Icons.label_outline,
                         size: 48,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.5),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -123,9 +123,7 @@ class AccountTagsWidget extends StatelessWidget {
           );
         }
 
-        return const Center(
-          child: Text('No tags data available'),
-        );
+        return const Center(child: Text('No tags data available'));
       },
     );
   }
@@ -134,11 +132,7 @@ class AccountTagsWidget extends StatelessWidget {
     return Chip(
       avatar: CircleAvatar(
         backgroundColor: _parseColor(tag.displayColor),
-        child: Icon(
-          _parseIcon(tag.displayIcon),
-          color: Colors.white,
-          size: 16,
-        ),
+        child: Icon(_parseIcon(tag.displayIcon), color: Colors.white, size: 16),
       ),
       label: Text(
         tag.tagName,
@@ -147,9 +141,7 @@ class AccountTagsWidget extends StatelessWidget {
         ),
       ),
       backgroundColor: _parseColor(tag.displayColor).withOpacity(0.1),
-      side: BorderSide(
-        color: _parseColor(tag.displayColor).withOpacity(0.3),
-      ),
+      side: BorderSide(color: _parseColor(tag.displayColor).withOpacity(0.3)),
       deleteIcon: Icon(
         Icons.remove_circle_outline,
         color: _parseColor(tag.displayColor),
@@ -163,8 +155,14 @@ class AccountTagsWidget extends StatelessWidget {
   void _showAddTagDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => const AddTagDialog(),
-    );
+      builder: (context) => AddTagDialog(accountId: accountId),
+    ).then((selectedTagId) {
+      if (selectedTagId != null) {
+        context.read<AccountsBloc>().add(
+              AssignTagToAccount(accountId, selectedTagId as String),
+            );
+      }
+    });
   }
 
   void _removeTag(BuildContext context, AccountTagAssignment tag) {
@@ -184,8 +182,8 @@ class AccountTagsWidget extends StatelessWidget {
             onPressed: () {
               Navigator.of(context).pop();
               context.read<AccountsBloc>().add(
-                    RemoveTagFromAccount(accountId, tag.tagId),
-                  );
+                RemoveTagFromAccount(accountId, tag.tagId),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -201,7 +199,9 @@ class AccountTagsWidget extends StatelessWidget {
   Color _parseColor(String colorString) {
     try {
       if (colorString.startsWith('#')) {
-        return Color(int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
+        return Color(
+          int.parse(colorString.substring(1), radix: 16) + 0xFF000000,
+        );
       }
       return Colors.blue;
     } catch (e) {
@@ -232,7 +232,9 @@ class AccountTagsWidget extends StatelessWidget {
 }
 
 class AddTagDialog extends StatefulWidget {
-  const AddTagDialog({Key? key}) : super(key: key);
+  final String accountId;
+
+  const AddTagDialog({Key? key, required this.accountId}) : super(key: key);
 
   @override
   State<AddTagDialog> createState() => _AddTagDialogState();
@@ -240,69 +242,67 @@ class AddTagDialog extends StatefulWidget {
 
 class _AddTagDialogState extends State<AddTagDialog> {
   String? selectedTagId;
-  List<AccountTag> availableTags = [];
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAvailableTags();
-  }
-
-  Future<void> _loadAvailableTags() async {
-    // This would load available tags from the repository
-    // For now, we'll use mock data
-    setState(() {
-      availableTags = [
-        AccountTag(
-          id: '1',
-          name: 'VIP',
-          description: 'Very Important Person',
-          color: '#FFD700',
-          icon: 'star',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          createdBy: 'system',
-        ),
-        AccountTag(
-          id: '2',
-          name: 'Premium',
-          description: 'Premium customer',
-          color: '#9C27B0',
-          icon: 'favorite',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          createdBy: 'system',
-        ),
-        AccountTag(
-          id: '3',
-          name: 'New',
-          description: 'New customer',
-          color: '#4CAF50',
-          icon: 'check_circle',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          createdBy: 'system',
-        ),
-      ];
-      isLoading = false;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Add Tag'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
+    return BlocBuilder<AccountsBloc, AccountsState>(
+      builder: (context, state) {
+        if (state is AllTagsForAccountLoading) {
+          return const AlertDialog(
+            content: SizedBox(
+              height: 100,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        }
+
+        if (state is AllTagsForAccountFailure) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('Failed to load tags: ${state.message}'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  context.read<AccountsBloc>().add(
+                        RefreshAllTagsForAccount(widget.accountId),
+                      );
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          );
+        }
+
+        if (state is AllTagsForAccountLoaded) {
+          if (state.tags.isEmpty) {
+            return AlertDialog(
+              title: const Text('No Tags Available'),
+              content: const Text(
+                'There are no tags available to assign to this account.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          }
+
+          return AlertDialog(
+            title: const Text('Add Tag'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('Select a tag to assign to this account:'),
                   const SizedBox(height: 16),
-                  ...availableTags.map((tag) {
+                  ...state.tags.map((tag) {
                     return RadioListTile<String>(
                       value: tag.id,
                       groupValue: selectedTagId,
@@ -337,28 +337,40 @@ class _AddTagDialogState extends State<AddTagDialog> {
                   }).toList(),
                 ],
               ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: selectedTagId != null
-              ? () {
-                  Navigator.of(context).pop(selectedTagId);
-                }
-              : null,
-          child: const Text('Add Tag'),
-        ),
-      ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: selectedTagId != null
+                    ? () {
+                        Navigator.of(context).pop(selectedTagId);
+                      }
+                    : null,
+                child: const Text('Add Tag'),
+              ),
+            ],
+          );
+        }
+
+        return const AlertDialog(
+          content: SizedBox(
+            height: 100,
+            child: Center(child: Text('No tags data available')),
+          ),
+        );
+      },
     );
   }
 
   Color _parseColor(String colorString) {
     try {
       if (colorString.startsWith('#')) {
-        return Color(int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
+        return Color(
+          int.parse(colorString.substring(1), radix: 16) + 0xFF000000,
+        );
       }
       return Colors.blue;
     } catch (e) {
