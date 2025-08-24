@@ -63,24 +63,20 @@ class AccountTagModel {
 
 @JsonSerializable()
 class AccountTagAssignmentModel {
-  final String id;
-  final String accountId;
   final String tagId;
-  final String tagName;
-  final String? tagColor;
-  final String? tagIcon;
-  final DateTime assignedAt;
-  final String assignedBy;
+  final String objectType;
+  final String objectId;
+  final String tagDefinitionId;
+  final String tagDefinitionName;
+  final List<dynamic> auditLogs;
 
   const AccountTagAssignmentModel({
-    required this.id,
-    required this.accountId,
     required this.tagId,
-    required this.tagName,
-    this.tagColor,
-    this.tagIcon,
-    required this.assignedAt,
-    required this.assignedBy,
+    required this.objectType,
+    required this.objectId,
+    required this.tagDefinitionId,
+    required this.tagDefinitionName,
+    required this.auditLogs,
   });
 
   factory AccountTagAssignmentModel.fromJson(Map<String, dynamic> json) =>
@@ -89,28 +85,28 @@ class AccountTagAssignmentModel {
   Map<String, dynamic> toJson() => _$AccountTagAssignmentModelToJson(this);
 
   factory AccountTagAssignmentModel.fromEntity(AccountTagAssignment entity) {
+    // Legacy conversion - the new structure is different
     return AccountTagAssignmentModel(
-      id: entity.id,
-      accountId: entity.accountId,
-      tagId: entity.tagId,
-      tagName: entity.tagName,
-      tagColor: entity.tagColor,
-      tagIcon: entity.tagIcon,
-      assignedAt: entity.assignedAt,
-      assignedBy: entity.assignedBy,
+      tagId: entity.id,
+      objectType: 'ACCOUNT',
+      objectId: entity.accountId,
+      tagDefinitionId: entity.tagId,
+      tagDefinitionName: entity.tagName,
+      auditLogs: const [],
     );
   }
 
   AccountTagAssignment toEntity() {
+    // Convert the new API structure to the legacy entity structure
     return AccountTagAssignment(
-      id: id,
-      accountId: accountId,
-      tagId: tagId,
-      tagName: tagName,
-      tagColor: tagColor,
-      tagIcon: tagIcon,
-      assignedAt: assignedAt,
-      assignedBy: assignedBy,
+      id: tagId,
+      accountId: objectId,
+      tagId: tagDefinitionId,
+      tagName: tagDefinitionName,
+      tagColor: null, // Not provided by API
+      tagIcon: null,  // Not provided by API
+      assignedAt: DateTime.now(), // Not provided by API
+      assignedBy: 'System', // Not provided by API
     );
   }
 }

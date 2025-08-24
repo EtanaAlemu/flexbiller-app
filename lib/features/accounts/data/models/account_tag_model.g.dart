@@ -35,25 +35,21 @@ Map<String, dynamic> _$AccountTagModelToJson(AccountTagModel instance) =>
 AccountTagAssignmentModel _$AccountTagAssignmentModelFromJson(
   Map<String, dynamic> json,
 ) => AccountTagAssignmentModel(
-  id: json['id'] as String,
-  accountId: json['accountId'] as String,
   tagId: json['tagId'] as String,
-  tagName: json['tagName'] as String,
-  tagColor: json['tagColor'] as String?,
-  tagIcon: json['tagIcon'] as String?,
-  assignedAt: DateTime.parse(json['assignedAt'] as String),
-  assignedBy: json['assignedBy'] as String,
+  objectType: json['objectType'] as String,
+  objectId: json['objectId'] as String,
+  tagDefinitionId: json['tagDefinitionId'] as String,
+  tagDefinitionName: json['tagDefinitionName'] as String,
+  auditLogs: json['auditLogs'] as List<dynamic>,
 );
 
 Map<String, dynamic> _$AccountTagAssignmentModelToJson(
   AccountTagAssignmentModel instance,
 ) => <String, dynamic>{
-  'id': instance.id,
-  'accountId': instance.accountId,
   'tagId': instance.tagId,
-  'tagName': instance.tagName,
-  'tagColor': instance.tagColor,
-  'tagIcon': instance.tagIcon,
-  'assignedAt': instance.assignedAt.toIso8601String(),
-  'assignedBy': instance.assignedBy,
+  'objectType': instance.objectType,
+  'objectId': instance.objectId,
+  'tagDefinitionId': instance.tagDefinitionId,
+  'tagDefinitionName': instance.tagDefinitionName,
+  'auditLogs': instance.auditLogs,
 };

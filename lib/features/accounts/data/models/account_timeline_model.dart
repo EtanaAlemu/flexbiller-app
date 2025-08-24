@@ -63,72 +63,79 @@ class AccountTimelineModel {
   AccountTimeline toEntity() {
     // Convert the comprehensive timeline to a simplified timeline for backward compatibility
     final List<TimelineEvent> events = [];
-    
+
     // Add bundle events
     for (final bundle in bundles) {
       for (final subscription in bundle.subscriptions) {
         for (final event in subscription.events) {
-          events.add(TimelineEvent(
-            id: event.eventId,
-            eventType: event.eventType.toLowerCase(),
-            title: '${event.product} - ${event.eventType}',
-            description: '${event.plan} (${event.billingPeriod})',
-            timestamp: DateTime.parse(event.effectiveDate),
-            metadata: {
-              'bundleId': bundle.bundleId,
-              'subscriptionId': subscription.subscriptionId,
-              'product': event.product,
-              'plan': event.plan,
-              'billingPeriod': event.billingPeriod,
-              'phase': event.phase,
-              'serviceName': event.serviceName,
-              'serviceStateName': event.serviceStateName,
-            },
-          ));
+          events.add(
+            TimelineEvent(
+              id: event.eventId,
+              eventType: event.eventType.toLowerCase(),
+              title: '${event.product} - ${event.eventType}',
+              description: '${event.plan} (${event.billingPeriod})',
+              timestamp: DateTime.parse(event.effectiveDate),
+              metadata: {
+                'bundleId': bundle.bundleId,
+                'subscriptionId': subscription.subscriptionId,
+                'product': event.product,
+                'plan': event.plan,
+                'billingPeriod': event.billingPeriod,
+                'phase': event.phase,
+                'serviceName': event.serviceName,
+                'serviceStateName': event.serviceStateName,
+              },
+            ),
+          );
         }
       }
     }
-    
+
     // Add invoice events
     for (final invoice in invoices) {
-      events.add(TimelineEvent(
-        id: invoice.invoiceId,
-        eventType: 'invoice_created',
-        title: 'Invoice #${invoice.invoiceNumber}',
-        description: '${invoice.currency} ${invoice.amount} - ${invoice.status}',
-        timestamp: DateTime.parse(invoice.invoiceDate),
-        metadata: {
-          'invoiceId': invoice.invoiceId,
-          'amount': invoice.amount,
-          'currency': invoice.currency,
-          'status': invoice.status,
-          'balance': invoice.balance,
-          'bundleKeys': invoice.bundleKeys,
-        },
-      ));
+      events.add(
+        TimelineEvent(
+          id: invoice.invoiceId,
+          eventType: 'invoice_created',
+          title: 'Invoice #${invoice.invoiceNumber}',
+          description:
+              '${invoice.currency} ${invoice.amount} - ${invoice.status}',
+          timestamp: DateTime.parse(invoice.invoiceDate),
+          metadata: {
+            'invoiceId': invoice.invoiceId,
+            'amount': invoice.amount,
+            'currency': invoice.currency,
+            'status': invoice.status,
+            'balance': invoice.balance,
+            'bundleKeys': invoice.bundleKeys,
+          },
+        ),
+      );
     }
-    
+
     // Add payment events
     for (final payment in payments) {
-      events.add(TimelineEvent(
-        id: payment.paymentId,
-        eventType: 'payment_received',
-        title: 'Payment Received',
-        description: '${payment.currency} ${payment.amount}',
-        timestamp: DateTime.parse(payment.paymentDate),
-        metadata: {
-          'paymentId': payment.paymentId,
-          'amount': payment.amount,
-          'currency': payment.currency,
-          'status': payment.status,
-          'paymentMethodId': payment.paymentMethodId,
-        },
-      ));
+      events.add(
+        TimelineEvent(
+          id: payment.paymentId,
+          eventType: 'payment_received',
+          title: 'Payment Received',
+          description: '${payment.currency} ${payment.amount}',
+          timestamp: DateTime.parse(payment.paymentDate),
+          metadata: {
+            'paymentId': payment.paymentId,
+            'amount': payment.amount,
+            'currency': payment.currency,
+            'status': payment.status,
+            'paymentMethodId': payment.paymentMethodId,
+          },
+        ),
+      );
     }
-    
+
     // Sort events by timestamp (newest first)
     events.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    
+
     return AccountTimeline(
       id: account.accountId,
       accountId: account.accountId,
