@@ -156,11 +156,19 @@ class AccountTagsWidget extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AddTagDialog(accountId: accountId),
-    ).then((selectedTagId) {
-      if (selectedTagId != null) {
-        context.read<AccountsBloc>().add(
-              AssignTagToAccount(accountId, selectedTagId as String),
-            );
+    ).then((selectedTagIds) {
+      if (selectedTagIds != null && selectedTagIds is List<String>) {
+        if (selectedTagIds.length == 1) {
+          // Single tag assignment
+          context.read<AccountsBloc>().add(
+                AssignTagToAccount(accountId, selectedTagIds.first),
+              );
+        } else {
+          // Multiple tag assignment
+          context.read<AccountsBloc>().add(
+                AssignMultipleTagsToAccount(accountId, selectedTagIds),
+              );
+        }
       }
     });
   }
@@ -241,7 +249,7 @@ class AddTagDialog extends StatefulWidget {
 }
 
 class _AddTagDialogState extends State<AddTagDialog> {
-  String? selectedTagId;
+  Set<String> selectedTagIds = {};
 
   @override
   Widget build(BuildContext context) {
@@ -294,21 +302,24 @@ class _AddTagDialogState extends State<AddTagDialog> {
           }
 
           return AlertDialog(
-            title: const Text('Add Tag'),
+            title: const Text('Add Tags'),
             content: SizedBox(
               width: double.maxFinite,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Select a tag to assign to this account:'),
+                  const Text('Select tags to assign to this account:'),
                   const SizedBox(height: 16),
                   ...state.tags.map((tag) {
-                    return RadioListTile<String>(
-                      value: tag.id,
-                      groupValue: selectedTagId,
-                      onChanged: (value) {
+                    return CheckboxListTile(
+                      value: selectedTagIds.contains(tag.id),
+                      onChanged: (bool? value) {
                         setState(() {
-                          selectedTagId = value;
+                          if (value == true) {
+                            selectedTagIds.add(tag.id);
+                          } else {
+                            selectedTagIds.remove(tag.id);
+                          }
                         });
                       },
                       title: Row(
@@ -344,12 +355,12 @@ class _AddTagDialogState extends State<AddTagDialog> {
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: selectedTagId != null
+                onPressed: selectedTagIds.isNotEmpty
                     ? () {
-                        Navigator.of(context).pop(selectedTagId);
+                        Navigator.of(context).pop(selectedTagIds.toList());
                       }
                     : null,
-                child: const Text('Add Tag'),
+                child: Text('Add ${selectedTagIds.length} Tag${selectedTagIds.length == 1 ? '' : 's'}'),
               ),
             ],
           );

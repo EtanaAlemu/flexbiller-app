@@ -90,6 +90,22 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
   }
 
   @override
+  Future<List<AccountTagAssignment>> assignMultipleTagsToAccount(
+    String accountId,
+    List<String> tagIds,
+  ) async {
+    try {
+      final assignmentModels = await _remoteDataSource.assignMultipleTagsToAccount(
+        accountId,
+        tagIds,
+      );
+      return assignmentModels.map((tag) => tag.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> removeTagFromAccount(String accountId, String tagId) async {
     try {
       await _remoteDataSource.removeTagFromAccount(accountId, tagId);

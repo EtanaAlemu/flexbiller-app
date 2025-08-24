@@ -83,7 +83,9 @@ class AccountDetailsView extends StatelessWidget {
           final account = state.account;
           return BlocListener<AccountsBloc, AccountsState>(
             listener: (context, state) {
-              if (state is TagAssigned || state is TagRemoved) {
+              if (state is TagAssigned || 
+                  state is TagRemoved || 
+                  state is MultipleTagsAssigned) {
                 // Refresh tags after assignment/removal
                 context.read<AccountsBloc>().add(LoadAccountTags(accountId));
               }
@@ -152,7 +154,9 @@ class AccountDetailsView extends StatelessWidget {
                             unselectedLabelColor: Theme.of(
                               context,
                             ).colorScheme.onSurface.withOpacity(0.6),
-                            indicatorColor: Theme.of(context).colorScheme.primary,
+                            indicatorColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
                           ),
                           const SizedBox(height: 16),
                           SizedBox(

@@ -37,6 +37,8 @@ import 'features/accounts/domain/repositories/account_tags_repository.dart'
 import 'features/accounts/domain/repositories/account_timeline_repository.dart'
     as _i446;
 import 'features/accounts/domain/repositories/accounts_repository.dart' as _i42;
+import 'features/accounts/domain/usecases/assign_multiple_tags_to_account_usecase.dart'
+    as _i377;
 import 'features/accounts/domain/usecases/create_account_usecase.dart' as _i968;
 import 'features/accounts/domain/usecases/delete_account_usecase.dart' as _i823;
 import 'features/accounts/domain/usecases/get_account_by_id_usecase.dart'
@@ -104,6 +106,11 @@ _i174.GetIt $initGetIt(
   gh.factory<_i384.GetAllTagsForAccountUseCase>(
     () => _i384.GetAllTagsForAccountUseCase(gh<_i363.AccountTagsRepository>()),
   );
+  gh.factory<_i377.AssignMultipleTagsToAccountUseCase>(
+    () => _i377.AssignMultipleTagsToAccountUseCase(
+      gh<_i363.AccountTagsRepository>(),
+    ),
+  );
   gh.factory<_i400.GetAccountByIdUseCase>(
     () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
   );
@@ -147,14 +154,6 @@ _i174.GetIt $initGetIt(
     () =>
         _i711.GetAccountTimelineUseCase(gh<_i446.AccountTimelineRepository>()),
   );
-  gh.factory<_i363.AuthBloc>(
-    () => _i363.AuthBloc(
-      loginUseCase: gh<_i206.LoginUseCase>(),
-      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
-      changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
-      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
-    ),
-  );
   gh.factory<_i795.AccountsBloc>(
     () => _i795.AccountsBloc(
       getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
@@ -165,8 +164,18 @@ _i174.GetIt $initGetIt(
       getAccountTimelineUseCase: gh<_i711.GetAccountTimelineUseCase>(),
       getAccountTagsUseCase: gh<_i227.GetAccountTagsUseCase>(),
       getAllTagsForAccountUseCase: gh<_i384.GetAllTagsForAccountUseCase>(),
+      assignMultipleTagsToAccountUseCase:
+          gh<_i377.AssignMultipleTagsToAccountUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
+    ),
+  );
+  gh.factory<_i363.AuthBloc>(
+    () => _i363.AuthBloc(
+      loginUseCase: gh<_i206.LoginUseCase>(),
+      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
+      changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
+      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
     ),
   );
   return getIt;

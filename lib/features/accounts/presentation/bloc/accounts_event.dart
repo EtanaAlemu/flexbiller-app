@@ -158,6 +158,16 @@ class RemoveTagFromAccount extends AccountsEvent {
   List<Object?> get props => [accountId, tagId];
 }
 
+class AssignMultipleTagsToAccount extends AccountsEvent {
+  final String accountId;
+  final List<String> tagIds;
+
+  const AssignMultipleTagsToAccount(this.accountId, this.tagIds);
+
+  @override
+  List<Object?> get props => [accountId, tagIds];
+}
+
 class LoadAllTagsForAccount extends AccountsEvent {
   final String accountId;
 

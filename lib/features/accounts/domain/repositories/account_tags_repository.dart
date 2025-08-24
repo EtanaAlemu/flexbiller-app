@@ -25,6 +25,12 @@ abstract class AccountTagsRepository {
     String tagId,
   );
   
+  /// Assign multiple tags to an account
+  Future<List<AccountTagAssignment>> assignMultipleTagsToAccount(
+    String accountId,
+    List<String> tagIds,
+  );
+  
   /// Remove a tag from an account
   Future<void> removeTagFromAccount(String accountId, String tagId);
   

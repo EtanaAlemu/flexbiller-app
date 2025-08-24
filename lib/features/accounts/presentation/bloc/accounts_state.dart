@@ -308,6 +308,37 @@ class TagRemovalFailure extends AccountsState {
   List<Object?> get props => [message, accountId, tagId];
 }
 
+class MultipleTagsAssigning extends AccountsState {
+  final String accountId;
+  final List<String> tagIds;
+
+  const MultipleTagsAssigning(this.accountId, this.tagIds);
+
+  @override
+  List<Object?> get props => [accountId, tagIds];
+}
+
+class MultipleTagsAssigned extends AccountsState {
+  final String accountId;
+  final List<AccountTagAssignment> tags;
+
+  const MultipleTagsAssigned(this.accountId, this.tags);
+
+  @override
+  List<Object?> get props => [accountId, tags];
+}
+
+class MultipleTagsAssignmentFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final List<String> tagIds;
+
+  const MultipleTagsAssignmentFailure(this.message, this.accountId, this.tagIds);
+
+  @override
+  List<Object?> get props => [message, accountId, tagIds];
+}
+
 class AllTagsForAccountLoading extends AccountsState {
   final String accountId;
 

@@ -10,6 +10,7 @@ import '../../domain/usecases/delete_account_usecase.dart';
 import '../../domain/usecases/get_account_timeline_usecase.dart';
 import '../../domain/usecases/get_account_tags_usecase.dart';
 import '../../domain/usecases/get_all_tags_for_account_usecase.dart';
+import '../../domain/usecases/assign_multiple_tags_to_account_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/repositories/account_tags_repository.dart';
 import 'accounts_event.dart';
@@ -25,6 +26,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final GetAccountTimelineUseCase _getAccountTimelineUseCase;
   final GetAccountTagsUseCase _getAccountTagsUseCase;
   final GetAllTagsForAccountUseCase _getAllTagsForAccountUseCase;
+  final AssignMultipleTagsToAccountUseCase _assignMultipleTagsToAccountUseCase;
   final AccountsRepository _accountsRepository;
   final AccountTagsRepository _accountTagsRepository;
 
@@ -37,6 +39,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required GetAccountTimelineUseCase getAccountTimelineUseCase,
     required GetAccountTagsUseCase getAccountTagsUseCase,
     required GetAllTagsForAccountUseCase getAllTagsForAccountUseCase,
+    required AssignMultipleTagsToAccountUseCase assignMultipleTagsToAccountUseCase,
     required AccountsRepository accountsRepository,
     required AccountTagsRepository accountTagsRepository,
   })  : _getAccountsUseCase = getAccountsUseCase,
@@ -47,6 +50,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         _getAccountTimelineUseCase = getAccountTimelineUseCase,
         _getAccountTagsUseCase = getAccountTagsUseCase,
         _getAllTagsForAccountUseCase = getAllTagsForAccountUseCase,
+        _assignMultipleTagsToAccountUseCase = assignMultipleTagsToAccountUseCase,
         _accountsRepository = accountsRepository,
         _accountTagsRepository = accountTagsRepository,
         super(AccountsInitial()) {
@@ -69,6 +73,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<RemoveTagFromAccount>(_onRemoveTagFromAccount);
     on<LoadAllTagsForAccount>(_onLoadAllTagsForAccount);
     on<RefreshAllTagsForAccount>(_onRefreshAllTagsForAccount);
+    on<AssignMultipleTagsToAccount>(_onAssignMultipleTagsToAccount);
   }
 
   Future<void> _onLoadAccounts(
@@ -481,6 +486,22 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(AllTagsForAccountLoaded(event.accountId, tags));
     } catch (e) {
       emit(AllTagsForAccountFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onAssignMultipleTagsToAccount(
+    AssignMultipleTagsToAccount event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(MultipleTagsAssigning(event.accountId, event.tagIds));
+      final assignedTags = await _assignMultipleTagsToAccountUseCase(
+        event.accountId,
+        event.tagIds,
+      );
+      emit(MultipleTagsAssigned(event.accountId, assignedTags));
+    } catch (e) {
+      emit(MultipleTagsAssignmentFailure(e.toString(), event.accountId, event.tagIds));
     }
   }
 }
