@@ -389,3 +389,21 @@ class CreateInvoicePayment extends AccountsEvent {
   @override
   List<Object?> get props => [accountId, paymentAmount, currency, paymentMethod, notes];
 }
+
+class LoadAccountAuditLogs extends AccountsEvent {
+  final String accountId;
+
+  const LoadAccountAuditLogs(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class RefreshAccountAuditLogs extends AccountsEvent {
+  final String accountId;
+
+  const RefreshAccountAuditLogs(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}

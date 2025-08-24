@@ -13,6 +13,7 @@ import '../widgets/account_custom_fields_widget.dart';
 import '../widgets/account_emails_widget.dart';
 import '../widgets/account_blocking_states_widget.dart';
 import '../widgets/account_invoice_payments_widget.dart';
+import '../widgets/account_audit_logs_widget.dart';
 import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
@@ -32,7 +33,8 @@ class AccountDetailsPage extends StatelessWidget {
         ..add(LoadAccountCustomFields(accountId))
         ..add(LoadAccountEmails(accountId))
         ..add(LoadAccountBlockingStates(accountId))
-        ..add(LoadAccountInvoicePayments(accountId)),
+        ..add(LoadAccountInvoicePayments(accountId))
+        ..add(LoadAccountAuditLogs(accountId)),
       child: AccountDetailsView(accountId: accountId),
     );
   }
@@ -166,7 +168,7 @@ class AccountDetailsView extends StatelessWidget {
                   children: [
                     // Account Details Tabs
                     DefaultTabController(
-                      length: 7, // Changed from 6 to 7
+                      length: 8, // Changed from 7 to 8
                       child: Column(
                         children: [
                           TabBar(
@@ -177,7 +179,8 @@ class AccountDetailsView extends StatelessWidget {
                               Tab(text: 'Custom Fields'),
                               Tab(text: 'Emails'),
                               Tab(text: 'Blocking States'),
-                              Tab(text: 'Invoice Payments'), // Added
+                              Tab(text: 'Invoice Payments'),
+                              Tab(text: 'Audit Logs'), // Added
                             ],
                             labelColor: Theme.of(context).colorScheme.primary,
                             unselectedLabelColor: Theme.of(
@@ -206,6 +209,8 @@ class AccountDetailsView extends StatelessWidget {
                                 AccountBlockingStatesWidget(accountId: accountId),
                                 // Invoice Payments Tab
                                 AccountInvoicePaymentsWidget(accountId: accountId),
+                                // Audit Logs Tab
+                                AccountAuditLogsWidget(accountId: accountId),
                               ],
                             ),
                           ),

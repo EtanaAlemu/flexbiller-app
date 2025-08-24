@@ -24,6 +24,7 @@ import '../../domain/usecases/get_account_emails_usecase.dart';
 import '../../domain/usecases/get_account_blocking_states_usecase.dart';
 import '../../domain/usecases/get_account_invoice_payments_usecase.dart';
 import '../../domain/usecases/create_invoice_payment_usecase.dart';
+import '../../domain/usecases/get_account_audit_logs_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
@@ -55,6 +56,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final GetAccountBlockingStatesUseCase _getAccountBlockingStatesUseCase;
   final GetAccountInvoicePaymentsUseCase _getAccountInvoicePaymentsUseCase;
   final CreateInvoicePaymentUseCase _createInvoicePaymentUseCase;
+  final GetAccountAuditLogsUseCase _getAccountAuditLogsUseCase;
   final AccountsRepository _accountsRepository;
   final AccountTagsRepository _accountTagsRepository;
   final AccountCustomFieldsRepository _accountCustomFieldsRepository;
@@ -83,6 +85,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required GetAccountBlockingStatesUseCase getAccountBlockingStatesUseCase,
     required GetAccountInvoicePaymentsUseCase getAccountInvoicePaymentsUseCase,
     required CreateInvoicePaymentUseCase createInvoicePaymentUseCase,
+    required GetAccountAuditLogsUseCase getAccountAuditLogsUseCase,
     required AccountsRepository accountsRepository,
     required AccountTagsRepository accountTagsRepository,
     required AccountCustomFieldsRepository accountCustomFieldsRepository,
@@ -109,6 +112,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         _getAccountBlockingStatesUseCase = getAccountBlockingStatesUseCase,
         _getAccountInvoicePaymentsUseCase = getAccountInvoicePaymentsUseCase,
         _createInvoicePaymentUseCase = createInvoicePaymentUseCase,
+        _getAccountAuditLogsUseCase = getAccountAuditLogsUseCase,
         _accountsRepository = accountsRepository,
         _accountTagsRepository = accountTagsRepository,
         _accountCustomFieldsRepository = accountCustomFieldsRepository,
@@ -154,6 +158,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<LoadAccountInvoicePayments>(_onLoadAccountInvoicePayments);
     on<RefreshAccountInvoicePayments>(_onRefreshAccountInvoicePayments);
     on<CreateInvoicePayment>(_onCreateInvoicePayment);
+    on<LoadAccountAuditLogs>(_onLoadAccountAuditLogs);
+    on<RefreshAccountAuditLogs>(_onRefreshAccountAuditLogs);
   }
 
   Future<void> _onLoadAccounts(
@@ -826,6 +832,32 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(InvoicePaymentCreated(event.accountId, createdPayment));
     } catch (e) {
       emit(CreateInvoicePaymentFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onLoadAccountAuditLogs(
+    LoadAccountAuditLogs event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountAuditLogsLoading(event.accountId));
+      final auditLogs = await _getAccountAuditLogsUseCase(event.accountId);
+      emit(AccountAuditLogsLoaded(event.accountId, auditLogs));
+    } catch (e) {
+      emit(AccountAuditLogsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onRefreshAccountAuditLogs(
+    RefreshAccountAuditLogs event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountAuditLogsLoading(event.accountId));
+      final auditLogs = await _getAccountAuditLogsUseCase(event.accountId);
+      emit(AccountAuditLogsLoaded(event.accountId, auditLogs));
+    } catch (e) {
+      emit(AccountAuditLogsFailure(e.toString(), event.accountId));
     }
   }
 }
