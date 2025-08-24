@@ -449,3 +449,21 @@ class RefreshPaymentMethods extends AccountsEvent {
   @override
   List<Object?> get props => [accountId];
 }
+
+class LoadAccountPayments extends AccountsEvent {
+  final String accountId;
+
+  const LoadAccountPayments(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class RefreshAccountPayments extends AccountsEvent {
+  final String accountId;
+
+  const RefreshAccountPayments(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}

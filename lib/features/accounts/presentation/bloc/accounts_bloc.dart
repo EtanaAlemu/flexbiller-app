@@ -28,6 +28,7 @@ import '../../domain/usecases/get_account_audit_logs_usecase.dart';
 import '../../domain/usecases/get_account_payment_methods_usecase.dart';
 import '../../domain/usecases/set_default_payment_method_usecase.dart';
 import '../../domain/usecases/refresh_payment_methods_usecase.dart';
+import '../../domain/usecases/get_account_payments_usecase.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
@@ -47,14 +48,18 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final GetAccountTagsUseCase _getAccountTagsUseCase;
   final GetAllTagsForAccountUseCase _getAllTagsForAccountUseCase;
   final AssignMultipleTagsToAccountUseCase _assignMultipleTagsToAccountUseCase;
-  final RemoveMultipleTagsFromAccountUseCase _removeMultipleTagsFromAccountUseCase;
+  final RemoveMultipleTagsFromAccountUseCase
+  _removeMultipleTagsFromAccountUseCase;
   final GetAccountCustomFieldsUseCase _getAccountCustomFieldsUseCase;
   final CreateAccountCustomFieldUseCase _createAccountCustomFieldUseCase;
-  final CreateMultipleAccountCustomFieldsUseCase _createMultipleAccountCustomFieldsUseCase;
+  final CreateMultipleAccountCustomFieldsUseCase
+  _createMultipleAccountCustomFieldsUseCase;
   final UpdateAccountCustomFieldUseCase _updateAccountCustomFieldUseCase;
-  final UpdateMultipleAccountCustomFieldsUseCase _updateMultipleAccountCustomFieldsUseCase;
+  final UpdateMultipleAccountCustomFieldsUseCase
+  _updateMultipleAccountCustomFieldsUseCase;
   final DeleteAccountCustomFieldUseCase _deleteAccountCustomFieldUseCase;
-  final DeleteMultipleAccountCustomFieldsUseCase _deleteMultipleAccountCustomFieldsUseCase;
+  final DeleteMultipleAccountCustomFieldsUseCase
+  _deleteMultipleAccountCustomFieldsUseCase;
   final GetAccountEmailsUseCase _getAccountEmailsUseCase;
   final GetAccountBlockingStatesUseCase _getAccountBlockingStatesUseCase;
   final GetAccountInvoicePaymentsUseCase _getAccountInvoicePaymentsUseCase;
@@ -63,6 +68,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final GetAccountPaymentMethodsUseCase _getAccountPaymentMethodsUseCase;
   final SetDefaultPaymentMethodUseCase _setDefaultPaymentMethodUseCase;
   final RefreshPaymentMethodsUseCase _refreshPaymentMethodsUseCase;
+  final GetAccountPaymentsUseCase _getAccountPaymentsUseCase;
   final AccountsRepository _accountsRepository;
   final AccountTagsRepository _accountTagsRepository;
   final AccountCustomFieldsRepository _accountCustomFieldsRepository;
@@ -78,15 +84,20 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required GetAccountTimelineUseCase getAccountTimelineUseCase,
     required GetAccountTagsUseCase getAccountTagsUseCase,
     required GetAllTagsForAccountUseCase getAllTagsForAccountUseCase,
-    required AssignMultipleTagsToAccountUseCase assignMultipleTagsToAccountUseCase,
-    required RemoveMultipleTagsFromAccountUseCase removeMultipleTagsFromAccountUseCase,
+    required AssignMultipleTagsToAccountUseCase
+    assignMultipleTagsToAccountUseCase,
+    required RemoveMultipleTagsFromAccountUseCase
+    removeMultipleTagsFromAccountUseCase,
     required GetAccountCustomFieldsUseCase getAccountCustomFieldsUseCase,
     required CreateAccountCustomFieldUseCase createAccountCustomFieldUseCase,
-    required CreateMultipleAccountCustomFieldsUseCase createMultipleAccountCustomFieldsUseCase,
+    required CreateMultipleAccountCustomFieldsUseCase
+    createMultipleAccountCustomFieldsUseCase,
     required UpdateAccountCustomFieldUseCase updateAccountCustomFieldUseCase,
-    required UpdateMultipleAccountCustomFieldsUseCase updateMultipleAccountCustomFieldsUseCase,
+    required UpdateMultipleAccountCustomFieldsUseCase
+    updateMultipleAccountCustomFieldsUseCase,
     required DeleteAccountCustomFieldUseCase deleteAccountCustomFieldUseCase,
-    required DeleteMultipleAccountCustomFieldsUseCase deleteMultipleAccountCustomFieldsUseCase,
+    required DeleteMultipleAccountCustomFieldsUseCase
+    deleteMultipleAccountCustomFieldsUseCase,
     required GetAccountEmailsUseCase getAccountEmailsUseCase,
     required GetAccountBlockingStatesUseCase getAccountBlockingStatesUseCase,
     required GetAccountInvoicePaymentsUseCase getAccountInvoicePaymentsUseCase,
@@ -95,41 +106,47 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required GetAccountPaymentMethodsUseCase getAccountPaymentMethodsUseCase,
     required SetDefaultPaymentMethodUseCase setDefaultPaymentMethodUseCase,
     required RefreshPaymentMethodsUseCase refreshPaymentMethodsUseCase,
+    required GetAccountPaymentsUseCase getAccountPaymentsUseCase,
     required AccountsRepository accountsRepository,
     required AccountTagsRepository accountTagsRepository,
     required AccountCustomFieldsRepository accountCustomFieldsRepository,
     required AccountEmailsRepository accountEmailsRepository,
-  })  : _getAccountsUseCase = getAccountsUseCase,
-        _searchAccountsUseCase = searchAccountsUseCase,
-        _getAccountByIdUseCase = getAccountByIdUseCase,
-        _createAccountUseCase = createAccountUseCase,
-        _updateAccountUseCase = updateAccountUseCase,
-        _deleteAccountUseCase = deleteAccountUseCase,
-        _getAccountTimelineUseCase = getAccountTimelineUseCase,
-        _getAccountTagsUseCase = getAccountTagsUseCase,
-        _getAllTagsForAccountUseCase = getAllTagsForAccountUseCase,
-        _assignMultipleTagsToAccountUseCase = assignMultipleTagsToAccountUseCase,
-        _removeMultipleTagsFromAccountUseCase = removeMultipleTagsFromAccountUseCase,
-        _getAccountCustomFieldsUseCase = getAccountCustomFieldsUseCase,
-        _createAccountCustomFieldUseCase = createAccountCustomFieldUseCase,
-        _createMultipleAccountCustomFieldsUseCase = createMultipleAccountCustomFieldsUseCase,
-        _updateAccountCustomFieldUseCase = updateAccountCustomFieldUseCase,
-        _updateMultipleAccountCustomFieldsUseCase = updateMultipleAccountCustomFieldsUseCase,
-        _deleteAccountCustomFieldUseCase = deleteAccountCustomFieldUseCase,
-        _deleteMultipleAccountCustomFieldsUseCase = deleteMultipleAccountCustomFieldsUseCase,
-        _getAccountEmailsUseCase = getAccountEmailsUseCase,
-        _getAccountBlockingStatesUseCase = getAccountBlockingStatesUseCase,
-        _getAccountInvoicePaymentsUseCase = getAccountInvoicePaymentsUseCase,
-        _createInvoicePaymentUseCase = createInvoicePaymentUseCase,
-        _getAccountAuditLogsUseCase = getAccountAuditLogsUseCase,
-        _getAccountPaymentMethodsUseCase = getAccountPaymentMethodsUseCase,
-        _setDefaultPaymentMethodUseCase = setDefaultPaymentMethodUseCase,
-        _refreshPaymentMethodsUseCase = refreshPaymentMethodsUseCase,
-        _accountsRepository = accountsRepository,
-        _accountTagsRepository = accountTagsRepository,
-        _accountCustomFieldsRepository = accountCustomFieldsRepository,
-        _accountEmailsRepository = accountEmailsRepository,
-        super(AccountsInitial()) {
+  }) : _getAccountsUseCase = getAccountsUseCase,
+       _searchAccountsUseCase = searchAccountsUseCase,
+       _getAccountByIdUseCase = getAccountByIdUseCase,
+       _createAccountUseCase = createAccountUseCase,
+       _updateAccountUseCase = updateAccountUseCase,
+       _deleteAccountUseCase = deleteAccountUseCase,
+       _getAccountTimelineUseCase = getAccountTimelineUseCase,
+       _getAccountTagsUseCase = getAccountTagsUseCase,
+       _getAllTagsForAccountUseCase = getAllTagsForAccountUseCase,
+       _assignMultipleTagsToAccountUseCase = assignMultipleTagsToAccountUseCase,
+       _removeMultipleTagsFromAccountUseCase =
+           removeMultipleTagsFromAccountUseCase,
+       _getAccountCustomFieldsUseCase = getAccountCustomFieldsUseCase,
+       _createAccountCustomFieldUseCase = createAccountCustomFieldUseCase,
+       _createMultipleAccountCustomFieldsUseCase =
+           createMultipleAccountCustomFieldsUseCase,
+       _updateAccountCustomFieldUseCase = updateAccountCustomFieldUseCase,
+       _updateMultipleAccountCustomFieldsUseCase =
+           updateMultipleAccountCustomFieldsUseCase,
+       _deleteAccountCustomFieldUseCase = deleteAccountCustomFieldUseCase,
+       _deleteMultipleAccountCustomFieldsUseCase =
+           deleteMultipleAccountCustomFieldsUseCase,
+       _getAccountEmailsUseCase = getAccountEmailsUseCase,
+       _getAccountBlockingStatesUseCase = getAccountBlockingStatesUseCase,
+       _getAccountInvoicePaymentsUseCase = getAccountInvoicePaymentsUseCase,
+       _createInvoicePaymentUseCase = createInvoicePaymentUseCase,
+       _getAccountAuditLogsUseCase = getAccountAuditLogsUseCase,
+       _getAccountPaymentMethodsUseCase = getAccountPaymentMethodsUseCase,
+       _setDefaultPaymentMethodUseCase = setDefaultPaymentMethodUseCase,
+       _refreshPaymentMethodsUseCase = refreshPaymentMethodsUseCase,
+       _getAccountPaymentsUseCase = getAccountPaymentsUseCase,
+       _accountsRepository = accountsRepository,
+       _accountTagsRepository = accountTagsRepository,
+       _accountCustomFieldsRepository = accountCustomFieldsRepository,
+       _accountEmailsRepository = accountEmailsRepository,
+       super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
     on<SearchAccounts>(_onSearchAccounts);
     on<RefreshAccounts>(_onRefreshAccounts);
@@ -176,6 +193,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<RefreshAccountPaymentMethods>(_onRefreshAccountPaymentMethods);
     on<SetDefaultPaymentMethod>(_onSetDefaultPaymentMethod);
     on<RefreshPaymentMethods>(_onRefreshPaymentMethods);
+    on<LoadAccountPayments>(_onLoadAccountPayments);
+    on<RefreshAccountPayments>(_onRefreshAccountPayments);
   }
 
   Future<void> _onLoadAccounts(
@@ -548,7 +567,13 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       );
       emit(MultipleTagsAssigned(event.accountId, assignedTags));
     } catch (e) {
-      emit(MultipleTagsAssignmentFailure(e.toString(), event.accountId, event.tagIds));
+      emit(
+        MultipleTagsAssignmentFailure(
+          e.toString(),
+          event.accountId,
+          event.tagIds,
+        ),
+      );
     }
   }
 
@@ -564,7 +589,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       );
       emit(MultipleTagsRemoved(event.accountId, event.tagIds));
     } catch (e) {
-      emit(MultipleTagsRemovalFailure(e.toString(), event.accountId, event.tagIds));
+      emit(
+        MultipleTagsRemovalFailure(e.toString(), event.accountId, event.tagIds),
+      );
     }
   }
 
@@ -592,7 +619,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(AccountCustomFieldsLoading(event.accountId));
-      final customFields = await _accountCustomFieldsRepository.getAccountCustomFields(event.accountId);
+      final customFields = await _accountCustomFieldsRepository
+          .getAccountCustomFields(event.accountId);
       emit(AccountCustomFieldsLoaded(event.accountId, customFields));
     } catch (e) {
       emit(AccountCustomFieldsFailure(e.toString(), event.accountId));
@@ -605,7 +633,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(AccountCustomFieldsLoading(event.accountId));
-      final customFields = await _accountCustomFieldsRepository.getAccountCustomFields(event.accountId);
+      final customFields = await _accountCustomFieldsRepository
+          .getAccountCustomFields(event.accountId);
       emit(AccountCustomFieldsLoaded(event.accountId, customFields));
     } catch (e) {
       emit(AccountCustomFieldsFailure(e.toString(), event.accountId));
@@ -618,14 +647,18 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(CustomFieldCreating(event.accountId, event.name, event.value));
-      final createdCustomField = await _accountCustomFieldsRepository.createCustomField(
-        event.accountId,
-        event.name,
-        event.value,
-      );
+      final createdCustomField = await _accountCustomFieldsRepository
+          .createCustomField(event.accountId, event.name, event.value);
       emit(CustomFieldCreated(event.accountId, createdCustomField));
     } catch (e) {
-      emit(CustomFieldCreationFailure(e.toString(), event.accountId, event.name, event.value));
+      emit(
+        CustomFieldCreationFailure(
+          e.toString(),
+          event.accountId,
+          event.name,
+          event.value,
+        ),
+      );
     }
   }
 
@@ -635,13 +668,17 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(MultipleCustomFieldsCreating(event.accountId, event.customFields));
-      final createdCustomFields = await _accountCustomFieldsRepository.createMultipleCustomFields(
-        event.accountId,
-        event.customFields,
-      );
+      final createdCustomFields = await _accountCustomFieldsRepository
+          .createMultipleCustomFields(event.accountId, event.customFields);
       emit(MultipleCustomFieldsCreated(event.accountId, createdCustomFields));
     } catch (e) {
-      emit(MultipleCustomFieldsCreationFailure(e.toString(), event.accountId, event.customFields));
+      emit(
+        MultipleCustomFieldsCreationFailure(
+          e.toString(),
+          event.accountId,
+          event.customFields,
+        ),
+      );
     }
   }
 
@@ -650,16 +687,32 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
-      emit(CustomFieldUpdating(event.accountId, event.customFieldId, event.name, event.value));
-      final updatedCustomField = await _accountCustomFieldsRepository.updateCustomField(
-        event.accountId,
-        event.customFieldId,
-        event.name,
-        event.value,
+      emit(
+        CustomFieldUpdating(
+          event.accountId,
+          event.customFieldId,
+          event.name,
+          event.value,
+        ),
       );
+      final updatedCustomField = await _accountCustomFieldsRepository
+          .updateCustomField(
+            event.accountId,
+            event.customFieldId,
+            event.name,
+            event.value,
+          );
       emit(CustomFieldUpdated(event.accountId, updatedCustomField));
     } catch (e) {
-      emit(CustomFieldUpdateFailure(e.toString(), event.accountId, event.customFieldId, event.name, event.value));
+      emit(
+        CustomFieldUpdateFailure(
+          e.toString(),
+          event.accountId,
+          event.customFieldId,
+          event.name,
+          event.value,
+        ),
+      );
     }
   }
 
@@ -669,13 +722,17 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(MultipleCustomFieldsUpdating(event.accountId, event.customFields));
-      final updatedCustomFields = await _accountCustomFieldsRepository.updateMultipleCustomFields(
-        event.accountId,
-        event.customFields,
-      );
+      final updatedCustomFields = await _accountCustomFieldsRepository
+          .updateMultipleCustomFields(event.accountId, event.customFields);
       emit(MultipleCustomFieldsUpdated(event.accountId, updatedCustomFields));
     } catch (e) {
-      emit(MultipleCustomFieldsUpdateFailure(e.toString(), event.accountId, event.customFields));
+      emit(
+        MultipleCustomFieldsUpdateFailure(
+          e.toString(),
+          event.accountId,
+          event.customFields,
+        ),
+      );
     }
   }
 
@@ -685,10 +742,19 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(CustomFieldDeleting(event.accountId, event.customFieldId));
-      await _accountCustomFieldsRepository.deleteCustomField(event.accountId, event.customFieldId);
+      await _accountCustomFieldsRepository.deleteCustomField(
+        event.accountId,
+        event.customFieldId,
+      );
       emit(CustomFieldDeleted(event.accountId, event.customFieldId));
     } catch (e) {
-      emit(CustomFieldDeletionFailure(e.toString(), event.accountId, event.customFieldId));
+      emit(
+        CustomFieldDeletionFailure(
+          e.toString(),
+          event.accountId,
+          event.customFieldId,
+        ),
+      );
     }
   }
 
@@ -704,7 +770,13 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       );
       emit(MultipleCustomFieldsDeleted(event.accountId, event.customFieldIds));
     } catch (e) {
-      emit(MultipleCustomFieldsDeletionFailure(e.toString(), event.accountId, event.customFieldIds));
+      emit(
+        MultipleCustomFieldsDeletionFailure(
+          e.toString(),
+          event.accountId,
+          event.customFieldIds,
+        ),
+      );
     }
   }
 
@@ -714,7 +786,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(AccountEmailsLoading(event.accountId));
-      final emails = await _accountEmailsRepository.getAccountEmails(event.accountId);
+      final emails = await _accountEmailsRepository.getAccountEmails(
+        event.accountId,
+      );
       emit(AccountEmailsLoaded(event.accountId, emails));
     } catch (e) {
       emit(AccountEmailsFailure(e.toString(), event.accountId));
@@ -727,7 +801,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(AccountEmailsLoading(event.accountId));
-      final emails = await _accountEmailsRepository.getAccountEmails(event.accountId);
+      final emails = await _accountEmailsRepository.getAccountEmails(
+        event.accountId,
+      );
       emit(AccountEmailsLoaded(event.accountId, emails));
     } catch (e) {
       emit(AccountEmailsFailure(e.toString(), event.accountId));
@@ -746,7 +822,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       );
       emit(AccountEmailCreated(event.accountId, createdEmail));
     } catch (e) {
-      emit(AccountEmailCreationFailure(e.toString(), event.accountId, event.email));
+      emit(
+        AccountEmailCreationFailure(e.toString(), event.accountId, event.email),
+      );
     }
   }
 
@@ -763,7 +841,14 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       );
       emit(AccountEmailUpdated(event.accountId, updatedEmail));
     } catch (e) {
-      emit(AccountEmailUpdateFailure(e.toString(), event.accountId, event.emailId, event.email));
+      emit(
+        AccountEmailUpdateFailure(
+          e.toString(),
+          event.accountId,
+          event.emailId,
+          event.email,
+        ),
+      );
     }
   }
 
@@ -773,10 +858,19 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(AccountEmailDeleting(event.accountId, event.emailId));
-      await _accountEmailsRepository.deleteAccountEmail(event.accountId, event.emailId);
+      await _accountEmailsRepository.deleteAccountEmail(
+        event.accountId,
+        event.emailId,
+      );
       emit(AccountEmailDeleted(event.accountId, event.emailId));
     } catch (e) {
-      emit(AccountEmailDeletionFailure(e.toString(), event.accountId, event.emailId));
+      emit(
+        AccountEmailDeletionFailure(
+          e.toString(),
+          event.accountId,
+          event.emailId,
+        ),
+      );
     }
   }
 
@@ -786,7 +880,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(AccountBlockingStatesLoading(event.accountId));
-      final blockingStates = await _getAccountBlockingStatesUseCase(event.accountId);
+      final blockingStates = await _getAccountBlockingStatesUseCase(
+        event.accountId,
+      );
       emit(AccountBlockingStatesLoaded(event.accountId, blockingStates));
     } catch (e) {
       emit(AccountBlockingStatesFailure(e.toString(), event.accountId));
@@ -799,7 +895,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(AccountBlockingStatesLoading(event.accountId));
-      final blockingStates = await _getAccountBlockingStatesUseCase(event.accountId);
+      final blockingStates = await _getAccountBlockingStatesUseCase(
+        event.accountId,
+      );
       emit(AccountBlockingStatesLoaded(event.accountId, blockingStates));
     } catch (e) {
       emit(AccountBlockingStatesFailure(e.toString(), event.accountId));
@@ -883,7 +981,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(AccountPaymentMethodsLoading(event.accountId));
-      final paymentMethods = await _getAccountPaymentMethodsUseCase(event.accountId);
+      final paymentMethods = await _getAccountPaymentMethodsUseCase(
+        event.accountId,
+      );
       emit(AccountPaymentMethodsLoaded(event.accountId, paymentMethods));
     } catch (e) {
       emit(AccountPaymentMethodsFailure(e.toString(), event.accountId));
@@ -896,7 +996,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(AccountPaymentMethodsLoading(event.accountId));
-      final paymentMethods = await _getAccountPaymentMethodsUseCase(event.accountId);
+      final paymentMethods = await _getAccountPaymentMethodsUseCase(
+        event.accountId,
+      );
       emit(AccountPaymentMethodsLoaded(event.accountId, paymentMethods));
     } catch (e) {
       emit(AccountPaymentMethodsFailure(e.toString(), event.accountId));
@@ -916,7 +1018,13 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       );
       emit(DefaultPaymentMethodSet(event.accountId, updatedPaymentMethod));
     } catch (e) {
-      emit(SetDefaultPaymentMethodFailure(e.toString(), event.accountId, event.paymentMethodId));
+      emit(
+        SetDefaultPaymentMethodFailure(
+          e.toString(),
+          event.accountId,
+          event.paymentMethodId,
+        ),
+      );
     }
   }
 
@@ -926,10 +1034,38 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       emit(RefreshingPaymentMethods(event.accountId));
-      final paymentMethods = await _refreshPaymentMethodsUseCase(event.accountId);
+      final paymentMethods = await _refreshPaymentMethodsUseCase(
+        event.accountId,
+      );
       emit(PaymentMethodsRefreshed(event.accountId, paymentMethods));
     } catch (e) {
       emit(RefreshPaymentMethodsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onLoadAccountPayments(
+    LoadAccountPayments event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountPaymentsLoading(event.accountId));
+      final payments = await _getAccountPaymentsUseCase(event.accountId);
+      emit(AccountPaymentsLoaded(event.accountId, payments));
+    } catch (e) {
+      emit(AccountPaymentsFailure(e.toString(), event.accountId));
+    }
+  }
+
+  Future<void> _onRefreshAccountPayments(
+    RefreshAccountPayments event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountPaymentsLoading(event.accountId));
+      final payments = await _getAccountPaymentsUseCase(event.accountId);
+      emit(AccountPaymentsLoaded(event.accountId, payments));
+    } catch (e) {
+      emit(AccountPaymentsFailure(e.toString(), event.accountId));
     }
   }
 }

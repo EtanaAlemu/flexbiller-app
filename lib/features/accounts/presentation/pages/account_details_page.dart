@@ -15,6 +15,7 @@ import '../widgets/account_blocking_states_widget.dart';
 import '../widgets/account_invoice_payments_widget.dart';
 import '../widgets/account_audit_logs_widget.dart';
 import '../widgets/account_payment_methods_widget.dart';
+import '../widgets/account_payments_widget.dart'; // Added import
 import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
@@ -36,7 +37,8 @@ class AccountDetailsPage extends StatelessWidget {
         ..add(LoadAccountBlockingStates(accountId))
         ..add(LoadAccountInvoicePayments(accountId))
         ..add(LoadAccountAuditLogs(accountId))
-        ..add(LoadAccountPaymentMethods(accountId)),
+        ..add(LoadAccountPaymentMethods(accountId))
+        ..add(LoadAccountPayments(accountId)),
       child: AccountDetailsView(accountId: accountId),
     );
   }
@@ -170,7 +172,7 @@ class AccountDetailsView extends StatelessWidget {
                   children: [
                     // Account Details Tabs
                     DefaultTabController(
-                      length: 9, // Changed from 8 to 9
+                      length: 10, // Changed from 9 to 10
                       child: Column(
                         children: [
                           TabBar(
@@ -183,7 +185,8 @@ class AccountDetailsView extends StatelessWidget {
                               Tab(text: 'Blocking States'),
                               Tab(text: 'Invoice Payments'),
                               Tab(text: 'Audit Logs'),
-                              Tab(text: 'Payment Methods'), // Added
+                              Tab(text: 'Payment Methods'),
+                              Tab(text: 'Payments'), // Added
                             ],
                             labelColor: Theme.of(context).colorScheme.primary,
                             unselectedLabelColor: Theme.of(
@@ -222,6 +225,8 @@ class AccountDetailsView extends StatelessWidget {
                                 AccountPaymentMethodsWidget(
                                   accountId: accountId,
                                 ),
+                                // Payments Tab
+                                AccountPaymentsWidget(accountId: accountId),
                               ],
                             ),
                           ),
