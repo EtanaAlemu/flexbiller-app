@@ -108,9 +108,7 @@ class AccountDetailsView extends StatelessWidget {
                   LoadAccountCustomFields(accountId),
                 );
                 // Refresh emails after creation/update/deletion
-                context.read<AccountsBloc>().add(
-                  LoadAccountEmails(accountId),
-                );
+                context.read<AccountsBloc>().add(LoadAccountEmails(accountId));
               }
             },
             child: Scaffold(

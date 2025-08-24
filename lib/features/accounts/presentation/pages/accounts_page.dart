@@ -9,6 +9,7 @@ import '../widgets/accounts_search_widget.dart';
 import '../widgets/accounts_filter_widget.dart';
 import '../widgets/create_account_form.dart';
 import '../../../../injection_container.dart';
+import '../../domain/entities/accounts_query_params.dart';
 
 class AccountsPage extends StatelessWidget {
   const AccountsPage({Key? key}) : super(key: key);
@@ -16,7 +17,8 @@ class AccountsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<AccountsBloc>()..add(const LoadAccounts()),
+      create: (context) =>
+          getIt<AccountsBloc>()..add(const LoadAccounts(AccountsQueryParams())),
       child: const AccountsView(),
     );
   }
