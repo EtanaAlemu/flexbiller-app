@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -42,7 +43,7 @@ class _LoginFormState extends State<LoginForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return BlocProvider(
       create: (context) => getIt<AuthBloc>(),
       child: BlocConsumer<AuthBloc, AuthState>(
@@ -57,7 +58,7 @@ class _LoginFormState extends State<LoginForm> {
           } else if (state is AuthSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('Login successful!'),
+                content: Text(AppStrings.successLogin),
                 backgroundColor: AppTheme.getSuccessColor(theme.brightness),
               ),
             );
@@ -66,11 +67,9 @@ class _LoginFormState extends State<LoginForm> {
         },
         builder: (context, state) {
           if (state is AuthLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
-          
+
           return Form(
             key: _formKey,
             child: Column(
@@ -84,7 +83,7 @@ class _LoginFormState extends State<LoginForm> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'Welcome Back',
+                  AppStrings.welcomeBack,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onBackground,
@@ -93,35 +92,35 @@ class _LoginFormState extends State<LoginForm> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Sign in to your account to continue',
+                  AppStrings.signInToContinue,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onBackground.withOpacity(0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                const Text(
-                  'Test with: techtcoder1237@gmail.com / Tcoder@123',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                Text(
+                  AppStrings.testCredentials,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
-                    prefixIcon: Icon(Icons.email),
+                  decoration: InputDecoration(
+                    labelText: AppStrings.email,
+                    hintText: AppStrings.emailHint,
+                    prefixIcon: const Icon(Icons.email),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return AppStrings.validationRequired;
                     }
                     if (!RegExp(
                       r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                     ).hasMatch(value)) {
-                      return 'Please enter a valid email';
+                      return AppStrings.validationEmail;
                     }
                     return null;
                   },
@@ -131,12 +130,14 @@ class _LoginFormState extends State<LoginForm> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
+                    labelText: AppStrings.password,
+                    hintText: AppStrings.passwordHint,
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
                       onPressed: () {
                         setState(() {
@@ -147,10 +148,10 @@ class _LoginFormState extends State<LoginForm> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return AppStrings.validationRequired;
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return AppStrings.validationPasswordLength(6);
                     }
                     return null;
                   },
@@ -158,9 +159,9 @@ class _LoginFormState extends State<LoginForm> {
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _submitForm,
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  child: Text(
+                    AppStrings.loginButton,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -172,7 +173,7 @@ class _LoginFormState extends State<LoginForm> {
                       ),
                     );
                   },
-                  child: const Text('Forgot Password?'),
+                  child: Text(AppStrings.forgotPassword),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
@@ -183,14 +184,14 @@ class _LoginFormState extends State<LoginForm> {
                       ),
                     );
                   },
-                  child: const Text('Change Password'),
+                  child: Text(AppStrings.changePassword),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
                     // TODO: Navigate to register page
                   },
-                  child: const Text('Don\'t have an account? Sign up'),
+                  child: Text(AppStrings.dontHaveAccount),
                 ),
               ],
             ),

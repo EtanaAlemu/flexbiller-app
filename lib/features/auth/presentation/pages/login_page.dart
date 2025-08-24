@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../injection_container.dart';
 import '../../../../core/theme/theme_toggle_widget.dart';
-import '../bloc/auth_bloc.dart';
-import '../bloc/auth_event.dart';
-import '../bloc/auth_state.dart';
+import '../../../../core/localization/language_selector_widget.dart';
 import '../widgets/login_form.dart';
 
 class LoginPage extends StatelessWidget {
@@ -16,6 +12,8 @@ class LoginPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('FlexBiller'),
         actions: [
+          const SimpleLanguageSelector(),
+          const SizedBox(width: 8),
           const ThemeToggleWidget(),
           const SizedBox(width: 8),
         ],
