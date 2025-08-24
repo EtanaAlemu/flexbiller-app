@@ -48,7 +48,10 @@ _i174.GetIt $initGetIt(
     () => _i493.SecureStorageService(gh<_i558.FlutterSecureStorage>()),
   );
   gh.factory<_i1015.AuthRepository>(
-    () => _i111.AuthRepositoryImpl(gh<_i767.AuthRemoteDataSource>()),
+    () => _i111.AuthRepositoryImpl(
+      gh<_i767.AuthRemoteDataSource>(),
+      gh<_i493.SecureStorageService>(),
+    ),
   );
   gh.factory<_i206.LoginUseCase>(
     () => _i206.LoginUseCase(gh<_i1015.AuthRepository>()),

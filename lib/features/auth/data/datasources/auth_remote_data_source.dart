@@ -23,10 +23,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final response = await dio.post(
         '/auth/login',
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
       if (response.statusCode == 200) {
@@ -78,15 +75,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<AuthResponse> register(String email, String password, String name) async {
+  Future<AuthResponse> register(
+    String email,
+    String password,
+    String name,
+  ) async {
     try {
       final response = await dio.post(
         '/auth/register',
-        data: {
-          'email': email,
-          'password': password,
-          'name': name,
-        },
+        data: {'email': email, 'password': password, 'name': name},
       );
 
       if (response.statusCode == 200) {
@@ -140,10 +137,32 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> logout() async {
     try {
-      await dio.post('/auth/logout');
+      final response = await dio.post('/auth/logout');
+
+      // Logout endpoint returns 204 No Content on success
+      if (response.statusCode == 204) {
+        return; // Success - no content to parse
+      } else if (response.statusCode != 200) {
+        throw ServerException(
+          'Logout failed with status: ${response.statusCode}',
+          response.statusCode,
+        );
+      }
     } on DioException catch (e) {
-      // Logout can fail silently, just log the error
-      print('Logout error: ${e.message}');
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized - token may be invalid');
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Request timeout');
+      } else {
+        throw ServerException(
+          e.message ?? 'Network error occurred',
+          e.response?.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
     }
   }
 
@@ -152,9 +171,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final response = await dio.post(
         '/auth/refresh-token',
-        data: {
-          'refreshToken': refreshToken,
-        },
+        data: {'refreshToken': refreshToken},
       );
 
       if (response.statusCode == 200) {
@@ -210,9 +227,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final response = await dio.post(
         '/auth/forgot-password',
-        data: {
-          'email': email,
-        },
+        data: {'email': email},
       );
 
       if (response.statusCode == 200) {

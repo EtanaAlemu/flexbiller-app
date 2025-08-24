@@ -3,23 +3,25 @@ import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
 import '../models/auth_response.dart';
+import 'package:flexbiller_app/core/services/secure_storage_service.dart';
+import 'package:flexbiller_app/core/errors/exceptions.dart';
 
 @Injectable(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
+  final SecureStorageService _secureStorage;
 
-  AuthRepositoryImpl(this._remoteDataSource);
+  AuthRepositoryImpl(this._remoteDataSource, this._secureStorage);
 
   @override
   Future<User> login(String email, String password) async {
     try {
       final authResponse = await _remoteDataSource.login(email, password);
-      
+
       // Store tokens in secure storage
-      // TODO: Inject SecureStorageService and store tokens
-      // await _secureStorage.write(key: AppConstants.authTokenKey, value: authResponse.accessToken);
-      // await _secureStorage.write(key: AppConstants.refreshTokenKey, value: authResponse.refreshToken);
-      
+      await _secureStorage.saveAuthToken(authResponse.accessToken);
+      await _secureStorage.saveRefreshToken(authResponse.refreshToken);
+
       return authResponse.user.toEntity();
     } catch (e) {
       // Re-throw the exception to be handled by the BLoC
@@ -30,11 +32,16 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<User> register(String email, String password, String name) async {
     try {
-      final authResponse = await _remoteDataSource.register(email, password, name);
-      
+      final authResponse = await _remoteDataSource.register(
+        email,
+        password,
+        name,
+      );
+
       // Store tokens in secure storage
-      // TODO: Inject SecureStorageService and store tokens
-      
+      await _secureStorage.saveAuthToken(authResponse.accessToken);
+      await _secureStorage.saveRefreshToken(authResponse.refreshToken);
+
       return authResponse.user.toEntity();
     } catch (e) {
       rethrow;
@@ -45,8 +52,13 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> logout() async {
     try {
       await _remoteDataSource.logout();
-      // TODO: Clear tokens from secure storage
+      // Clear tokens from secure storage
+      await _secureStorage.clearAuthTokens();
+      await _secureStorage.clear(); // Clear all stored data
     } catch (e) {
+      // Even if logout fails, clear local tokens for security
+      await _secureStorage.clearAuthTokens();
+      await _secureStorage.clear();
       rethrow;
     }
   }
@@ -66,10 +78,19 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<AuthResponse> refreshToken() async {
     try {
-      // TODO: Get refresh token from secure storage
-      final refreshToken = 'dummy_token';
+      // Get refresh token from secure storage
+      final refreshToken = await _secureStorage.getRefreshToken();
+      if (refreshToken == null) {
+        throw AuthException('No refresh token available');
+      }
       // Call remote data source to refresh token
-      return await _remoteDataSource.refreshToken(refreshToken);
+      final authResponse = await _remoteDataSource.refreshToken(refreshToken);
+      
+      // Store new tokens
+      await _secureStorage.saveAuthToken(authResponse.accessToken);
+      await _secureStorage.saveRefreshToken(authResponse.refreshToken);
+      
+      return authResponse;
     } catch (e) {
       rethrow;
     }
