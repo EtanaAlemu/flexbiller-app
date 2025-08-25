@@ -880,8 +880,15 @@ class AccountPaymentsRemoteDataSourceImpl
       if (response.statusCode == 201) {
         final responseData = response.data;
 
-        // Handle new response format with payment object
-        if (responseData['payment'] != null) {
+        // Handle new response format with nested payment.paymentData structure
+        if (responseData['payment'] != null && 
+            responseData['payment']['paymentData'] != null) {
+          return AccountPaymentModel.fromJson(
+            responseData['payment']['paymentData'] as Map<String, dynamic>,
+          );
+        }
+        // Handle new response format with direct payment object
+        else if (responseData['payment'] != null) {
           return AccountPaymentModel.fromJson(
             responseData['payment'] as Map<String, dynamic>,
           );
