@@ -48,6 +48,19 @@ abstract class AccountPaymentsRemoteDataSource {
     String? description,
     Map<String, dynamic>? properties,
   });
+
+  /// Create a new payment using external key (global endpoint)
+  Future<AccountPaymentModel> createGlobalPayment({
+    required String externalKey,
+    required String paymentMethodId,
+    required String transactionExternalKey,
+    required String paymentExternalKey,
+    required String transactionType,
+    required double amount,
+    required String currency,
+    required DateTime effectiveDate,
+    List<Map<String, dynamic>>? properties,
+  });
 }
 
 @Injectable(as: AccountPaymentsRemoteDataSource)
@@ -881,7 +894,7 @@ class AccountPaymentsRemoteDataSourceImpl
         final responseData = response.data;
 
         // Handle new response format with nested payment.paymentData structure
-        if (responseData['payment'] != null && 
+        if (responseData['payment'] != null &&
             responseData['payment']['paymentData'] != null) {
           return AccountPaymentModel.fromJson(
             responseData['payment']['paymentData'] as Map<String, dynamic>,
@@ -927,6 +940,85 @@ class AccountPaymentsRemoteDataSourceImpl
         throw NetworkException('No internet connection');
       } else {
         throw ServerException('Failed to create account payment: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<AccountPaymentModel> createGlobalPayment({
+    required String externalKey,
+    required String paymentMethodId,
+    required String transactionExternalKey,
+    required String paymentExternalKey,
+    required String transactionType,
+    required double amount,
+    required String currency,
+    required DateTime effectiveDate,
+    List<Map<String, dynamic>>? properties,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/accounts/payments',
+        queryParameters: {
+          'externalKey': externalKey,
+          'paymentMethodId': paymentMethodId,
+        },
+        data: {
+          'transactionExternalKey': transactionExternalKey,
+          'paymentExternalKey': paymentExternalKey,
+          'transactionType': transactionType,
+          'amount': amount,
+          'currency': currency,
+          'effectiveDate': effectiveDate.toIso8601String(),
+          if (properties != null) 'properties': properties,
+        },
+      );
+
+      if (response.statusCode == 201) {
+        final responseData = response.data;
+
+        // Handle new response format with direct payment object
+        if (responseData['payment'] != null) {
+          return AccountPaymentModel.fromJson(
+            responseData['payment'] as Map<String, dynamic>,
+          );
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          return AccountPaymentModel.fromJson(
+            responseData['data'] as Map<String, dynamic>,
+          );
+        } else {
+          throw ServerException(
+            responseData['message'] ?? 'Failed to create global payment',
+          );
+        }
+      } else {
+        throw ServerException(
+          'Failed to create global payment: ${response.statusCode}',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized to create global payment');
+      } else if (e.response?.statusCode == 403) {
+        throw AuthException(
+          'Forbidden: Insufficient permissions to create global payment',
+        );
+      } else if (e.response?.statusCode == 404) {
+        throw ValidationException('Account not found for global payment');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException(
+          'Connection timeout while creating global payment',
+        );
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('No internet connection');
+      } else {
+        throw ServerException('Failed to create global payment: ${e.message}');
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');

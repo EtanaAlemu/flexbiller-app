@@ -56,4 +56,17 @@ abstract class AccountPaymentsRepository {
     String? description,
     Map<String, dynamic>? properties,
   });
+
+  /// Create a new payment using external key (global endpoint)
+  Future<AccountPayment> createGlobalPayment({
+    required String externalKey,
+    required String paymentMethodId,
+    required String transactionExternalKey,
+    required String paymentExternalKey,
+    required String transactionType,
+    required double amount,
+    required String currency,
+    required DateTime effectiveDate,
+    List<Map<String, dynamic>>? properties,
+  });
 }

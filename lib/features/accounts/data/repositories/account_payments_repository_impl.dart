@@ -171,4 +171,34 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<AccountPayment> createGlobalPayment({
+    required String externalKey,
+    required String paymentMethodId,
+    required String transactionExternalKey,
+    required String paymentExternalKey,
+    required String transactionType,
+    required double amount,
+    required String currency,
+    required DateTime effectiveDate,
+    List<Map<String, dynamic>>? properties,
+  }) async {
+    try {
+      final paymentModel = await _remoteDataSource.createGlobalPayment(
+        externalKey: externalKey,
+        paymentMethodId: paymentMethodId,
+        transactionExternalKey: transactionExternalKey,
+        paymentExternalKey: paymentExternalKey,
+        transactionType: transactionType,
+        amount: amount,
+        currency: currency,
+        effectiveDate: effectiveDate,
+        properties: properties,
+      );
+      return paymentModel.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
