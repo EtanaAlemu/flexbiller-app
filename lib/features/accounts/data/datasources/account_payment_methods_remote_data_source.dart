@@ -4,28 +4,62 @@ import '../../../../core/errors/exceptions.dart';
 import '../models/account_payment_method_model.dart';
 
 abstract class AccountPaymentMethodsRemoteDataSource {
-  Future<List<AccountPaymentMethodModel>> getAccountPaymentMethods(String accountId);
-  Future<AccountPaymentMethodModel> getAccountPaymentMethod(String accountId, String paymentMethodId);
+  Future<List<AccountPaymentMethodModel>> getAccountPaymentMethods(
+    String accountId,
+  );
+  Future<AccountPaymentMethodModel> getAccountPaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  );
   Future<AccountPaymentMethodModel?> getDefaultPaymentMethod(String accountId);
-  Future<List<AccountPaymentMethodModel>> getActivePaymentMethods(String accountId);
-  Future<List<AccountPaymentMethodModel>> getPaymentMethodsByType(String accountId, String type);
-  Future<AccountPaymentMethodModel> setDefaultPaymentMethod(String accountId, String paymentMethodId, bool payAllUnpaidInvoices);
-  Future<AccountPaymentMethodModel> createPaymentMethod(String accountId, String paymentMethodType, String paymentMethodName, Map<String, dynamic> paymentDetails);
-  Future<AccountPaymentMethodModel> updatePaymentMethod(String accountId, String paymentMethodId, Map<String, dynamic> updates);
+  Future<List<AccountPaymentMethodModel>> getActivePaymentMethods(
+    String accountId,
+  );
+  Future<List<AccountPaymentMethodModel>> getPaymentMethodsByType(
+    String accountId,
+    String type,
+  );
+  Future<AccountPaymentMethodModel> setDefaultPaymentMethod(
+    String accountId,
+    String paymentMethodId,
+    bool payAllUnpaidInvoices,
+  );
+  Future<AccountPaymentMethodModel> createPaymentMethod(
+    String accountId,
+    String paymentMethodType,
+    String paymentMethodName,
+    Map<String, dynamic> paymentDetails,
+  );
+  Future<AccountPaymentMethodModel> updatePaymentMethod(
+    String accountId,
+    String paymentMethodId,
+    Map<String, dynamic> updates,
+  );
   Future<void> deletePaymentMethod(String accountId, String paymentMethodId);
-  Future<AccountPaymentMethodModel> deactivatePaymentMethod(String accountId, String paymentMethodId);
-  Future<AccountPaymentMethodModel> reactivatePaymentMethod(String accountId, String paymentMethodId);
-  Future<List<AccountPaymentMethodModel>> refreshPaymentMethods(String accountId);
+  Future<AccountPaymentMethodModel> deactivatePaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  );
+  Future<AccountPaymentMethodModel> reactivatePaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  );
+  Future<List<AccountPaymentMethodModel>> refreshPaymentMethods(
+    String accountId,
+  );
 }
 
 @Injectable(as: AccountPaymentMethodsRemoteDataSource)
-class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethodsRemoteDataSource {
+class AccountPaymentMethodsRemoteDataSourceImpl
+    implements AccountPaymentMethodsRemoteDataSource {
   final Dio _dio;
 
   AccountPaymentMethodsRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<List<AccountPaymentMethodModel>> getAccountPaymentMethods(String accountId) async {
+  Future<List<AccountPaymentMethodModel>> getAccountPaymentMethods(
+    String accountId,
+  ) async {
     try {
       final response = await _dio.get('/accounts/$accountId/paymentMethods');
 
@@ -33,25 +67,40 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         final responseData = response.data;
 
         // Handle new response format with paymentMethods
-        if (responseData['paymentMethods'] != null && responseData['paymentMethods'] is List) {
-          final List<dynamic> methodsData = responseData['paymentMethods'] as List<dynamic>;
+        if (responseData['paymentMethods'] != null &&
+            responseData['paymentMethods'] is List) {
+          final List<dynamic> methodsData =
+              responseData['paymentMethods'] as List<dynamic>;
           return methodsData
-              .map((item) => AccountPaymentMethodModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) => AccountPaymentMethodModel.fromJson(
+                  item as Map<String, dynamic>,
+                ),
+              )
               .toList();
         }
         // Handle old response format with data
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> methodsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> methodsData =
+              responseData['data'] as List<dynamic>;
           return methodsData
-              .map((item) => AccountPaymentMethodModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) => AccountPaymentMethodModel.fromJson(
+                  item as Map<String, dynamic>,
+                ),
+              )
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to fetch account payment methods',
+            responseData['message'] ??
+                'Failed to fetch account payment methods',
           );
         }
       } else {
-        throw ServerException('Failed to fetch account payment methods: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account payment methods: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -64,11 +113,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         throw ValidationException('Account not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account payment methods');
+        throw NetworkException(
+          'Connection timeout while fetching account payment methods',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch account payment methods: ${e.message}');
+        throw ServerException(
+          'Failed to fetch account payment methods: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -76,9 +129,14 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
   }
 
   @override
-  Future<AccountPaymentMethodModel> getAccountPaymentMethod(String accountId, String paymentMethodId) async {
+  Future<AccountPaymentMethodModel> getAccountPaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/paymentMethods/$paymentMethodId');
+      final response = await _dio.get(
+        '/accounts/$accountId/paymentMethods/$paymentMethodId',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -93,7 +151,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           );
         }
       } else {
-        throw ServerException('Failed to fetch account payment method: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account payment method: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -106,11 +166,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         throw ValidationException('Account payment method not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account payment method');
+        throw NetworkException(
+          'Connection timeout while fetching account payment method',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch account payment method: ${e.message}');
+        throw ServerException(
+          'Failed to fetch account payment method: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -118,9 +182,13 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
   }
 
   @override
-  Future<AccountPaymentMethodModel?> getDefaultPaymentMethod(String accountId) async {
+  Future<AccountPaymentMethodModel?> getDefaultPaymentMethod(
+    String accountId,
+  ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/paymentMethods/default');
+      final response = await _dio.get(
+        '/accounts/$accountId/paymentMethods/default',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -129,7 +197,8 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           return AccountPaymentMethodModel.fromJson(
             responseData['data'] as Map<String, dynamic>,
           );
-        } else if (responseData['success'] == true && responseData['data'] == null) {
+        } else if (responseData['success'] == true &&
+            responseData['data'] == null) {
           return null; // No default payment method
         } else {
           throw ServerException(
@@ -137,7 +206,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           );
         }
       } else {
-        throw ServerException('Failed to fetch default payment method: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch default payment method: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -148,11 +219,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching default payment method');
+        throw NetworkException(
+          'Connection timeout while fetching default payment method',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch default payment method: ${e.message}');
+        throw ServerException(
+          'Failed to fetch default payment method: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -160,17 +235,26 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
   }
 
   @override
-  Future<List<AccountPaymentMethodModel>> getActivePaymentMethods(String accountId) async {
+  Future<List<AccountPaymentMethodModel>> getActivePaymentMethods(
+    String accountId,
+  ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/paymentMethods/active');
+      final response = await _dio.get(
+        '/accounts/$accountId/paymentMethods/active',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> methodsData = responseData['data'] as List<dynamic>;
+          final List<dynamic> methodsData =
+              responseData['data'] as List<dynamic>;
           return methodsData
-              .map((item) => AccountPaymentMethodModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) => AccountPaymentMethodModel.fromJson(
+                  item as Map<String, dynamic>,
+                ),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -178,7 +262,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           );
         }
       } else {
-        throw ServerException('Failed to fetch active payment methods: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch active payment methods: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -189,11 +275,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching active payment methods');
+        throw NetworkException(
+          'Connection timeout while fetching active payment methods',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch active payment methods: ${e.message}');
+        throw ServerException(
+          'Failed to fetch active payment methods: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -201,7 +291,10 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
   }
 
   @override
-  Future<List<AccountPaymentMethodModel>> getPaymentMethodsByType(String accountId, String type) async {
+  Future<List<AccountPaymentMethodModel>> getPaymentMethodsByType(
+    String accountId,
+    String type,
+  ) async {
     try {
       final response = await _dio.get(
         '/accounts/$accountId/paymentMethods/type',
@@ -212,17 +305,25 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> methodsData = responseData['data'] as List<dynamic>;
+          final List<dynamic> methodsData =
+              responseData['data'] as List<dynamic>;
           return methodsData
-              .map((item) => AccountPaymentMethodModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) => AccountPaymentMethodModel.fromJson(
+                  item as Map<String, dynamic>,
+                ),
+              )
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to fetch payment methods by type',
+            responseData['message'] ??
+                'Failed to fetch payment methods by type',
           );
         }
       } else {
-        throw ServerException('Failed to fetch payment methods by type: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch payment methods by type: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -233,11 +334,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching payment methods by type');
+        throw NetworkException(
+          'Connection timeout while fetching payment methods by type',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch payment methods by type: ${e.message}');
+        throw ServerException(
+          'Failed to fetch payment methods by type: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -259,7 +364,37 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with success message and IDs
+        if (responseData['message'] != null && 
+            responseData['accountId'] != null && 
+            responseData['paymentMethodId'] != null) {
+          // Create a minimal payment method model with available data
+          return AccountPaymentMethodModel(
+            id: responseData['paymentMethodId'],
+            accountId: responseData['accountId'],
+            externalKey: null,
+            pluginName: null,
+            pluginInfo: null,
+            isDefault: true, // This method sets it as default
+            auditLogs: null,
+            paymentMethodType: null,
+            paymentMethodName: null,
+            cardLastFourDigits: null,
+            cardBrand: null,
+            cardExpiryMonth: null,
+            cardExpiryYear: null,
+            bankName: null,
+            bankAccountLastFourDigits: null,
+            bankAccountType: null,
+            paypalEmail: null,
+            isActive: null,
+            createdAt: null,
+            updatedAt: null,
+            metadata: null,
+          );
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           return AccountPaymentMethodModel.fromJson(
             responseData['data'] as Map<String, dynamic>,
           );
@@ -269,7 +404,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           );
         }
       } else {
-        throw ServerException('Failed to set default payment method: ${response.statusCode}');
+        throw ServerException(
+          'Failed to set default payment method: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -282,11 +419,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         throw ValidationException('Account or payment method not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while setting default payment method');
+        throw NetworkException(
+          'Connection timeout while setting default payment method',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to set default payment method: ${e.message}');
+        throw ServerException(
+          'Failed to set default payment method: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -323,7 +464,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           );
         }
       } else {
-        throw ServerException('Failed to create payment method: ${response.statusCode}');
+        throw ServerException(
+          'Failed to create payment method: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -336,7 +479,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         throw ValidationException('Invalid payment method data');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while creating payment method');
+        throw NetworkException(
+          'Connection timeout while creating payment method',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -372,7 +517,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           );
         }
       } else {
-        throw ServerException('Failed to update payment method: ${response.statusCode}');
+        throw ServerException(
+          'Failed to update payment method: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -387,7 +534,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         throw ValidationException('Invalid update data');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while updating payment method');
+        throw NetworkException(
+          'Connection timeout while updating payment method',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -399,9 +548,14 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
   }
 
   @override
-  Future<void> deletePaymentMethod(String accountId, String paymentMethodId) async {
+  Future<void> deletePaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  ) async {
     try {
-      final response = await _dio.delete('/accounts/$accountId/paymentMethods/$paymentMethodId');
+      final response = await _dio.delete(
+        '/accounts/$accountId/paymentMethods/$paymentMethodId',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -412,7 +566,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           );
         }
       } else {
-        throw ServerException('Failed to delete payment method: ${response.statusCode}');
+        throw ServerException(
+          'Failed to delete payment method: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -425,7 +581,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         throw ValidationException('Account or payment method not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while deleting payment method');
+        throw NetworkException(
+          'Connection timeout while deleting payment method',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -437,7 +595,10 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
   }
 
   @override
-  Future<AccountPaymentMethodModel> deactivatePaymentMethod(String accountId, String paymentMethodId) async {
+  Future<AccountPaymentMethodModel> deactivatePaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  ) async {
     try {
       final response = await _dio.put(
         '/accounts/$accountId/paymentMethods/$paymentMethodId/deactivate',
@@ -456,7 +617,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           );
         }
       } else {
-        throw ServerException('Failed to deactivate payment method: ${response.statusCode}');
+        throw ServerException(
+          'Failed to deactivate payment method: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -469,11 +632,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         throw ValidationException('Account or payment method not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while deactivating payment method');
+        throw NetworkException(
+          'Connection timeout while deactivating payment method',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to deactivate payment method: ${e.message}');
+        throw ServerException(
+          'Failed to deactivate payment method: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -481,7 +648,10 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
   }
 
   @override
-  Future<AccountPaymentMethodModel> reactivatePaymentMethod(String accountId, String paymentMethodId) async {
+  Future<AccountPaymentMethodModel> reactivatePaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  ) async {
     try {
       final response = await _dio.put(
         '/accounts/$accountId/paymentMethods/$paymentMethodId/reactivate',
@@ -500,7 +670,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           );
         }
       } else {
-        throw ServerException('Failed to reactivate payment method: ${response.statusCode}');
+        throw ServerException(
+          'Failed to reactivate payment method: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -513,11 +685,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         throw ValidationException('Account or payment method not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while reactivating payment method');
+        throw NetworkException(
+          'Connection timeout while reactivating payment method',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to reactivate payment method: ${e.message}');
+        throw ServerException(
+          'Failed to reactivate payment method: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -525,17 +701,26 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
   }
 
   @override
-  Future<List<AccountPaymentMethodModel>> refreshPaymentMethods(String accountId) async {
+  Future<List<AccountPaymentMethodModel>> refreshPaymentMethods(
+    String accountId,
+  ) async {
     try {
-      final response = await _dio.put('/accounts/$accountId/paymentMethods/refresh');
+      final response = await _dio.put(
+        '/accounts/$accountId/paymentMethods/refresh',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> methodsData = responseData['data'] as List<dynamic>;
+          final List<dynamic> methodsData =
+              responseData['data'] as List<dynamic>;
           return methodsData
-              .map((item) => AccountPaymentMethodModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) => AccountPaymentMethodModel.fromJson(
+                  item as Map<String, dynamic>,
+                ),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -543,7 +728,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
           );
         }
       } else {
-        throw ServerException('Failed to refresh payment methods: ${response.statusCode}');
+        throw ServerException(
+          'Failed to refresh payment methods: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -554,11 +741,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while refreshing payment methods');
+        throw NetworkException(
+          'Connection timeout while refreshing payment methods',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to refresh payment methods: ${e.message}');
+        throw ServerException(
+          'Failed to refresh payment methods: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
