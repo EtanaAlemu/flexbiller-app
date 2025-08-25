@@ -5,13 +5,33 @@ import '../models/account_payment_model.dart';
 
 abstract class AccountPaymentsRemoteDataSource {
   Future<List<AccountPaymentModel>> getAccountPayments(String accountId);
-  Future<AccountPaymentModel> getAccountPayment(String accountId, String paymentId);
-  Future<List<AccountPaymentModel>> getAccountPaymentsByStatus(String accountId, String status);
-  Future<List<AccountPaymentModel>> getAccountPaymentsByType(String accountId, String type);
-  Future<List<AccountPaymentModel>> getAccountPaymentsByDateRange(String accountId, DateTime startDate, DateTime endDate);
-  Future<List<AccountPaymentModel>> getAccountPaymentsWithPagination(String accountId, int page, int pageSize);
+  Future<AccountPaymentModel> getAccountPayment(
+    String accountId,
+    String paymentId,
+  );
+  Future<List<AccountPaymentModel>> getAccountPaymentsByStatus(
+    String accountId,
+    String status,
+  );
+  Future<List<AccountPaymentModel>> getAccountPaymentsByType(
+    String accountId,
+    String type,
+  );
+  Future<List<AccountPaymentModel>> getAccountPaymentsByDateRange(
+    String accountId,
+    DateTime startDate,
+    DateTime endDate,
+  );
+  Future<List<AccountPaymentModel>> getAccountPaymentsWithPagination(
+    String accountId,
+    int page,
+    int pageSize,
+  );
   Future<Map<String, dynamic>> getAccountPaymentStatistics(String accountId);
-  Future<List<AccountPaymentModel>> searchAccountPayments(String accountId, String searchTerm);
+  Future<List<AccountPaymentModel>> searchAccountPayments(
+    String accountId,
+    String searchTerm,
+  );
   Future<List<AccountPaymentModel>> getRefundedPayments(String accountId);
   Future<List<AccountPaymentModel>> getFailedPayments(String accountId);
   Future<List<AccountPaymentModel>> getSuccessfulPayments(String accountId);
@@ -31,7 +51,8 @@ abstract class AccountPaymentsRemoteDataSource {
 }
 
 @Injectable(as: AccountPaymentsRemoteDataSource)
-class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSource {
+class AccountPaymentsRemoteDataSourceImpl
+    implements AccountPaymentsRemoteDataSource {
   final Dio _dio;
 
   AccountPaymentsRemoteDataSourceImpl(this._dio);
@@ -45,17 +66,27 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         final responseData = response.data;
 
         // Handle new response format with payments array
-        if (responseData['payments'] != null && responseData['payments'] is List) {
-          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+        if (responseData['payments'] != null &&
+            responseData['payments'] is List) {
+          final List<dynamic> paymentsData =
+              responseData['payments'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> paymentsData =
+              responseData['data'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -63,7 +94,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
           );
         }
       } else {
-        throw ServerException('Failed to fetch account payments: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account payments: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -76,7 +109,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         throw ValidationException('Account not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account payments');
+        throw NetworkException(
+          'Connection timeout while fetching account payments',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -88,9 +123,14 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
   }
 
   @override
-  Future<AccountPaymentModel> getAccountPayment(String accountId, String paymentId) async {
+  Future<AccountPaymentModel> getAccountPayment(
+    String accountId,
+    String paymentId,
+  ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/payments/$paymentId');
+      final response = await _dio.get(
+        '/accounts/$accountId/payments/$paymentId',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -105,7 +145,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
           );
         }
       } else {
-        throw ServerException('Failed to fetch account payment: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account payment: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -118,7 +160,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         throw ValidationException('Account payment not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account payment');
+        throw NetworkException(
+          'Connection timeout while fetching account payment',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -130,7 +174,10 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
   }
 
   @override
-  Future<List<AccountPaymentModel>> getAccountPaymentsByStatus(String accountId, String status) async {
+  Future<List<AccountPaymentModel>> getAccountPaymentsByStatus(
+    String accountId,
+    String status,
+  ) async {
     try {
       final response = await _dio.get(
         '/accounts/$accountId/payments/status',
@@ -141,25 +188,38 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         final responseData = response.data;
 
         // Handle new response format with payments array
-        if (responseData['payments'] != null && responseData['payments'] is List) {
-          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+        if (responseData['payments'] != null &&
+            responseData['payments'] is List) {
+          final List<dynamic> paymentsData =
+              responseData['payments'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> paymentsData =
+              responseData['data'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to fetch account payments by status',
+            responseData['message'] ??
+                'Failed to fetch account payments by status',
           );
         }
       } else {
-        throw ServerException('Failed to fetch account payments by status: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account payments by status: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -170,11 +230,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account payments by status');
+        throw NetworkException(
+          'Connection timeout while fetching account payments by status',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch account payments by status: ${e.message}');
+        throw ServerException(
+          'Failed to fetch account payments by status: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -182,7 +246,10 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
   }
 
   @override
-  Future<List<AccountPaymentModel>> getAccountPaymentsByType(String accountId, String type) async {
+  Future<List<AccountPaymentModel>> getAccountPaymentsByType(
+    String accountId,
+    String type,
+  ) async {
     try {
       final response = await _dio.get(
         '/accounts/$accountId/payments/type',
@@ -193,25 +260,38 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         final responseData = response.data;
 
         // Handle new response format with payments array
-        if (responseData['payments'] != null && responseData['payments'] is List) {
-          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+        if (responseData['payments'] != null &&
+            responseData['payments'] is List) {
+          final List<dynamic> paymentsData =
+              responseData['payments'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> paymentsData =
+              responseData['data'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to fetch account payments by type',
+            responseData['message'] ??
+                'Failed to fetch account payments by type',
           );
         }
       } else {
-        throw ServerException('Failed to fetch account payments by type: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account payments by type: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -222,11 +302,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account payments by type');
+        throw NetworkException(
+          'Connection timeout while fetching account payments by type',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch account payments by type: ${e.message}');
+        throw ServerException(
+          'Failed to fetch account payments by type: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -252,40 +336,59 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         final responseData = response.data;
 
         // Handle new response format with payments array
-        if (responseData['payments'] != null && responseData['payments'] is List) {
-          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+        if (responseData['payments'] != null &&
+            responseData['payments'] is List) {
+          final List<dynamic> paymentsData =
+              responseData['payments'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> paymentsData =
+              responseData['data'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to fetch account payments by date range',
+            responseData['message'] ??
+                'Failed to fetch account payments by date range',
           );
         }
       } else {
-        throw ServerException('Failed to fetch account payments by date range: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account payments by date range: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        throw AuthException('Unauthorized to fetch account payments by date range');
+        throw AuthException(
+          'Unauthorized to fetch account payments by date range',
+        );
       } else if (e.response?.statusCode == 403) {
         throw AuthException(
           'Forbidden: Insufficient permissions to fetch account payments by date range',
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account payments by date range');
+        throw NetworkException(
+          'Connection timeout while fetching account payments by date range',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch account payments by date range: ${e.message}');
+        throw ServerException(
+          'Failed to fetch account payments by date range: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -301,50 +404,66 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
     try {
       final response = await _dio.get(
         '/accounts/$accountId/payments/paginated',
-        queryParameters: {
-          'page': page,
-          'pageSize': pageSize,
-        },
+        queryParameters: {'page': page, 'pageSize': pageSize},
       );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
 
         // Handle new response format with payments array
-        if (responseData['payments'] != null && responseData['payments'] is List) {
-          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+        if (responseData['payments'] != null &&
+            responseData['payments'] is List) {
+          final List<dynamic> paymentsData =
+              responseData['payments'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> paymentsData =
+              responseData['data'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to fetch account payments with pagination',
+            responseData['message'] ??
+                'Failed to fetch account payments with pagination',
           );
         }
       } else {
-        throw ServerException('Failed to fetch account payments with pagination: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account payments with pagination: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        throw AuthException('Unauthorized to fetch account payments with pagination');
+        throw AuthException(
+          'Unauthorized to fetch account payments with pagination',
+        );
       } else if (e.response?.statusCode == 403) {
         throw AuthException(
           'Forbidden: Insufficient permissions to fetch account payments with pagination',
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account payments with pagination');
+        throw NetworkException(
+          'Connection timeout while fetching account payments with pagination',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch account payments with pagination: ${e.message}');
+        throw ServerException(
+          'Failed to fetch account payments with pagination: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -352,9 +471,13 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
   }
 
   @override
-  Future<Map<String, dynamic>> getAccountPaymentStatistics(String accountId) async {
+  Future<Map<String, dynamic>> getAccountPaymentStatistics(
+    String accountId,
+  ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/payments/statistics');
+      final response = await _dio.get(
+        '/accounts/$accountId/payments/statistics',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -363,11 +486,14 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
           return responseData['data'] as Map<String, dynamic>;
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to fetch account payment statistics',
+            responseData['message'] ??
+                'Failed to fetch account payment statistics',
           );
         }
       } else {
-        throw ServerException('Failed to fetch account payment statistics: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account payment statistics: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -378,11 +504,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account payment statistics');
+        throw NetworkException(
+          'Connection timeout while fetching account payment statistics',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch account payment statistics: ${e.message}');
+        throw ServerException(
+          'Failed to fetch account payment statistics: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -390,7 +520,10 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
   }
 
   @override
-  Future<List<AccountPaymentModel>> searchAccountPayments(String accountId, String searchTerm) async {
+  Future<List<AccountPaymentModel>> searchAccountPayments(
+    String accountId,
+    String searchTerm,
+  ) async {
     try {
       final response = await _dio.get(
         '/accounts/$accountId/payments/search',
@@ -401,17 +534,27 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         final responseData = response.data;
 
         // Handle new response format with payments array
-        if (responseData['payments'] != null && responseData['payments'] is List) {
-          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+        if (responseData['payments'] != null &&
+            responseData['payments'] is List) {
+          final List<dynamic> paymentsData =
+              responseData['payments'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> paymentsData =
+              responseData['data'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -419,7 +562,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
           );
         }
       } else {
-        throw ServerException('Failed to search account payments: ${response.statusCode}');
+        throw ServerException(
+          'Failed to search account payments: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -430,11 +575,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while searching account payments');
+        throw NetworkException(
+          'Connection timeout while searching account payments',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to search account payments: ${e.message}');
+        throw ServerException(
+          'Failed to search account payments: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -442,7 +591,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
   }
 
   @override
-  Future<List<AccountPaymentModel>> getRefundedPayments(String accountId) async {
+  Future<List<AccountPaymentModel>> getRefundedPayments(
+    String accountId,
+  ) async {
     try {
       final response = await _dio.get('/accounts/$accountId/payments/refunded');
 
@@ -450,17 +601,27 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         final responseData = response.data;
 
         // Handle new response format with payments array
-        if (responseData['payments'] != null && responseData['payments'] is List) {
-          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+        if (responseData['payments'] != null &&
+            responseData['payments'] is List) {
+          final List<dynamic> paymentsData =
+              responseData['payments'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> paymentsData =
+              responseData['data'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -468,7 +629,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
           );
         }
       } else {
-        throw ServerException('Failed to fetch refunded payments: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch refunded payments: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -479,11 +642,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching refunded payments');
+        throw NetworkException(
+          'Connection timeout while fetching refunded payments',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch refunded payments: ${e.message}');
+        throw ServerException(
+          'Failed to fetch refunded payments: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -499,17 +666,27 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         final responseData = response.data;
 
         // Handle new response format with payments array
-        if (responseData['payments'] != null && responseData['payments'] is List) {
-          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+        if (responseData['payments'] != null &&
+            responseData['payments'] is List) {
+          final List<dynamic> paymentsData =
+              responseData['payments'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> paymentsData =
+              responseData['data'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -517,7 +694,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
           );
         }
       } else {
-        throw ServerException('Failed to fetch failed payments: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch failed payments: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -528,7 +707,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching failed payments');
+        throw NetworkException(
+          'Connection timeout while fetching failed payments',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -540,25 +721,39 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
   }
 
   @override
-  Future<List<AccountPaymentModel>> getSuccessfulPayments(String accountId) async {
+  Future<List<AccountPaymentModel>> getSuccessfulPayments(
+    String accountId,
+  ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/payments/successful');
+      final response = await _dio.get(
+        '/accounts/$accountId/payments/successful',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
 
         // Handle new response format with payments array
-        if (responseData['payments'] != null && responseData['payments'] is List) {
-          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+        if (responseData['payments'] != null &&
+            responseData['payments'] is List) {
+          final List<dynamic> paymentsData =
+              responseData['payments'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> paymentsData =
+              responseData['data'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -566,7 +761,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
           );
         }
       } else {
-        throw ServerException('Failed to fetch successful payments: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch successful payments: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -577,11 +774,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching successful payments');
+        throw NetworkException(
+          'Connection timeout while fetching successful payments',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch successful payments: ${e.message}');
+        throw ServerException(
+          'Failed to fetch successful payments: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -597,17 +798,27 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         final responseData = response.data;
 
         // Handle new response format with payments array
-        if (responseData['payments'] != null && responseData['payments'] is List) {
-          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+        if (responseData['payments'] != null &&
+            responseData['payments'] is List) {
+          final List<dynamic> paymentsData =
+              responseData['payments'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> paymentsData =
+              responseData['data'] as List<dynamic>;
           return paymentsData
-              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountPaymentModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -615,7 +826,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
           );
         }
       } else {
-        throw ServerException('Failed to fetch pending payments: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch pending payments: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -626,7 +839,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching pending payments');
+        throw NetworkException(
+          'Connection timeout while fetching pending payments',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -672,7 +887,8 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
           );
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
           return AccountPaymentModel.fromJson(
             responseData['data'] as Map<String, dynamic>,
           );
@@ -682,7 +898,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
           );
         }
       } else {
-        throw ServerException('Failed to create account payment: ${response.statusCode}');
+        throw ServerException(
+          'Failed to create account payment: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -695,7 +913,9 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
         throw ValidationException('Account not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while creating account payment');
+        throw NetworkException(
+          'Connection timeout while creating account payment',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
