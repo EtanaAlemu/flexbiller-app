@@ -24,6 +24,8 @@ import 'features/accounts/data/datasources/account_audit_logs_remote_data_source
     as _i276;
 import 'features/accounts/data/datasources/account_blocking_states_remote_data_source.dart'
     as _i819;
+import 'features/accounts/data/datasources/account_bundles_remote_data_source.dart'
+    as _i326;
 import 'features/accounts/data/datasources/account_custom_fields_remote_data_source.dart'
     as _i608;
 import 'features/accounts/data/datasources/account_emails_remote_data_source.dart'
@@ -203,6 +205,9 @@ _i174.GetIt $initGetIt(
     () => _i510.AccountAuditLogsRepositoryImpl(
       gh<_i276.AccountAuditLogsRemoteDataSource>(),
     ),
+  );
+  gh.factory<_i326.AccountBundlesRemoteDataSource>(
+    () => _i326.AccountBundlesRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
   gh.factory<_i45.DioClient>(
     () => _i45.DioClient(gh<_i558.FlutterSecureStorage>()),

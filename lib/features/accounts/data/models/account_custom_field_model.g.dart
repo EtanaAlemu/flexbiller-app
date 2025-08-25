@@ -14,8 +14,8 @@ AccountCustomFieldModel _$AccountCustomFieldModelFromJson(
   objectType: json['objectType'] as String,
   name: json['name'] as String,
   value: json['value'] as String,
-  auditLogs: (json['auditLogs'] as List<dynamic>)
-      .map((e) => CustomFieldAuditLogModel.fromJson(e as Map<String, dynamic>))
+  auditLogs: (json['auditLogs'] as List<dynamic>?)
+      ?.map((e) => e as Map<String, dynamic>)
       .toList(),
 );
 
