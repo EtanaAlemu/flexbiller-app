@@ -7,6 +7,10 @@ part 'account_custom_field_model.g.dart';
 class AccountCustomFieldModel {
   @JsonKey(name: 'customFieldId')
   final String customFieldId;
+  @JsonKey(name: 'objectId')
+  final String objectId;
+  @JsonKey(name: 'objectType')
+  final String objectType;
   final String name;
   final String value;
   @JsonKey(name: 'auditLogs')
@@ -14,6 +18,8 @@ class AccountCustomFieldModel {
 
   const AccountCustomFieldModel({
     required this.customFieldId,
+    required this.objectId,
+    required this.objectType,
     required this.name,
     required this.value,
     required this.auditLogs,
@@ -27,6 +33,8 @@ class AccountCustomFieldModel {
   factory AccountCustomFieldModel.fromEntity(AccountCustomField entity) {
     return AccountCustomFieldModel(
       customFieldId: entity.customFieldId,
+      objectId: entity.accountId, // Map accountId to objectId
+      objectType: 'ACCOUNT', // Default to ACCOUNT for account custom fields
       name: entity.name,
       value: entity.value,
       auditLogs: entity.auditLogs
@@ -38,6 +46,7 @@ class AccountCustomFieldModel {
   AccountCustomField toEntity() {
     return AccountCustomField(
       customFieldId: customFieldId,
+      accountId: objectId, // Map objectId to accountId
       name: name,
       value: value,
       auditLogs: auditLogs.map((log) => log.toEntity()).toList(),

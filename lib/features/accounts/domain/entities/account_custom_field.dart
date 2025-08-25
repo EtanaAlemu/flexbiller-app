@@ -2,28 +2,32 @@ import 'package:equatable/equatable.dart';
 
 class AccountCustomField extends Equatable {
   final String customFieldId;
+  final String accountId;
   final String name;
   final String value;
   final List<CustomFieldAuditLog> auditLogs;
 
   const AccountCustomField({
     required this.customFieldId,
+    required this.accountId,
     required this.name,
     required this.value,
     required this.auditLogs,
   });
 
   @override
-  List<Object?> get props => [customFieldId, name, value, auditLogs];
+  List<Object?> get props => [customFieldId, accountId, name, value, auditLogs];
 
   AccountCustomField copyWith({
     String? customFieldId,
+    String? accountId,
     String? name,
     String? value,
     List<CustomFieldAuditLog>? auditLogs,
   }) {
     return AccountCustomField(
       customFieldId: customFieldId ?? this.customFieldId,
+      accountId: accountId ?? this.accountId,
       name: name ?? this.name,
       value: value ?? this.value,
       auditLogs: auditLogs ?? this.auditLogs,

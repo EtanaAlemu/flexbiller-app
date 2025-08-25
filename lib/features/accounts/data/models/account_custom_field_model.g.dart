@@ -10,6 +10,8 @@ AccountCustomFieldModel _$AccountCustomFieldModelFromJson(
   Map<String, dynamic> json,
 ) => AccountCustomFieldModel(
   customFieldId: json['customFieldId'] as String,
+  objectId: json['objectId'] as String,
+  objectType: json['objectType'] as String,
   name: json['name'] as String,
   value: json['value'] as String,
   auditLogs: (json['auditLogs'] as List<dynamic>)
@@ -21,6 +23,8 @@ Map<String, dynamic> _$AccountCustomFieldModelToJson(
   AccountCustomFieldModel instance,
 ) => <String, dynamic>{
   'customFieldId': instance.customFieldId,
+  'objectId': instance.objectId,
+  'objectType': instance.objectType,
   'name': instance.name,
   'value': instance.value,
   'auditLogs': instance.auditLogs,
