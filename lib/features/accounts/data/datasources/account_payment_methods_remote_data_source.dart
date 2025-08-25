@@ -714,14 +714,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl
         final responseData = response.data;
 
         // Handle new response format with success message and accountId
-        if (responseData['message'] != null && 
+        if (responseData['message'] != null &&
             responseData['accountId'] != null) {
           // Refresh operation successful, but doesn't return the updated list
           // Return empty list - the caller should fetch payment methods separately
           return [];
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
           final List<dynamic> methodsData =
               responseData['data'] as List<dynamic>;
           return methodsData

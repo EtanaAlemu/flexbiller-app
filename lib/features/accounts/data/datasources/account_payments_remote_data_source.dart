@@ -44,7 +44,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payments array
+        if (responseData['payments'] != null && responseData['payments'] is List) {
+          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+          return paymentsData
+              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
           return paymentsData
               .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
@@ -132,7 +140,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payments array
+        if (responseData['payments'] != null && responseData['payments'] is List) {
+          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+          return paymentsData
+              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
           return paymentsData
               .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
@@ -176,7 +192,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payments array
+        if (responseData['payments'] != null && responseData['payments'] is List) {
+          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+          return paymentsData
+              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
           return paymentsData
               .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
@@ -227,7 +251,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payments array
+        if (responseData['payments'] != null && responseData['payments'] is List) {
+          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+          return paymentsData
+              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
           return paymentsData
               .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
@@ -278,7 +310,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payments array
+        if (responseData['payments'] != null && responseData['payments'] is List) {
+          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+          return paymentsData
+              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
           return paymentsData
               .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
@@ -360,7 +400,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payments array
+        if (responseData['payments'] != null && responseData['payments'] is List) {
+          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+          return paymentsData
+              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
           return paymentsData
               .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
@@ -401,7 +449,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payments array
+        if (responseData['payments'] != null && responseData['payments'] is List) {
+          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+          return paymentsData
+              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
           return paymentsData
               .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
@@ -442,7 +498,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payments array
+        if (responseData['payments'] != null && responseData['payments'] is List) {
+          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+          return paymentsData
+              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
           return paymentsData
               .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
@@ -483,7 +547,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payments array
+        if (responseData['payments'] != null && responseData['payments'] is List) {
+          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+          return paymentsData
+              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
           return paymentsData
               .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
@@ -524,7 +596,15 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payments array
+        if (responseData['payments'] != null && responseData['payments'] is List) {
+          final List<dynamic> paymentsData = responseData['payments'] as List<dynamic>;
+          return paymentsData
+              .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> paymentsData = responseData['data'] as List<dynamic>;
           return paymentsData
               .map((item) => AccountPaymentModel.fromJson(item as Map<String, dynamic>))
@@ -585,7 +665,14 @@ class AccountPaymentsRemoteDataSourceImpl implements AccountPaymentsRemoteDataSo
       if (response.statusCode == 201) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with payment object
+        if (responseData['payment'] != null) {
+          return AccountPaymentModel.fromJson(
+            responseData['payment'] as Map<String, dynamic>,
+          );
+        }
+        // Handle old response format with data field
+        else if (responseData['success'] == true && responseData['data'] != null) {
           return AccountPaymentModel.fromJson(
             responseData['data'] as Map<String, dynamic>,
           );
