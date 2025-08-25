@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../models/account_custom_field_model.dart';
-import '../models/account_custom_field_creation_response_model.dart';
 
 abstract class AccountCustomFieldsRemoteDataSource {
   Future<List<AccountCustomFieldModel>> getAccountCustomFields(String accountId);
@@ -279,6 +278,8 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         // In a real scenario, the API might return the updated field data
         return AccountCustomFieldModel(
           customFieldId: customFieldId,
+          objectId: accountId,
+          objectType: 'ACCOUNT',
           name: name,
           value: value,
           auditLogs: [
@@ -289,7 +290,6 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
               reasonCode: null,
               comments: null,
               objectType: null,
-              objectId: null,
               userToken: null,
             ),
           ],
