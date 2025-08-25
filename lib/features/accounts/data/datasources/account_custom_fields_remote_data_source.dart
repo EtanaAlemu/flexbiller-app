@@ -220,16 +220,18 @@ class AccountCustomFieldsRemoteDataSourceImpl
         if (responseData != null && responseData['message'] != null) {
           final message = responseData['message'] as String;
           final details = responseData['details'];
-          
+
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
             if (originalError.contains("doesn't exist")) {
               throw ValidationException('Account not found: $originalError');
             } else if (originalError.contains("CONNECTION_ERROR")) {
-              throw ServerException('Server communication error: $originalError');
+              throw ServerException(
+                'Server communication error: $originalError',
+              );
             }
           }
-          
+
           throw ServerException('Server error: $message');
         } else {
           throw ServerException('Internal server error occurred');
@@ -300,16 +302,18 @@ class AccountCustomFieldsRemoteDataSourceImpl
         if (responseData != null && responseData['message'] != null) {
           final message = responseData['message'] as String;
           final details = responseData['details'];
-          
+
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
             if (originalError.contains("doesn't exist")) {
               throw ValidationException('Account not found: $originalError');
             } else if (originalError.contains("CONNECTION_ERROR")) {
-              throw ServerException('Server communication error: $originalError');
+              throw ServerException(
+                'Server communication error: $originalError',
+              );
             }
           }
-          
+
           throw ServerException('Server error: $message');
         } else {
           throw ServerException('Internal server error occurred');
@@ -347,27 +351,37 @@ class AccountCustomFieldsRemoteDataSourceImpl
       );
 
       if (response.statusCode == 200) {
-        // Since the API returns 200 for successful update but doesn't return the updated field data,
-        // we'll create a model with the provided data and the existing customFieldId
-        // In a real scenario, the API might return the updated field data
-        return AccountCustomFieldModel(
-          customFieldId: customFieldId,
-          objectId: accountId,
-          objectType: 'ACCOUNT',
-          name: name,
-          value: value,
-          auditLogs: [
-            CustomFieldAuditLogModel(
-              changeType: 'UPDATE',
-              changeDate: DateTime.now(),
-              changedBy: 'Current User', // This would come from user context
-              reasonCode: null,
-              comments: null,
-              objectType: null,
-              userToken: null,
-            ),
-          ],
-        );
+        final responseData = response.data;
+        
+        // Check if the API returned the updated custom field data
+        if (responseData['customFields'] != null && 
+            responseData['customFields'] is List && 
+            (responseData['customFields'] as List).isNotEmpty) {
+          
+          // Parse the first updated custom field from the response
+          final updatedFieldData = (responseData['customFields'] as List).first as Map<String, dynamic>;
+          return AccountCustomFieldModel.fromJson(updatedFieldData);
+        } else {
+          // Fallback: Create a model with the provided data if no response data
+          return AccountCustomFieldModel(
+            customFieldId: customFieldId,
+            objectId: accountId,
+            objectType: 'ACCOUNT',
+            name: name,
+            value: value,
+            auditLogs: [
+              CustomFieldAuditLogModel(
+                changeType: 'UPDATE',
+                changeDate: DateTime.now(),
+                changedBy: 'Current User', // This would come from user context
+                reasonCode: null,
+                comments: null,
+                objectType: null,
+                userToken: null,
+              ),
+            ],
+          );
+        }
       } else {
         throw ServerException(
           'Failed to update custom field: ${response.statusCode}',
@@ -390,16 +404,20 @@ class AccountCustomFieldsRemoteDataSourceImpl
         if (responseData != null && responseData['message'] != null) {
           final message = responseData['message'] as String;
           final details = responseData['details'];
-          
+
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
             if (originalError.contains("doesn't exist")) {
-              throw ValidationException('Account or custom field not found: $originalError');
+              throw ValidationException(
+                'Account or custom field not found: $originalError',
+              );
             } else if (originalError.contains("CONNECTION_ERROR")) {
-              throw ServerException('Server communication error: $originalError');
+              throw ServerException(
+                'Server communication error: $originalError',
+              );
             }
           }
-          
+
           throw ServerException('Server error: $message');
         } else {
           throw ServerException('Internal server error occurred');
@@ -432,7 +450,20 @@ class AccountCustomFieldsRemoteDataSourceImpl
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-        if (responseData['success'] == true && responseData['data'] != null) {
+        
+        // Handle new response format with customFields
+        if (responseData['customFields'] != null && responseData['customFields'] is List) {
+          final List<dynamic> updatedFieldsData = responseData['customFields'] as List<dynamic>;
+          return updatedFieldsData
+              .map(
+                (field) => AccountCustomFieldModel.fromJson(
+                  field as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+        }
+        // Handle old response format with data
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> updatedFieldsData =
               responseData['data'] as List<dynamic>;
           return updatedFieldsData
@@ -468,16 +499,20 @@ class AccountCustomFieldsRemoteDataSourceImpl
         if (responseData != null && responseData['message'] != null) {
           final message = responseData['message'] as String;
           final details = responseData['details'];
-          
+
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
             if (originalError.contains("doesn't exist")) {
-              throw ValidationException('Account or custom field not found: $originalError');
+              throw ValidationException(
+                'Account or custom field not found: $originalError',
+              );
             } else if (originalError.contains("CONNECTION_ERROR")) {
-              throw ServerException('Server communication error: $originalError');
+              throw ServerException(
+                'Server communication error: $originalError',
+              );
             }
           }
-          
+
           throw ServerException('Server error: $message');
         } else {
           throw ServerException('Internal server error occurred');
@@ -530,16 +565,20 @@ class AccountCustomFieldsRemoteDataSourceImpl
         if (responseData != null && responseData['message'] != null) {
           final message = responseData['message'] as String;
           final details = responseData['details'];
-          
+
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
             if (originalError.contains("doesn't exist")) {
-              throw ValidationException('Account or custom field not found: $originalError');
+              throw ValidationException(
+                'Account or custom field not found: $originalError',
+              );
             } else if (originalError.contains("CONNECTION_ERROR")) {
-              throw ServerException('Server communication error: $originalError');
+              throw ServerException(
+                'Server communication error: $originalError',
+              );
             }
           }
-          
+
           throw ServerException('Server error: $message');
         } else {
           throw ServerException('Internal server error occurred');
@@ -593,16 +632,20 @@ class AccountCustomFieldsRemoteDataSourceImpl
         if (responseData != null && responseData['message'] != null) {
           final message = responseData['message'] as String;
           final details = responseData['details'];
-          
+
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
             if (originalError.contains("doesn't exist")) {
-              throw ValidationException('Account or custom field not found: $originalError');
+              throw ValidationException(
+                'Account or custom field not found: $originalError',
+              );
             } else if (originalError.contains("CONNECTION_ERROR")) {
-              throw ServerException('Server communication error: $originalError');
+              throw ServerException(
+                'Server communication error: $originalError',
+              );
             }
           }
-          
+
           throw ServerException('Server error: $message');
         } else {
           throw ServerException('Internal server error occurred');
