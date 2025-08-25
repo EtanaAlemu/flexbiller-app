@@ -220,3 +220,20 @@ class AccountTagAssignmentResponseModel {
     )).toList();
   }
 }
+
+// Model for tag removal response (when removing tags from account)
+@JsonSerializable()
+class AccountTagRemovalResponseModel {
+  final String accountId;
+  final List<String> tagDefIds;
+
+  const AccountTagRemovalResponseModel({
+    required this.accountId,
+    required this.tagDefIds,
+  });
+
+  factory AccountTagRemovalResponseModel.fromJson(Map<String, dynamic> json) =>
+      _$AccountTagRemovalResponseModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AccountTagRemovalResponseModelToJson(this);
+}

@@ -435,7 +435,18 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         },
       );
 
-      if (response.statusCode != 200 && response.statusCode != 204) {
+      if (response.statusCode == 200) {
+        // The API returns a success response with data about removed tags
+        final responseData = response.data;
+        if (responseData['success'] == true) {
+          // Successfully removed tags
+          return;
+        } else {
+          throw ServerException(
+            responseData['message'] ?? 'Failed to remove tag from account',
+          );
+        }
+      } else if (response.statusCode != 204) {
         throw ServerException(
           'Failed to remove tag from account: ${response.statusCode}',
         );
@@ -451,6 +462,16 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         throw ValidationException('Account or tag assignment not found');
       } else if (e.response?.statusCode == 400) {
         throw ValidationException('Invalid tag removal data');
+      } else if (e.response?.statusCode == 500) {
+        // Handle 500 error which might indicate tag definition issues
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['message'] != null) {
+          final message = responseData['message'] as String;
+          if (message.contains("does not exist")) {
+            throw ValidationException('One or more tag definitions do not exist');
+          }
+        }
+        throw ServerException('Server error while removing tags from account');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException('Connection timeout while removing tag');
@@ -475,7 +496,18 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         data: {'tagDefIds': tagIds},
       );
 
-      if (response.statusCode != 200 && response.statusCode != 204) {
+      if (response.statusCode == 200) {
+        // The API returns a success response with data about removed tags
+        final responseData = response.data;
+        if (responseData['success'] == true) {
+          // Successfully removed tags
+          return;
+        } else {
+          throw ServerException(
+            responseData['message'] ?? 'Failed to remove multiple tags from account',
+          );
+        }
+      } else if (response.statusCode != 204) {
         throw ServerException(
           'Failed to remove multiple tags from account: ${response.statusCode}',
         );
@@ -491,6 +523,16 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         throw ValidationException('Account not found');
       } else if (e.response?.statusCode == 400) {
         throw ValidationException('Invalid tag removal data');
+      } else if (e.response?.statusCode == 500) {
+        // Handle 500 error which might indicate tag definition issues
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['message'] != null) {
+          final message = responseData['message'] as String;
+          if (message.contains("does not exist")) {
+            throw ValidationException('One or more tag definitions do not exist');
+          }
+        }
+        throw ServerException('Server error while removing tags from account');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException(

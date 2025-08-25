@@ -119,3 +119,19 @@ Map<String, dynamic> _$AccountTagAssignmentResponseModelToJson(
   'tagDefIds': instance.tagDefIds,
   'addedAt': instance.addedAt,
 };
+
+AccountTagRemovalResponseModel _$AccountTagRemovalResponseModelFromJson(
+  Map<String, dynamic> json,
+) => AccountTagRemovalResponseModel(
+  accountId: json['accountId'] as String,
+  tagDefIds: (json['tagDefIds'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+);
+
+Map<String, dynamic> _$AccountTagRemovalResponseModelToJson(
+  AccountTagRemovalResponseModel instance,
+) => <String, dynamic>{
+  'accountId': instance.accountId,
+  'tagDefIds': instance.tagDefIds,
+};
