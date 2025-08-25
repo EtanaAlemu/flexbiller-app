@@ -4,8 +4,13 @@ import '../../../../core/errors/exceptions.dart';
 import '../models/account_custom_field_model.dart';
 
 abstract class AccountCustomFieldsRemoteDataSource {
-  Future<List<AccountCustomFieldModel>> getAccountCustomFields(String accountId);
-  Future<AccountCustomFieldModel> getCustomField(String accountId, String customFieldId);
+  Future<List<AccountCustomFieldModel>> getAccountCustomFields(
+    String accountId,
+  );
+  Future<AccountCustomFieldModel> getCustomField(
+    String accountId,
+    String customFieldId,
+  );
   Future<AccountCustomFieldModel> createCustomField(
     String accountId,
     String name,
@@ -26,17 +31,23 @@ abstract class AccountCustomFieldsRemoteDataSource {
     List<Map<String, dynamic>> customFields,
   );
   Future<void> deleteCustomField(String accountId, String customFieldId);
-  Future<void> deleteMultipleCustomFields(String accountId, List<String> customFieldIds);
+  Future<void> deleteMultipleCustomFields(
+    String accountId,
+    List<String> customFieldIds,
+  );
 }
 
 @Injectable(as: AccountCustomFieldsRemoteDataSource)
-class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemoteDataSource {
+class AccountCustomFieldsRemoteDataSourceImpl
+    implements AccountCustomFieldsRemoteDataSource {
   final Dio _dio;
 
   AccountCustomFieldsRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<List<AccountCustomFieldModel>> getAccountCustomFields(String accountId) async {
+  Future<List<AccountCustomFieldModel>> getAccountCustomFields(
+    String accountId,
+  ) async {
     try {
       final response = await _dio.get('/accounts/$accountId/customFields');
 
@@ -44,7 +55,8 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> customFieldsData = responseData['data'] as List<dynamic>;
+          final List<dynamic> customFieldsData =
+              responseData['data'] as List<dynamic>;
           return customFieldsData
               .map(
                 (field) => AccountCustomFieldModel.fromJson(
@@ -73,11 +85,15 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         throw ValidationException('Account custom fields not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching custom fields');
+        throw NetworkException(
+          'Connection timeout while fetching custom fields',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch account custom fields: ${e.message}');
+        throw ServerException(
+          'Failed to fetch account custom fields: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: ${e.toString()}');
@@ -85,9 +101,14 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
   }
 
   @override
-  Future<AccountCustomFieldModel> getCustomField(String accountId, String customFieldId) async {
+  Future<AccountCustomFieldModel> getCustomField(
+    String accountId,
+    String customFieldId,
+  ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/customFields/$customFieldId');
+      final response = await _dio.get(
+        '/accounts/$accountId/customFields/$customFieldId',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -102,7 +123,9 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
           );
         }
       } else {
-        throw ServerException('Failed to fetch custom field: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch custom field: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -115,7 +138,9 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         throw ValidationException('Custom field not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching custom field');
+        throw NetworkException(
+          'Connection timeout while fetching custom field',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -136,29 +161,28 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
       final response = await _dio.post(
         '/accounts/$accountId/customFields',
         data: [
-          {
-            'name': name,
-            'value': value,
-          },
+          {'name': name, 'value': value},
         ],
       );
 
       if (response.statusCode == 201) {
         final responseData = response.data;
-        
+
         // Parse the creation response
-        final creationResponse = AccountCustomFieldCreationResponseModel.fromJson(responseData);
-        
+        final creationResponse =
+            AccountCustomFieldCreationResponseModel.fromJson(responseData);
+
         // Convert to AccountCustomFieldModel for backward compatibility
         final customFieldModels = creationResponse.toAccountCustomFieldModels();
-        
+
         // Return the first created field (since we only created one)
         if (customFieldModels.isNotEmpty) {
           return customFieldModels.first;
         } else {
           // Fallback to creating a model with the provided data
           return AccountCustomFieldModel(
-            customFieldId: DateTime.now().millisecondsSinceEpoch.toString(), // Temporary ID
+            customFieldId: DateTime.now().millisecondsSinceEpoch
+                .toString(), // Temporary ID
             objectId: accountId,
             objectType: 'ACCOUNT',
             name: name,
@@ -177,7 +201,9 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
           );
         }
       } else {
-        throw ServerException('Failed to create custom field: ${response.statusCode}');
+        throw ServerException(
+          'Failed to create custom field: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -188,9 +214,31 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         );
       } else if (e.response?.statusCode == 400) {
         throw ValidationException('Invalid custom field data');
+      } else if (e.response?.statusCode == 500) {
+        // Handle 500 errors with specific error messages
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['message'] != null) {
+          final message = responseData['message'] as String;
+          final details = responseData['details'];
+          
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Account not found: $originalError');
+            } else if (originalError.contains("CONNECTION_ERROR")) {
+              throw ServerException('Server communication error: $originalError');
+            }
+          }
+          
+          throw ServerException('Server error: $message');
+        } else {
+          throw ServerException('Internal server error occurred');
+        }
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while creating custom field');
+        throw NetworkException(
+          'Connection timeout while creating custom field',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -215,7 +263,8 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
       if (response.statusCode == 201) {
         final responseData = response.data;
         if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> createdFieldsData = responseData['data'] as List<dynamic>;
+          final List<dynamic> createdFieldsData =
+              responseData['data'] as List<dynamic>;
           return createdFieldsData
               .map(
                 (field) => AccountCustomFieldModel.fromJson(
@@ -225,11 +274,14 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to create multiple custom fields',
+            responseData['message'] ??
+                'Failed to create multiple custom fields',
           );
         }
       } else {
-        throw ServerException('Failed to create multiple custom fields: ${response.statusCode}');
+        throw ServerException(
+          'Failed to create multiple custom fields: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -239,14 +291,40 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
           'Forbidden: Insufficient permissions to create multiple custom fields',
         );
       } else if (e.response?.statusCode == 400) {
-        throw ValidationException('Invalid custom field data for bulk creation');
+        throw ValidationException(
+          'Invalid custom field data for bulk creation',
+        );
+      } else if (e.response?.statusCode == 500) {
+        // Handle 500 errors with specific error messages
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['message'] != null) {
+          final message = responseData['message'] as String;
+          final details = responseData['details'];
+          
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Account not found: $originalError');
+            } else if (originalError.contains("CONNECTION_ERROR")) {
+              throw ServerException('Server communication error: $originalError');
+            }
+          }
+          
+          throw ServerException('Server error: $message');
+        } else {
+          throw ServerException('Internal server error occurred');
+        }
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while creating multiple custom fields');
+        throw NetworkException(
+          'Connection timeout while creating multiple custom fields',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to create multiple custom fields: ${e.message}');
+        throw ServerException(
+          'Failed to create multiple custom fields: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: ${e.toString()}');
@@ -264,11 +342,7 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
       final response = await _dio.put(
         '/accounts/$accountId/customFields',
         data: [
-          {
-            'customFieldId': customFieldId,
-            'name': name,
-            'value': value,
-          },
+          {'customFieldId': customFieldId, 'name': name, 'value': value},
         ],
       );
 
@@ -295,7 +369,9 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
           ],
         );
       } else {
-        throw ServerException('Failed to update custom field: ${response.statusCode}');
+        throw ServerException(
+          'Failed to update custom field: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -308,9 +384,31 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         throw ValidationException('Custom field not found');
       } else if (e.response?.statusCode == 400) {
         throw ValidationException('Invalid custom field data');
+      } else if (e.response?.statusCode == 500) {
+        // Handle 500 errors with specific error messages
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['message'] != null) {
+          final message = responseData['message'] as String;
+          final details = responseData['details'];
+          
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Account or custom field not found: $originalError');
+            } else if (originalError.contains("CONNECTION_ERROR")) {
+              throw ServerException('Server communication error: $originalError');
+            }
+          }
+          
+          throw ServerException('Server error: $message');
+        } else {
+          throw ServerException('Internal server error occurred');
+        }
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while updating custom field');
+        throw NetworkException(
+          'Connection timeout while updating custom field',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -335,7 +433,8 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> updatedFieldsData = responseData['data'] as List<dynamic>;
+          final List<dynamic> updatedFieldsData =
+              responseData['data'] as List<dynamic>;
           return updatedFieldsData
               .map(
                 (field) => AccountCustomFieldModel.fromJson(
@@ -345,11 +444,14 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to update multiple custom fields',
+            responseData['message'] ??
+                'Failed to update multiple custom fields',
           );
         }
       } else {
-        throw ServerException('Failed to update multiple custom fields: ${response.statusCode}');
+        throw ServerException(
+          'Failed to update multiple custom fields: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -360,13 +462,37 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         );
       } else if (e.response?.statusCode == 400) {
         throw ValidationException('Invalid custom field data for bulk update');
+      } else if (e.response?.statusCode == 500) {
+        // Handle 500 errors with specific error messages
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['message'] != null) {
+          final message = responseData['message'] as String;
+          final details = responseData['details'];
+          
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Account or custom field not found: $originalError');
+            } else if (originalError.contains("CONNECTION_ERROR")) {
+              throw ServerException('Server communication error: $originalError');
+            }
+          }
+          
+          throw ServerException('Server error: $message');
+        } else {
+          throw ServerException('Internal server error occurred');
+        }
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while updating multiple custom fields');
+        throw NetworkException(
+          'Connection timeout while updating multiple custom fields',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to update multiple custom fields: ${e.message}');
+        throw ServerException(
+          'Failed to update multiple custom fields: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: ${e.toString()}');
@@ -378,16 +504,16 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
     try {
       final response = await _dio.delete(
         '/accounts/$accountId/customFields',
-        queryParameters: {
-          'customField': customFieldId,
-        },
+        queryParameters: {'customField': customFieldId},
       );
 
       if (response.statusCode == 204) {
         // Successfully deleted - no content returned
         return;
       } else {
-        throw ServerException('Failed to delete custom field: ${response.statusCode}');
+        throw ServerException(
+          'Failed to delete custom field: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -398,9 +524,31 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         );
       } else if (e.response?.statusCode == 404) {
         throw ValidationException('Custom field not found');
+      } else if (e.response?.statusCode == 500) {
+        // Handle 500 errors with specific error messages
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['message'] != null) {
+          final message = responseData['message'] as String;
+          final details = responseData['details'];
+          
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Account or custom field not found: $originalError');
+            } else if (originalError.contains("CONNECTION_ERROR")) {
+              throw ServerException('Server communication error: $originalError');
+            }
+          }
+          
+          throw ServerException('Server error: $message');
+        } else {
+          throw ServerException('Internal server error occurred');
+        }
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while deleting custom field');
+        throw NetworkException(
+          'Connection timeout while deleting custom field',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -412,20 +560,23 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
   }
 
   @override
-  Future<void> deleteMultipleCustomFields(String accountId, List<String> customFieldIds) async {
+  Future<void> deleteMultipleCustomFields(
+    String accountId,
+    List<String> customFieldIds,
+  ) async {
     try {
       final response = await _dio.delete(
         '/accounts/$accountId/customFields/bulk',
-        queryParameters: {
-          'customFieldIds': customFieldIds.join(','),
-        },
+        queryParameters: {'customFieldIds': customFieldIds.join(',')},
       );
 
       if (response.statusCode == 204) {
         // Successfully deleted - no content returned
         return;
       } else {
-        throw ServerException('Failed to delete multiple custom fields: ${response.statusCode}');
+        throw ServerException(
+          'Failed to delete multiple custom fields: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -436,13 +587,37 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
         );
       } else if (e.response?.statusCode == 400) {
         throw ValidationException('Invalid custom field IDs for bulk deletion');
+      } else if (e.response?.statusCode == 500) {
+        // Handle 500 errors with specific error messages
+        final responseData = e.response?.data;
+        if (responseData != null && responseData['message'] != null) {
+          final message = responseData['message'] as String;
+          final details = responseData['details'];
+          
+          if (details != null && details['originalError'] != null) {
+            final originalError = details['originalError'] as String;
+            if (originalError.contains("doesn't exist")) {
+              throw ValidationException('Account or custom field not found: $originalError');
+            } else if (originalError.contains("CONNECTION_ERROR")) {
+              throw ServerException('Server communication error: $originalError');
+            }
+          }
+          
+          throw ServerException('Server error: $message');
+        } else {
+          throw ServerException('Internal server error occurred');
+        }
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while deleting multiple custom fields');
+        throw NetworkException(
+          'Connection timeout while deleting multiple custom fields',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to delete multiple custom fields: ${e.message}');
+        throw ServerException(
+          'Failed to delete multiple custom fields: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: ${e.toString()}');
