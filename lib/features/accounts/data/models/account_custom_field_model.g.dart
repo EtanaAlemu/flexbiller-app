@@ -39,8 +39,7 @@ CustomFieldAuditLogModel _$CustomFieldAuditLogModelFromJson(
   reasonCode: json['reasonCode'] as String?,
   comments: json['comments'] as String?,
   objectType: json['objectType'] as String?,
-  objectId: json['objectId'] as String?,
-  userToken: json['userToken'] as String?,
+  userToken: json['objectId'] as String?,
 );
 
 Map<String, dynamic> _$CustomFieldAuditLogModelToJson(
@@ -52,6 +51,34 @@ Map<String, dynamic> _$CustomFieldAuditLogModelToJson(
   'reasonCode': instance.reasonCode,
   'comments': instance.comments,
   'objectType': instance.objectType,
-  'objectId': instance.objectId,
-  'userToken': instance.userToken,
+  'objectId': instance.userToken,
 };
+
+AccountCustomFieldCreationResponseModel
+_$AccountCustomFieldCreationResponseModelFromJson(Map<String, dynamic> json) =>
+    AccountCustomFieldCreationResponseModel(
+      message: json['message'] as String,
+      accountId: json['accountId'] as String,
+      customFields: (json['customFields'] as List<dynamic>)
+          .map((e) => CustomFieldDataModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$AccountCustomFieldCreationResponseModelToJson(
+  AccountCustomFieldCreationResponseModel instance,
+) => <String, dynamic>{
+  'message': instance.message,
+  'accountId': instance.accountId,
+  'customFields': instance.customFields,
+};
+
+CustomFieldDataModel _$CustomFieldDataModelFromJson(
+  Map<String, dynamic> json,
+) => CustomFieldDataModel(
+  name: json['name'] as String,
+  value: json['value'] as String,
+);
+
+Map<String, dynamic> _$CustomFieldDataModelToJson(
+  CustomFieldDataModel instance,
+) => <String, dynamic>{'name': instance.name, 'value': instance.value};

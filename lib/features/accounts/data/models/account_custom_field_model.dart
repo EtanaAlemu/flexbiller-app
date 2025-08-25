@@ -68,8 +68,6 @@ class CustomFieldAuditLogModel {
   @JsonKey(name: 'objectType')
   final String? objectType;
   @JsonKey(name: 'objectId')
-  final String? objectId;
-  @JsonKey(name: 'userToken')
   final String? userToken;
 
   const CustomFieldAuditLogModel({
@@ -79,7 +77,6 @@ class CustomFieldAuditLogModel {
     this.reasonCode,
     this.comments,
     this.objectType,
-    this.objectId,
     this.userToken,
   });
 
@@ -96,7 +93,6 @@ class CustomFieldAuditLogModel {
       reasonCode: entity.reasonCode,
       comments: entity.comments,
       objectType: entity.objectType,
-      objectId: entity.objectId,
       userToken: entity.userToken,
     );
   }
@@ -109,8 +105,55 @@ class CustomFieldAuditLogModel {
       reasonCode: reasonCode,
       comments: comments,
       objectType: objectType,
-      objectId: objectId,
       userToken: userToken,
     );
   }
+}
+
+// Model for custom field creation response
+@JsonSerializable()
+class AccountCustomFieldCreationResponseModel {
+  final String message;
+  final String accountId;
+  final List<CustomFieldDataModel> customFields;
+
+  const AccountCustomFieldCreationResponseModel({
+    required this.message,
+    required this.accountId,
+    required this.customFields,
+  });
+
+  factory AccountCustomFieldCreationResponseModel.fromJson(Map<String, dynamic> json) =>
+      _$AccountCustomFieldCreationResponseModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AccountCustomFieldCreationResponseModelToJson(this);
+
+  // Convert to AccountCustomFieldModel for backward compatibility
+  List<AccountCustomFieldModel> toAccountCustomFieldModels() {
+    return customFields.map((field) => AccountCustomFieldModel(
+      customFieldId: '', // Not provided in response
+      objectId: accountId,
+      objectType: 'ACCOUNT',
+      name: field.name,
+      value: field.value,
+      auditLogs: [], // Not provided in response
+    )).toList();
+  }
+}
+
+// Model for custom field data in creation response
+@JsonSerializable()
+class CustomFieldDataModel {
+  final String name;
+  final String value;
+
+  const CustomFieldDataModel({
+    required this.name,
+    required this.value,
+  });
+
+  factory CustomFieldDataModel.fromJson(Map<String, dynamic> json) =>
+      _$CustomFieldDataModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$CustomFieldDataModelToJson(this);
 }

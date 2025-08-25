@@ -138,10 +138,14 @@ class SubscriptionModel {
       planName: planName,
       state: state,
       sourceType: sourceType,
-      cancelledDate: cancelledDate != null ? DateTime.parse(cancelledDate!) : null,
+      cancelledDate: cancelledDate != null
+          ? DateTime.parse(cancelledDate!)
+          : null,
       chargedThroughDate: DateTime.parse(chargedThroughDate),
       billingStartDate: DateTime.parse(billingStartDate),
-      billingEndDate: billingEndDate != null ? DateTime.parse(billingEndDate!) : null,
+      billingEndDate: billingEndDate != null
+          ? DateTime.parse(billingEndDate!)
+          : null,
       billCycleDayLocal: billCycleDayLocal,
       quantity: quantity,
       events: events.map((e) => e.toEntity()).toList(),

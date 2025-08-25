@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../models/account_custom_field_model.dart';
+import '../models/account_custom_field_creation_response_model.dart';
 
 abstract class AccountCustomFieldsRemoteDataSource {
   Future<List<AccountCustomFieldModel>> getAccountCustomFields(String accountId);
@@ -144,26 +145,38 @@ class AccountCustomFieldsRemoteDataSourceImpl implements AccountCustomFieldsRemo
       );
 
       if (response.statusCode == 201) {
-        // Since the API returns 201 for successful creation but doesn't return the created field data,
-        // we'll create a model with the provided data and a generated ID
-        // In a real scenario, the API might return the created field data
-        return AccountCustomFieldModel(
-          customFieldId: DateTime.now().millisecondsSinceEpoch.toString(), // Temporary ID
-          name: name,
-          value: value,
-          auditLogs: [
-            CustomFieldAuditLogModel(
-              changeType: 'INSERT',
-              changeDate: DateTime.now(),
-              changedBy: 'Current User', // This would come from user context
-              reasonCode: null,
-              comments: null,
-              objectType: null,
-              objectId: null,
-              userToken: null,
-            ),
-          ],
-        );
+        final responseData = response.data;
+        
+        // Parse the creation response
+        final creationResponse = AccountCustomFieldCreationResponseModel.fromJson(responseData);
+        
+        // Convert to AccountCustomFieldModel for backward compatibility
+        final customFieldModels = creationResponse.toAccountCustomFieldModels();
+        
+        // Return the first created field (since we only created one)
+        if (customFieldModels.isNotEmpty) {
+          return customFieldModels.first;
+        } else {
+          // Fallback to creating a model with the provided data
+          return AccountCustomFieldModel(
+            customFieldId: DateTime.now().millisecondsSinceEpoch.toString(), // Temporary ID
+            objectId: accountId,
+            objectType: 'ACCOUNT',
+            name: name,
+            value: value,
+            auditLogs: [
+              CustomFieldAuditLogModel(
+                changeType: 'INSERT',
+                changeDate: DateTime.now(),
+                changedBy: 'Current User', // This would come from user context
+                reasonCode: null,
+                comments: null,
+                objectType: null,
+                userToken: null,
+              ),
+            ],
+          );
+        }
       } else {
         throw ServerException('Failed to create custom field: ${response.statusCode}');
       }
