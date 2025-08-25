@@ -352,14 +352,15 @@ class AccountCustomFieldsRemoteDataSourceImpl
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-        
+
         // Check if the API returned the updated custom field data
-        if (responseData['customFields'] != null && 
-            responseData['customFields'] is List && 
+        if (responseData['customFields'] != null &&
+            responseData['customFields'] is List &&
             (responseData['customFields'] as List).isNotEmpty) {
-          
           // Parse the first updated custom field from the response
-          final updatedFieldData = (responseData['customFields'] as List).first as Map<String, dynamic>;
+          final updatedFieldData =
+              (responseData['customFields'] as List).first
+                  as Map<String, dynamic>;
           return AccountCustomFieldModel.fromJson(updatedFieldData);
         } else {
           // Fallback: Create a model with the provided data if no response data
@@ -450,10 +451,12 @@ class AccountCustomFieldsRemoteDataSourceImpl
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-        
+
         // Handle new response format with customFields
-        if (responseData['customFields'] != null && responseData['customFields'] is List) {
-          final List<dynamic> updatedFieldsData = responseData['customFields'] as List<dynamic>;
+        if (responseData['customFields'] != null &&
+            responseData['customFields'] is List) {
+          final List<dynamic> updatedFieldsData =
+              responseData['customFields'] as List<dynamic>;
           return updatedFieldsData
               .map(
                 (field) => AccountCustomFieldModel.fromJson(
@@ -463,7 +466,8 @@ class AccountCustomFieldsRemoteDataSourceImpl
               .toList();
         }
         // Handle old response format with data
-        else if (responseData['success'] == true && responseData['data'] != null) {
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
           final List<dynamic> updatedFieldsData =
               responseData['data'] as List<dynamic>;
           return updatedFieldsData

@@ -148,10 +148,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
   @override
   Future<List<AccountModel>> searchAccounts(String searchKey) async {
     try {
-      final response = await _dio.get(
-        '/accounts/search',
-        queryParameters: {'searchKey': searchKey},
-      );
+      final response = await _dio.get('/accounts/search/$searchKey');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
