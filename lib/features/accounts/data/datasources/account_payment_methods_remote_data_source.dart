@@ -32,7 +32,15 @@ class AccountPaymentMethodsRemoteDataSourceImpl implements AccountPaymentMethods
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        if (responseData['success'] == true && responseData['data'] != null) {
+        // Handle new response format with paymentMethods
+        if (responseData['paymentMethods'] != null && responseData['paymentMethods'] is List) {
+          final List<dynamic> methodsData = responseData['paymentMethods'] as List<dynamic>;
+          return methodsData
+              .map((item) => AccountPaymentMethodModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        // Handle old response format with data
+        else if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> methodsData = responseData['data'] as List<dynamic>;
           return methodsData
               .map((item) => AccountPaymentMethodModel.fromJson(item as Map<String, dynamic>))

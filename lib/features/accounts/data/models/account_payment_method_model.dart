@@ -5,13 +5,26 @@ part 'account_payment_method_model.g.dart';
 
 @JsonSerializable()
 class AccountPaymentMethodModel {
+  @JsonKey(name: 'paymentMethodId')
   final String id;
   @JsonKey(name: 'accountId')
   final String accountId;
+  @JsonKey(name: 'externalKey')
+  final String? externalKey;
+  @JsonKey(name: 'pluginName')
+  final String? pluginName;
+  @JsonKey(name: 'pluginInfo')
+  final Map<String, dynamic>? pluginInfo;
+  @JsonKey(name: 'isDefault')
+  final bool isDefault;
+  @JsonKey(name: 'auditLogs')
+  final List<Map<String, dynamic>>? auditLogs;
+  
+  // Legacy fields for backward compatibility
   @JsonKey(name: 'paymentMethodType')
-  final String paymentMethodType;
+  final String? paymentMethodType;
   @JsonKey(name: 'paymentMethodName')
-  final String paymentMethodName;
+  final String? paymentMethodName;
   @JsonKey(name: 'cardLastFourDigits')
   final String? cardLastFourDigits;
   @JsonKey(name: 'cardBrand')
@@ -28,12 +41,10 @@ class AccountPaymentMethodModel {
   final String? bankAccountType;
   @JsonKey(name: 'paypalEmail')
   final String? paypalEmail;
-  @JsonKey(name: 'isDefault')
-  final bool isDefault;
   @JsonKey(name: 'isActive')
-  final bool isActive;
+  final bool? isActive;
   @JsonKey(name: 'createdAt')
-  final DateTime createdAt;
+  final DateTime? createdAt;
   @JsonKey(name: 'updatedAt')
   final DateTime? updatedAt;
   final Map<String, dynamic>? metadata;
@@ -41,8 +52,13 @@ class AccountPaymentMethodModel {
   const AccountPaymentMethodModel({
     required this.id,
     required this.accountId,
-    required this.paymentMethodType,
-    required this.paymentMethodName,
+    this.externalKey,
+    this.pluginName,
+    this.pluginInfo,
+    required this.isDefault,
+    this.auditLogs,
+    this.paymentMethodType,
+    this.paymentMethodName,
     this.cardLastFourDigits,
     this.cardBrand,
     this.cardExpiryMonth,
@@ -51,9 +67,8 @@ class AccountPaymentMethodModel {
     this.bankAccountLastFourDigits,
     this.bankAccountType,
     this.paypalEmail,
-    required this.isDefault,
-    required this.isActive,
-    required this.createdAt,
+    this.isActive,
+    this.createdAt,
     this.updatedAt,
     this.metadata,
   });
@@ -67,6 +82,11 @@ class AccountPaymentMethodModel {
     return AccountPaymentMethodModel(
       id: entity.id,
       accountId: entity.accountId,
+      externalKey: null, // Not available in entity
+      pluginName: null, // Not available in entity
+      pluginInfo: null, // Not available in entity
+      isDefault: entity.isDefault,
+      auditLogs: null, // Not available in entity
       paymentMethodType: entity.paymentMethodType,
       paymentMethodName: entity.paymentMethodName,
       cardLastFourDigits: entity.cardLastFourDigits,
@@ -77,7 +97,6 @@ class AccountPaymentMethodModel {
       bankAccountLastFourDigits: entity.bankAccountLastFourDigits,
       bankAccountType: entity.bankAccountType,
       paypalEmail: entity.paypalEmail,
-      isDefault: entity.isDefault,
       isActive: entity.isActive,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -89,8 +108,8 @@ class AccountPaymentMethodModel {
     return AccountPaymentMethod(
       id: id,
       accountId: accountId,
-      paymentMethodType: paymentMethodType,
-      paymentMethodName: paymentMethodName,
+      paymentMethodType: paymentMethodType ?? 'UNKNOWN',
+      paymentMethodName: paymentMethodName ?? 'Unknown Payment Method',
       cardLastFourDigits: cardLastFourDigits,
       cardBrand: cardBrand,
       cardExpiryMonth: cardExpiryMonth,
@@ -100,8 +119,8 @@ class AccountPaymentMethodModel {
       bankAccountType: bankAccountType,
       paypalEmail: paypalEmail,
       isDefault: isDefault,
-      isActive: isActive,
-      createdAt: createdAt,
+      isActive: isActive ?? true,
+      createdAt: createdAt ?? DateTime.now(),
       updatedAt: updatedAt,
       metadata: metadata,
     );
