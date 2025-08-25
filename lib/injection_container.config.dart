@@ -86,6 +86,8 @@ import 'features/accounts/domain/usecases/create_account_custom_field_usecase.da
 import 'features/accounts/domain/usecases/create_account_payment_usecase.dart'
     as _i463;
 import 'features/accounts/domain/usecases/create_account_usecase.dart' as _i968;
+import 'features/accounts/domain/usecases/create_global_payment_usecase.dart'
+    as _i1047;
 import 'features/accounts/domain/usecases/create_invoice_payment_usecase.dart'
     as _i350;
 import 'features/accounts/domain/usecases/create_multiple_account_custom_fields_usecase.dart'
@@ -180,6 +182,11 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i463.CreateAccountPaymentUseCase>(
     () => _i463.CreateAccountPaymentUseCase(
+      gh<_i1054.AccountPaymentsRepository>(),
+    ),
+  );
+  gh.factory<_i1047.CreateGlobalPaymentUseCase>(
+    () => _i1047.CreateGlobalPaymentUseCase(
       gh<_i1054.AccountPaymentsRepository>(),
     ),
   );
