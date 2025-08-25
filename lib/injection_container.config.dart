@@ -32,6 +32,8 @@ import 'features/accounts/data/datasources/account_emails_remote_data_source.dar
     as _i606;
 import 'features/accounts/data/datasources/account_invoice_payments_remote_data_source.dart'
     as _i976;
+import 'features/accounts/data/datasources/account_invoices_remote_data_source.dart'
+    as _i702;
 import 'features/accounts/data/datasources/account_payment_methods_remote_data_source.dart'
     as _i361;
 import 'features/accounts/data/datasources/account_payments_remote_data_source.dart'
@@ -205,6 +207,9 @@ _i174.GetIt $initGetIt(
     () => _i510.AccountAuditLogsRepositoryImpl(
       gh<_i276.AccountAuditLogsRemoteDataSource>(),
     ),
+  );
+  gh.factory<_i702.AccountInvoicesRemoteDataSource>(
+    () => _i702.AccountInvoicesRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
   gh.factory<_i326.AccountBundlesRemoteDataSource>(
     () => _i326.AccountBundlesRemoteDataSourceImpl(gh<_i361.Dio>()),

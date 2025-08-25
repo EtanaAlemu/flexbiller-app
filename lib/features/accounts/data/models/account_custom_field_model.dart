@@ -7,19 +7,19 @@ part 'account_custom_field_model.g.dart';
 class AccountCustomFieldModel {
   @JsonKey(name: 'customFieldId')
   final String customFieldId;
-  
+
   @JsonKey(name: 'objectId')
   final String objectId;
-  
+
   @JsonKey(name: 'objectType')
   final String objectType;
-  
+
   @JsonKey(name: 'name')
   final String name;
-  
+
   @JsonKey(name: 'value')
   final String value;
-  
+
   @JsonKey(name: 'auditLogs')
   final List<Map<String, dynamic>>? auditLogs;
 
@@ -107,21 +107,27 @@ class AccountCustomFieldCreationResponseModel {
     required this.customFields,
   });
 
-  factory AccountCustomFieldCreationResponseModel.fromJson(Map<String, dynamic> json) =>
-      _$AccountCustomFieldCreationResponseModelFromJson(json);
+  factory AccountCustomFieldCreationResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) => _$AccountCustomFieldCreationResponseModelFromJson(json);
 
-  Map<String, dynamic> toJson() => _$AccountCustomFieldCreationResponseModelToJson(this);
+  Map<String, dynamic> toJson() =>
+      _$AccountCustomFieldCreationResponseModelToJson(this);
 
   // Convert to AccountCustomFieldModel for backward compatibility
   List<AccountCustomFieldModel> toAccountCustomFieldModels() {
-    return customFields.map((field) => AccountCustomFieldModel(
-      customFieldId: '', // Not provided in response
-      objectId: accountId,
-      objectType: 'ACCOUNT',
-      name: field.name,
-      value: field.value,
-      auditLogs: [], // Not provided in response
-    )).toList();
+    return customFields
+        .map(
+          (field) => AccountCustomFieldModel(
+            customFieldId: '', // Not provided in response
+            objectId: accountId,
+            objectType: 'ACCOUNT',
+            name: field.name,
+            value: field.value,
+            auditLogs: [], // Not provided in response
+          ),
+        )
+        .toList();
   }
 }
 
@@ -131,10 +137,7 @@ class CustomFieldDataModel {
   final String name;
   final String value;
 
-  const CustomFieldDataModel({
-    required this.name,
-    required this.value,
-  });
+  const CustomFieldDataModel({required this.name, required this.value});
 
   factory CustomFieldDataModel.fromJson(Map<String, dynamic> json) =>
       _$CustomFieldDataModelFromJson(json);

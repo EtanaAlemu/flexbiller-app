@@ -15,7 +15,9 @@ class AccountCustomFieldsRemoteDataSourceImpl
   AccountCustomFieldsRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<List<AccountCustomFieldModel>> getAllCustomFields(String accountId) async {
+  Future<List<AccountCustomFieldModel>> getAllCustomFields(
+    String accountId,
+  ) async {
     try {
       final response = await _dio.get('/accounts/$accountId/allCustomFields');
 
@@ -29,8 +31,9 @@ class AccountCustomFieldsRemoteDataSourceImpl
               responseData['customFields'] as List<dynamic>;
           return customFieldsData
               .map(
-                (item) =>
-                    AccountCustomFieldModel.fromJson(item as Map<String, dynamic>),
+                (item) => AccountCustomFieldModel.fromJson(
+                  item as Map<String, dynamic>,
+                ),
               )
               .toList();
         }
@@ -41,8 +44,9 @@ class AccountCustomFieldsRemoteDataSourceImpl
               responseData['data'] as List<dynamic>;
           return customFieldsData
               .map(
-                (item) =>
-                    AccountCustomFieldModel.fromJson(item as Map<String, dynamic>),
+                (item) => AccountCustomFieldModel.fromJson(
+                  item as Map<String, dynamic>,
+                ),
               )
               .toList();
         } else {
