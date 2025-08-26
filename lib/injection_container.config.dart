@@ -34,6 +34,8 @@ import 'features/accounts/data/datasources/account_invoice_payments_remote_data_
     as _i976;
 import 'features/accounts/data/datasources/account_invoices_remote_data_source.dart'
     as _i702;
+import 'features/accounts/data/datasources/account_overdue_state_remote_data_source.dart'
+    as _i910;
 import 'features/accounts/data/datasources/account_payment_methods_remote_data_source.dart'
     as _i361;
 import 'features/accounts/data/datasources/account_payments_remote_data_source.dart'
@@ -56,6 +58,8 @@ import 'features/accounts/data/repositories/account_invoice_payments_repository_
     as _i636;
 import 'features/accounts/data/repositories/account_invoices_repository_impl.dart'
     as _i309;
+import 'features/accounts/data/repositories/account_overdue_state_repository_impl.dart'
+    as _i681;
 import 'features/accounts/data/repositories/account_payment_methods_repository_impl.dart'
     as _i421;
 import 'features/accounts/data/repositories/account_payments_repository_impl.dart'
@@ -78,6 +82,8 @@ import 'features/accounts/domain/repositories/account_invoice_payments_repositor
     as _i378;
 import 'features/accounts/domain/repositories/account_invoices_repository.dart'
     as _i521;
+import 'features/accounts/domain/repositories/account_overdue_state_repository.dart'
+    as _i455;
 import 'features/accounts/domain/repositories/account_payment_methods_repository.dart'
     as _i845;
 import 'features/accounts/domain/repositories/account_payments_repository.dart'
@@ -128,6 +134,9 @@ import 'features/accounts/domain/usecases/get_account_timeline_usecase.dart'
 import 'features/accounts/domain/usecases/get_accounts_usecase.dart' as _i684;
 import 'features/accounts/domain/usecases/get_all_tags_for_account_usecase.dart'
     as _i384;
+import 'features/accounts/domain/usecases/get_invoices_usecase.dart' as _i747;
+import 'features/accounts/domain/usecases/get_overdue_state_usecase.dart'
+    as _i512;
 import 'features/accounts/domain/usecases/get_paginated_invoices_usecase.dart'
     as _i887;
 import 'features/accounts/domain/usecases/refresh_payment_methods_usecase.dart'
@@ -206,6 +215,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i817.AccountTimelineRemoteDataSource>(
     () => _i817.AccountTimelineRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
+  gh.factory<_i910.AccountOverdueStateRemoteDataSource>(
+    () => _i910.AccountOverdueStateRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
   gh.factory<_i976.AccountInvoicePaymentsRemoteDataSource>(
     () => _i976.AccountInvoicePaymentsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
@@ -241,6 +253,11 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i767.AuthRemoteDataSource>(
     () => _i767.AuthRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
+  gh.factory<_i455.AccountOverdueStateRepository>(
+    () => _i681.AccountOverdueStateRepositoryImpl(
+      gh<_i910.AccountOverdueStateRemoteDataSource>(),
+    ),
   );
   gh.factory<_i221.AccountCustomFieldsRepository>(
     () => _i762.AccountCustomFieldsRepositoryImpl(
@@ -304,6 +321,10 @@ _i174.GetIt $initGetIt(
       gh<_i842.JwtService>(),
     ),
   );
+  gh.factory<_i512.GetOverdueStateUseCase>(
+    () =>
+        _i512.GetOverdueStateUseCase(gh<_i455.AccountOverdueStateRepository>()),
+  );
   gh.factory<_i521.AccountInvoicesRepository>(
     () => _i309.AccountInvoicesRepositoryImpl(
       gh<_i702.AccountInvoicesRemoteDataSource>(),
@@ -331,6 +352,9 @@ _i174.GetIt $initGetIt(
     () => _i887.GetPaginatedInvoicesUseCase(
       gh<_i521.AccountInvoicesRepository>(),
     ),
+  );
+  gh.factory<_i747.GetInvoicesUseCase>(
+    () => _i747.GetInvoicesUseCase(gh<_i521.AccountInvoicesRepository>()),
   );
   gh.factory<_i336.DeleteAccountCustomFieldUseCase>(
     () => _i336.DeleteAccountCustomFieldUseCase(

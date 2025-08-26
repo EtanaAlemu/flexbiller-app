@@ -73,9 +73,7 @@ class AccountInvoicesRemoteDataSourceImpl
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException(
-          'Failed to fetch account invoices: ${e.message}',
-        );
+        throw ServerException('Failed to fetch account invoices: ${e.message}');
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -83,9 +81,13 @@ class AccountInvoicesRemoteDataSourceImpl
   }
 
   @override
-  Future<List<AccountInvoiceModel>> getPaginatedInvoices(String accountId) async {
+  Future<List<AccountInvoiceModel>> getPaginatedInvoices(
+    String accountId,
+  ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/invoices/pagination');
+      final response = await _dio.get(
+        '/accounts/$accountId/invoices/pagination',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -140,9 +142,7 @@ class AccountInvoicesRemoteDataSourceImpl
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException(
-          'Failed to fetch account invoices: ${e.message}',
-        );
+        throw ServerException('Failed to fetch account invoices: ${e.message}');
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
