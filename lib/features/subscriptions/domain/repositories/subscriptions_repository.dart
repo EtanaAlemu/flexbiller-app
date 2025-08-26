@@ -2,6 +2,7 @@ import '../entities/subscription.dart';
 import '../entities/subscription_custom_field.dart';
 import '../entities/subscription_blocking_state.dart';
 import '../entities/subscription_addon_product.dart';
+import '../entities/subscription_audit_log.dart';
 
 abstract class SubscriptionsRepository {
   Future<List<Subscription>> getRecentSubscriptions();
@@ -42,4 +43,7 @@ abstract class SubscriptionsRepository {
   Future<Map<String, dynamic>> createSubscriptionWithAddOns({
     required List<SubscriptionAddonProduct> addonProducts,
   });
+
+  // Get Subscription Audit Logs method
+  Future<List<SubscriptionAuditLog>> getSubscriptionAuditLogsWithHistory(String subscriptionId);
 }

@@ -12,6 +12,7 @@ import '../../domain/usecases/update_subscription_custom_fields_usecase.dart';
 import '../../domain/usecases/remove_subscription_custom_fields_usecase.dart';
 import '../../domain/usecases/block_subscription_usecase.dart';
 import '../../domain/usecases/create_subscription_with_addons_usecase.dart';
+import '../../domain/usecases/get_subscription_audit_logs_with_history_usecase.dart';
 import '../../domain/entities/subscription_addon_product.dart';
 import 'subscriptions_event.dart';
 import 'subscriptions_state.dart';
@@ -30,6 +31,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   final RemoveSubscriptionCustomFieldsUseCase _removeSubscriptionCustomFieldsUseCase;
   final BlockSubscriptionUseCase _blockSubscriptionUseCase;
   final CreateSubscriptionWithAddOnsUseCase _createSubscriptionWithAddOnsUseCase;
+  final GetSubscriptionAuditLogsWithHistoryUseCase _getSubscriptionAuditLogsWithHistoryUseCase;
 
   SubscriptionsBloc(
     this._getRecentSubscriptionsUseCase,
@@ -44,6 +46,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     this._removeSubscriptionCustomFieldsUseCase,
     this._blockSubscriptionUseCase,
     this._createSubscriptionWithAddOnsUseCase,
+    this._getSubscriptionAuditLogsWithHistoryUseCase,
   ) : super(SubscriptionsInitial()) {
     on<LoadRecentSubscriptions>(_onLoadRecentSubscriptions);
     on<RefreshRecentSubscriptions>(_onRefreshRecentSubscriptions);
@@ -58,6 +61,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     on<RemoveSubscriptionCustomFields>(_onRemoveSubscriptionCustomFields);
     on<BlockSubscription>(_onBlockSubscription);
     on<CreateSubscriptionWithAddOns>(_onCreateSubscriptionWithAddOns);
+    on<GetSubscriptionAuditLogsWithHistory>(_onGetSubscriptionAuditLogsWithHistory);
   }
 
   Future<void> _onLoadRecentSubscriptions(
@@ -256,6 +260,19 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       emit(CreateSubscriptionWithAddOnsSuccess(result));
     } catch (e) {
       emit(CreateSubscriptionWithAddOnsError(e.toString()));
+    }
+  }
+
+  Future<void> _onGetSubscriptionAuditLogsWithHistory(
+    GetSubscriptionAuditLogsWithHistory event,
+    Emitter<SubscriptionsState> emit,
+  ) async {
+    emit(GetSubscriptionAuditLogsWithHistoryLoading());
+    try {
+      final auditLogs = await _getSubscriptionAuditLogsWithHistoryUseCase(event.subscriptionId);
+      emit(GetSubscriptionAuditLogsWithHistorySuccess(auditLogs, event.subscriptionId));
+    } catch (e) {
+      emit(GetSubscriptionAuditLogsWithHistoryError(e.toString(), event.subscriptionId));
     }
   }
 }

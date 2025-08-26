@@ -11,6 +11,7 @@ import '../models/block_subscription_request_model.dart';
 import '../models/block_subscription_response_model.dart';
 import '../models/create_subscription_with_addons_request_model.dart';
 import '../models/create_subscription_with_addons_response_model.dart';
+import '../models/subscription_audit_logs_response_model.dart';
 import '../../../../core/constants/api_endpoints.dart';
 
 abstract class SubscriptionsRemoteDataSource {
@@ -48,9 +49,12 @@ abstract class SubscriptionsRemoteDataSource {
   });
 
   // Create Subscription with Add-ons method
-  Future<CreateSubscriptionWithAddonsResponseModel> createSubscriptionWithAddOns({
-    required List<CreateSubscriptionWithAddonsRequestModel> addonProducts,
+  Future<CreateSubscriptionWithAddOnsResponseModel> createSubscriptionWithAddOns({
+    required List<CreateSubscriptionWithAddOnsRequestModel> addonProducts,
   });
+
+  // Get Subscription Audit Logs method
+  Future<SubscriptionAuditLogsResponseModel> getSubscriptionAuditLogsWithHistory(String subscriptionId);
 }
 
 @Injectable(as: SubscriptionsRemoteDataSource)
@@ -275,7 +279,7 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
 
   @override
   Future<CreateSubscriptionWithAddonsResponseModel> createSubscriptionWithAddOns({
-    required List<CreateSubscriptionWithAddonsRequestModel> addonProducts,
+    required List<CreateSubscriptionWithAddOnsRequestModel> addonProducts,
   }) async {
     try {
       final response = await _dio.post(
@@ -291,6 +295,24 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
       }
     } catch (e) {
       throw Exception('Failed to create subscription with add-ons: $e');
+    }
+  }
+
+  @override
+  Future<SubscriptionAuditLogsResponseModel> getSubscriptionAuditLogsWithHistory(String subscriptionId) async {
+    try {
+      final response = await _dio.get(
+        '${ApiEndpoints.getSubscriptionAuditLogsWithHistory}/$subscriptionId/auditLogsWithHistory',
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        return SubscriptionAuditLogsResponseModel.fromJson(data);
+      } else {
+        throw Exception('Failed to load subscription audit logs');
+      }
+    } catch (e) {
+      throw Exception('Failed to load subscription audit logs: $e');
     }
   }
 }

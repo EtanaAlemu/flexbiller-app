@@ -3,6 +3,7 @@ import '../../domain/entities/subscription.dart';
 import '../../domain/entities/subscription_custom_field.dart';
 import '../../domain/entities/subscription_blocking_state.dart';
 import '../../domain/entities/subscription_addon_product.dart';
+import '../../domain/entities/subscription_audit_log.dart';
 import '../../domain/repositories/subscriptions_repository.dart';
 import '../datasources/subscriptions_remote_data_source.dart';
 import '../models/create_subscription_request_model.dart';
@@ -11,6 +12,7 @@ import '../models/update_subscription_custom_fields_request_model.dart';
 import '../models/remove_subscription_custom_fields_request_model.dart';
 import '../models/block_subscription_request_model.dart';
 import '../models/create_subscription_with_addons_request_model.dart';
+import '../models/subscription_audit_logs_response_model.dart';
 
 @Injectable(as: SubscriptionsRepository)
 class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
@@ -213,7 +215,7 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
   }) async {
     try {
       final addonProductModels = addonProducts.map((addon) =>
-        CreateSubscriptionWithAddonsRequestModel(
+        CreateSubscriptionWithAddOnsRequestModel(
           accountId: addon.accountId,
           productName: addon.productName,
           productCategory: addon.productCategory,
@@ -235,5 +237,50 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
     } catch (e) {
       rethrow;
     }
+  }
+
+  @override
+  Future<List<SubscriptionAuditLog>> getSubscriptionAuditLogsWithHistory(String subscriptionId) async {
+    try {
+      final result = await _remoteDataSource.getSubscriptionAuditLogsWithHistory(subscriptionId);
+      
+      return result.data.map((model) => _mapAuditLogModelToEntity(model)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  SubscriptionAuditLog _mapAuditLogModelToEntity(SubscriptionAuditLogModel model) {
+    return SubscriptionAuditLog(
+      changeType: model.changeType,
+      changeDate: model.changeDate != null ? DateTime.parse(model.changeDate!) : null,
+      objectType: model.objectType,
+      objectId: model.objectId,
+      changedBy: model.changedBy,
+      reasonCode: model.reasonCode,
+      comments: model.comments,
+      userToken: model.userToken,
+      history: model.history != null ? _mapAuditHistoryModelToEntity(model.history!) : null,
+    );
+  }
+
+  SubscriptionAuditHistory _mapAuditHistoryModelToEntity(SubscriptionAuditHistoryModel model) {
+    return SubscriptionAuditHistory(
+      id: model.id,
+      createdDate: model.createdDate != null ? DateTime.parse(model.createdDate!) : null,
+      updatedDate: model.updatedDate != null ? DateTime.parse(model.updatedDate!) : null,
+      recordId: model.recordId,
+      accountRecordId: model.accountRecordId,
+      tenantRecordId: model.tenantRecordId,
+      bundleId: model.bundleId,
+      externalKey: model.externalKey,
+      category: model.category,
+      startDate: model.startDate != null ? DateTime.parse(model.startDate!) : null,
+      bundleStartDate: model.bundleStartDate != null ? DateTime.parse(model.bundleStartDate!) : null,
+      chargedThroughDate: model.chargedThroughDate != null ? DateTime.parse(model.chargedThroughDate!) : null,
+      migrated: model.migrated,
+      tableName: model.tableName,
+      historyTableName: model.historyTableName,
+    );
   }
 }

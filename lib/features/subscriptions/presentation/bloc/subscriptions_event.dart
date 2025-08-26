@@ -138,3 +138,13 @@ class CreateSubscriptionWithAddOns extends SubscriptionsEvent {
   @override
   List<Object?> get props => [addonProducts];
 }
+
+// Get Subscription Audit Logs event
+class GetSubscriptionAuditLogsWithHistory extends SubscriptionsEvent {
+  final String subscriptionId;
+
+  const GetSubscriptionAuditLogsWithHistory(this.subscriptionId);
+
+  @override
+  List<Object?> get props => [subscriptionId];
+}

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../../domain/entities/subscription.dart';
 import '../../domain/entities/subscription_custom_field.dart';
 import '../../domain/entities/subscription_blocking_state.dart';
+import '../../domain/entities/subscription_audit_log.dart';
 
 abstract class SubscriptionsState extends Equatable {
   const SubscriptionsState();
@@ -220,4 +221,23 @@ class CreateSubscriptionWithAddOnsError extends SubscriptionsState {
   const CreateSubscriptionWithAddOnsError(this.message);
   @override
   List<Object?> get props => [message];
+}
+
+// Get Subscription Audit Logs states
+class GetSubscriptionAuditLogsWithHistoryLoading extends SubscriptionsState {}
+
+class GetSubscriptionAuditLogsWithHistorySuccess extends SubscriptionsState {
+  final List<SubscriptionAuditLog> auditLogs;
+  final String subscriptionId;
+  const GetSubscriptionAuditLogsWithHistorySuccess(this.auditLogs, this.subscriptionId);
+  @override
+  List<Object?> get props => [auditLogs, subscriptionId];
+}
+
+class GetSubscriptionAuditLogsWithHistoryError extends SubscriptionsState {
+  final String message;
+  final String subscriptionId;
+  const GetSubscriptionAuditLogsWithHistoryError(this.message, this.subscriptionId);
+  @override
+  List<Object?> get props => [message, subscriptionId];
 }

@@ -7,6 +7,7 @@ import 'subscriptions_page.dart';
 import 'subscription_custom_fields_demo_page.dart';
 import 'block_subscription_demo_page.dart';
 import 'create_subscription_with_addons_demo_page.dart';
+import 'subscription_audit_logs_demo_page.dart';
 
 class SubscriptionsDemoPage extends StatelessWidget {
   const SubscriptionsDemoPage({super.key});
@@ -35,6 +36,11 @@ class SubscriptionsDemoPage extends StatelessWidget {
               icon: const Icon(Icons.add_shopping_cart),
               tooltip: 'Create with Add-ons',
             ),
+            IconButton(
+              onPressed: () => _auditLogs(context),
+              icon: const Icon(Icons.history),
+              tooltip: 'Audit Logs',
+            ),
           ],
         ),
         body: const SubscriptionsPage(),
@@ -57,6 +63,12 @@ class SubscriptionsDemoPage extends StatelessWidget {
   void _createSubscriptionWithAddOns(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const CreateSubscriptionWithAddOnsDemoPage()),
+    );
+  }
+
+  void _auditLogs(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const SubscriptionAuditLogsDemoPage()),
     );
   }
 }
