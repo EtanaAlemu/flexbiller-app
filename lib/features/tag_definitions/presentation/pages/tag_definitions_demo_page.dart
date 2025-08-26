@@ -5,6 +5,7 @@ import '../bloc/tag_definitions_bloc.dart';
 import '../bloc/tag_definitions_event.dart';
 import 'tag_definitions_page.dart';
 import 'create_tag_definition_page.dart';
+import 'get_tag_definition_by_id_demo_page.dart';
 
 class TagDefinitionsDemoPage extends StatelessWidget {
   const TagDefinitionsDemoPage({super.key});
@@ -74,15 +75,32 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () => _createTagDefinition(context),
-                icon: const Icon(Icons.add_circle_outline),
-                label: const Text('Create Tag Definition'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Theme.of(context).colorScheme.tertiary,
-                  foregroundColor: Colors.white,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _createTagDefinition(context),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Create Tag Definition'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _getTagDefinitionById(context),
+                      icon: const Icon(Icons.search),
+                      label: const Text('Get By ID'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Theme.of(context).colorScheme.secondary,
+                        foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               OutlinedButton.icon(
@@ -120,10 +138,11 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'API Endpoints:',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
                         ),
                       ],
                     ),
@@ -285,6 +304,12 @@ class TagDefinitionsDemoPage extends StatelessWidget {
   void _createTagDefinition(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const CreateTagDefinitionPage()),
+    );
+  }
+
+  void _getTagDefinitionById(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const GetTagDefinitionByIdDemoPage()),
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/tag_definition.dart';
+import '../pages/tag_definition_details_page.dart';
 
 class TagDefinitionCardWidget extends StatelessWidget {
   final TagDefinition tagDefinition;
@@ -18,7 +19,7 @@ class TagDefinitionCardWidget extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap ?? () => _navigateToDetails(context),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -118,6 +119,16 @@ class TagDefinitionCardWidget extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToDetails(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => TagDefinitionDetailsPage(
+          tagDefinitionId: tagDefinition.id,
         ),
       ),
     );

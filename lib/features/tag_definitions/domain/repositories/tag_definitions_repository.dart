@@ -8,4 +8,5 @@ abstract class TagDefinitionsRepository {
     required bool isControlTag,
     required List<String> applicableObjectTypes,
   });
+  Future<TagDefinition> getTagDefinitionById(String id);
 }

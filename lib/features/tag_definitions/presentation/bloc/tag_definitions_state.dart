@@ -49,3 +49,24 @@ class CreateTagDefinitionError extends TagDefinitionsState {
   @override
   List<Object?> get props => [message];
 }
+
+class SingleTagDefinitionLoading extends TagDefinitionsState {}
+
+class SingleTagDefinitionLoaded extends TagDefinitionsState {
+  final TagDefinition tagDefinition;
+
+  const SingleTagDefinitionLoaded(this.tagDefinition);
+
+  @override
+  List<Object?> get props => [tagDefinition];
+}
+
+class SingleTagDefinitionError extends TagDefinitionsState {
+  final String message;
+  final String id;
+
+  const SingleTagDefinitionError(this.message, this.id);
+
+  @override
+  List<Object?> get props => [message, id];
+}

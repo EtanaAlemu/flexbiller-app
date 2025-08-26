@@ -6,11 +6,15 @@ import '../../../../core/constants/api_endpoints.dart';
 
 abstract class TagDefinitionsRemoteDataSource {
   Future<List<TagDefinitionModel>> getTagDefinitions();
-  Future<TagDefinitionModel> createTagDefinition(CreateTagDefinitionRequestModel request);
+  Future<TagDefinitionModel> createTagDefinition(
+    CreateTagDefinitionRequestModel request,
+  );
+  Future<TagDefinitionModel> getTagDefinitionById(String id);
 }
 
 @Injectable(as: TagDefinitionsRemoteDataSource)
-class TagDefinitionsRemoteDataSourceImpl implements TagDefinitionsRemoteDataSource {
+class TagDefinitionsRemoteDataSourceImpl
+    implements TagDefinitionsRemoteDataSource {
   final Dio _dio;
 
   TagDefinitionsRemoteDataSourceImpl(this._dio);
@@ -32,7 +36,9 @@ class TagDefinitionsRemoteDataSourceImpl implements TagDefinitionsRemoteDataSour
   }
 
   @override
-  Future<TagDefinitionModel> createTagDefinition(CreateTagDefinitionRequestModel request) async {
+  Future<TagDefinitionModel> createTagDefinition(
+    CreateTagDefinitionRequestModel request,
+  ) async {
     try {
       final response = await _dio.post(
         ApiEndpoints.createTagDefinition,
@@ -47,6 +53,24 @@ class TagDefinitionsRemoteDataSourceImpl implements TagDefinitionsRemoteDataSour
       }
     } catch (e) {
       throw Exception('Failed to create tag definition: $e');
+    }
+  }
+
+  @override
+  Future<TagDefinitionModel> getTagDefinitionById(String id) async {
+    try {
+      final response = await _dio.get(
+        '${ApiEndpoints.getTagDefinitionById}/$id',
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        return TagDefinitionModel.fromJson(data);
+      } else {
+        throw Exception('Failed to load tag definition');
+      }
+    } catch (e) {
+      throw Exception('Failed to load tag definition: $e');
     }
   }
 }

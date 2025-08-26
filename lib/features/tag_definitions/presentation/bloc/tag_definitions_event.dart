@@ -27,3 +27,12 @@ class CreateTagDefinition extends TagDefinitionsEvent {
   @override
   List<Object?> get props => [name, description, isControlTag, applicableObjectTypes];
 }
+
+class GetTagDefinitionById extends TagDefinitionsEvent {
+  final String id;
+
+  const GetTagDefinitionById(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}

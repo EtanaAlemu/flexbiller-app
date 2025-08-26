@@ -34,8 +34,22 @@ class TagDefinitionsRepositoryImpl implements TagDefinitionsRepository {
         isControlTag: isControlTag,
         applicableObjectTypes: applicableObjectTypes,
       );
-      
-      final tagDefinitionModel = await _remoteDataSource.createTagDefinition(request);
+
+      final tagDefinitionModel = await _remoteDataSource.createTagDefinition(
+        request,
+      );
+      return tagDefinitionModel.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<TagDefinition> getTagDefinitionById(String id) async {
+    try {
+      final tagDefinitionModel = await _remoteDataSource.getTagDefinitionById(
+        id,
+      );
       return tagDefinitionModel.toEntity();
     } catch (e) {
       rethrow;

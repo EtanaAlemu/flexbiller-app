@@ -216,6 +216,8 @@ import 'features/tag_definitions/domain/repositories/tag_definitions_repository.
     as _i866;
 import 'features/tag_definitions/domain/usecases/create_tag_definition_usecase.dart'
     as _i732;
+import 'features/tag_definitions/domain/usecases/get_tag_definition_by_id_usecase.dart'
+    as _i448;
 import 'features/tag_definitions/domain/usecases/get_tag_definitions_usecase.dart'
     as _i235;
 import 'features/tag_definitions/presentation/bloc/tag_definitions_bloc.dart'
@@ -591,6 +593,10 @@ _i174.GetIt $initGetIt(
     () =>
         _i732.CreateTagDefinitionUseCase(gh<_i866.TagDefinitionsRepository>()),
   );
+  gh.factory<_i448.GetTagDefinitionByIdUseCase>(
+    () =>
+        _i448.GetTagDefinitionByIdUseCase(gh<_i866.TagDefinitionsRepository>()),
+  );
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
   );
@@ -607,12 +613,6 @@ _i174.GetIt $initGetIt(
       forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
       changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
       resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
-    ),
-  );
-  gh.factory<_i65.TagDefinitionsBloc>(
-    () => _i65.TagDefinitionsBloc(
-      gh<_i235.GetTagDefinitionsUseCase>(),
-      gh<_i732.CreateTagDefinitionUseCase>(),
     ),
   );
   gh.factory<_i584.GetAccountInvoicePaymentsUseCase>(
@@ -678,6 +678,13 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i88.GetChildAccountsUseCase>(
     () => _i88.GetChildAccountsUseCase(gh<_i596.ChildAccountRepository>()),
+  );
+  gh.factory<_i65.TagDefinitionsBloc>(
+    () => _i65.TagDefinitionsBloc(
+      gh<_i235.GetTagDefinitionsUseCase>(),
+      gh<_i732.CreateTagDefinitionUseCase>(),
+      gh<_i448.GetTagDefinitionByIdUseCase>(),
+    ),
   );
   return getIt;
 }
