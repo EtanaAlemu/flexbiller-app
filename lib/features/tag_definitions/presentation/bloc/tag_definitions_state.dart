@@ -29,3 +29,23 @@ class TagDefinitionsError extends TagDefinitionsState {
   @override
   List<Object?> get props => [message];
 }
+
+class CreateTagDefinitionLoading extends TagDefinitionsState {}
+
+class CreateTagDefinitionSuccess extends TagDefinitionsState {
+  final TagDefinition tagDefinition;
+
+  const CreateTagDefinitionSuccess(this.tagDefinition);
+
+  @override
+  List<Object?> get props => [tagDefinition];
+}
+
+class CreateTagDefinitionError extends TagDefinitionsState {
+  final String message;
+
+  const CreateTagDefinitionError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

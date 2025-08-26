@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import '../bloc/tag_definitions_bloc.dart';
 import '../bloc/tag_definitions_event.dart';
 import 'tag_definitions_page.dart';
+import 'create_tag_definition_page.dart';
 
 class TagDefinitionsDemoPage extends StatelessWidget {
   const TagDefinitionsDemoPage({super.key});
@@ -35,9 +36,8 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                           const SizedBox(width: 12),
                           Text(
                             'Tag Definitions Management',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -48,9 +48,14 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       _buildFeatureItem('• View all available tag definitions'),
-                      _buildFeatureItem('• Distinguish between control and custom tags'),
-                      _buildFeatureItem('• See applicable object types for each tag'),
+                      _buildFeatureItem(
+                        '• Distinguish between control and custom tags',
+                      ),
+                      _buildFeatureItem(
+                        '• See applicable object types for each tag',
+                      ),
                       _buildFeatureItem('• View tag descriptions and metadata'),
+                      _buildFeatureItem('• Create new tag definitions'),
                       _buildFeatureItem('• Refresh tag definition data'),
                       _buildFeatureItem('• Handle empty states and errors'),
                       _buildFeatureItem('• Color-coded object type indicators'),
@@ -69,6 +74,17 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => _createTagDefinition(context),
+                icon: const Icon(Icons.add_circle_outline),
+                label: const Text('Create Tag Definition'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Theme.of(context).colorScheme.tertiary,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
               OutlinedButton.icon(
                 onPressed: () => _testTagDefinitionsBloc(context),
                 icon: const Icon(Icons.science),
@@ -81,14 +97,14 @@ class TagDefinitionsDemoPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondaryContainer.withValues(
-                    alpha: 0.1,
-                  ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.secondaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.secondary.withValues(
-                      alpha: 0.3,
-                    ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.secondary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(
@@ -103,7 +119,7 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'API Endpoint:',
+                          'API Endpoints:',
                           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.secondary,
@@ -112,24 +128,18 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Text(
-                        'GET /api/tagDefinitions',
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 12,
-                        ),
-                      ),
+                    _buildApiEndpoint(
+                      'GET /api/tagDefinitions',
+                      'Returns all available tag definitions',
+                    ),
+                    const SizedBox(height: 4),
+                    _buildApiEndpoint(
+                      'POST /api/tagDefinitions',
+                      'Creates a new tag definition',
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Returns all available tag definitions with their properties including control tags, descriptions, and applicable object types.',
+                      'Create endpoint supports custom tag definitions with name, description, control tag flag, and applicable object types.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -139,14 +149,14 @@ class TagDefinitionsDemoPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.tertiaryContainer.withValues(
-                    alpha: 0.1,
-                  ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.tertiaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.tertiary.withValues(
-                      alpha: 0.3,
-                    ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.tertiary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(
@@ -162,17 +172,30 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'Tag Definition Types:',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.tertiary,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.tertiary,
+                              ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    _buildTypeInfo('Control Tags', 'System-managed tags with special behavior', Colors.red),
-                    _buildTypeInfo('Custom Tags', 'User-defined tags for categorization', Colors.blue),
-                    _buildTypeInfo('Object Types', 'Entities that can be tagged (ACCOUNT, SUBSCRIPTION, etc.)', Colors.green),
+                    _buildTypeInfo(
+                      'Control Tags',
+                      'System-managed tags with special behavior',
+                      Colors.red,
+                    ),
+                    _buildTypeInfo(
+                      'Custom Tags',
+                      'User-defined tags for categorization',
+                      Colors.blue,
+                    ),
+                    _buildTypeInfo(
+                      'Object Types',
+                      'Entities that can be tagged (ACCOUNT, SUBSCRIPTION, etc.)',
+                      Colors.green,
+                    ),
                   ],
                 ),
               ),
@@ -190,6 +213,35 @@ class TagDefinitionsDemoPage extends StatelessWidget {
     );
   }
 
+  Widget _buildApiEndpoint(String endpoint, String description) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            endpoint,
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            description,
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTypeInfo(String title, String description, Color color) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -198,10 +250,7 @@ class TagDefinitionsDemoPage extends StatelessWidget {
           Container(
             width: 12,
             height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -217,10 +266,7 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                 ),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -231,8 +277,14 @@ class TagDefinitionsDemoPage extends StatelessWidget {
   }
 
   void _viewTagDefinitions(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const TagDefinitionsPage()));
+  }
+
+  void _createTagDefinition(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const TagDefinitionsPage()),
+      MaterialPageRoute(builder: (context) => const CreateTagDefinitionPage()),
     );
   }
 
@@ -245,7 +297,9 @@ class TagDefinitionsDemoPage extends StatelessWidget {
     // Show a snackbar to indicate the test
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Testing Tag Definitions BLoC - Check the console for state changes'),
+        content: Text(
+          'Testing Tag Definitions BLoC - Check the console for state changes',
+        ),
         duration: Duration(seconds: 2),
       ),
     );

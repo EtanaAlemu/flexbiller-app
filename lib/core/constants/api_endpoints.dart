@@ -20,4 +20,5 @@ class ApiEndpoints {
 
   // Tag Definitions endpoints
   static const String getTagDefinitions = '/api/tagDefinitions';
+  static const String createTagDefinition = '/api/tagDefinitions';
 }
