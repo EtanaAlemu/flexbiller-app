@@ -20,4 +20,14 @@ class ChildAccountRepositoryImpl implements ChildAccountRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<List<ChildAccount>> getChildAccounts(String parentAccountId) async {
+    try {
+      final childAccountModels = await _remoteDataSource.getChildAccounts(parentAccountId);
+      return childAccountModels.map((model) => model.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
