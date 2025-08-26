@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import '../bloc/tags_bloc.dart';
 import '../bloc/tags_event.dart';
 import 'tags_page.dart';
+import 'search_tags_page.dart';
 
 class TagsDemoPage extends StatelessWidget {
   const TagsDemoPage({super.key});
@@ -35,9 +36,8 @@ class TagsDemoPage extends StatelessWidget {
                           const SizedBox(width: 12),
                           Text(
                             'Tags Management',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -48,10 +48,13 @@ class TagsDemoPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       _buildFeatureItem('• View all available tags'),
+                      _buildFeatureItem('• Search tags by definition name'),
                       _buildFeatureItem('• See tag details and metadata'),
                       _buildFeatureItem('• Filter by object types'),
                       _buildFeatureItem('• Refresh tag data'),
                       _buildFeatureItem('• Handle empty states and errors'),
+                      _buildFeatureItem('• Pagination support (offset/limit)'),
+                      _buildFeatureItem('• Audit level configuration'),
                     ],
                   ),
                 ),
@@ -63,6 +66,17 @@ class TagsDemoPage extends StatelessWidget {
                 label: const Text('View All Tags'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => _searchTags(context),
+                icon: const Icon(Icons.search),
+                label: const Text('Search Tags'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  foregroundColor: Colors.white,
                 ),
               ),
               const SizedBox(height: 16),
@@ -78,14 +92,14 @@ class TagsDemoPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withValues(
-                    alpha: 0.1,
-                  ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withValues(
-                      alpha: 0.3,
-                    ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(
@@ -100,7 +114,7 @@ class TagsDemoPage extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'API Endpoint:',
+                          'API Endpoints:',
                           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.primary,
@@ -109,24 +123,18 @@ class TagsDemoPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Text(
-                        'GET /api/tags',
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 12,
-                        ),
-                      ),
+                    _buildApiEndpoint(
+                      'GET /api/tags',
+                      'Returns all available tags',
+                    ),
+                    const SizedBox(height: 4),
+                    _buildApiEndpoint(
+                      'GET /api/tags/search/{tagDefinitionName}',
+                      'Search tags with pagination and audit options',
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Returns all available tags with their metadata including object types, IDs, and audit logs.',
+                      'Search parameters include offset, limit, and audit level for flexible tag retrieval.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -142,31 +150,66 @@ class TagsDemoPage extends StatelessWidget {
   Widget _buildFeatureItem(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 14),
+      child: Text(text, style: const TextStyle(fontSize: 14)),
+    );
+  }
+
+  Widget _buildApiEndpoint(String endpoint, String description) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            endpoint,
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   void _viewAllTags(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const TagsPage()));
+  }
+
+  void _searchTags(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const TagsPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const SearchTagsPage()),
     );
   }
 
   void _testTagsBloc(BuildContext context) {
     final tagsBloc = context.read<TagsBloc>();
-    
+
     // Test loading tags
     tagsBloc.add(LoadAllTags());
-    
+
     // Show a snackbar to indicate the test
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Testing Tags BLoC - Check the console for state changes'),
+        content: Text(
+          'Testing Tags BLoC - Check the console for state changes',
+        ),
         duration: Duration(seconds: 2),
       ),
     );

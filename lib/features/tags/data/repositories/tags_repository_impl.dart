@@ -18,4 +18,14 @@ class TagsRepositoryImpl implements TagsRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<List<Tag>> searchTags(String tagDefinitionName, {int offset = 0, int limit = 100, String audit = 'NONE'}) async {
+    try {
+      final tagModels = await _remoteDataSource.searchTags(tagDefinitionName, offset: offset, limit: limit, audit: audit);
+      return tagModels.map((model) => model.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

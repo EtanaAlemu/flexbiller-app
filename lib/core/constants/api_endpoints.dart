@@ -16,4 +16,5 @@ class ApiEndpoints {
 
   // Tags endpoints
   static const String getAllTags = '/api/tags';
+  static const String searchTags = '/api/tags/search';
 }

@@ -212,6 +212,7 @@ import 'features/tags/data/datasources/tags_remote_data_source.dart' as _i376;
 import 'features/tags/data/repositories/tags_repository_impl.dart' as _i990;
 import 'features/tags/domain/repositories/tags_repository.dart' as _i734;
 import 'features/tags/domain/usecases/get_all_tags_usecase.dart' as _i348;
+import 'features/tags/domain/usecases/search_tags_usecase.dart' as _i335;
 import 'features/tags/presentation/bloc/tags_bloc.dart' as _i844;
 
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -355,6 +356,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i348.GetAllTagsUseCase>(
     () => _i348.GetAllTagsUseCase(gh<_i734.TagsRepository>()),
   );
+  gh.factory<_i335.SearchTagsUseCase>(
+    () => _i335.SearchTagsUseCase(gh<_i734.TagsRepository>()),
+  );
   gh.factory<_i493.SecureStorageService>(
     () => _i493.SecureStorageService(gh<_i558.FlutterSecureStorage>()),
   );
@@ -444,7 +448,10 @@ _i174.GetIt $initGetIt(
     ),
   );
   gh.factory<_i844.TagsBloc>(
-    () => _i844.TagsBloc(gh<_i348.GetAllTagsUseCase>()),
+    () => _i844.TagsBloc(
+      gh<_i348.GetAllTagsUseCase>(),
+      gh<_i335.SearchTagsUseCase>(),
+    ),
   );
   gh.factory<_i887.GetPaginatedInvoicesUseCase>(
     () => _i887.GetPaginatedInvoicesUseCase(

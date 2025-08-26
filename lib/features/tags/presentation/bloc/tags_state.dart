@@ -29,3 +29,34 @@ class TagsError extends TagsState {
   @override
   List<Object?> get props => [message];
 }
+
+class TagsSearchLoading extends TagsState {}
+
+class TagsSearchLoaded extends TagsState {
+  final List<Tag> tags;
+  final String searchQuery;
+  final int offset;
+  final int limit;
+  final String audit;
+
+  const TagsSearchLoaded({
+    required this.tags,
+    required this.searchQuery,
+    required this.offset,
+    required this.limit,
+    required this.audit,
+  });
+
+  @override
+  List<Object?> get props => [tags, searchQuery, offset, limit, audit];
+}
+
+class TagsSearchError extends TagsState {
+  final String message;
+  final String searchQuery;
+
+  const TagsSearchError(this.message, this.searchQuery);
+
+  @override
+  List<Object?> get props => [message, searchQuery];
+}
