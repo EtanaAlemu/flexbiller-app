@@ -32,6 +32,8 @@ import 'features/accounts/data/datasources/account_custom_fields_remote_data_sou
     as _i608;
 import 'features/accounts/data/datasources/account_emails_remote_data_source.dart'
     as _i606;
+import 'features/accounts/data/datasources/account_export_remote_data_source.dart'
+    as _i690;
 import 'features/accounts/data/datasources/account_invoice_payments_remote_data_source.dart'
     as _i976;
 import 'features/accounts/data/datasources/account_invoices_remote_data_source.dart'
@@ -58,6 +60,8 @@ import 'features/accounts/data/repositories/account_custom_fields_repository_imp
     as _i762;
 import 'features/accounts/data/repositories/account_emails_repository_impl.dart'
     as _i31;
+import 'features/accounts/data/repositories/account_export_repository_impl.dart'
+    as _i973;
 import 'features/accounts/data/repositories/account_invoice_payments_repository_impl.dart'
     as _i636;
 import 'features/accounts/data/repositories/account_invoices_repository_impl.dart'
@@ -84,6 +88,8 @@ import 'features/accounts/domain/repositories/account_custom_fields_repository.d
     as _i221;
 import 'features/accounts/domain/repositories/account_emails_repository.dart'
     as _i330;
+import 'features/accounts/domain/repositories/account_export_repository.dart'
+    as _i930;
 import 'features/accounts/domain/repositories/account_invoice_payments_repository.dart'
     as _i378;
 import 'features/accounts/domain/repositories/account_invoices_repository.dart'
@@ -117,6 +123,8 @@ import 'features/accounts/domain/usecases/delete_account_custom_field_usecase.da
 import 'features/accounts/domain/usecases/delete_account_usecase.dart' as _i823;
 import 'features/accounts/domain/usecases/delete_multiple_account_custom_fields_usecase.dart'
     as _i82;
+import 'features/accounts/domain/usecases/export_account_data_usecase.dart'
+    as _i553;
 import 'features/accounts/domain/usecases/get_account_audit_logs_usecase.dart'
     as _i657;
 import 'features/accounts/domain/usecases/get_account_blocking_states_usecase.dart'
@@ -219,6 +227,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i608.AccountCustomFieldsRemoteDataSource>(
     () => _i608.AccountCustomFieldsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
+  gh.factory<_i690.AccountExportRemoteDataSource>(
+    () => _i690.AccountExportRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
   gh.factory<_i817.AccountTimelineRemoteDataSource>(
     () => _i817.AccountTimelineRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
@@ -295,6 +306,11 @@ _i174.GetIt $initGetIt(
   gh.factory<_i493.SecureStorageService>(
     () => _i493.SecureStorageService(gh<_i558.FlutterSecureStorage>()),
   );
+  gh.factory<_i930.AccountExportRepository>(
+    () => _i973.AccountExportRepositoryImpl(
+      gh<_i690.AccountExportRemoteDataSource>(),
+    ),
+  );
   gh.factory<_i227.GetAccountTagsUseCase>(
     () => _i227.GetAccountTagsUseCase(gh<_i363.AccountTagsRepository>()),
   );
@@ -310,6 +326,9 @@ _i174.GetIt $initGetIt(
     () => _i582.RemoveMultipleTagsFromAccountUseCase(
       gh<_i363.AccountTagsRepository>(),
     ),
+  );
+  gh.factory<_i553.ExportAccountDataUseCase>(
+    () => _i553.ExportAccountDataUseCase(gh<_i930.AccountExportRepository>()),
   );
   gh.factory<_i400.GetAccountByIdUseCase>(
     () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
