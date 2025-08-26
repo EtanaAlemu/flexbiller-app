@@ -112,3 +112,17 @@ class RemoveSubscriptionCustomFields extends SubscriptionsEvent {
   @override
   List<Object?> get props => [subscriptionId, customFieldIds];
 }
+
+// Block Subscription event
+class BlockSubscription extends SubscriptionsEvent {
+  final String subscriptionId;
+  final Map<String, dynamic> blockingData;
+
+  const BlockSubscription({
+    required this.subscriptionId,
+    required this.blockingData,
+  });
+
+  @override
+  List<Object?> get props => [subscriptionId, blockingData];
+}

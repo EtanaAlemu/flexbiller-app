@@ -194,6 +194,8 @@ import 'features/subscriptions/domain/repositories/subscriptions_repository.dart
     as _i154;
 import 'features/subscriptions/domain/usecases/add_subscription_custom_fields_usecase.dart'
     as _i1055;
+import 'features/subscriptions/domain/usecases/block_subscription_usecase.dart'
+    as _i497;
 import 'features/subscriptions/domain/usecases/cancel_subscription_usecase.dart'
     as _i1005;
 import 'features/subscriptions/domain/usecases/create_subscription_usecase.dart'
@@ -535,6 +537,9 @@ _i174.GetIt $initGetIt(
       gh<_i154.SubscriptionsRepository>(),
     ),
   );
+  gh.factory<_i497.BlockSubscriptionUseCase>(
+    () => _i497.BlockSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
   gh.factory<_i336.DeleteAccountCustomFieldUseCase>(
     () => _i336.DeleteAccountCustomFieldUseCase(
       gh<_i221.AccountCustomFieldsRepository>(),
@@ -578,6 +583,21 @@ _i174.GetIt $initGetIt(
   gh.factory<_i729.GetAccountBlockingStatesUseCase>(
     () => _i729.GetAccountBlockingStatesUseCase(
       gh<_i696.AccountBlockingStatesRepository>(),
+    ),
+  );
+  gh.factory<_i675.SubscriptionsBloc>(
+    () => _i675.SubscriptionsBloc(
+      gh<_i825.GetRecentSubscriptionsUseCase>(),
+      gh<_i815.GetSubscriptionByIdUseCase>(),
+      gh<_i233.GetSubscriptionsForAccountUseCase>(),
+      gh<_i862.CreateSubscriptionUseCase>(),
+      gh<_i676.UpdateSubscriptionUseCase>(),
+      gh<_i1005.CancelSubscriptionUseCase>(),
+      gh<_i1055.AddSubscriptionCustomFieldsUseCase>(),
+      gh<_i939.GetSubscriptionCustomFieldsUseCase>(),
+      gh<_i354.UpdateSubscriptionCustomFieldsUseCase>(),
+      gh<_i175.RemoveSubscriptionCustomFieldsUseCase>(),
+      gh<_i497.BlockSubscriptionUseCase>(),
     ),
   );
   gh.factory<_i580.SetDefaultPaymentMethodUseCase>(
@@ -695,20 +715,6 @@ _i174.GetIt $initGetIt(
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
       accountEmailsRepository: gh<_i330.AccountEmailsRepository>(),
-    ),
-  );
-  gh.factory<_i675.SubscriptionsBloc>(
-    () => _i675.SubscriptionsBloc(
-      gh<_i825.GetRecentSubscriptionsUseCase>(),
-      gh<_i815.GetSubscriptionByIdUseCase>(),
-      gh<_i233.GetSubscriptionsForAccountUseCase>(),
-      gh<_i862.CreateSubscriptionUseCase>(),
-      gh<_i676.UpdateSubscriptionUseCase>(),
-      gh<_i1005.CancelSubscriptionUseCase>(),
-      gh<_i1055.AddSubscriptionCustomFieldsUseCase>(),
-      gh<_i939.GetSubscriptionCustomFieldsUseCase>(),
-      gh<_i354.UpdateSubscriptionCustomFieldsUseCase>(),
-      gh<_i175.RemoveSubscriptionCustomFieldsUseCase>(),
     ),
   );
   gh.factory<_i743.CreateChildAccountUseCase>(

@@ -10,6 +10,7 @@ import '../../domain/usecases/add_subscription_custom_fields_usecase.dart';
 import '../../domain/usecases/get_subscription_custom_fields_usecase.dart';
 import '../../domain/usecases/update_subscription_custom_fields_usecase.dart';
 import '../../domain/usecases/remove_subscription_custom_fields_usecase.dart';
+import '../../domain/usecases/block_subscription_usecase.dart';
 import 'subscriptions_event.dart';
 import 'subscriptions_state.dart';
 
@@ -25,6 +26,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   final GetSubscriptionCustomFieldsUseCase _getSubscriptionCustomFieldsUseCase;
   final UpdateSubscriptionCustomFieldsUseCase _updateSubscriptionCustomFieldsUseCase;
   final RemoveSubscriptionCustomFieldsUseCase _removeSubscriptionCustomFieldsUseCase;
+  final BlockSubscriptionUseCase _blockSubscriptionUseCase;
 
   SubscriptionsBloc(
     this._getRecentSubscriptionsUseCase,
@@ -37,6 +39,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     this._getSubscriptionCustomFieldsUseCase,
     this._updateSubscriptionCustomFieldsUseCase,
     this._removeSubscriptionCustomFieldsUseCase,
+    this._blockSubscriptionUseCase,
   ) : super(SubscriptionsInitial()) {
     on<LoadRecentSubscriptions>(_onLoadRecentSubscriptions);
     on<RefreshRecentSubscriptions>(_onRefreshRecentSubscriptions);
@@ -49,6 +52,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     on<GetSubscriptionCustomFields>(_onGetSubscriptionCustomFields);
     on<UpdateSubscriptionCustomFields>(_onUpdateSubscriptionCustomFields);
     on<RemoveSubscriptionCustomFields>(_onRemoveSubscriptionCustomFields);
+    on<BlockSubscription>(_onBlockSubscription);
   }
 
   Future<void> _onLoadRecentSubscriptions(
@@ -206,6 +210,22 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       emit(RemoveSubscriptionCustomFieldsSuccess(result, event.subscriptionId));
     } catch (e) {
       emit(RemoveSubscriptionCustomFieldsError(e.toString(), event.subscriptionId));
+    }
+  }
+
+  Future<void> _onBlockSubscription(
+    BlockSubscription event,
+    Emitter<SubscriptionsState> emit,
+  ) async {
+    emit(BlockSubscriptionLoading());
+    try {
+      final result = await _blockSubscriptionUseCase(
+        subscriptionId: event.subscriptionId,
+        blockingData: event.blockingData,
+      );
+      emit(BlockSubscriptionSuccess(result, event.subscriptionId));
+    } catch (e) {
+      emit(BlockSubscriptionError(e.toString(), event.subscriptionId));
     }
   }
 }

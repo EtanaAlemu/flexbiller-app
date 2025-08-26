@@ -1,12 +1,14 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/subscription.dart';
 import '../../domain/entities/subscription_custom_field.dart';
+import '../../domain/entities/subscription_blocking_state.dart';
 import '../../domain/repositories/subscriptions_repository.dart';
 import '../datasources/subscriptions_remote_data_source.dart';
 import '../models/create_subscription_request_model.dart';
 import '../models/add_subscription_custom_fields_request_model.dart';
 import '../models/update_subscription_custom_fields_request_model.dart';
 import '../models/remove_subscription_custom_fields_request_model.dart';
+import '../models/block_subscription_request_model.dart';
 
 @Injectable(as: SubscriptionsRepository)
 class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
@@ -126,7 +128,7 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
     required List<Map<String, String>> customFields,
   }) async {
     try {
-      final customFieldModels = customFields.map((field) => 
+      final customFieldModels = customFields.map((field) =>
         UpdateSubscriptionCustomFieldsRequestModel(
           customFieldId: field['customFieldId']!,
           name: field['name']!,
@@ -158,11 +160,46 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
         subscriptionId: subscriptionId,
         request: request,
       );
-      
+
       return {
         'subscriptionId': result.subscriptionId,
         'removedCustomFields': result.removedCustomFields,
       };
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<SubscriptionBlockingState> blockSubscription({
+    required String subscriptionId,
+    required Map<String, dynamic> blockingData,
+  }) async {
+    try {
+      final request = BlockSubscriptionRequestModel(
+        stateName: blockingData['stateName'] ?? 'BLOCKED',
+        service: blockingData['service'] ?? 'PAYMENT',
+        isBlockChange: blockingData['isBlockChange'] ?? true,
+        isBlockEntitlement: blockingData['isBlockEntitlement'] ?? true,
+        isBlockBilling: blockingData['isBlockBilling'] ?? true,
+        effectiveDate: blockingData['effectiveDate'] ?? DateTime.now().toIso8601String(),
+        type: blockingData['type'] ?? 'SUBSCRIPTION',
+      );
+
+      final result = await _remoteDataSource.blockSubscription(
+        subscriptionId: subscriptionId,
+        request: request,
+      );
+
+      return SubscriptionBlockingState(
+        stateName: result.stateName,
+        service: result.service,
+        isBlockChange: result.isBlockChange,
+        isBlockEntitlement: result.isBlockEntitlement,
+        isBlockBilling: result.isBlockBilling,
+        effectiveDate: DateTime.parse(result.effectiveDate),
+        type: result.type,
+      );
     } catch (e) {
       rethrow;
     }

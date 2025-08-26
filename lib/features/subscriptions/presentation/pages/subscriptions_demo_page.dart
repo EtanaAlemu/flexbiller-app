@@ -5,6 +5,7 @@ import '../bloc/subscriptions_bloc.dart';
 import '../bloc/subscriptions_event.dart';
 import 'subscriptions_page.dart';
 import 'subscription_custom_fields_demo_page.dart';
+import 'block_subscription_demo_page.dart';
 
 class SubscriptionsDemoPage extends StatelessWidget {
   const SubscriptionsDemoPage({super.key});
@@ -23,6 +24,11 @@ class SubscriptionsDemoPage extends StatelessWidget {
               icon: const Icon(Icons.settings_input_component),
               tooltip: 'Custom Fields',
             ),
+            IconButton(
+              onPressed: () => _blockSubscription(context),
+              icon: const Icon(Icons.block),
+              tooltip: 'Block Subscription',
+            ),
           ],
         ),
         body: const SubscriptionsPage(),
@@ -33,6 +39,12 @@ class SubscriptionsDemoPage extends StatelessWidget {
   void _customFields(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const SubscriptionCustomFieldsDemoPage()),
+    );
+  }
+
+  void _blockSubscription(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const BlockSubscriptionDemoPage()),
     );
   }
 }

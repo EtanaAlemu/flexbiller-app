@@ -1,5 +1,6 @@
 import '../entities/subscription.dart';
 import '../entities/subscription_custom_field.dart';
+import '../entities/subscription_blocking_state.dart';
 
 abstract class SubscriptionsRepository {
   Future<List<Subscription>> getRecentSubscriptions();
@@ -28,5 +29,11 @@ abstract class SubscriptionsRepository {
   Future<Map<String, dynamic>> removeSubscriptionCustomFields({
     required String subscriptionId,
     required String customFieldIds,
+  });
+
+  // Block Subscription method
+  Future<SubscriptionBlockingState> blockSubscription({
+    required String subscriptionId,
+    required Map<String, dynamic> blockingData,
   });
 }
