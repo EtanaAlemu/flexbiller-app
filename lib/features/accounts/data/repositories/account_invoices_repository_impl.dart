@@ -10,9 +10,21 @@ class AccountInvoicesRepositoryImpl implements AccountInvoicesRepository {
   AccountInvoicesRepositoryImpl(this._remoteDataSource);
 
   @override
+  Future<List<AccountInvoice>> getInvoices(String accountId) async {
+    try {
+      final invoiceModels = await _remoteDataSource.getInvoices(accountId);
+      return invoiceModels.map((model) => model.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<List<AccountInvoice>> getPaginatedInvoices(String accountId) async {
     try {
-      final invoiceModels = await _remoteDataSource.getPaginatedInvoices(accountId);
+      final invoiceModels = await _remoteDataSource.getPaginatedInvoices(
+        accountId,
+      );
       return invoiceModels.map((model) => model.toEntity()).toList();
     } catch (e) {
       rethrow;
