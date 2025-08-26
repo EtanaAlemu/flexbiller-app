@@ -10,9 +10,15 @@ class AccountExportRepositoryImpl implements AccountExportRepository {
   AccountExportRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<AccountExport> exportAccountData(String accountId, {String? format}) async {
+  Future<AccountExport> exportAccountData(
+    String accountId, {
+    String? format,
+  }) async {
     try {
-      final exportModel = await _remoteDataSource.exportAccountData(accountId, format: format);
+      final exportModel = await _remoteDataSource.exportAccountData(
+        accountId,
+        format: format,
+      );
       return exportModel.toEntity();
     } catch (e) {
       rethrow;

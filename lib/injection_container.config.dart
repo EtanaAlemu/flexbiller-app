@@ -50,6 +50,8 @@ import 'features/accounts/data/datasources/account_timeline_remote_data_source.d
     as _i817;
 import 'features/accounts/data/datasources/accounts_remote_data_source.dart'
     as _i852;
+import 'features/accounts/data/datasources/child_account_remote_data_source.dart'
+    as _i827;
 import 'features/accounts/data/repositories/account_audit_logs_repository_impl.dart'
     as _i510;
 import 'features/accounts/data/repositories/account_blocking_states_repository_impl.dart'
@@ -78,6 +80,8 @@ import 'features/accounts/data/repositories/account_timeline_repository_impl.dar
     as _i735;
 import 'features/accounts/data/repositories/accounts_repository_impl.dart'
     as _i395;
+import 'features/accounts/data/repositories/child_account_repository_impl.dart'
+    as _i311;
 import 'features/accounts/domain/repositories/account_audit_logs_repository.dart'
     as _i271;
 import 'features/accounts/domain/repositories/account_blocking_states_repository.dart'
@@ -105,6 +109,8 @@ import 'features/accounts/domain/repositories/account_tags_repository.dart'
 import 'features/accounts/domain/repositories/account_timeline_repository.dart'
     as _i446;
 import 'features/accounts/domain/repositories/accounts_repository.dart' as _i42;
+import 'features/accounts/domain/repositories/child_account_repository.dart'
+    as _i596;
 import 'features/accounts/domain/usecases/assign_multiple_tags_to_account_usecase.dart'
     as _i377;
 import 'features/accounts/domain/usecases/create_account_custom_field_usecase.dart'
@@ -112,6 +118,8 @@ import 'features/accounts/domain/usecases/create_account_custom_field_usecase.da
 import 'features/accounts/domain/usecases/create_account_payment_usecase.dart'
     as _i463;
 import 'features/accounts/domain/usecases/create_account_usecase.dart' as _i968;
+import 'features/accounts/domain/usecases/create_child_account_usecase.dart'
+    as _i743;
 import 'features/accounts/domain/usecases/create_global_payment_usecase.dart'
     as _i1047;
 import 'features/accounts/domain/usecases/create_invoice_payment_usecase.dart'
@@ -258,6 +266,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i819.AccountBlockingStatesRemoteDataSource>(
     () => _i819.AccountBlockingStatesRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
+  gh.factory<_i827.ChildAccountRemoteDataSource>(
+    () => _i827.ChildAccountRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
   gh.factory<_i363.AccountTagsRepository>(
     () => _i813.AccountTagsRepositoryImpl(
@@ -429,6 +440,11 @@ _i174.GetIt $initGetIt(
       gh<_i221.AccountCustomFieldsRepository>(),
     ),
   );
+  gh.factory<_i596.ChildAccountRepository>(
+    () => _i311.ChildAccountRepositoryImpl(
+      gh<_i827.ChildAccountRemoteDataSource>(),
+    ),
+  );
   gh.factory<_i729.GetAccountBlockingStatesUseCase>(
     () => _i729.GetAccountBlockingStatesUseCase(
       gh<_i696.AccountBlockingStatesRepository>(),
@@ -530,6 +546,9 @@ _i174.GetIt $initGetIt(
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
       accountEmailsRepository: gh<_i330.AccountEmailsRepository>(),
     ),
+  );
+  gh.factory<_i743.CreateChildAccountUseCase>(
+    () => _i743.CreateChildAccountUseCase(gh<_i596.ChildAccountRepository>()),
   );
   return getIt;
 }
