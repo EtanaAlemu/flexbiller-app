@@ -7,19 +7,19 @@ part 'account_custom_field_model.g.dart';
 class AccountCustomFieldModel {
   @JsonKey(name: 'customFieldId')
   final String customFieldId;
-
+  
   @JsonKey(name: 'objectId')
   final String objectId;
-
+  
   @JsonKey(name: 'objectType')
   final String objectType;
-
+  
   @JsonKey(name: 'name')
   final String name;
-
+  
   @JsonKey(name: 'value')
   final String value;
-
+  
   @JsonKey(name: 'auditLogs')
   final List<Map<String, dynamic>>? auditLogs;
 
@@ -36,6 +36,49 @@ class AccountCustomFieldModel {
       _$AccountCustomFieldModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$AccountCustomFieldModelToJson(this);
+
+  // Convert from domain entity to data model
+  factory AccountCustomFieldModel.fromEntity(AccountCustomField entity) {
+    return AccountCustomFieldModel(
+      customFieldId: entity.customFieldId,
+      objectId: entity.accountId, // Map accountId to objectId
+      objectType: 'ACCOUNT', // Default to ACCOUNT for account custom fields
+      name: entity.name,
+      value: entity.value,
+      auditLogs: entity.auditLogs
+          .map((log) => {
+                'changeType': log.changeType,
+                'changeDate': log.changeDate.toIso8601String(),
+                'changedBy': log.changedBy,
+                'reasonCode': log.reasonCode,
+                'comments': log.comments,
+                'objectType': log.objectType,
+                'userToken': log.userToken,
+              })
+          .toList(),
+    );
+  }
+
+  // Convert from data model to domain entity
+  AccountCustomField toEntity() {
+    return AccountCustomField(
+      customFieldId: customFieldId,
+      accountId: objectId, // Map objectId to accountId
+      name: name,
+      value: value,
+      auditLogs: auditLogs
+          ?.map((log) => CustomFieldAuditLog(
+                changeType: log['changeType'] ?? '',
+                changeDate: DateTime.tryParse(log['changeDate'] ?? '') ?? DateTime.now(),
+                changedBy: log['changedBy'] ?? '',
+                reasonCode: log['reasonCode'],
+                comments: log['comments'],
+                objectType: log['objectType'],
+                userToken: log['userToken'],
+              ))
+          .toList() ?? [],
+    );
+  }
 }
 
 @JsonSerializable()

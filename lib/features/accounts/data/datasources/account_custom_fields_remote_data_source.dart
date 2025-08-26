@@ -5,14 +5,37 @@ import '../models/account_custom_field_model.dart';
 
 abstract class AccountCustomFieldsRemoteDataSource {
   Future<List<AccountCustomFieldModel>> getAllCustomFields(String accountId);
-  Future<List<AccountCustomFieldModel>> getAccountCustomFields(String accountId);
-  Future<AccountCustomFieldModel> getCustomField(String accountId, String customFieldId);
-  Future<AccountCustomFieldModel> createCustomField(String accountId, String name, String value);
-  Future<List<AccountCustomFieldModel>> createMultipleCustomFields(String accountId, List<Map<String, String>> customFields);
-  Future<AccountCustomFieldModel> updateCustomField(String accountId, String customFieldId, String name, String value);
-  Future<List<AccountCustomFieldModel>> updateMultipleCustomFields(String accountId, List<Map<String, dynamic>> customFields);
+  Future<List<AccountCustomFieldModel>> getAccountCustomFields(
+    String accountId,
+  );
+  Future<AccountCustomFieldModel> getCustomField(
+    String accountId,
+    String customFieldId,
+  );
+  Future<AccountCustomFieldModel> createCustomField(
+    String accountId,
+    String name,
+    String value,
+  );
+  Future<List<AccountCustomFieldModel>> createMultipleCustomFields(
+    String accountId,
+    List<Map<String, String>> customFields,
+  );
+  Future<AccountCustomFieldModel> updateCustomField(
+    String accountId,
+    String customFieldId,
+    String name,
+    String value,
+  );
+  Future<List<AccountCustomFieldModel>> updateMultipleCustomFields(
+    String accountId,
+    List<Map<String, dynamic>> customFields,
+  );
   Future<void> deleteCustomField(String accountId, String customFieldId);
-  Future<void> deleteMultipleCustomFields(String accountId, List<String> customFieldIds);
+  Future<void> deleteMultipleCustomFields(
+    String accountId,
+    List<String> customFieldIds,
+  );
 }
 
 @Injectable(as: AccountCustomFieldsRemoteDataSource)
@@ -23,7 +46,9 @@ class AccountCustomFieldsRemoteDataSourceImpl
   AccountCustomFieldsRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<List<AccountCustomFieldModel>> getAllCustomFields(String accountId) async {
+  Future<List<AccountCustomFieldModel>> getAllCustomFields(
+    String accountId,
+  ) async {
     try {
       final response = await _dio.get('/accounts/$accountId/allCustomFields');
 
@@ -37,8 +62,9 @@ class AccountCustomFieldsRemoteDataSourceImpl
               responseData['customFields'] as List<dynamic>;
           return customFieldsData
               .map(
-                (item) =>
-                    AccountCustomFieldModel.fromJson(item as Map<String, dynamic>),
+                (item) => AccountCustomFieldModel.fromJson(
+                  item as Map<String, dynamic>,
+                ),
               )
               .toList();
         }
@@ -49,8 +75,9 @@ class AccountCustomFieldsRemoteDataSourceImpl
               responseData['data'] as List<dynamic>;
           return customFieldsData
               .map(
-                (item) =>
-                    AccountCustomFieldModel.fromJson(item as Map<String, dynamic>),
+                (item) => AccountCustomFieldModel.fromJson(
+                  item as Map<String, dynamic>,
+                ),
               )
               .toList();
         } else {
@@ -90,7 +117,9 @@ class AccountCustomFieldsRemoteDataSourceImpl
   }
 
   @override
-  Future<List<AccountCustomFieldModel>> getAccountCustomFields(String accountId) async {
+  Future<List<AccountCustomFieldModel>> getAccountCustomFields(
+    String accountId,
+  ) async {
     try {
       final response = await _dio.get('/accounts/$accountId/customFields');
 
@@ -142,7 +171,10 @@ class AccountCustomFieldsRemoteDataSourceImpl
   }
 
   @override
-  Future<AccountCustomFieldModel> getCustomField(String accountId, String customFieldId) async {
+  Future<AccountCustomFieldModel> getCustomField(
+    String accountId,
+    String customFieldId,
+  ) async {
     try {
       final response = await _dio.get(
         '/accounts/$accountId/customFields/$customFieldId',
@@ -190,7 +222,11 @@ class AccountCustomFieldsRemoteDataSourceImpl
   }
 
   @override
-  Future<AccountCustomFieldModel> createCustomField(String accountId, String name, String value) async {
+  Future<AccountCustomFieldModel> createCustomField(
+    String accountId,
+    String name,
+    String value,
+  ) async {
     try {
       final response = await _dio.post(
         '/accounts/$accountId/customFields',
@@ -225,7 +261,8 @@ class AccountCustomFieldsRemoteDataSourceImpl
               {
                 'changeType': 'INSERT',
                 'changeDate': DateTime.now().toIso8601String(),
-                'changedBy': 'Current User', // This would come from user context
+                'changedBy':
+                    'Current User', // This would come from user context
                 'reasonCode': null,
                 'comments': null,
                 'objectType': null,
@@ -286,7 +323,10 @@ class AccountCustomFieldsRemoteDataSourceImpl
   }
 
   @override
-  Future<List<AccountCustomFieldModel>> createMultipleCustomFields(String accountId, List<Map<String, String>> customFields) async {
+  Future<List<AccountCustomFieldModel>> createMultipleCustomFields(
+    String accountId,
+    List<Map<String, String>> customFields,
+  ) async {
     try {
       final response = await _dio.post(
         '/accounts/$accountId/customFields/bulk',
@@ -367,7 +407,12 @@ class AccountCustomFieldsRemoteDataSourceImpl
   }
 
   @override
-  Future<AccountCustomFieldModel> updateCustomField(String accountId, String customFieldId, String name, String value) async {
+  Future<AccountCustomFieldModel> updateCustomField(
+    String accountId,
+    String customFieldId,
+    String name,
+    String value,
+  ) async {
     try {
       final response = await _dio.put(
         '/accounts/$accountId/customFields',
@@ -400,7 +445,8 @@ class AccountCustomFieldsRemoteDataSourceImpl
               {
                 'changeType': 'UPDATE',
                 'changeDate': DateTime.now().toIso8601String(),
-                'changedBy': 'Current User', // This would come from user context
+                'changedBy':
+                    'Current User', // This would come from user context
                 'reasonCode': null,
                 'comments': null,
                 'objectType': null,
@@ -465,7 +511,10 @@ class AccountCustomFieldsRemoteDataSourceImpl
   }
 
   @override
-  Future<List<AccountCustomFieldModel>> updateMultipleCustomFields(String accountId, List<Map<String, dynamic>> customFields) async {
+  Future<List<AccountCustomFieldModel>> updateMultipleCustomFields(
+    String accountId,
+    List<Map<String, dynamic>> customFields,
+  ) async {
     try {
       final response = await _dio.put(
         '/accounts/$accountId/customFields/bulk',
@@ -626,7 +675,10 @@ class AccountCustomFieldsRemoteDataSourceImpl
   }
 
   @override
-  Future<void> deleteMultipleCustomFields(String accountId, List<String> customFieldIds) async {
+  Future<void> deleteMultipleCustomFields(
+    String accountId,
+    List<String> customFieldIds,
+  ) async {
     try {
       final response = await _dio.delete(
         '/accounts/$accountId/customFields/bulk',
