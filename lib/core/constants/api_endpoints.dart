@@ -13,4 +13,7 @@ class ApiEndpoints {
       '/api/analytics/recent-subscriptions';
   static const String getSubscriptionById = '/api/subscriptions';
   static const String getSubscriptionsForAccount = '/api/subscriptions/account';
+
+  // Tags endpoints
+  static const String getAllTags = '/api/tags';
 }

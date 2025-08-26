@@ -208,6 +208,11 @@ import 'features/subscriptions/domain/usecases/update_subscription_usecase.dart'
     as _i676;
 import 'features/subscriptions/presentation/bloc/subscriptions_bloc.dart'
     as _i675;
+import 'features/tags/data/datasources/tags_remote_data_source.dart' as _i376;
+import 'features/tags/data/repositories/tags_repository_impl.dart' as _i990;
+import 'features/tags/domain/repositories/tags_repository.dart' as _i734;
+import 'features/tags/domain/usecases/get_all_tags_usecase.dart' as _i348;
+import 'features/tags/presentation/bloc/tags_bloc.dart' as _i844;
 
 // initializes the registration of main-scope dependencies inside of GetIt
 _i174.GetIt $initGetIt(
@@ -282,11 +287,17 @@ _i174.GetIt $initGetIt(
   gh.factory<_i702.AccountInvoicesRemoteDataSource>(
     () => _i702.AccountInvoicesRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
+  gh.factory<_i376.TagsRemoteDataSource>(
+    () => _i376.TagsRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
   gh.factory<_i326.AccountBundlesRemoteDataSource>(
     () => _i326.AccountBundlesRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
   gh.factory<_i45.DioClient>(
     () => _i45.DioClient(gh<_i558.FlutterSecureStorage>()),
+  );
+  gh.factory<_i734.TagsRepository>(
+    () => _i990.TagsRepositoryImpl(gh<_i376.TagsRemoteDataSource>()),
   );
   gh.factory<_i819.AccountBlockingStatesRemoteDataSource>(
     () => _i819.AccountBlockingStatesRemoteDataSourceImpl(gh<_i361.Dio>()),
@@ -340,6 +351,9 @@ _i174.GetIt $initGetIt(
     () => _i552.AccountBlockingStatesRepositoryImpl(
       gh<_i819.AccountBlockingStatesRemoteDataSource>(),
     ),
+  );
+  gh.factory<_i348.GetAllTagsUseCase>(
+    () => _i348.GetAllTagsUseCase(gh<_i734.TagsRepository>()),
   );
   gh.factory<_i493.SecureStorageService>(
     () => _i493.SecureStorageService(gh<_i558.FlutterSecureStorage>()),
@@ -428,6 +442,9 @@ _i174.GetIt $initGetIt(
     () => _i735.AccountTimelineRepositoryImpl(
       gh<_i817.AccountTimelineRemoteDataSource>(),
     ),
+  );
+  gh.factory<_i844.TagsBloc>(
+    () => _i844.TagsBloc(gh<_i348.GetAllTagsUseCase>()),
   );
   gh.factory<_i887.GetPaginatedInvoicesUseCase>(
     () => _i887.GetPaginatedInvoicesUseCase(

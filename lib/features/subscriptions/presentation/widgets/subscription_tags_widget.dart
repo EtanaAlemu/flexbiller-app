@@ -19,8 +19,9 @@ class SubscriptionTagsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => context.read<SubscriptionsBloc>()
-        ..add(LoadSubscriptionTags(subscriptionId)),
+      create: (context) =>
+          context.read<SubscriptionsBloc>()
+            ..add(LoadSubscriptionTags(subscriptionId)),
       child: BlocBuilder<SubscriptionsBloc, SubscriptionsState>(
         builder: (context, state) {
           if (state is SubscriptionTagsLoading) {
@@ -90,8 +91,12 @@ class SubscriptionTagsWidget extends StatelessWidget {
                   },
                   tooltip: 'Refresh Tags',
                   style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    foregroundColor: Theme.of(
+                      context,
+                    ).colorScheme.onPrimaryContainer,
                     padding: const EdgeInsets.all(8),
                   ),
                 ),
@@ -112,14 +117,12 @@ class SubscriptionTagsWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.3,
-        ),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(
-            alpha: 0.3,
-          ),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -127,26 +130,24 @@ class SubscriptionTagsWidget extends StatelessWidget {
           Icon(
             Icons.label_off_outlined,
             size: 48,
-            color: Theme.of(context).colorScheme.outline.withValues(
-              alpha: 0.6,
-            ),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.6),
           ),
           const SizedBox(height: 8),
           Text(
             'No tags found',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline.withValues(
-                alpha: 0.8,
-              ),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.8),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'This subscription has no tags assigned',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline.withValues(
-                alpha: 0.6,
-              ),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.6),
             ),
             textAlign: TextAlign.center,
           ),
@@ -170,9 +171,7 @@ class SubscriptionTagsWidget extends StatelessWidget {
         color: Theme.of(context).colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withValues(
-            alpha: 0.3,
-          ),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -225,9 +224,9 @@ class SubscriptionTagsWidget extends StatelessWidget {
             Text(
               message,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.error.withValues(
-                  alpha: 0.8,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.error.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: 12),
@@ -264,25 +263,25 @@ class SubscriptionTagsWidget extends StatelessWidget {
           children: [
             Icon(
               Icons.label_outline,
-              color: Theme.of(context).colorScheme.outline.withValues(
-                alpha: 0.6,
-              ),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.6),
               size: 20,
             ),
             const SizedBox(width: 16),
             Text(
               'Tags',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const Spacer(),
             Text(
               'Loading...',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline.withValues(
-                  alpha: 0.6,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.outline.withValues(alpha: 0.6),
               ),
             ),
           ],
