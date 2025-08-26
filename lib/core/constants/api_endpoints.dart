@@ -23,4 +23,5 @@ class ApiEndpoints {
   static const String createTagDefinition = '/api/tagDefinitions';
   static const String getTagDefinitionById = '/api/tagDefinitions';
   static const String getTagDefinitionAuditLogsWithHistory = '/api/tagDefinitions';
+  static const String deleteTagDefinition = '/api/tagDefinitions';
 }

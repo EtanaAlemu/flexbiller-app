@@ -58,10 +58,22 @@ class TagDefinitionsRepositoryImpl implements TagDefinitionsRepository {
   }
 
   @override
-  Future<List<TagDefinitionAuditLog>> getTagDefinitionAuditLogsWithHistory(String id) async {
+  Future<List<TagDefinitionAuditLog>> getTagDefinitionAuditLogsWithHistory(
+    String id,
+  ) async {
     try {
-      final auditLogModels = await _remoteDataSource.getTagDefinitionAuditLogsWithHistory(id);
+      final auditLogModels = await _remoteDataSource
+          .getTagDefinitionAuditLogsWithHistory(id);
       return auditLogModels.map((model) => model.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteTagDefinition(String id) async {
+    try {
+      await _remoteDataSource.deleteTagDefinition(id);
     } catch (e) {
       rethrow;
     }

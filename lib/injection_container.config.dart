@@ -216,6 +216,8 @@ import 'features/tag_definitions/domain/repositories/tag_definitions_repository.
     as _i866;
 import 'features/tag_definitions/domain/usecases/create_tag_definition_usecase.dart'
     as _i732;
+import 'features/tag_definitions/domain/usecases/delete_tag_definition_usecase.dart'
+    as _i528;
 import 'features/tag_definitions/domain/usecases/get_tag_definition_audit_logs_with_history_usecase.dart'
     as _i982;
 import 'features/tag_definitions/domain/usecases/get_tag_definition_by_id_usecase.dart'
@@ -604,6 +606,10 @@ _i174.GetIt $initGetIt(
       gh<_i866.TagDefinitionsRepository>(),
     ),
   );
+  gh.factory<_i528.DeleteTagDefinitionUseCase>(
+    () =>
+        _i528.DeleteTagDefinitionUseCase(gh<_i866.TagDefinitionsRepository>()),
+  );
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
   );
@@ -692,6 +698,7 @@ _i174.GetIt $initGetIt(
       gh<_i732.CreateTagDefinitionUseCase>(),
       gh<_i448.GetTagDefinitionByIdUseCase>(),
       gh<_i982.GetTagDefinitionAuditLogsWithHistoryUseCase>(),
+      gh<_i528.DeleteTagDefinitionUseCase>(),
     ),
   );
   return getIt;

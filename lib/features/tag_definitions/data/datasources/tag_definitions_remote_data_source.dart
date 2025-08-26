@@ -12,6 +12,7 @@ abstract class TagDefinitionsRemoteDataSource {
   );
   Future<TagDefinitionModel> getTagDefinitionById(String id);
   Future<List<TagDefinitionAuditLogModel>> getTagDefinitionAuditLogsWithHistory(String id);
+  Future<void> deleteTagDefinition(String id);
 }
 
 @Injectable(as: TagDefinitionsRemoteDataSource)
@@ -91,6 +92,21 @@ class TagDefinitionsRemoteDataSourceImpl
       }
     } catch (e) {
       throw Exception('Failed to load tag definition audit logs: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteTagDefinition(String id) async {
+    try {
+      final response = await _dio.delete(
+        '${ApiEndpoints.deleteTagDefinition}/$id',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Failed to delete tag definition');
+      }
+    } catch (e) {
+      throw Exception('Failed to delete tag definition: $e');
     }
   }
 }

@@ -11,4 +11,5 @@ abstract class TagDefinitionsRepository {
   });
   Future<TagDefinition> getTagDefinitionById(String id);
   Future<List<TagDefinitionAuditLog>> getTagDefinitionAuditLogsWithHistory(String id);
+  Future<void> deleteTagDefinition(String id);
 }

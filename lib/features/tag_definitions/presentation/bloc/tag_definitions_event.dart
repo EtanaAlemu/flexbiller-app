@@ -45,3 +45,12 @@ class GetTagDefinitionAuditLogsWithHistory extends TagDefinitionsEvent {
   @override
   List<Object?> get props => [id];
 }
+
+class DeleteTagDefinition extends TagDefinitionsEvent {
+  final String id;
+
+  const DeleteTagDefinition(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}

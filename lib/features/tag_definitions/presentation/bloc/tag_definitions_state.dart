@@ -93,3 +93,24 @@ class AuditLogsWithHistoryError extends TagDefinitionsState {
   @override
   List<Object?> get props => [message, tagDefinitionId];
 }
+
+class DeleteTagDefinitionLoading extends TagDefinitionsState {}
+
+class DeleteTagDefinitionSuccess extends TagDefinitionsState {
+  final String deletedId;
+
+  const DeleteTagDefinitionSuccess(this.deletedId);
+
+  @override
+  List<Object?> get props => [deletedId];
+}
+
+class DeleteTagDefinitionError extends TagDefinitionsState {
+  final String message;
+  final String id;
+
+  const DeleteTagDefinitionError(this.message, this.id);
+
+  @override
+  List<Object?> get props => [message, id];
+}

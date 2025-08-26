@@ -7,6 +7,7 @@ import 'tag_definitions_page.dart';
 import 'create_tag_definition_page.dart';
 import 'get_tag_definition_by_id_demo_page.dart';
 import 'get_tag_definition_audit_logs_demo_page.dart';
+import 'delete_tag_definition_demo_page.dart';
 
 class TagDefinitionsDemoPage extends StatelessWidget {
   const TagDefinitionsDemoPage({super.key});
@@ -114,6 +115,19 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: Theme.of(context).colorScheme.tertiary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _deleteTagDefinition(context),
+                      icon: const Icon(Icons.delete_forever),
+                      label: const Text('Delete'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Theme.of(context).colorScheme.error,
                         foregroundColor: Colors.white,
                       ),
                     ),
@@ -334,6 +348,12 @@ class TagDefinitionsDemoPage extends StatelessWidget {
   void _getTagDefinitionAuditLogs(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const GetTagDefinitionAuditLogsDemoPage()),
+    );
+  }
+
+  void _deleteTagDefinition(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const DeleteTagDefinitionDemoPage()),
     );
   }
 

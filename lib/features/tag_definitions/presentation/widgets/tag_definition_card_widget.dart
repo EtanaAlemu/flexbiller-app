@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/tag_definition.dart';
 import '../pages/tag_definition_details_page.dart';
+import 'delete_tag_definition_dialog.dart';
 
 class TagDefinitionCardWidget extends StatelessWidget {
   final TagDefinition tagDefinition;
   final VoidCallback? onTap;
+  final VoidCallback? onDelete;
 
   const TagDefinitionCardWidget({
     super.key,
     required this.tagDefinition,
     this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -53,6 +56,23 @@ class TagDefinitionCardWidget extends StatelessWidget {
                     color: theme.colorScheme.primary,
                     size: 20,
                   ),
+                  if (onDelete != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _showDeleteDialog(context),
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: theme.colorScheme.error,
+                        size: 20,
+                      ),
+                      tooltip: 'Delete Tag Definition',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 12),
@@ -130,6 +150,16 @@ class TagDefinitionCardWidget extends StatelessWidget {
         builder: (context) => TagDefinitionDetailsPage(
           tagDefinitionId: tagDefinition.id,
         ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => DeleteTagDefinitionDialog(
+        tagDefinition: tagDefinition,
+        onConfirm: onDelete,
       ),
     );
   }
