@@ -12,6 +12,8 @@ import '../models/block_subscription_response_model.dart';
 import '../models/create_subscription_with_addons_request_model.dart';
 import '../models/create_subscription_with_addons_response_model.dart';
 import '../models/subscription_audit_logs_response_model.dart';
+import '../models/update_subscription_bcd_request_model.dart';
+import '../models/update_subscription_bcd_response_model.dart';
 import '../../../../core/constants/api_endpoints.dart';
 
 abstract class SubscriptionsRemoteDataSource {
@@ -55,6 +57,12 @@ abstract class SubscriptionsRemoteDataSource {
 
   // Get Subscription Audit Logs method
   Future<SubscriptionAuditLogsResponseModel> getSubscriptionAuditLogsWithHistory(String subscriptionId);
+
+  // Update Subscription BCD method
+  Future<UpdateSubscriptionBcdResponseModel> updateSubscriptionBcd({
+    required String subscriptionId,
+    required UpdateSubscriptionBcdRequestModel request,
+  });
 }
 
 @Injectable(as: SubscriptionsRemoteDataSource)
@@ -313,6 +321,28 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
       }
     } catch (e) {
       throw Exception('Failed to load subscription audit logs: $e');
+    }
+  }
+
+  @override
+  Future<UpdateSubscriptionBcdResponseModel> updateSubscriptionBcd({
+    required String subscriptionId,
+    required UpdateSubscriptionBcdRequestModel request,
+  }) async {
+    try {
+      final response = await _dio.put(
+        '${ApiEndpoints.updateSubscriptionBcd}/$subscriptionId/bcd',
+        data: request.toJson(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        return UpdateSubscriptionBcdResponseModel.fromJson(data);
+      } else {
+        throw Exception('Failed to update subscription BCD');
+      }
+    } catch (e) {
+      throw Exception('Failed to update subscription BCD: $e');
     }
   }
 }

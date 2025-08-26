@@ -8,6 +8,7 @@ import 'subscription_custom_fields_demo_page.dart';
 import 'block_subscription_demo_page.dart';
 import 'create_subscription_with_addons_demo_page.dart';
 import 'subscription_audit_logs_demo_page.dart';
+import 'update_subscription_bcd_demo_page.dart';
 
 class SubscriptionsDemoPage extends StatelessWidget {
   const SubscriptionsDemoPage({super.key});
@@ -41,6 +42,11 @@ class SubscriptionsDemoPage extends StatelessWidget {
               icon: const Icon(Icons.history),
               tooltip: 'Audit Logs',
             ),
+            IconButton(
+              onPressed: () => _updateBcd(context),
+              icon: const Icon(Icons.update),
+              tooltip: 'Update BCD',
+            ),
           ],
         ),
         body: const SubscriptionsPage(),
@@ -69,6 +75,12 @@ class SubscriptionsDemoPage extends StatelessWidget {
   void _auditLogs(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const SubscriptionAuditLogsDemoPage()),
+    );
+  }
+
+  void _updateBcd(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const UpdateSubscriptionBcdDemoPage()),
     );
   }
 }

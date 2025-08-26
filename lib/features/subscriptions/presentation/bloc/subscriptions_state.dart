@@ -241,3 +241,22 @@ class GetSubscriptionAuditLogsWithHistoryError extends SubscriptionsState {
   @override
   List<Object?> get props => [message, subscriptionId];
 }
+
+// Update Subscription BCD states
+class UpdateSubscriptionBcdLoading extends SubscriptionsState {}
+
+class UpdateSubscriptionBcdSuccess extends SubscriptionsState {
+  final Map<String, dynamic> result;
+  final String subscriptionId;
+  const UpdateSubscriptionBcdSuccess(this.result, this.subscriptionId);
+  @override
+  List<Object?> get props => [result, subscriptionId];
+}
+
+class UpdateSubscriptionBcdError extends SubscriptionsState {
+  final String message;
+  final String subscriptionId;
+  const UpdateSubscriptionBcdError(this.message, this.subscriptionId);
+  @override
+  List<Object?> get props => [message, subscriptionId];
+}

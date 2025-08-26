@@ -17,6 +17,7 @@ class ApiEndpoints {
   static const String blockSubscription = '/api/subscriptions'; // Base for blocking
   static const String createSubscriptionWithAddOns = '/api/subscriptions/createSubscriptionWithAddOns';
   static const String getSubscriptionAuditLogsWithHistory = '/api/subscriptions'; // Base for audit logs
+  static const String updateSubscriptionBcd = '/api/subscriptions'; // Base for updating BCD
 
   // Tags endpoints
   static const String getAllTags = '/api/tags';

@@ -3,6 +3,7 @@ import '../entities/subscription_custom_field.dart';
 import '../entities/subscription_blocking_state.dart';
 import '../entities/subscription_addon_product.dart';
 import '../entities/subscription_audit_log.dart';
+import '../entities/subscription_bcd_update.dart';
 
 abstract class SubscriptionsRepository {
   Future<List<Subscription>> getRecentSubscriptions();
@@ -46,4 +47,10 @@ abstract class SubscriptionsRepository {
 
   // Get Subscription Audit Logs method
   Future<List<SubscriptionAuditLog>> getSubscriptionAuditLogsWithHistory(String subscriptionId);
+
+  // Update Subscription BCD method
+  Future<Map<String, dynamic>> updateSubscriptionBcd({
+    required String subscriptionId,
+    required SubscriptionBcdUpdate bcdUpdate,
+  });
 }

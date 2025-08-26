@@ -4,6 +4,7 @@ import '../../domain/entities/subscription_custom_field.dart';
 import '../../domain/entities/subscription_blocking_state.dart';
 import '../../domain/entities/subscription_addon_product.dart';
 import '../../domain/entities/subscription_audit_log.dart';
+import '../../domain/entities/subscription_bcd_update.dart';
 import '../../domain/repositories/subscriptions_repository.dart';
 import '../datasources/subscriptions_remote_data_source.dart';
 import '../models/create_subscription_request_model.dart';
@@ -13,6 +14,8 @@ import '../models/remove_subscription_custom_fields_request_model.dart';
 import '../models/block_subscription_request_model.dart';
 import '../models/create_subscription_with_addons_request_model.dart';
 import '../models/subscription_audit_logs_response_model.dart';
+import '../models/update_subscription_bcd_request_model.dart';
+import '../models/update_subscription_bcd_response_model.dart';
 
 @Injectable(as: SubscriptionsRepository)
 class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
@@ -248,6 +251,100 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
     } catch (e) {
       rethrow;
     }
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateSubscriptionBcd({
+    required String subscriptionId,
+    required SubscriptionBcdUpdate bcdUpdate,
+  }) async {
+    try {
+      final request = UpdateSubscriptionBcdRequestModel(
+        accountId: bcdUpdate.accountId,
+        bundleId: bcdUpdate.bundleId,
+        subscriptionId: bcdUpdate.subscriptionId,
+        startDate: bcdUpdate.startDate.toIso8601String().split('T')[0], // Format as YYYY-MM-DD
+        productName: bcdUpdate.productName,
+        productCategory: bcdUpdate.productCategory,
+        billingPeriod: bcdUpdate.billingPeriod,
+        priceList: bcdUpdate.priceList,
+        phaseType: bcdUpdate.phaseType,
+        billCycleDayLocal: bcdUpdate.billCycleDayLocal,
+      );
+
+      final result = await _remoteDataSource.updateSubscriptionBcd(
+        subscriptionId: subscriptionId,
+        request: request,
+      );
+
+      return {
+        'success': result.success,
+        'code': result.code,
+        'data': _mapBcdDataModelToMap(result.data),
+        'message': result.message,
+      };
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Map<String, dynamic> _mapBcdDataModelToMap(SubscriptionBcdDataModel model) {
+    return {
+      'accountId': model.accountId,
+      'bundleId': model.bundleId,
+      'bundleExternalKey': model.bundleExternalKey,
+      'subscriptionId': model.subscriptionId,
+      'externalKey': model.externalKey,
+      'startDate': model.startDate,
+      'productName': model.productName,
+      'productCategory': model.productCategory,
+      'billingPeriod': model.billingPeriod,
+      'phaseType': model.phaseType,
+      'priceList': model.priceList,
+      'planName': model.planName,
+      'state': model.state,
+      'sourceType': model.sourceType,
+      'cancelledDate': model.cancelledDate,
+      'chargedThroughDate': model.chargedThroughDate,
+      'billingStartDate': model.billingStartDate,
+      'billingEndDate': model.billingEndDate,
+      'billCycleDayLocal': model.billCycleDayLocal,
+      'quantity': model.quantity,
+      'events': model.events?.map((event) => _mapEventModelToMap(event)).toList(),
+      'priceOverrides': model.priceOverrides,
+      'prices': model.prices?.map((price) => _mapPriceModelToMap(price)).toList(),
+      'auditLogs': model.auditLogs,
+    };
+  }
+
+  Map<String, dynamic> _mapEventModelToMap(SubscriptionEventModel event) {
+    return {
+      'eventId': event.eventId,
+      'billingPeriod': event.billingPeriod,
+      'effectiveDate': event.effectiveDate,
+      'catalogEffectiveDate': event.catalogEffectiveDate,
+      'plan': event.plan,
+      'product': event.product,
+      'priceList': event.priceList,
+      'eventType': event.eventType,
+      'isBlockedBilling': event.isBlockedBilling,
+      'isBlockedEntitlement': event.isBlockedEntitlement,
+      'serviceName': event.serviceName,
+      'serviceStateName': event.serviceStateName,
+      'phase': event.phase,
+      'auditLogs': event.auditLogs,
+    };
+  }
+
+  Map<String, dynamic> _mapPriceModelToMap(SubscriptionPriceModel price) {
+    return {
+      'planName': price.planName,
+      'phaseName': price.phaseName,
+      'phaseType': price.phaseType,
+      'fixedPrice': price.fixedPrice,
+      'recurringPrice': price.recurringPrice,
+      'usagePrices': price.usagePrices,
+    };
   }
 
   SubscriptionAuditLog _mapAuditLogModelToEntity(SubscriptionAuditLogModel model) {

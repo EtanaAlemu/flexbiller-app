@@ -148,3 +148,17 @@ class GetSubscriptionAuditLogsWithHistory extends SubscriptionsEvent {
   @override
   List<Object?> get props => [subscriptionId];
 }
+
+// Update Subscription BCD event
+class UpdateSubscriptionBcd extends SubscriptionsEvent {
+  final String subscriptionId;
+  final Map<String, dynamic> bcdData;
+
+  const UpdateSubscriptionBcd({
+    required this.subscriptionId,
+    required this.bcdData,
+  });
+
+  @override
+  List<Object?> get props => [subscriptionId, bcdData];
+}

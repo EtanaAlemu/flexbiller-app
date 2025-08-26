@@ -214,6 +214,8 @@ import 'features/subscriptions/domain/usecases/get_subscriptions_for_account_use
     as _i233;
 import 'features/subscriptions/domain/usecases/remove_subscription_custom_fields_usecase.dart'
     as _i175;
+import 'features/subscriptions/domain/usecases/update_subscription_bcd_usecase.dart'
+    as _i400;
 import 'features/subscriptions/domain/usecases/update_subscription_custom_fields_usecase.dart'
     as _i354;
 import 'features/subscriptions/domain/usecases/update_subscription_usecase.dart'
@@ -554,6 +556,10 @@ _i174.GetIt $initGetIt(
   gh.factory<_i1005.CancelSubscriptionUseCase>(
     () => _i1005.CancelSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
   );
+  gh.factory<_i400.UpdateSubscriptionBcdUseCase>(
+    () =>
+        _i400.UpdateSubscriptionBcdUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
   gh.factory<_i82.DeleteMultipleAccountCustomFieldsUseCase>(
     () => _i82.DeleteMultipleAccountCustomFieldsUseCase(
       gh<_i221.AccountCustomFieldsRepository>(),
@@ -646,18 +652,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i1070.ResetPasswordUseCase>(
     () => _i1070.ResetPasswordUseCase(gh<_i1015.AuthRepository>()),
   );
-  gh.factory<_i711.GetAccountTimelineUseCase>(
-    () =>
-        _i711.GetAccountTimelineUseCase(gh<_i446.AccountTimelineRepository>()),
-  );
-  gh.factory<_i363.AuthBloc>(
-    () => _i363.AuthBloc(
-      loginUseCase: gh<_i206.LoginUseCase>(),
-      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
-      changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
-      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
-    ),
-  );
   gh.factory<_i675.SubscriptionsBloc>(
     () => _i675.SubscriptionsBloc(
       gh<_i825.GetRecentSubscriptionsUseCase>(),
@@ -673,6 +667,19 @@ _i174.GetIt $initGetIt(
       gh<_i497.BlockSubscriptionUseCase>(),
       gh<_i814.CreateSubscriptionWithAddOnsUseCase>(),
       gh<_i887.GetSubscriptionAuditLogsWithHistoryUseCase>(),
+      gh<_i400.UpdateSubscriptionBcdUseCase>(),
+    ),
+  );
+  gh.factory<_i711.GetAccountTimelineUseCase>(
+    () =>
+        _i711.GetAccountTimelineUseCase(gh<_i446.AccountTimelineRepository>()),
+  );
+  gh.factory<_i363.AuthBloc>(
+    () => _i363.AuthBloc(
+      loginUseCase: gh<_i206.LoginUseCase>(),
+      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
+      changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
+      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
     ),
   );
   gh.factory<_i350.CreateInvoicePaymentUseCase>(

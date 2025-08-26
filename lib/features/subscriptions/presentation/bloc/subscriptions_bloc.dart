@@ -13,7 +13,9 @@ import '../../domain/usecases/remove_subscription_custom_fields_usecase.dart';
 import '../../domain/usecases/block_subscription_usecase.dart';
 import '../../domain/usecases/create_subscription_with_addons_usecase.dart';
 import '../../domain/usecases/get_subscription_audit_logs_with_history_usecase.dart';
+import '../../domain/usecases/update_subscription_bcd_usecase.dart';
 import '../../domain/entities/subscription_addon_product.dart';
+import '../../domain/entities/subscription_bcd_update.dart';
 import 'subscriptions_event.dart';
 import 'subscriptions_state.dart';
 
@@ -32,6 +34,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   final BlockSubscriptionUseCase _blockSubscriptionUseCase;
   final CreateSubscriptionWithAddOnsUseCase _createSubscriptionWithAddOnsUseCase;
   final GetSubscriptionAuditLogsWithHistoryUseCase _getSubscriptionAuditLogsWithHistoryUseCase;
+  final UpdateSubscriptionBcdUseCase _updateSubscriptionBcdUseCase;
 
   SubscriptionsBloc(
     this._getRecentSubscriptionsUseCase,
@@ -47,6 +50,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     this._blockSubscriptionUseCase,
     this._createSubscriptionWithAddOnsUseCase,
     this._getSubscriptionAuditLogsWithHistoryUseCase,
+    this._updateSubscriptionBcdUseCase,
   ) : super(SubscriptionsInitial()) {
     on<LoadRecentSubscriptions>(_onLoadRecentSubscriptions);
     on<RefreshRecentSubscriptions>(_onRefreshRecentSubscriptions);
@@ -62,6 +66,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     on<BlockSubscription>(_onBlockSubscription);
     on<CreateSubscriptionWithAddOns>(_onCreateSubscriptionWithAddOns);
     on<GetSubscriptionAuditLogsWithHistory>(_onGetSubscriptionAuditLogsWithHistory);
+    on<UpdateSubscriptionBcd>(_onUpdateSubscriptionBcd);
   }
 
   Future<void> _onLoadRecentSubscriptions(
@@ -273,6 +278,35 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       emit(GetSubscriptionAuditLogsWithHistorySuccess(auditLogs, event.subscriptionId));
     } catch (e) {
       emit(GetSubscriptionAuditLogsWithHistoryError(e.toString(), event.subscriptionId));
+    }
+  }
+
+  Future<void> _onUpdateSubscriptionBcd(
+    UpdateSubscriptionBcd event,
+    Emitter<SubscriptionsState> emit,
+  ) async {
+    emit(UpdateSubscriptionBcdLoading());
+    try {
+      final bcdUpdate = SubscriptionBcdUpdate(
+        accountId: event.bcdData['accountId']!,
+        bundleId: event.bcdData['bundleId']!,
+        subscriptionId: event.bcdData['subscriptionId']!,
+        startDate: DateTime.parse(event.bcdData['startDate']!),
+        productName: event.bcdData['productName']!,
+        productCategory: event.bcdData['productCategory']!,
+        billingPeriod: event.bcdData['billingPeriod']!,
+        priceList: event.bcdData['priceList']!,
+        phaseType: event.bcdData['phaseType']!,
+        billCycleDayLocal: event.bcdData['billCycleDayLocal']!,
+      );
+
+      final result = await _updateSubscriptionBcdUseCase(
+        subscriptionId: event.subscriptionId,
+        bcdUpdate: bcdUpdate,
+      );
+      emit(UpdateSubscriptionBcdSuccess(result, event.subscriptionId));
+    } catch (e) {
+      emit(UpdateSubscriptionBcdError(e.toString(), event.subscriptionId));
     }
   }
 }
