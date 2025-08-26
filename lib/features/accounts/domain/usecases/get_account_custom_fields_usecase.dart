@@ -9,6 +9,6 @@ class GetAccountCustomFieldsUseCase {
   GetAccountCustomFieldsUseCase(this._customFieldsRepository);
 
   Future<List<AccountCustomField>> call(String accountId) async {
-    return await _customFieldsRepository.getAllCustomFields(accountId);
+    return await _customFieldsRepository.getAccountCustomFields(accountId);
   }
 }

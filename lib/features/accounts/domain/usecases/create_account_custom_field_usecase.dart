@@ -8,14 +8,15 @@ class CreateAccountCustomFieldUseCase {
 
   CreateAccountCustomFieldUseCase(this._customFieldsRepository);
 
-  Future<List<AccountCustomField>> call({
-    required String accountId,
-    required String name,
-    required String value,
-  }) async {
-    // Since create is not supported in the simplified repository,
-    // we'll return the current custom fields for now
-    // TODO: Implement create functionality when the API supports it
-    return await _customFieldsRepository.getAllCustomFields(accountId);
+  Future<AccountCustomField> call(
+    String accountId,
+    String name,
+    String value,
+  ) async {
+    return await _customFieldsRepository.createCustomField(
+      accountId,
+      name,
+      value,
+    );
   }
 }
