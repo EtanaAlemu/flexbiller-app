@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/subscription.dart';
+import '../../domain/entities/subscription_custom_field.dart';
 
 abstract class SubscriptionsState extends Equatable {
   const SubscriptionsState();
@@ -12,10 +13,10 @@ class SubscriptionsInitial extends SubscriptionsState {}
 
 class SubscriptionsLoading extends SubscriptionsState {}
 
-class SubscriptionsLoaded extends SubscriptionsState {
+class RecentSubscriptionsLoaded extends SubscriptionsState {
   final List<Subscription> subscriptions;
 
-  const SubscriptionsLoaded(this.subscriptions);
+  const RecentSubscriptionsLoaded(this.subscriptions);
 
   @override
   List<Object?> get props => [subscriptions];
@@ -43,35 +44,34 @@ class SingleSubscriptionLoaded extends SubscriptionsState {
 
 class SingleSubscriptionError extends SubscriptionsState {
   final String message;
+  final String id;
 
-  const SingleSubscriptionError(this.message);
+  const SingleSubscriptionError(this.message, this.id);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, id];
 }
 
 class AccountSubscriptionsLoading extends SubscriptionsState {}
 
 class AccountSubscriptionsLoaded extends SubscriptionsState {
-  final String accountId;
   final List<Subscription> subscriptions;
+  final String accountId;
 
-  const AccountSubscriptionsLoaded({
-    required this.accountId,
-    required this.subscriptions,
-  });
+  const AccountSubscriptionsLoaded(this.subscriptions, this.accountId);
 
   @override
-  List<Object?> get props => [accountId, subscriptions];
+  List<Object?> get props => [subscriptions, accountId];
 }
 
 class AccountSubscriptionsError extends SubscriptionsState {
   final String message;
+  final String accountId;
 
-  const AccountSubscriptionsError(this.message);
+  const AccountSubscriptionsError(this.message, this.accountId);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, accountId];
 }
 
 class CreateSubscriptionLoading extends SubscriptionsState {}
@@ -107,57 +107,120 @@ class UpdateSubscriptionSuccess extends SubscriptionsState {
 
 class UpdateSubscriptionError extends SubscriptionsState {
   final String message;
+  final String id;
 
-  const UpdateSubscriptionError(this.message);
+  const UpdateSubscriptionError(this.message, this.id);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, id];
 }
 
 class CancelSubscriptionLoading extends SubscriptionsState {}
 
 class CancelSubscriptionSuccess extends SubscriptionsState {
-  final String subscriptionId;
-  final String message;
+  final String cancelledId;
 
-  const CancelSubscriptionSuccess({
-    required this.subscriptionId,
-    required this.message,
-  });
+  const CancelSubscriptionSuccess(this.cancelledId);
 
   @override
-  List<Object?> get props => [subscriptionId, message];
+  List<Object?> get props => [cancelledId];
 }
 
 class CancelSubscriptionError extends SubscriptionsState {
   final String message;
+  final String id;
 
-  const CancelSubscriptionError(this.message);
+  const CancelSubscriptionError(this.message, this.id);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, id];
 }
 
-class SubscriptionTagsLoading extends SubscriptionsState {}
+// Custom Fields states
+class SubscriptionCustomFieldsLoading extends SubscriptionsState {}
 
-class SubscriptionTagsLoaded extends SubscriptionsState {
+class SubscriptionCustomFieldsLoaded extends SubscriptionsState {
+  final List<SubscriptionCustomField> customFields;
   final String subscriptionId;
-  final List<String> tags;
 
-  const SubscriptionTagsLoaded({
-    required this.subscriptionId,
-    required this.tags,
-  });
+  const SubscriptionCustomFieldsLoaded(this.customFields, this.subscriptionId);
 
   @override
-  List<Object?> get props => [subscriptionId, tags];
+  List<Object?> get props => [customFields, subscriptionId];
 }
 
-class SubscriptionTagsError extends SubscriptionsState {
+class SubscriptionCustomFieldsError extends SubscriptionsState {
   final String message;
+  final String subscriptionId;
 
-  const SubscriptionTagsError(this.message);
+  const SubscriptionCustomFieldsError(this.message, this.subscriptionId);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, subscriptionId];
+}
+
+class AddSubscriptionCustomFieldsLoading extends SubscriptionsState {}
+
+class AddSubscriptionCustomFieldsSuccess extends SubscriptionsState {
+  final List<SubscriptionCustomField> customFields;
+  final String subscriptionId;
+
+  const AddSubscriptionCustomFieldsSuccess(this.customFields, this.subscriptionId);
+
+  @override
+  List<Object?> get props => [customFields, subscriptionId];
+}
+
+class AddSubscriptionCustomFieldsError extends SubscriptionsState {
+  final String message;
+  final String subscriptionId;
+
+  const AddSubscriptionCustomFieldsError(this.message, this.subscriptionId);
+
+  @override
+  List<Object?> get props => [message, subscriptionId];
+}
+
+class UpdateSubscriptionCustomFieldsLoading extends SubscriptionsState {}
+
+class UpdateSubscriptionCustomFieldsSuccess extends SubscriptionsState {
+  final List<SubscriptionCustomField> customFields;
+  final String subscriptionId;
+
+  const UpdateSubscriptionCustomFieldsSuccess(this.customFields, this.subscriptionId);
+
+  @override
+  List<Object?> get props => [customFields, subscriptionId];
+}
+
+class UpdateSubscriptionCustomFieldsError extends SubscriptionsState {
+  final String message;
+  final String subscriptionId;
+
+  const UpdateSubscriptionCustomFieldsError(this.message, this.subscriptionId);
+
+  @override
+  List<Object?> get props => [message, subscriptionId];
+}
+
+class RemoveSubscriptionCustomFieldsLoading extends SubscriptionsState {}
+
+class RemoveSubscriptionCustomFieldsSuccess extends SubscriptionsState {
+  final Map<String, dynamic> result;
+  final String subscriptionId;
+
+  const RemoveSubscriptionCustomFieldsSuccess(this.result, this.subscriptionId);
+
+  @override
+  List<Object?> get props => [result, subscriptionId];
+}
+
+class RemoveSubscriptionCustomFieldsError extends SubscriptionsState {
+  final String message;
+  final String subscriptionId;
+
+  const RemoveSubscriptionCustomFieldsError(this.message, this.subscriptionId);
+
+  @override
+  List<Object?> get props => [message, subscriptionId];
 }

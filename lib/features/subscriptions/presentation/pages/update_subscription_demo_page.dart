@@ -141,7 +141,7 @@ class _UpdateSubscriptionDemoPageState
 
       // Load the subscription first
       context.read<SubscriptionsBloc>().add(
-        LoadSubscriptionById(subscriptionId),
+        GetSubscriptionById(subscriptionId),
       );
 
       // Show a dialog with the update form

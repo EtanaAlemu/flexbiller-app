@@ -21,7 +21,7 @@ class AccountSubscriptionsPage extends StatelessWidget {
     return BlocProvider(
       create: (context) =>
           context.read<SubscriptionsBloc>()
-            ..add(LoadSubscriptionsForAccount(accountId)),
+            ..add(GetSubscriptionsForAccount(accountId)),
       child: Scaffold(
         appBar: AppBar(
           title: Text(
@@ -34,7 +34,7 @@ class AccountSubscriptionsPage extends StatelessWidget {
               icon: const Icon(Icons.refresh),
               onPressed: () {
                 context.read<SubscriptionsBloc>().add(
-                  LoadSubscriptionsForAccount(accountId),
+                  GetSubscriptionsForAccount(accountId),
                 );
               },
             ),
@@ -86,7 +86,7 @@ class AccountSubscriptionsPage extends StatelessWidget {
               return RefreshIndicator(
                 onRefresh: () async {
                   context.read<SubscriptionsBloc>().add(
-                    LoadSubscriptionsForAccount(accountId),
+                    GetSubscriptionsForAccount(accountId),
                   );
                 },
                 child: Column(
@@ -131,7 +131,7 @@ class AccountSubscriptionsPage extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () {
                         context.read<SubscriptionsBloc>().add(
-                          LoadSubscriptionsForAccount(accountId),
+                          GetSubscriptionsForAccount(accountId),
                         );
                       },
                       child: const Text('Retry'),
@@ -159,7 +159,7 @@ class AccountSubscriptionsPage extends StatelessWidget {
     if (result == true) {
       if (context.mounted) {
         context.read<SubscriptionsBloc>().add(
-          LoadSubscriptionsForAccount(accountId),
+          GetSubscriptionsForAccount(accountId),
         );
       }
     }

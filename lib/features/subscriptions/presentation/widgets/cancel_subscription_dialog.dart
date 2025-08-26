@@ -22,7 +22,7 @@ class CancelSubscriptionDialog extends StatelessWidget {
       listener: (context, state) {
         if (state is CancelSubscriptionSuccess) {
           Navigator.of(context).pop(true);
-          _showSuccessSnackBar(context, state.message);
+          _showSuccessSnackBar(context, 'Subscription cancelled successfully');
           onSuccess?.call();
         } else if (state is CancelSubscriptionError) {
           Navigator.of(context).pop(false);

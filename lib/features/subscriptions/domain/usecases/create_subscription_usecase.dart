@@ -8,7 +8,13 @@ class CreateSubscriptionUseCase {
 
   CreateSubscriptionUseCase(this._repository);
 
-  Future<Subscription> call(String accountId, String planName) async {
-    return await _repository.createSubscription(accountId, planName);
+  Future<Subscription> call({
+    required String accountId,
+    required String planName,
+  }) async {
+    return await _repository.createSubscription(
+      accountId: accountId,
+      planName: planName,
+    );
   }
 }

@@ -1,14 +1,32 @@
 import '../entities/subscription.dart';
+import '../entities/subscription_custom_field.dart';
 
 abstract class SubscriptionsRepository {
   Future<List<Subscription>> getRecentSubscriptions();
-  Future<Subscription> getSubscriptionById(String subscriptionId);
+  Future<Subscription> getSubscriptionById(String id);
   Future<List<Subscription>> getSubscriptionsForAccount(String accountId);
-  Future<Subscription> createSubscription(String accountId, String planName);
-  Future<Subscription> updateSubscription(
-    String subscriptionId,
-    Map<String, dynamic> updateData,
-  );
-  Future<Map<String, dynamic>> cancelSubscription(String subscriptionId);
-  Future<List<String>> getSubscriptionTags(String subscriptionId);
+  Future<Subscription> createSubscription({
+    required String accountId,
+    required String planName,
+  });
+  Future<Subscription> updateSubscription({
+    required String id,
+    required Map<String, dynamic> payload,
+  });
+  Future<void> cancelSubscription(String id);
+  
+  // Custom Fields methods
+  Future<List<SubscriptionCustomField>> addSubscriptionCustomFields({
+    required String subscriptionId,
+    required List<Map<String, String>> customFields,
+  });
+  Future<List<SubscriptionCustomField>> getSubscriptionCustomFields(String subscriptionId);
+  Future<List<SubscriptionCustomField>> updateSubscriptionCustomFields({
+    required String subscriptionId,
+    required List<Map<String, String>> customFields,
+  });
+  Future<Map<String, dynamic>> removeSubscriptionCustomFields({
+    required String subscriptionId,
+    required String customFieldIds,
+  });
 }

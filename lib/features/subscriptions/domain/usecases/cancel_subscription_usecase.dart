@@ -7,7 +7,7 @@ class CancelSubscriptionUseCase {
 
   CancelSubscriptionUseCase(this._repository);
 
-  Future<Map<String, dynamic>> call(String subscriptionId) async {
-    return await _repository.cancelSubscription(subscriptionId);
+  Future<void> call(String id) async {
+    return await _repository.cancelSubscription(id);
   }
 }

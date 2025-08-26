@@ -17,7 +17,7 @@ class SubscriptionsPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              context.read<SubscriptionsBloc>().add(RefreshSubscriptions());
+              context.read<SubscriptionsBloc>().add(RefreshRecentSubscriptions());
             },
           ),
         ],
@@ -26,13 +26,13 @@ class SubscriptionsPage extends StatelessWidget {
         builder: (context, state) {
           if (state is SubscriptionsLoading) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is SubscriptionsLoaded) {
+          } else if (state is RecentSubscriptionsLoaded) {
             if (state.subscriptions.isEmpty) {
               return const Center(child: Text('No subscriptions found'));
             }
             return RefreshIndicator(
               onRefresh: () async {
-                context.read<SubscriptionsBloc>().add(RefreshSubscriptions());
+                context.read<SubscriptionsBloc>().add(RefreshRecentSubscriptions());
               },
               child: ListView.builder(
                 itemCount: state.subscriptions.length,

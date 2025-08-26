@@ -15,7 +15,7 @@ class TagDefinitionsBloc
   final CreateTagDefinitionUseCase _createTagDefinitionUseCase;
   final GetTagDefinitionByIdUseCase _getTagDefinitionByIdUseCase;
   final GetTagDefinitionAuditLogsWithHistoryUseCase
-      _getTagDefinitionAuditLogsWithHistoryUseCase;
+  _getTagDefinitionAuditLogsWithHistoryUseCase;
   final DeleteTagDefinitionUseCase _deleteTagDefinitionUseCase;
 
   TagDefinitionsBloc(

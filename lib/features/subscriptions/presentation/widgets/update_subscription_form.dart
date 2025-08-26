@@ -436,8 +436,8 @@ class _UpdateSubscriptionFormState extends State<UpdateSubscriptionForm> {
 
       context.read<SubscriptionsBloc>().add(
         UpdateSubscription(
-          subscriptionId: widget.subscription.subscriptionId,
-          updateData: updateData,
+          id: widget.subscription.subscriptionId,
+          payload: updateData,
         ),
       );
     }

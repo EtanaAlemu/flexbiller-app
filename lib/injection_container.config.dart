@@ -192,6 +192,8 @@ import 'features/subscriptions/data/repositories/subscriptions_repository_impl.d
     as _i234;
 import 'features/subscriptions/domain/repositories/subscriptions_repository.dart'
     as _i154;
+import 'features/subscriptions/domain/usecases/add_subscription_custom_fields_usecase.dart'
+    as _i1055;
 import 'features/subscriptions/domain/usecases/cancel_subscription_usecase.dart'
     as _i1005;
 import 'features/subscriptions/domain/usecases/create_subscription_usecase.dart'
@@ -200,10 +202,14 @@ import 'features/subscriptions/domain/usecases/get_recent_subscriptions_usecase.
     as _i825;
 import 'features/subscriptions/domain/usecases/get_subscription_by_id_usecase.dart'
     as _i815;
-import 'features/subscriptions/domain/usecases/get_subscription_tags_usecase.dart'
-    as _i1049;
+import 'features/subscriptions/domain/usecases/get_subscription_custom_fields_usecase.dart'
+    as _i939;
 import 'features/subscriptions/domain/usecases/get_subscriptions_for_account_usecase.dart'
     as _i233;
+import 'features/subscriptions/domain/usecases/remove_subscription_custom_fields_usecase.dart'
+    as _i175;
+import 'features/subscriptions/domain/usecases/update_subscription_custom_fields_usecase.dart'
+    as _i354;
 import 'features/subscriptions/domain/usecases/update_subscription_usecase.dart'
     as _i676;
 import 'features/subscriptions/presentation/bloc/subscriptions_bloc.dart'
@@ -509,9 +515,25 @@ _i174.GetIt $initGetIt(
   gh.factory<_i1005.CancelSubscriptionUseCase>(
     () => _i1005.CancelSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
   );
-  gh.factory<_i1049.GetSubscriptionTagsUseCase>(
-    () =>
-        _i1049.GetSubscriptionTagsUseCase(gh<_i154.SubscriptionsRepository>()),
+  gh.factory<_i939.GetSubscriptionCustomFieldsUseCase>(
+    () => _i939.GetSubscriptionCustomFieldsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i175.RemoveSubscriptionCustomFieldsUseCase>(
+    () => _i175.RemoveSubscriptionCustomFieldsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i1055.AddSubscriptionCustomFieldsUseCase>(
+    () => _i1055.AddSubscriptionCustomFieldsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i354.UpdateSubscriptionCustomFieldsUseCase>(
+    () => _i354.UpdateSubscriptionCustomFieldsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
   );
   gh.factory<_i336.DeleteAccountCustomFieldUseCase>(
     () => _i336.DeleteAccountCustomFieldUseCase(
@@ -556,17 +578,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i729.GetAccountBlockingStatesUseCase>(
     () => _i729.GetAccountBlockingStatesUseCase(
       gh<_i696.AccountBlockingStatesRepository>(),
-    ),
-  );
-  gh.factory<_i675.SubscriptionsBloc>(
-    () => _i675.SubscriptionsBloc(
-      gh<_i825.GetRecentSubscriptionsUseCase>(),
-      gh<_i815.GetSubscriptionByIdUseCase>(),
-      gh<_i233.GetSubscriptionsForAccountUseCase>(),
-      gh<_i862.CreateSubscriptionUseCase>(),
-      gh<_i676.UpdateSubscriptionUseCase>(),
-      gh<_i1005.CancelSubscriptionUseCase>(),
-      gh<_i1049.GetSubscriptionTagsUseCase>(),
     ),
   );
   gh.factory<_i580.SetDefaultPaymentMethodUseCase>(
@@ -684,6 +695,20 @@ _i174.GetIt $initGetIt(
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
       accountEmailsRepository: gh<_i330.AccountEmailsRepository>(),
+    ),
+  );
+  gh.factory<_i675.SubscriptionsBloc>(
+    () => _i675.SubscriptionsBloc(
+      gh<_i825.GetRecentSubscriptionsUseCase>(),
+      gh<_i815.GetSubscriptionByIdUseCase>(),
+      gh<_i233.GetSubscriptionsForAccountUseCase>(),
+      gh<_i862.CreateSubscriptionUseCase>(),
+      gh<_i676.UpdateSubscriptionUseCase>(),
+      gh<_i1005.CancelSubscriptionUseCase>(),
+      gh<_i1055.AddSubscriptionCustomFieldsUseCase>(),
+      gh<_i939.GetSubscriptionCustomFieldsUseCase>(),
+      gh<_i354.UpdateSubscriptionCustomFieldsUseCase>(),
+      gh<_i175.RemoveSubscriptionCustomFieldsUseCase>(),
     ),
   );
   gh.factory<_i743.CreateChildAccountUseCase>(

@@ -2,27 +2,44 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../models/subscription_model.dart';
 import '../models/create_subscription_request_model.dart';
+import '../models/subscription_custom_field_model.dart';
+import '../models/add_subscription_custom_fields_request_model.dart';
+import '../models/update_subscription_custom_fields_request_model.dart';
+import '../models/remove_subscription_custom_fields_request_model.dart';
+import '../models/remove_subscription_custom_fields_response_model.dart';
 import '../../../../core/constants/api_endpoints.dart';
 
 abstract class SubscriptionsRemoteDataSource {
   Future<List<SubscriptionModel>> getRecentSubscriptions();
-  Future<SubscriptionModel> getSubscriptionById(String subscriptionId);
+  Future<SubscriptionModel> getSubscriptionById(String id);
   Future<List<SubscriptionModel>> getSubscriptionsForAccount(String accountId);
   Future<SubscriptionModel> createSubscription(
-    String accountId,
-    String planName,
+    CreateSubscriptionRequestModel request,
   );
-  Future<SubscriptionModel> updateSubscription(
-    String subscriptionId,
-    Map<String, dynamic> updateData,
-  );
-  Future<Map<String, dynamic>> cancelSubscription(String subscriptionId);
-  Future<List<String>> getSubscriptionTags(String subscriptionId);
+  Future<SubscriptionModel> updateSubscription({
+    required String id,
+    required Map<String, dynamic> payload,
+  });
+  Future<void> cancelSubscription(String id);
+  
+  // Custom Fields methods
+  Future<List<SubscriptionCustomFieldModel>> addSubscriptionCustomFields({
+    required String subscriptionId,
+    required List<AddSubscriptionCustomFieldsRequestModel> customFields,
+  });
+  Future<List<SubscriptionCustomFieldModel>> getSubscriptionCustomFields(String subscriptionId);
+  Future<List<SubscriptionCustomFieldModel>> updateSubscriptionCustomFields({
+    required String subscriptionId,
+    required List<UpdateSubscriptionCustomFieldsRequestModel> customFields,
+  });
+  Future<RemoveSubscriptionCustomFieldsResponseModel> removeSubscriptionCustomFields({
+    required String subscriptionId,
+    required RemoveSubscriptionCustomFieldsRequestModel request,
+  });
 }
 
 @Injectable(as: SubscriptionsRemoteDataSource)
-class SubscriptionsRemoteDataSourceImpl
-    implements SubscriptionsRemoteDataSource {
+class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource {
   final Dio _dio;
 
   SubscriptionsRemoteDataSourceImpl(this._dio);
@@ -44,11 +61,9 @@ class SubscriptionsRemoteDataSourceImpl
   }
 
   @override
-  Future<SubscriptionModel> getSubscriptionById(String subscriptionId) async {
+  Future<SubscriptionModel> getSubscriptionById(String id) async {
     try {
-      final response = await _dio.get(
-        '${ApiEndpoints.getSubscriptionById}/$subscriptionId',
-      );
+      final response = await _dio.get('${ApiEndpoints.getSubscriptionById}/$id');
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as Map<String, dynamic>;
@@ -62,9 +77,7 @@ class SubscriptionsRemoteDataSourceImpl
   }
 
   @override
-  Future<List<SubscriptionModel>> getSubscriptionsForAccount(
-    String accountId,
-  ) async {
+  Future<List<SubscriptionModel>> getSubscriptionsForAccount(String accountId) async {
     try {
       final response = await _dio.get(
         '${ApiEndpoints.getSubscriptionsForAccount}/$accountId',
@@ -74,27 +87,21 @@ class SubscriptionsRemoteDataSourceImpl
         final data = response.data['data'] as List;
         return data.map((json) => SubscriptionModel.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load account subscriptions');
+        throw Exception('Failed to load subscriptions for account');
       }
     } catch (e) {
-      throw Exception('Failed to load account subscriptions: $e');
+      throw Exception('Failed to load subscriptions for account: $e');
     }
   }
 
   @override
   Future<SubscriptionModel> createSubscription(
-    String accountId,
-    String planName,
+    CreateSubscriptionRequestModel request,
   ) async {
     try {
-      final requestModel = CreateSubscriptionRequestModel(
-        accountId: accountId,
-        planName: planName,
-      );
-
       final response = await _dio.post(
-        ApiEndpoints.getSubscriptionById, // Using the same endpoint for POST
-        data: requestModel.toJson(),
+        ApiEndpoints.getSubscriptionById,
+        data: request.toJson(),
       );
 
       if (response.statusCode == 201) {
@@ -109,14 +116,14 @@ class SubscriptionsRemoteDataSourceImpl
   }
 
   @override
-  Future<SubscriptionModel> updateSubscription(
-    String subscriptionId,
-    Map<String, dynamic> updateData,
-  ) async {
+  Future<SubscriptionModel> updateSubscription({
+    required String id,
+    required Map<String, dynamic> payload,
+  }) async {
     try {
       final response = await _dio.put(
-        '${ApiEndpoints.getSubscriptionById}/$subscriptionId',
-        data: updateData,
+        '${ApiEndpoints.getSubscriptionById}/$id',
+        data: payload,
       );
 
       if (response.statusCode == 200) {
@@ -131,15 +138,13 @@ class SubscriptionsRemoteDataSourceImpl
   }
 
   @override
-  Future<Map<String, dynamic>> cancelSubscription(String subscriptionId) async {
+  Future<void> cancelSubscription(String id) async {
     try {
       final response = await _dio.delete(
-        '${ApiEndpoints.getSubscriptionById}/$subscriptionId',
+        '${ApiEndpoints.getSubscriptionById}/$id',
       );
 
-      if (response.statusCode == 200) {
-        return response.data['data'] as Map<String, dynamic>;
-      } else {
+      if (response.statusCode != 200 && response.statusCode != 204) {
         throw Exception('Failed to cancel subscription');
       }
     } catch (e) {
@@ -148,20 +153,86 @@ class SubscriptionsRemoteDataSourceImpl
   }
 
   @override
-  Future<List<String>> getSubscriptionTags(String subscriptionId) async {
+  Future<List<SubscriptionCustomFieldModel>> addSubscriptionCustomFields({
+    required String subscriptionId,
+    required List<AddSubscriptionCustomFieldsRequestModel> customFields,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '${ApiEndpoints.subscriptionCustomFields}/$subscriptionId/customFields',
+        data: customFields.map((field) => field.toJson()).toList(),
+      );
+
+      if (response.statusCode == 201) {
+        final data = response.data['data'] as List;
+        return data.map((json) => SubscriptionCustomFieldModel.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to add subscription custom fields');
+      }
+    } catch (e) {
+      throw Exception('Failed to add subscription custom fields: $e');
+    }
+  }
+
+  @override
+  Future<List<SubscriptionCustomFieldModel>> getSubscriptionCustomFields(String subscriptionId) async {
     try {
       final response = await _dio.get(
-        '${ApiEndpoints.getSubscriptionById}/$subscriptionId/tags',
+        '${ApiEndpoints.subscriptionCustomFields}/$subscriptionId/customFields',
       );
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List;
-        return data.cast<String>();
+        return data.map((json) => SubscriptionCustomFieldModel.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load subscription tags');
+        throw Exception('Failed to load subscription custom fields');
       }
     } catch (e) {
-      throw Exception('Failed to load subscription tags: $e');
+      throw Exception('Failed to load subscription custom fields: $e');
+    }
+  }
+
+  @override
+  Future<List<SubscriptionCustomFieldModel>> updateSubscriptionCustomFields({
+    required String subscriptionId,
+    required List<UpdateSubscriptionCustomFieldsRequestModel> customFields,
+  }) async {
+    try {
+      final response = await _dio.put(
+        '${ApiEndpoints.subscriptionCustomFields}/$subscriptionId/customFields',
+        data: customFields.map((field) => field.toJson()).toList(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as List;
+        return data.map((json) => SubscriptionCustomFieldModel.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to update subscription custom fields');
+      }
+    } catch (e) {
+      throw Exception('Failed to update subscription custom fields: $e');
+    }
+  }
+
+  @override
+  Future<RemoveSubscriptionCustomFieldsResponseModel> removeSubscriptionCustomFields({
+    required String subscriptionId,
+    required RemoveSubscriptionCustomFieldsRequestModel request,
+  }) async {
+    try {
+      final response = await _dio.delete(
+        '${ApiEndpoints.subscriptionCustomFields}/$subscriptionId/customFields',
+        data: request.toJson(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        return RemoveSubscriptionCustomFieldsResponseModel.fromJson(data);
+      } else {
+        throw Exception('Failed to remove subscription custom fields');
+      }
+    } catch (e) {
+      throw Exception('Failed to remove subscription custom fields: $e');
     }
   }
 }

@@ -6,7 +6,7 @@ import '../bloc/subscriptions_event.dart';
 import '../bloc/subscriptions_state.dart';
 import '../../domain/entities/subscription.dart';
 import '../widgets/cancel_subscription_dialog.dart';
-import '../widgets/subscription_tags_widget.dart';
+
 import 'update_subscription_page.dart';
 
 class SubscriptionDetailsPage extends StatelessWidget {
@@ -19,7 +19,7 @@ class SubscriptionDetailsPage extends StatelessWidget {
     return BlocProvider(
       create: (context) =>
           context.read<SubscriptionsBloc>()
-            ..add(LoadSubscriptionById(subscriptionId)),
+            ..add(GetSubscriptionById(subscriptionId)),
       child: BlocBuilder<SubscriptionsBloc, SubscriptionsState>(
         builder: (context, state) {
           if (state is SingleSubscriptionLoading) {
@@ -55,7 +55,7 @@ class SubscriptionDetailsPage extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () {
                         context.read<SubscriptionsBloc>().add(
-                          LoadSubscriptionById(subscriptionId),
+                          GetSubscriptionById(subscriptionId),
                         );
                       },
                       child: const Text('Retry'),
@@ -109,11 +109,7 @@ class SubscriptionDetailsPage extends StatelessWidget {
             const SizedBox(height: 16),
             _buildBillingInfoCard(context, subscription, dateFormat),
             const SizedBox(height: 16),
-            SubscriptionTagsWidget(
-              subscriptionId: subscription.subscriptionId,
-              subscriptionName: subscription.productName,
-            ),
-            const SizedBox(height: 16),
+
             _buildEventsCard(context, subscription, dateFormat),
             if (subscription.prices.isNotEmpty) ...[
               const SizedBox(height: 16),
@@ -136,7 +132,7 @@ class SubscriptionDetailsPage extends StatelessWidget {
           onSuccess: () {
             // Refresh the subscription details after cancellation
             context.read<SubscriptionsBloc>().add(
-              LoadSubscriptionById(subscriptionId),
+              GetSubscriptionById(subscriptionId),
             );
           },
         ),
@@ -159,7 +155,7 @@ class SubscriptionDetailsPage extends StatelessWidget {
     if (result == true) {
       if (context.mounted) {
         context.read<SubscriptionsBloc>().add(
-          LoadSubscriptionById(subscriptionId),
+          GetSubscriptionById(subscriptionId),
         );
       }
     }

@@ -8,7 +8,13 @@ class UpdateSubscriptionUseCase {
 
   UpdateSubscriptionUseCase(this._repository);
 
-  Future<Subscription> call(String subscriptionId, Map<String, dynamic> updateData) async {
-    return await _repository.updateSubscription(subscriptionId, updateData);
+  Future<Subscription> call({
+    required String id,
+    required Map<String, dynamic> payload,
+  }) async {
+    return await _repository.updateSubscription(
+      id: id,
+      payload: payload,
+    );
   }
 }

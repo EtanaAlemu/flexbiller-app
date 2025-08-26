@@ -9,21 +9,21 @@ abstract class SubscriptionsEvent extends Equatable {
 
 class LoadRecentSubscriptions extends SubscriptionsEvent {}
 
-class RefreshSubscriptions extends SubscriptionsEvent {}
+class RefreshRecentSubscriptions extends SubscriptionsEvent {}
 
-class LoadSubscriptionById extends SubscriptionsEvent {
-  final String subscriptionId;
+class GetSubscriptionById extends SubscriptionsEvent {
+  final String id;
 
-  const LoadSubscriptionById(this.subscriptionId);
+  const GetSubscriptionById(this.id);
 
   @override
-  List<Object?> get props => [subscriptionId];
+  List<Object?> get props => [id];
 }
 
-class LoadSubscriptionsForAccount extends SubscriptionsEvent {
+class GetSubscriptionsForAccount extends SubscriptionsEvent {
   final String accountId;
 
-  const LoadSubscriptionsForAccount(this.accountId);
+  const GetSubscriptionsForAccount(this.accountId);
 
   @override
   List<Object?> get props => [accountId];
@@ -33,39 +33,82 @@ class CreateSubscription extends SubscriptionsEvent {
   final String accountId;
   final String planName;
 
-  const CreateSubscription({required this.accountId, required this.planName});
+  const CreateSubscription({
+    required this.accountId,
+    required this.planName,
+  });
 
   @override
   List<Object?> get props => [accountId, planName];
 }
 
 class UpdateSubscription extends SubscriptionsEvent {
-  final String subscriptionId;
-  final Map<String, dynamic> updateData;
+  final String id;
+  final Map<String, dynamic> payload;
 
   const UpdateSubscription({
-    required this.subscriptionId,
-    required this.updateData,
+    required this.id,
+    required this.payload,
   });
 
   @override
-  List<Object?> get props => [subscriptionId, updateData];
+  List<Object?> get props => [id, payload];
 }
 
 class CancelSubscription extends SubscriptionsEvent {
+  final String id;
+
+  const CancelSubscription(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}
+
+// Custom Fields events
+class AddSubscriptionCustomFields extends SubscriptionsEvent {
+  final String subscriptionId;
+  final List<Map<String, String>> customFields;
+
+  const AddSubscriptionCustomFields({
+    required this.subscriptionId,
+    required this.customFields,
+  });
+
+  @override
+  List<Object?> get props => [subscriptionId, customFields];
+}
+
+class GetSubscriptionCustomFields extends SubscriptionsEvent {
   final String subscriptionId;
 
-  const CancelSubscription(this.subscriptionId);
+  const GetSubscriptionCustomFields(this.subscriptionId);
 
   @override
   List<Object?> get props => [subscriptionId];
 }
 
-class LoadSubscriptionTags extends SubscriptionsEvent {
+class UpdateSubscriptionCustomFields extends SubscriptionsEvent {
   final String subscriptionId;
+  final List<Map<String, String>> customFields;
 
-  const LoadSubscriptionTags(this.subscriptionId);
+  const UpdateSubscriptionCustomFields({
+    required this.subscriptionId,
+    required this.customFields,
+  });
 
   @override
-  List<Object?> get props => [subscriptionId];
+  List<Object?> get props => [subscriptionId, customFields];
+}
+
+class RemoveSubscriptionCustomFields extends SubscriptionsEvent {
+  final String subscriptionId;
+  final String customFieldIds;
+
+  const RemoveSubscriptionCustomFields({
+    required this.subscriptionId,
+    required this.customFieldIds,
+  });
+
+  @override
+  List<Object?> get props => [subscriptionId, customFieldIds];
 }

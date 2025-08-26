@@ -6,7 +6,10 @@ import '../../domain/usecases/get_subscriptions_for_account_usecase.dart';
 import '../../domain/usecases/create_subscription_usecase.dart';
 import '../../domain/usecases/update_subscription_usecase.dart';
 import '../../domain/usecases/cancel_subscription_usecase.dart';
-import '../../domain/usecases/get_subscription_tags_usecase.dart';
+import '../../domain/usecases/add_subscription_custom_fields_usecase.dart';
+import '../../domain/usecases/get_subscription_custom_fields_usecase.dart';
+import '../../domain/usecases/update_subscription_custom_fields_usecase.dart';
+import '../../domain/usecases/remove_subscription_custom_fields_usecase.dart';
 import 'subscriptions_event.dart';
 import 'subscriptions_state.dart';
 
@@ -18,7 +21,10 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   final CreateSubscriptionUseCase _createSubscriptionUseCase;
   final UpdateSubscriptionUseCase _updateSubscriptionUseCase;
   final CancelSubscriptionUseCase _cancelSubscriptionUseCase;
-  final GetSubscriptionTagsUseCase _getSubscriptionTagsUseCase;
+  final AddSubscriptionCustomFieldsUseCase _addSubscriptionCustomFieldsUseCase;
+  final GetSubscriptionCustomFieldsUseCase _getSubscriptionCustomFieldsUseCase;
+  final UpdateSubscriptionCustomFieldsUseCase _updateSubscriptionCustomFieldsUseCase;
+  final RemoveSubscriptionCustomFieldsUseCase _removeSubscriptionCustomFieldsUseCase;
 
   SubscriptionsBloc(
     this._getRecentSubscriptionsUseCase,
@@ -27,16 +33,22 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     this._createSubscriptionUseCase,
     this._updateSubscriptionUseCase,
     this._cancelSubscriptionUseCase,
-    this._getSubscriptionTagsUseCase,
+    this._addSubscriptionCustomFieldsUseCase,
+    this._getSubscriptionCustomFieldsUseCase,
+    this._updateSubscriptionCustomFieldsUseCase,
+    this._removeSubscriptionCustomFieldsUseCase,
   ) : super(SubscriptionsInitial()) {
     on<LoadRecentSubscriptions>(_onLoadRecentSubscriptions);
-    on<RefreshSubscriptions>(_onRefreshSubscriptions);
-    on<LoadSubscriptionById>(_onLoadSubscriptionById);
-    on<LoadSubscriptionsForAccount>(_onLoadSubscriptionsForAccount);
+    on<RefreshRecentSubscriptions>(_onRefreshRecentSubscriptions);
+    on<GetSubscriptionById>(_onGetSubscriptionById);
+    on<GetSubscriptionsForAccount>(_onGetSubscriptionsForAccount);
     on<CreateSubscription>(_onCreateSubscription);
     on<UpdateSubscription>(_onUpdateSubscription);
     on<CancelSubscription>(_onCancelSubscription);
-    on<LoadSubscriptionTags>(_onLoadSubscriptionTags);
+    on<AddSubscriptionCustomFields>(_onAddSubscriptionCustomFields);
+    on<GetSubscriptionCustomFields>(_onGetSubscriptionCustomFields);
+    on<UpdateSubscriptionCustomFields>(_onUpdateSubscriptionCustomFields);
+    on<RemoveSubscriptionCustomFields>(_onRemoveSubscriptionCustomFields);
   }
 
   Future<void> _onLoadRecentSubscriptions(
@@ -46,57 +58,48 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     emit(SubscriptionsLoading());
     try {
       final subscriptions = await _getRecentSubscriptionsUseCase();
-      emit(SubscriptionsLoaded(subscriptions));
+      emit(RecentSubscriptionsLoaded(subscriptions));
     } catch (e) {
       emit(SubscriptionsError(e.toString()));
     }
   }
 
-  Future<void> _onRefreshSubscriptions(
-    RefreshSubscriptions event,
+  Future<void> _onRefreshRecentSubscriptions(
+    RefreshRecentSubscriptions event,
     Emitter<SubscriptionsState> emit,
   ) async {
     emit(SubscriptionsLoading());
     try {
       final subscriptions = await _getRecentSubscriptionsUseCase();
-      emit(SubscriptionsLoaded(subscriptions));
+      emit(RecentSubscriptionsLoaded(subscriptions));
     } catch (e) {
       emit(SubscriptionsError(e.toString()));
     }
   }
 
-  Future<void> _onLoadSubscriptionById(
-    LoadSubscriptionById event,
+  Future<void> _onGetSubscriptionById(
+    GetSubscriptionById event,
     Emitter<SubscriptionsState> emit,
   ) async {
     emit(SingleSubscriptionLoading());
     try {
-      final subscription = await _getSubscriptionByIdUseCase(
-        event.subscriptionId,
-      );
+      final subscription = await _getSubscriptionByIdUseCase(event.id);
       emit(SingleSubscriptionLoaded(subscription));
     } catch (e) {
-      emit(SingleSubscriptionError(e.toString()));
+      emit(SingleSubscriptionError(e.toString(), event.id));
     }
   }
 
-  Future<void> _onLoadSubscriptionsForAccount(
-    LoadSubscriptionsForAccount event,
+  Future<void> _onGetSubscriptionsForAccount(
+    GetSubscriptionsForAccount event,
     Emitter<SubscriptionsState> emit,
   ) async {
     emit(AccountSubscriptionsLoading());
     try {
-      final subscriptions = await _getSubscriptionsForAccountUseCase(
-        event.accountId,
-      );
-      emit(
-        AccountSubscriptionsLoaded(
-          accountId: event.accountId,
-          subscriptions: subscriptions,
-        ),
-      );
+      final subscriptions = await _getSubscriptionsForAccountUseCase(event.accountId);
+      emit(AccountSubscriptionsLoaded(subscriptions, event.accountId));
     } catch (e) {
-      emit(AccountSubscriptionsError(e.toString()));
+      emit(AccountSubscriptionsError(e.toString(), event.accountId));
     }
   }
 
@@ -107,8 +110,8 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     emit(CreateSubscriptionLoading());
     try {
       final subscription = await _createSubscriptionUseCase(
-        event.accountId,
-        event.planName,
+        accountId: event.accountId,
+        planName: event.planName,
       );
       emit(CreateSubscriptionSuccess(subscription));
     } catch (e) {
@@ -123,12 +126,12 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     emit(UpdateSubscriptionLoading());
     try {
       final subscription = await _updateSubscriptionUseCase(
-        event.subscriptionId,
-        event.updateData,
+        id: event.id,
+        payload: event.payload,
       );
       emit(UpdateSubscriptionSuccess(subscription));
     } catch (e) {
-      emit(UpdateSubscriptionError(e.toString()));
+      emit(UpdateSubscriptionError(e.toString(), event.id));
     }
   }
 
@@ -138,33 +141,71 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   ) async {
     emit(CancelSubscriptionLoading());
     try {
-      final result = await _cancelSubscriptionUseCase(event.subscriptionId);
-      emit(
-        CancelSubscriptionSuccess(
-          subscriptionId: event.subscriptionId,
-          message: result['message'] ?? 'Subscription cancelled successfully',
-        ),
-      );
+      await _cancelSubscriptionUseCase(event.id);
+      emit(CancelSubscriptionSuccess(event.id));
     } catch (e) {
-      emit(CancelSubscriptionError(e.toString()));
+      emit(CancelSubscriptionError(e.toString(), event.id));
     }
   }
 
-  Future<void> _onLoadSubscriptionTags(
-    LoadSubscriptionTags event,
+  Future<void> _onAddSubscriptionCustomFields(
+    AddSubscriptionCustomFields event,
     Emitter<SubscriptionsState> emit,
   ) async {
-    emit(SubscriptionTagsLoading());
+    emit(AddSubscriptionCustomFieldsLoading());
     try {
-      final tags = await _getSubscriptionTagsUseCase(event.subscriptionId);
-      emit(
-        SubscriptionTagsLoaded(
-          subscriptionId: event.subscriptionId,
-          tags: tags,
-        ),
+      final customFields = await _addSubscriptionCustomFieldsUseCase(
+        subscriptionId: event.subscriptionId,
+        customFields: event.customFields,
       );
+      emit(AddSubscriptionCustomFieldsSuccess(customFields, event.subscriptionId));
     } catch (e) {
-      emit(SubscriptionTagsError(e.toString()));
+      emit(AddSubscriptionCustomFieldsError(e.toString(), event.subscriptionId));
+    }
+  }
+
+  Future<void> _onGetSubscriptionCustomFields(
+    GetSubscriptionCustomFields event,
+    Emitter<SubscriptionsState> emit,
+  ) async {
+    emit(SubscriptionCustomFieldsLoading());
+    try {
+      final customFields = await _getSubscriptionCustomFieldsUseCase(event.subscriptionId);
+      emit(SubscriptionCustomFieldsLoaded(customFields, event.subscriptionId));
+    } catch (e) {
+      emit(SubscriptionCustomFieldsError(e.toString(), event.subscriptionId));
+    }
+  }
+
+  Future<void> _onUpdateSubscriptionCustomFields(
+    UpdateSubscriptionCustomFields event,
+    Emitter<SubscriptionsState> emit,
+  ) async {
+    emit(UpdateSubscriptionCustomFieldsLoading());
+    try {
+      final customFields = await _updateSubscriptionCustomFieldsUseCase(
+        subscriptionId: event.subscriptionId,
+        customFields: event.customFields,
+      );
+      emit(UpdateSubscriptionCustomFieldsSuccess(customFields, event.subscriptionId));
+    } catch (e) {
+      emit(UpdateSubscriptionCustomFieldsError(e.toString(), event.subscriptionId));
+    }
+  }
+
+  Future<void> _onRemoveSubscriptionCustomFields(
+    RemoveSubscriptionCustomFields event,
+    Emitter<SubscriptionsState> emit,
+  ) async {
+    emit(RemoveSubscriptionCustomFieldsLoading());
+    try {
+      final result = await _removeSubscriptionCustomFieldsUseCase(
+        subscriptionId: event.subscriptionId,
+        customFieldIds: event.customFieldIds,
+      );
+      emit(RemoveSubscriptionCustomFieldsSuccess(result, event.subscriptionId));
+    } catch (e) {
+      emit(RemoveSubscriptionCustomFieldsError(e.toString(), event.subscriptionId));
     }
   }
 }
