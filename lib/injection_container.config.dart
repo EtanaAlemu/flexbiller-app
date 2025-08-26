@@ -192,6 +192,8 @@ import 'features/subscriptions/data/repositories/subscriptions_repository_impl.d
     as _i234;
 import 'features/subscriptions/domain/repositories/subscriptions_repository.dart'
     as _i154;
+import 'features/subscriptions/domain/usecases/cancel_subscription_usecase.dart'
+    as _i1005;
 import 'features/subscriptions/domain/usecases/create_subscription_usecase.dart'
     as _i862;
 import 'features/subscriptions/domain/usecases/get_recent_subscriptions_usecase.dart'
@@ -452,6 +454,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i676.UpdateSubscriptionUseCase>(
     () => _i676.UpdateSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
   );
+  gh.factory<_i1005.CancelSubscriptionUseCase>(
+    () => _i1005.CancelSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
   gh.factory<_i336.DeleteAccountCustomFieldUseCase>(
     () => _i336.DeleteAccountCustomFieldUseCase(
       gh<_i221.AccountCustomFieldsRepository>(),
@@ -553,6 +558,7 @@ _i174.GetIt $initGetIt(
       gh<_i233.GetSubscriptionsForAccountUseCase>(),
       gh<_i862.CreateSubscriptionUseCase>(),
       gh<_i676.UpdateSubscriptionUseCase>(),
+      gh<_i1005.CancelSubscriptionUseCase>(),
     ),
   );
   gh.factory<_i795.AccountsBloc>(

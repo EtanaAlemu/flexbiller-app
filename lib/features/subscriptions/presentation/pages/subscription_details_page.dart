@@ -5,6 +5,7 @@ import '../bloc/subscriptions_bloc.dart';
 import '../bloc/subscriptions_event.dart';
 import '../bloc/subscriptions_state.dart';
 import '../../domain/entities/subscription.dart';
+import '../widgets/cancel_subscription_dialog.dart';
 import 'update_subscription_page.dart';
 
 class SubscriptionDetailsPage extends StatelessWidget {
@@ -81,6 +82,14 @@ class SubscriptionDetailsPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('${subscription.productName} Details'),
         actions: [
+          // Cancel button for non-cancelled subscriptions
+          if (subscription.state.toUpperCase() != 'CANCELLED')
+            IconButton(
+              icon: const Icon(Icons.cancel_outlined),
+              onPressed: () => _showCancelDialog(context, subscription),
+              tooltip: 'Cancel Subscription',
+              color: Theme.of(context).colorScheme.error,
+            ),
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () => _editSubscription(context, subscription),
@@ -110,12 +119,33 @@ class SubscriptionDetailsPage extends StatelessWidget {
     );
   }
 
-  void _editSubscription(BuildContext context, Subscription subscription) async {
+  void _showCancelDialog(BuildContext context, Subscription subscription) {
+    showDialog(
+      context: context,
+      builder: (context) => BlocProvider(
+        create: (context) => context.read<SubscriptionsBloc>(),
+        child: CancelSubscriptionDialog(
+          subscriptionId: subscription.subscriptionId,
+          subscriptionName: subscription.productName,
+          onSuccess: () {
+            // Refresh the subscription details after cancellation
+            context.read<SubscriptionsBloc>().add(
+              LoadSubscriptionById(subscriptionId),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _editSubscription(
+    BuildContext context,
+    Subscription subscription,
+  ) async {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => UpdateSubscriptionPage(
-          subscription: subscription,
-        ),
+        builder: (context) =>
+            UpdateSubscriptionPage(subscription: subscription),
       ),
     );
 
@@ -390,9 +420,9 @@ class SubscriptionDetailsPage extends StatelessWidget {
             decoration: BoxDecoration(
               color:
                   event['isBlockedBilling'] == true ||
-                          event['isBlockedEntitlement'] == true
-                      ? Colors.red
-                      : Colors.green,
+                      event['isBlockedEntitlement'] == true
+                  ? Colors.red
+                  : Colors.green,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(

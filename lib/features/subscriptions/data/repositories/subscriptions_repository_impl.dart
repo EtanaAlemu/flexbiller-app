@@ -62,13 +62,25 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
   }
 
   @override
-  Future<Subscription> updateSubscription(String subscriptionId, Map<String, dynamic> updateData) async {
+  Future<Subscription> updateSubscription(
+    String subscriptionId,
+    Map<String, dynamic> updateData,
+  ) async {
     try {
       final subscriptionModel = await _remoteDataSource.updateSubscription(
         subscriptionId,
         updateData,
       );
       return subscriptionModel.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> cancelSubscription(String subscriptionId) async {
+    try {
+      return await _remoteDataSource.cancelSubscription(subscriptionId);
     } catch (e) {
       rethrow;
     }

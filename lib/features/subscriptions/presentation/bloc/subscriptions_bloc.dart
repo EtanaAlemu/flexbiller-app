@@ -5,6 +5,7 @@ import '../../domain/usecases/get_subscription_by_id_usecase.dart';
 import '../../domain/usecases/get_subscriptions_for_account_usecase.dart';
 import '../../domain/usecases/create_subscription_usecase.dart';
 import '../../domain/usecases/update_subscription_usecase.dart';
+import '../../domain/usecases/cancel_subscription_usecase.dart';
 import 'subscriptions_event.dart';
 import 'subscriptions_state.dart';
 
@@ -15,6 +16,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   final GetSubscriptionsForAccountUseCase _getSubscriptionsForAccountUseCase;
   final CreateSubscriptionUseCase _createSubscriptionUseCase;
   final UpdateSubscriptionUseCase _updateSubscriptionUseCase;
+  final CancelSubscriptionUseCase _cancelSubscriptionUseCase;
 
   SubscriptionsBloc(
     this._getRecentSubscriptionsUseCase,
@@ -22,6 +24,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     this._getSubscriptionsForAccountUseCase,
     this._createSubscriptionUseCase,
     this._updateSubscriptionUseCase,
+    this._cancelSubscriptionUseCase,
   ) : super(SubscriptionsInitial()) {
     on<LoadRecentSubscriptions>(_onLoadRecentSubscriptions);
     on<RefreshSubscriptions>(_onRefreshSubscriptions);
@@ -29,6 +32,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     on<LoadSubscriptionsForAccount>(_onLoadSubscriptionsForAccount);
     on<CreateSubscription>(_onCreateSubscription);
     on<UpdateSubscription>(_onUpdateSubscription);
+    on<CancelSubscription>(_onCancelSubscription);
   }
 
   Future<void> _onLoadRecentSubscriptions(
@@ -121,6 +125,22 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       emit(UpdateSubscriptionSuccess(subscription));
     } catch (e) {
       emit(UpdateSubscriptionError(e.toString()));
+    }
+  }
+
+  Future<void> _onCancelSubscription(
+    CancelSubscription event,
+    Emitter<SubscriptionsState> emit,
+  ) async {
+    emit(CancelSubscriptionLoading());
+    try {
+      final result = await _cancelSubscriptionUseCase(event.subscriptionId);
+      emit(CancelSubscriptionSuccess(
+        subscriptionId: event.subscriptionId,
+        message: result['message'] ?? 'Subscription cancelled successfully',
+      ));
+    } catch (e) {
+      emit(CancelSubscriptionError(e.toString()));
     }
   }
 }

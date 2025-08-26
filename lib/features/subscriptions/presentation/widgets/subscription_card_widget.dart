@@ -1,36 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/subscription.dart';
 import '../pages/subscription_details_page.dart';
 import '../pages/update_subscription_page.dart';
+import '../bloc/subscriptions_bloc.dart';
+import 'cancel_subscription_dialog.dart';
 
 class SubscriptionCardWidget extends StatelessWidget {
   final Subscription subscription;
   final VoidCallback? onTap;
+  final VoidCallback? onCancel;
 
   const SubscriptionCardWidget({
     super.key,
     required this.subscription,
     this.onTap,
+    this.onCancel,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM dd, yyyy');
+    final isCancelled = subscription.state.toUpperCase() == 'CANCELLED';
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: InkWell(
-        onTap: onTap ?? () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => SubscriptionDetailsPage(
-                subscriptionId: subscription.subscriptionId,
-              ),
-            ),
-          );
-        },
+        onTap:
+            onTap ??
+            () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SubscriptionDetailsPage(
+                    subscriptionId: subscription.subscriptionId,
+                  ),
+                ),
+              );
+            },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -52,9 +60,8 @@ class SubscriptionCardWidget extends StatelessWidget {
                         Text(
                           subscription.planName,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.textTheme.bodyMedium?.color?.withValues(
-                              alpha: 0.7,
-                            ),
+                            color: theme.textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -84,13 +91,28 @@ class SubscriptionCardWidget extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Cancel button (only for non-cancelled subscriptions)
+                          if (!isCancelled)
+                            IconButton(
+                              icon: const Icon(Icons.cancel_outlined, size: 20),
+                              onPressed: () => _showCancelDialog(context),
+                              tooltip: 'Cancel Subscription',
+                              style: IconButton.styleFrom(
+                                backgroundColor: theme.colorScheme.errorContainer,
+                                foregroundColor: theme.colorScheme.error,
+                                padding: const EdgeInsets.all(8),
+                              ),
+                            ),
+                          if (!isCancelled) const SizedBox(width: 4),
                           IconButton(
                             icon: const Icon(Icons.edit, size: 20),
                             onPressed: () => _editSubscription(context),
                             tooltip: 'Edit Subscription',
                             style: IconButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primaryContainer,
-                              foregroundColor: theme.colorScheme.onPrimaryContainer,
+                              backgroundColor:
+                                  theme.colorScheme.primaryContainer,
+                              foregroundColor:
+                                  theme.colorScheme.onPrimaryContainer,
                               padding: const EdgeInsets.all(8),
                             ),
                           ),
@@ -100,8 +122,10 @@ class SubscriptionCardWidget extends StatelessWidget {
                             onPressed: () => _viewDetails(context),
                             tooltip: 'View Details',
                             style: IconButton.styleFrom(
-                              backgroundColor: theme.colorScheme.secondaryContainer,
-                              foregroundColor: theme.colorScheme.onSecondaryContainer,
+                              backgroundColor:
+                                  theme.colorScheme.secondaryContainer,
+                              foregroundColor:
+                                  theme.colorScheme.onSecondaryContainer,
                               padding: const EdgeInsets.all(8),
                             ),
                           ),
@@ -121,13 +145,13 @@ class SubscriptionCardWidget extends StatelessWidget {
                       Icons.calendar_today,
                     ),
                   ),
-                                     Expanded(
-                     child: _buildInfoItem(
-                       'Quantity',
-                       subscription.quantity.toString(),
-                       Icons.numbers,
-                     ),
-                   ),
+                  Expanded(
+                    child: _buildInfoItem(
+                      'Quantity',
+                      subscription.quantity.toString(),
+                      Icons.numbers,
+                    ),
+                  ),
                   Expanded(
                     child: _buildInfoItem(
                       'Start Date',
@@ -166,11 +190,7 @@ class SubscriptionCardWidget extends StatelessWidget {
   Widget _buildInfoItem(String label, String value, IconData icon) {
     return Column(
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Colors.grey.shade600,
-        ),
+        Icon(icon, size: 16, color: Colors.grey.shade600),
         const SizedBox(height: 4),
         Text(
           label,
@@ -192,12 +212,27 @@ class SubscriptionCardWidget extends StatelessWidget {
     );
   }
 
+  void _showCancelDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => BlocProvider(
+        create: (context) => context.read<SubscriptionsBloc>(),
+        child: CancelSubscriptionDialog(
+          subscriptionId: subscription.subscriptionId,
+          subscriptionName: subscription.productName,
+          onSuccess: () {
+            onCancel?.call();
+          },
+        ),
+      ),
+    );
+  }
+
   void _editSubscription(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => UpdateSubscriptionPage(
-          subscription: subscription,
-        ),
+        builder: (context) =>
+            UpdateSubscriptionPage(subscription: subscription),
       ),
     );
   }

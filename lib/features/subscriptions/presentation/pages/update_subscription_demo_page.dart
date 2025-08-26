@@ -14,8 +14,10 @@ class UpdateSubscriptionDemoPage extends StatefulWidget {
       _UpdateSubscriptionDemoPageState();
 }
 
-class _UpdateSubscriptionDemoPageState extends State<UpdateSubscriptionDemoPage> {
-  final TextEditingController _subscriptionIdController = TextEditingController();
+class _UpdateSubscriptionDemoPageState
+    extends State<UpdateSubscriptionDemoPage> {
+  final TextEditingController _subscriptionIdController =
+      TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -136,7 +138,7 @@ class _UpdateSubscriptionDemoPageState extends State<UpdateSubscriptionDemoPage>
   void _loadSubscription() {
     if (_formKey.currentState!.validate()) {
       final subscriptionId = _subscriptionIdController.text.trim();
-      
+
       // Load the subscription first
       context.read<SubscriptionsBloc>().add(
         LoadSubscriptionById(subscriptionId),
@@ -145,73 +147,76 @@ class _UpdateSubscriptionDemoPageState extends State<UpdateSubscriptionDemoPage>
       // Show a dialog with the update form
       showDialog(
         context: context,
-        builder: (context) => BlocBuilder<SubscriptionsBloc, SubscriptionsState>(
-          builder: (context, state) {
-            if (state is SingleSubscriptionLoading) {
-              return const AlertDialog(
-                content: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            } else if (state is SingleSubscriptionLoaded) {
-              return Dialog(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.9,
-                  height: MediaQuery.of(context).size.height * 0.8,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        builder: (context) =>
+            BlocBuilder<SubscriptionsBloc, SubscriptionsState>(
+              builder: (context, state) {
+                if (state is SingleSubscriptionLoading) {
+                  return const AlertDialog(
+                    content: Center(child: CircularProgressIndicator()),
+                  );
+                } else if (state is SingleSubscriptionLoaded) {
+                  return Dialog(
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.9,
+                      height: MediaQuery.of(context).size.height * 0.8,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
                         children: [
-                          Text(
-                            'Update Subscription',
-                            style: Theme.of(context).textTheme.titleLarge,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Update Subscription',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.of(context).pop(),
+                          const Divider(),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: UpdateSubscriptionForm(
+                                subscription: state.subscription,
+                                onSuccess: () {
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Subscription updated successfully!',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      const Divider(),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: UpdateSubscriptionForm(
-                            subscription: state.subscription,
-                            onSuccess: () {
-                              Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Subscription updated successfully!'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                    ),
+                  );
+                } else if (state is SingleSubscriptionError) {
+                  return AlertDialog(
+                    title: const Text('Error'),
+                    content: Text(
+                      'Failed to load subscription: ${state.message}',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('OK'),
                       ),
                     ],
-                  ),
-                ),
-              );
-            } else if (state is SingleSubscriptionError) {
-              return AlertDialog(
-                title: const Text('Error'),
-                content: Text('Failed to load subscription: ${state.message}'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
-              );
-            }
-            return const AlertDialog(
-              content: Text('No subscription loaded'),
-            );
-          },
-        ),
+                  );
+                }
+                return const AlertDialog(
+                  content: Text('No subscription loaded'),
+                );
+              },
+            ),
       );
     }
   }

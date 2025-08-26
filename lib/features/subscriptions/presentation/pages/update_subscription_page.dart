@@ -8,10 +8,7 @@ import '../../domain/entities/subscription.dart';
 class UpdateSubscriptionPage extends StatelessWidget {
   final Subscription subscription;
 
-  const UpdateSubscriptionPage({
-    super.key,
-    required this.subscription,
-  });
+  const UpdateSubscriptionPage({super.key, required this.subscription});
 
   @override
   Widget build(BuildContext context) {

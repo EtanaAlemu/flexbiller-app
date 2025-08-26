@@ -113,3 +113,27 @@ class UpdateSubscriptionError extends SubscriptionsState {
   @override
   List<Object?> get props => [message];
 }
+
+class CancelSubscriptionLoading extends SubscriptionsState {}
+
+class CancelSubscriptionSuccess extends SubscriptionsState {
+  final String subscriptionId;
+  final String message;
+
+  const CancelSubscriptionSuccess({
+    required this.subscriptionId,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => [subscriptionId, message];
+}
+
+class CancelSubscriptionError extends SubscriptionsState {
+  final String message;
+
+  const CancelSubscriptionError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

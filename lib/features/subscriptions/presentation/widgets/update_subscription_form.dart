@@ -33,14 +33,28 @@ class _UpdateSubscriptionFormState extends State<UpdateSubscriptionForm> {
   @override
   void initState() {
     super.initState();
-    _productNameController = TextEditingController(text: widget.subscription.productName);
-    _planNameController = TextEditingController(text: widget.subscription.planName);
-    _billingPeriodController = TextEditingController(text: widget.subscription.billingPeriod);
-    _phaseTypeController = TextEditingController(text: widget.subscription.phaseType);
+    _productNameController = TextEditingController(
+      text: widget.subscription.productName,
+    );
+    _planNameController = TextEditingController(
+      text: widget.subscription.planName,
+    );
+    _billingPeriodController = TextEditingController(
+      text: widget.subscription.billingPeriod,
+    );
+    _phaseTypeController = TextEditingController(
+      text: widget.subscription.phaseType,
+    );
     _stateController = TextEditingController(text: widget.subscription.state);
-    _quantityController = TextEditingController(text: widget.subscription.quantity.toString());
-    _billCycleDayController = TextEditingController(text: widget.subscription.billCycleDayLocal.toString());
-    _chargedThroughController = TextEditingController(text: widget.subscription.chargedThroughDate);
+    _quantityController = TextEditingController(
+      text: widget.subscription.quantity.toString(),
+    );
+    _billCycleDayController = TextEditingController(
+      text: widget.subscription.billCycleDayLocal.toString(),
+    );
+    _chargedThroughController = TextEditingController(
+      text: widget.subscription.chargedThroughDate,
+    );
   }
 
   @override
@@ -81,7 +95,9 @@ class _UpdateSubscriptionFormState extends State<UpdateSubscriptionForm> {
             Text(
               'ID: ${widget.subscription.subscriptionId}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                color: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
@@ -93,17 +109,19 @@ class _UpdateSubscriptionFormState extends State<UpdateSubscriptionForm> {
             BlocBuilder<SubscriptionsBloc, SubscriptionsState>(
               builder: (context, state) {
                 final isLoading = state is UpdateSubscriptionLoading;
-                
+
                 return ElevatedButton.icon(
                   onPressed: isLoading ? null : _updateSubscription,
-                  icon: isLoading 
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save),
-                  label: Text(isLoading ? 'Updating...' : 'Update Subscription'),
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save),
+                  label: Text(
+                    isLoading ? 'Updating...' : 'Update Subscription',
+                  ),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -127,9 +145,9 @@ class _UpdateSubscriptionFormState extends State<UpdateSubscriptionForm> {
           children: [
             Text(
               'Basic Information',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
@@ -218,9 +236,9 @@ class _UpdateSubscriptionFormState extends State<UpdateSubscriptionForm> {
           children: [
             Text(
               'Billing Information',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
@@ -306,17 +324,24 @@ class _UpdateSubscriptionFormState extends State<UpdateSubscriptionForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Sample Values:',
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
+        Text('Sample Values:', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           children: [
-            _buildSampleChip('Billing Period', ['MONTHLY', 'WEEKLY', 'DAILY', 'YEARLY']),
+            _buildSampleChip('Billing Period', [
+              'MONTHLY',
+              'WEEKLY',
+              'DAILY',
+              'YEARLY',
+            ]),
             _buildSampleChip('Phase Type', ['TRIAL', 'EVERGREEN', 'DISCOUNT']),
-            _buildSampleChip('State', ['ACTIVE', 'PENDING', 'BLOCKED', 'CANCELLED']),
+            _buildSampleChip('State', [
+              'ACTIVE',
+              'PENDING',
+              'BLOCKED',
+              'CANCELLED',
+            ]),
           ],
         ),
       ],
@@ -327,30 +352,31 @@ class _UpdateSubscriptionFormState extends State<UpdateSubscriptionForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 4),
         Wrap(
           spacing: 4,
-          children: values.map((value) => ActionChip(
-            label: Text(value),
-            onPressed: () {
-              switch (label) {
-                case 'Billing Period':
-                  _billingPeriodController.text = value;
-                  break;
-                case 'Phase Type':
-                  _phaseTypeController.text = value;
-                  break;
-                case 'State':
-                  _stateController.text = value;
-                  break;
-              }
-            },
-            avatar: const Icon(Icons.edit, size: 16),
-          )).toList(),
+          children: values
+              .map(
+                (value) => ActionChip(
+                  label: Text(value),
+                  onPressed: () {
+                    switch (label) {
+                      case 'Billing Period':
+                        _billingPeriodController.text = value;
+                        break;
+                      case 'Phase Type':
+                        _phaseTypeController.text = value;
+                        break;
+                      case 'State':
+                        _stateController.text = value;
+                        break;
+                    }
+                  },
+                  avatar: const Icon(Icons.edit, size: 16),
+                ),
+              )
+              .toList(),
         ),
       ],
     );
@@ -374,34 +400,40 @@ class _UpdateSubscriptionFormState extends State<UpdateSubscriptionForm> {
         'state': _stateController.text.trim(),
         'sourceType': widget.subscription.sourceType,
         'cancelledDate': widget.subscription.cancelledDate?.toIso8601String(),
-        'chargedThroughDate': _chargedThroughController.text.trim().isNotEmpty 
-            ? _chargedThroughController.text.trim() 
+        'chargedThroughDate': _chargedThroughController.text.trim().isNotEmpty
+            ? _chargedThroughController.text.trim()
             : null,
-        'billingStartDate': widget.subscription.billingStartDate.toIso8601String(),
+        'billingStartDate': widget.subscription.billingStartDate
+            .toIso8601String(),
         'billingEndDate': widget.subscription.billingEndDate?.toIso8601String(),
         'billCycleDayLocal': int.parse(_billCycleDayController.text.trim()),
         'quantity': int.parse(_quantityController.text.trim()),
-        'events': widget.subscription.events.map((e) => {
-          'eventId': e.eventId,
-          'billingPeriod': e.billingPeriod,
-          'effectiveDate': e.effectiveDate.toIso8601String(),
-          'catalogEffectiveDate': e.catalogEffectiveDate.toIso8601String(),
-          'plan': e.plan,
-          'product': e.product,
-          'priceList': e.priceList,
-          'eventType': e.eventType,
-          'isBlockedBilling': e.isBlockedBilling,
-          'isBlockedEntitlement': e.isBlockedEntitlement,
-          'serviceName': e.serviceName,
-          'serviceStateName': e.serviceStateName,
-          'phase': e.phase,
-          'auditLogs': e.auditLogs ?? [],
-        }).toList(),
+        'events': widget.subscription.events
+            .map(
+              (e) => {
+                'eventId': e.eventId,
+                'billingPeriod': e.billingPeriod,
+                'effectiveDate': e.effectiveDate.toIso8601String(),
+                'catalogEffectiveDate': e.catalogEffectiveDate
+                    .toIso8601String(),
+                'plan': e.plan,
+                'product': e.product,
+                'priceList': e.priceList,
+                'eventType': e.eventType,
+                'isBlockedBilling': e.isBlockedBilling,
+                'isBlockedEntitlement': e.isBlockedEntitlement,
+                'serviceName': e.serviceName,
+                'serviceStateName': e.serviceStateName,
+                'phase': e.phase,
+                'auditLogs': e.auditLogs ?? [],
+              },
+            )
+            .toList(),
         'priceOverrides': widget.subscription.priceOverrides,
         'prices': widget.subscription.prices,
         'auditLogs': widget.subscription.auditLogs,
       };
-      
+
       context.read<SubscriptionsBloc>().add(
         UpdateSubscription(
           subscriptionId: widget.subscription.subscriptionId,

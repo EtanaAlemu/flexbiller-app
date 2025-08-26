@@ -51,3 +51,12 @@ class UpdateSubscription extends SubscriptionsEvent {
   @override
   List<Object?> get props => [subscriptionId, updateData];
 }
+
+class CancelSubscription extends SubscriptionsEvent {
+  final String subscriptionId;
+
+  const CancelSubscription(this.subscriptionId);
+
+  @override
+  List<Object?> get props => [subscriptionId];
+}

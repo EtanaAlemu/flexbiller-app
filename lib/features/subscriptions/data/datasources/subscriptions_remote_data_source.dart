@@ -12,7 +12,11 @@ abstract class SubscriptionsRemoteDataSource {
     String accountId,
     String planName,
   );
-  Future<SubscriptionModel> updateSubscription(String subscriptionId, Map<String, dynamic> updateData);
+  Future<SubscriptionModel> updateSubscription(
+    String subscriptionId,
+    Map<String, dynamic> updateData,
+  );
+  Future<Map<String, dynamic>> cancelSubscription(String subscriptionId);
 }
 
 @Injectable(as: SubscriptionsRemoteDataSource)
@@ -104,7 +108,10 @@ class SubscriptionsRemoteDataSourceImpl
   }
 
   @override
-  Future<SubscriptionModel> updateSubscription(String subscriptionId, Map<String, dynamic> updateData) async {
+  Future<SubscriptionModel> updateSubscription(
+    String subscriptionId,
+    Map<String, dynamic> updateData,
+  ) async {
     try {
       final response = await _dio.put(
         '${ApiEndpoints.getSubscriptionById}/$subscriptionId',
@@ -119,6 +126,23 @@ class SubscriptionsRemoteDataSourceImpl
       }
     } catch (e) {
       throw Exception('Failed to update subscription: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> cancelSubscription(String subscriptionId) async {
+    try {
+      final response = await _dio.delete(
+        '${ApiEndpoints.getSubscriptionById}/$subscriptionId',
+      );
+
+      if (response.statusCode == 200) {
+        return response.data['data'] as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to cancel subscription');
+      }
+    } catch (e) {
+      throw Exception('Failed to cancel subscription: $e');
     }
   }
 }
