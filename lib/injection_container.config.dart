@@ -54,6 +54,8 @@ import 'features/accounts/data/repositories/account_emails_repository_impl.dart'
     as _i31;
 import 'features/accounts/data/repositories/account_invoice_payments_repository_impl.dart'
     as _i636;
+import 'features/accounts/data/repositories/account_invoices_repository_impl.dart'
+    as _i309;
 import 'features/accounts/data/repositories/account_payment_methods_repository_impl.dart'
     as _i421;
 import 'features/accounts/data/repositories/account_payments_repository_impl.dart'
@@ -74,6 +76,8 @@ import 'features/accounts/domain/repositories/account_emails_repository.dart'
     as _i330;
 import 'features/accounts/domain/repositories/account_invoice_payments_repository.dart'
     as _i378;
+import 'features/accounts/domain/repositories/account_invoices_repository.dart'
+    as _i521;
 import 'features/accounts/domain/repositories/account_payment_methods_repository.dart'
     as _i845;
 import 'features/accounts/domain/repositories/account_payments_repository.dart'
@@ -124,6 +128,8 @@ import 'features/accounts/domain/usecases/get_account_timeline_usecase.dart'
 import 'features/accounts/domain/usecases/get_accounts_usecase.dart' as _i684;
 import 'features/accounts/domain/usecases/get_all_tags_for_account_usecase.dart'
     as _i384;
+import 'features/accounts/domain/usecases/get_paginated_invoices_usecase.dart'
+    as _i887;
 import 'features/accounts/domain/usecases/refresh_payment_methods_usecase.dart'
     as _i905;
 import 'features/accounts/domain/usecases/remove_multiple_tags_from_account_usecase.dart'
@@ -298,6 +304,11 @@ _i174.GetIt $initGetIt(
       gh<_i842.JwtService>(),
     ),
   );
+  gh.factory<_i521.AccountInvoicesRepository>(
+    () => _i309.AccountInvoicesRepositoryImpl(
+      gh<_i702.AccountInvoicesRemoteDataSource>(),
+    ),
+  );
   gh.factory<_i378.AccountInvoicePaymentsRepository>(
     () => _i636.AccountInvoicePaymentsRepositoryImpl(
       gh<_i976.AccountInvoicePaymentsRemoteDataSource>(),
@@ -314,6 +325,11 @@ _i174.GetIt $initGetIt(
   gh.factory<_i446.AccountTimelineRepository>(
     () => _i735.AccountTimelineRepositoryImpl(
       gh<_i817.AccountTimelineRemoteDataSource>(),
+    ),
+  );
+  gh.factory<_i887.GetPaginatedInvoicesUseCase>(
+    () => _i887.GetPaginatedInvoicesUseCase(
+      gh<_i521.AccountInvoicesRepository>(),
     ),
   );
   gh.factory<_i336.DeleteAccountCustomFieldUseCase>(

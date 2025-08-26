@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../../domain/entities/account_invoice.dart';
 
 part 'account_invoice_model.g.dart';
 
@@ -87,4 +88,74 @@ class AccountInvoiceModel {
       _$AccountInvoiceModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$AccountInvoiceModelToJson(this);
+
+  // Convert from domain entity to data model
+  factory AccountInvoiceModel.fromEntity(AccountInvoice entity) {
+    return AccountInvoiceModel(
+      invoiceId: entity.invoiceId,
+      invoiceNumber: entity.invoiceNumber,
+      accountId: entity.accountId,
+      amount: entity.amount,
+      currency: entity.currency,
+      status: entity.status,
+      balance: entity.balance,
+      creditAdj: entity.creditAdj,
+      refundAdj: entity.refundAdj,
+      invoiceDate: entity.invoiceDate,
+      targetDate: entity.targetDate,
+      bundleKeys: entity.bundleKeys,
+      credits: entity.credits,
+      items: entity.items,
+      trackingIds: entity.trackingIds,
+      isParentInvoice: entity.isParentInvoice,
+      parentInvoiceId: entity.parentInvoiceId,
+      parentAccountId: entity.parentAccountId,
+      auditLogs: entity.auditLogs
+          .map((log) => {
+                'changeType': log.changeType,
+                'changeDate': log.changeDate.toIso8601String(),
+                'changedBy': log.changedBy,
+                'reasonCode': log.reasonCode,
+                'comments': log.comments,
+                'objectType': log.objectType,
+                'userToken': log.userToken,
+              })
+          .toList(),
+    );
+  }
+
+  // Convert from data model to domain entity
+  AccountInvoice toEntity() {
+    return AccountInvoice(
+      invoiceId: invoiceId,
+      invoiceNumber: invoiceNumber,
+      accountId: accountId,
+      amount: amount,
+      currency: currency,
+      status: status,
+      balance: balance,
+      creditAdj: creditAdj,
+      refundAdj: refundAdj,
+      invoiceDate: invoiceDate,
+      targetDate: targetDate,
+      bundleKeys: bundleKeys,
+      credits: credits,
+      items: items,
+      trackingIds: trackingIds,
+      isParentInvoice: isParentInvoice,
+      parentInvoiceId: parentInvoiceId,
+      parentAccountId: parentAccountId,
+      auditLogs: auditLogs
+          .map((log) => InvoiceAuditLog(
+                changeType: log['changeType'] ?? '',
+                changeDate: DateTime.tryParse(log['changeDate'] ?? '') ?? DateTime.now(),
+                changedBy: log['changedBy'] ?? '',
+                reasonCode: log['reasonCode'],
+                comments: log['comments'],
+                objectType: log['objectType'],
+                userToken: log['userToken'],
+              ))
+          .toList(),
+    );
+  }
 }
