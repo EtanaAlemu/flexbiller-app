@@ -208,6 +208,16 @@ import 'features/subscriptions/domain/usecases/update_subscription_usecase.dart'
     as _i676;
 import 'features/subscriptions/presentation/bloc/subscriptions_bloc.dart'
     as _i675;
+import 'features/tag_definitions/data/datasources/tag_definitions_remote_data_source.dart'
+    as _i692;
+import 'features/tag_definitions/data/repositories/tag_definitions_repository_impl.dart'
+    as _i17;
+import 'features/tag_definitions/domain/repositories/tag_definitions_repository.dart'
+    as _i866;
+import 'features/tag_definitions/domain/usecases/get_tag_definitions_usecase.dart'
+    as _i235;
+import 'features/tag_definitions/presentation/bloc/tag_definitions_bloc.dart'
+    as _i65;
 import 'features/tags/data/datasources/tags_remote_data_source.dart' as _i376;
 import 'features/tags/data/repositories/tags_repository_impl.dart' as _i990;
 import 'features/tags/domain/repositories/tags_repository.dart' as _i734;
@@ -261,6 +271,9 @@ _i174.GetIt $initGetIt(
     () => _i1047.CreateGlobalPaymentUseCase(
       gh<_i1054.AccountPaymentsRepository>(),
     ),
+  );
+  gh.factory<_i692.TagDefinitionsRemoteDataSource>(
+    () => _i692.TagDefinitionsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
   gh.factory<_i608.AccountCustomFieldsRemoteDataSource>(
     () => _i608.AccountCustomFieldsRemoteDataSourceImpl(gh<_i361.Dio>()),
@@ -415,6 +428,11 @@ _i174.GetIt $initGetIt(
     () =>
         _i512.GetOverdueStateUseCase(gh<_i455.AccountOverdueStateRepository>()),
   );
+  gh.factory<_i866.TagDefinitionsRepository>(
+    () => _i17.TagDefinitionsRepositoryImpl(
+      gh<_i692.TagDefinitionsRemoteDataSource>(),
+    ),
+  );
   gh.factory<_i521.AccountInvoicesRepository>(
     () => _i309.AccountInvoicesRepositoryImpl(
       gh<_i702.AccountInvoicesRemoteDataSource>(),
@@ -564,6 +582,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i206.LoginUseCase>(
     () => _i206.LoginUseCase(gh<_i1015.AuthRepository>()),
   );
+  gh.factory<_i235.GetTagDefinitionsUseCase>(
+    () => _i235.GetTagDefinitionsUseCase(gh<_i866.TagDefinitionsRepository>()),
+  );
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
   );
@@ -639,6 +660,9 @@ _i174.GetIt $initGetIt(
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
       accountEmailsRepository: gh<_i330.AccountEmailsRepository>(),
     ),
+  );
+  gh.factory<_i65.TagDefinitionsBloc>(
+    () => _i65.TagDefinitionsBloc(gh<_i235.GetTagDefinitionsUseCase>()),
   );
   gh.factory<_i743.CreateChildAccountUseCase>(
     () => _i743.CreateChildAccountUseCase(gh<_i596.ChildAccountRepository>()),

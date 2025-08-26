@@ -115,10 +115,11 @@ class TagsDemoPage extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'API Endpoints:',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                         ),
                       ],
                     ),
@@ -176,10 +177,7 @@ class TagsDemoPage extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             description,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -193,9 +191,9 @@ class TagsDemoPage extends StatelessWidget {
   }
 
   void _searchTags(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const SearchTagsPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const SearchTagsPage()));
   }
 
   void _testTagsBloc(BuildContext context) {

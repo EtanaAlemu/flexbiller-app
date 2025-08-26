@@ -5,7 +5,12 @@ import '../../../../core/constants/api_endpoints.dart';
 
 abstract class TagsRemoteDataSource {
   Future<List<TagModel>> getAllTags();
-  Future<List<TagModel>> searchTags(String tagDefinitionName, {int offset = 0, int limit = 100, String audit = 'NONE'});
+  Future<List<TagModel>> searchTags(
+    String tagDefinitionName, {
+    int offset = 0,
+    int limit = 100,
+    String audit = 'NONE',
+  });
 }
 
 @Injectable(as: TagsRemoteDataSource)
@@ -31,7 +36,12 @@ class TagsRemoteDataSourceImpl implements TagsRemoteDataSource {
   }
 
   @override
-  Future<List<TagModel>> searchTags(String tagDefinitionName, {int offset = 0, int limit = 100, String audit = 'NONE'}) async {
+  Future<List<TagModel>> searchTags(
+    String tagDefinitionName, {
+    int offset = 0,
+    int limit = 100,
+    String audit = 'NONE',
+  }) async {
     try {
       final queryParams = {
         'offset': offset.toString(),
