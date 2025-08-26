@@ -1,4 +1,5 @@
 import '../entities/tag_definition.dart';
+import '../entities/tag_definition_audit_log.dart';
 
 abstract class TagDefinitionsRepository {
   Future<List<TagDefinition>> getTagDefinitions();
@@ -9,4 +10,5 @@ abstract class TagDefinitionsRepository {
     required List<String> applicableObjectTypes,
   });
   Future<TagDefinition> getTagDefinitionById(String id);
+  Future<List<TagDefinitionAuditLog>> getTagDefinitionAuditLogsWithHistory(String id);
 }

@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/tag_definition.dart';
+import '../../domain/entities/tag_definition_audit_log.dart';
 import '../../domain/repositories/tag_definitions_repository.dart';
 import '../datasources/tag_definitions_remote_data_source.dart';
 import '../models/create_tag_definition_request_model.dart';
@@ -51,6 +52,16 @@ class TagDefinitionsRepositoryImpl implements TagDefinitionsRepository {
         id,
       );
       return tagDefinitionModel.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<TagDefinitionAuditLog>> getTagDefinitionAuditLogsWithHistory(String id) async {
+    try {
+      final auditLogModels = await _remoteDataSource.getTagDefinitionAuditLogsWithHistory(id);
+      return auditLogModels.map((model) => model.toEntity()).toList();
     } catch (e) {
       rethrow;
     }

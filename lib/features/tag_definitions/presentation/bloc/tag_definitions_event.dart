@@ -36,3 +36,12 @@ class GetTagDefinitionById extends TagDefinitionsEvent {
   @override
   List<Object?> get props => [id];
 }
+
+class GetTagDefinitionAuditLogsWithHistory extends TagDefinitionsEvent {
+  final String id;
+
+  const GetTagDefinitionAuditLogsWithHistory(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}

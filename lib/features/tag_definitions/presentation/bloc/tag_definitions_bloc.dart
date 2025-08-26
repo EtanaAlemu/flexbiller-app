@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import '../../domain/usecases/get_tag_definitions_usecase.dart';
 import '../../domain/usecases/create_tag_definition_usecase.dart';
 import '../../domain/usecases/get_tag_definition_by_id_usecase.dart';
+import '../../domain/usecases/get_tag_definition_audit_logs_with_history_usecase.dart';
 import 'tag_definitions_event.dart';
 import 'tag_definitions_state.dart';
 
@@ -11,16 +12,19 @@ class TagDefinitionsBloc extends Bloc<TagDefinitionsEvent, TagDefinitionsState> 
   final GetTagDefinitionsUseCase _getTagDefinitionsUseCase;
   final CreateTagDefinitionUseCase _createTagDefinitionUseCase;
   final GetTagDefinitionByIdUseCase _getTagDefinitionByIdUseCase;
+  final GetTagDefinitionAuditLogsWithHistoryUseCase _getTagDefinitionAuditLogsWithHistoryUseCase;
 
   TagDefinitionsBloc(
     this._getTagDefinitionsUseCase,
     this._createTagDefinitionUseCase,
     this._getTagDefinitionByIdUseCase,
+    this._getTagDefinitionAuditLogsWithHistoryUseCase,
   ) : super(TagDefinitionsInitial()) {
     on<LoadTagDefinitions>(_onLoadTagDefinitions);
     on<RefreshTagDefinitions>(_onRefreshTagDefinitions);
     on<CreateTagDefinition>(_onCreateTagDefinition);
     on<GetTagDefinitionById>(_onGetTagDefinitionById);
+    on<GetTagDefinitionAuditLogsWithHistory>(_onGetTagDefinitionAuditLogsWithHistory);
   }
 
   Future<void> _onLoadTagDefinitions(
@@ -77,6 +81,19 @@ class TagDefinitionsBloc extends Bloc<TagDefinitionsEvent, TagDefinitionsState> 
       emit(SingleTagDefinitionLoaded(tagDefinition));
     } catch (e) {
       emit(SingleTagDefinitionError(e.toString(), event.id));
+    }
+  }
+
+  Future<void> _onGetTagDefinitionAuditLogsWithHistory(
+    GetTagDefinitionAuditLogsWithHistory event,
+    Emitter<TagDefinitionsState> emit,
+  ) async {
+    emit(AuditLogsWithHistoryLoading());
+    try {
+      final auditLogs = await _getTagDefinitionAuditLogsWithHistoryUseCase(event.id);
+      emit(AuditLogsWithHistoryLoaded(auditLogs, event.id));
+    } catch (e) {
+      emit(AuditLogsWithHistoryError(e.toString(), event.id));
     }
   }
 }

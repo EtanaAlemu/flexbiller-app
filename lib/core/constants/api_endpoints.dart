@@ -22,4 +22,5 @@ class ApiEndpoints {
   static const String getTagDefinitions = '/api/tagDefinitions';
   static const String createTagDefinition = '/api/tagDefinitions';
   static const String getTagDefinitionById = '/api/tagDefinitions';
+  static const String getTagDefinitionAuditLogsWithHistory = '/api/tagDefinitions';
 }

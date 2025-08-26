@@ -6,6 +6,7 @@ import '../bloc/tag_definitions_event.dart';
 import 'tag_definitions_page.dart';
 import 'create_tag_definition_page.dart';
 import 'get_tag_definition_by_id_demo_page.dart';
+import 'get_tag_definition_audit_logs_demo_page.dart';
 
 class TagDefinitionsDemoPage extends StatelessWidget {
   const TagDefinitionsDemoPage({super.key});
@@ -97,6 +98,23 @@ class TagDefinitionsDemoPage extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: Theme.of(context).colorScheme.secondary,
                         foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _getTagDefinitionAuditLogs(context),
+                      icon: const Icon(Icons.history),
+                      label: const Text('Audit Logs'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Theme.of(context).colorScheme.tertiary,
+                        foregroundColor: Colors.white,
                       ),
                     ),
                   ),
@@ -310,6 +328,12 @@ class TagDefinitionsDemoPage extends StatelessWidget {
   void _getTagDefinitionById(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const GetTagDefinitionByIdDemoPage()),
+    );
+  }
+
+  void _getTagDefinitionAuditLogs(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const GetTagDefinitionAuditLogsDemoPage()),
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/tag_definition.dart';
+import '../../domain/entities/tag_definition_audit_log.dart';
 
 abstract class TagDefinitionsState extends Equatable {
   const TagDefinitionsState();
@@ -69,4 +70,26 @@ class SingleTagDefinitionError extends TagDefinitionsState {
 
   @override
   List<Object?> get props => [message, id];
+}
+
+class AuditLogsWithHistoryLoading extends TagDefinitionsState {}
+
+class AuditLogsWithHistoryLoaded extends TagDefinitionsState {
+  final List<TagDefinitionAuditLog> auditLogs;
+  final String tagDefinitionId;
+
+  const AuditLogsWithHistoryLoaded(this.auditLogs, this.tagDefinitionId);
+
+  @override
+  List<Object?> get props => [auditLogs, tagDefinitionId];
+}
+
+class AuditLogsWithHistoryError extends TagDefinitionsState {
+  final String message;
+  final String tagDefinitionId;
+
+  const AuditLogsWithHistoryError(this.message, this.tagDefinitionId);
+
+  @override
+  List<Object?> get props => [message, tagDefinitionId];
 }
