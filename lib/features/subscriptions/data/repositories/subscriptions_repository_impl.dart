@@ -85,4 +85,13 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<List<String>> getSubscriptionTags(String subscriptionId) async {
+    try {
+      return await _remoteDataSource.getSubscriptionTags(subscriptionId);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

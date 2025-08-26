@@ -10,4 +10,5 @@ abstract class SubscriptionsRepository {
     Map<String, dynamic> updateData,
   );
   Future<Map<String, dynamic>> cancelSubscription(String subscriptionId);
+  Future<List<String>> getSubscriptionTags(String subscriptionId);
 }

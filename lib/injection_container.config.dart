@@ -200,6 +200,8 @@ import 'features/subscriptions/domain/usecases/get_recent_subscriptions_usecase.
     as _i825;
 import 'features/subscriptions/domain/usecases/get_subscription_by_id_usecase.dart'
     as _i815;
+import 'features/subscriptions/domain/usecases/get_subscription_tags_usecase.dart'
+    as _i1049;
 import 'features/subscriptions/domain/usecases/get_subscriptions_for_account_usecase.dart'
     as _i233;
 import 'features/subscriptions/domain/usecases/update_subscription_usecase.dart'
@@ -457,6 +459,10 @@ _i174.GetIt $initGetIt(
   gh.factory<_i1005.CancelSubscriptionUseCase>(
     () => _i1005.CancelSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
   );
+  gh.factory<_i1049.GetSubscriptionTagsUseCase>(
+    () =>
+        _i1049.GetSubscriptionTagsUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
   gh.factory<_i336.DeleteAccountCustomFieldUseCase>(
     () => _i336.DeleteAccountCustomFieldUseCase(
       gh<_i221.AccountCustomFieldsRepository>(),
@@ -500,6 +506,17 @@ _i174.GetIt $initGetIt(
   gh.factory<_i729.GetAccountBlockingStatesUseCase>(
     () => _i729.GetAccountBlockingStatesUseCase(
       gh<_i696.AccountBlockingStatesRepository>(),
+    ),
+  );
+  gh.factory<_i675.SubscriptionsBloc>(
+    () => _i675.SubscriptionsBloc(
+      gh<_i825.GetRecentSubscriptionsUseCase>(),
+      gh<_i815.GetSubscriptionByIdUseCase>(),
+      gh<_i233.GetSubscriptionsForAccountUseCase>(),
+      gh<_i862.CreateSubscriptionUseCase>(),
+      gh<_i676.UpdateSubscriptionUseCase>(),
+      gh<_i1005.CancelSubscriptionUseCase>(),
+      gh<_i1049.GetSubscriptionTagsUseCase>(),
     ),
   );
   gh.factory<_i580.SetDefaultPaymentMethodUseCase>(
@@ -549,16 +566,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i350.CreateInvoicePaymentUseCase>(
     () => _i350.CreateInvoicePaymentUseCase(
       gh<_i378.AccountInvoicePaymentsRepository>(),
-    ),
-  );
-  gh.factory<_i675.SubscriptionsBloc>(
-    () => _i675.SubscriptionsBloc(
-      gh<_i825.GetRecentSubscriptionsUseCase>(),
-      gh<_i815.GetSubscriptionByIdUseCase>(),
-      gh<_i233.GetSubscriptionsForAccountUseCase>(),
-      gh<_i862.CreateSubscriptionUseCase>(),
-      gh<_i676.UpdateSubscriptionUseCase>(),
-      gh<_i1005.CancelSubscriptionUseCase>(),
     ),
   );
   gh.factory<_i795.AccountsBloc>(

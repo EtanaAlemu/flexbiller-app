@@ -17,6 +17,7 @@ abstract class SubscriptionsRemoteDataSource {
     Map<String, dynamic> updateData,
   );
   Future<Map<String, dynamic>> cancelSubscription(String subscriptionId);
+  Future<List<String>> getSubscriptionTags(String subscriptionId);
 }
 
 @Injectable(as: SubscriptionsRemoteDataSource)
@@ -143,6 +144,24 @@ class SubscriptionsRemoteDataSourceImpl
       }
     } catch (e) {
       throw Exception('Failed to cancel subscription: $e');
+    }
+  }
+
+  @override
+  Future<List<String>> getSubscriptionTags(String subscriptionId) async {
+    try {
+      final response = await _dio.get(
+        '${ApiEndpoints.getSubscriptionById}/$subscriptionId/tags',
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as List;
+        return data.cast<String>();
+      } else {
+        throw Exception('Failed to load subscription tags');
+      }
+    } catch (e) {
+      throw Exception('Failed to load subscription tags: $e');
     }
   }
 }

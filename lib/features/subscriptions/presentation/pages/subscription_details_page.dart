@@ -6,6 +6,7 @@ import '../bloc/subscriptions_event.dart';
 import '../bloc/subscriptions_state.dart';
 import '../../domain/entities/subscription.dart';
 import '../widgets/cancel_subscription_dialog.dart';
+import '../widgets/subscription_tags_widget.dart';
 import 'update_subscription_page.dart';
 
 class SubscriptionDetailsPage extends StatelessWidget {
@@ -107,6 +108,11 @@ class SubscriptionDetailsPage extends StatelessWidget {
             _buildBasicInfoCard(context, subscription, dateFormat),
             const SizedBox(height: 16),
             _buildBillingInfoCard(context, subscription, dateFormat),
+            const SizedBox(height: 16),
+            SubscriptionTagsWidget(
+              subscriptionId: subscription.subscriptionId,
+              subscriptionName: subscription.productName,
+            ),
             const SizedBox(height: 16),
             _buildEventsCard(context, subscription, dateFormat),
             if (subscription.prices.isNotEmpty) ...[

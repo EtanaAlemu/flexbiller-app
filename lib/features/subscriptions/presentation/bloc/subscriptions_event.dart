@@ -60,3 +60,12 @@ class CancelSubscription extends SubscriptionsEvent {
   @override
   List<Object?> get props => [subscriptionId];
 }
+
+class LoadSubscriptionTags extends SubscriptionsEvent {
+  final String subscriptionId;
+
+  const LoadSubscriptionTags(this.subscriptionId);
+
+  @override
+  List<Object?> get props => [subscriptionId];
+}

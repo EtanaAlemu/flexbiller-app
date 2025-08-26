@@ -98,7 +98,8 @@ class SubscriptionCardWidget extends StatelessWidget {
                               onPressed: () => _showCancelDialog(context),
                               tooltip: 'Cancel Subscription',
                               style: IconButton.styleFrom(
-                                backgroundColor: theme.colorScheme.errorContainer,
+                                backgroundColor:
+                                    theme.colorScheme.errorContainer,
                                 foregroundColor: theme.colorScheme.error,
                                 padding: const EdgeInsets.all(8),
                               ),
@@ -192,20 +193,11 @@ class SubscriptionCardWidget extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: Colors.grey.shade600),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
-        ),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           textAlign: TextAlign.center,
         ),
       ],
