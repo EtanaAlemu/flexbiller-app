@@ -204,3 +204,20 @@ class BlockSubscriptionError extends SubscriptionsState {
   @override
   List<Object?> get props => [message, subscriptionId];
 }
+
+// Create Subscription with Add-ons states
+class CreateSubscriptionWithAddOnsLoading extends SubscriptionsState {}
+
+class CreateSubscriptionWithAddOnsSuccess extends SubscriptionsState {
+  final Map<String, dynamic> result;
+  const CreateSubscriptionWithAddOnsSuccess(this.result);
+  @override
+  List<Object?> get props => [result];
+}
+
+class CreateSubscriptionWithAddOnsError extends SubscriptionsState {
+  final String message;
+  const CreateSubscriptionWithAddOnsError(this.message);
+  @override
+  List<Object?> get props => [message];
+}

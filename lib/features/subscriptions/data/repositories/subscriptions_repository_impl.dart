@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import '../../domain/entities/subscription.dart';
 import '../../domain/entities/subscription_custom_field.dart';
 import '../../domain/entities/subscription_blocking_state.dart';
+import '../../domain/entities/subscription_addon_product.dart';
 import '../../domain/repositories/subscriptions_repository.dart';
 import '../datasources/subscriptions_remote_data_source.dart';
 import '../models/create_subscription_request_model.dart';
@@ -9,6 +10,7 @@ import '../models/add_subscription_custom_fields_request_model.dart';
 import '../models/update_subscription_custom_fields_request_model.dart';
 import '../models/remove_subscription_custom_fields_request_model.dart';
 import '../models/block_subscription_request_model.dart';
+import '../models/create_subscription_with_addons_request_model.dart';
 
 @Injectable(as: SubscriptionsRepository)
 class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
@@ -95,7 +97,7 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
     required List<Map<String, String>> customFields,
   }) async {
     try {
-      final customFieldModels = customFields.map((field) => 
+      final customFieldModels = customFields.map((field) =>
         AddSubscriptionCustomFieldsRequestModel(
           name: field['name']!,
           value: field['value']!,
@@ -200,6 +202,36 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
         effectiveDate: DateTime.parse(result.effectiveDate),
         type: result.type,
       );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> createSubscriptionWithAddOns({
+    required List<SubscriptionAddonProduct> addonProducts,
+  }) async {
+    try {
+      final addonProductModels = addonProducts.map((addon) =>
+        CreateSubscriptionWithAddonsRequestModel(
+          accountId: addon.accountId,
+          productName: addon.productName,
+          productCategory: addon.productCategory,
+          billingPeriod: addon.billingPeriod,
+          priceList: addon.priceList,
+        )
+      ).toList();
+
+      final result = await _remoteDataSource.createSubscriptionWithAddOns(
+        addonProducts: addonProductModels,
+      );
+
+      return {
+        'success': result.success,
+        'code': result.code,
+        'data': result.data,
+        'message': result.message,
+      };
     } catch (e) {
       rethrow;
     }

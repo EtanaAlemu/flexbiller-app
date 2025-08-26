@@ -15,6 +15,7 @@ class ApiEndpoints {
   static const String getSubscriptionsForAccount = '/api/subscriptions/account';
   static const String subscriptionCustomFields = '/api/subscriptions';
   static const String blockSubscription = '/api/subscriptions'; // Base for blocking
+  static const String createSubscriptionWithAddOns = '/api/subscriptions/createSubscriptionWithAddOns';
 
   // Tags endpoints
   static const String getAllTags = '/api/tags';

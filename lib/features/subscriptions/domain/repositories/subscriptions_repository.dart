@@ -1,6 +1,7 @@
 import '../entities/subscription.dart';
 import '../entities/subscription_custom_field.dart';
 import '../entities/subscription_blocking_state.dart';
+import '../entities/subscription_addon_product.dart';
 
 abstract class SubscriptionsRepository {
   Future<List<Subscription>> getRecentSubscriptions();
@@ -35,5 +36,10 @@ abstract class SubscriptionsRepository {
   Future<SubscriptionBlockingState> blockSubscription({
     required String subscriptionId,
     required Map<String, dynamic> blockingData,
+  });
+
+  // Create Subscription with Add-ons method
+  Future<Map<String, dynamic>> createSubscriptionWithAddOns({
+    required List<SubscriptionAddonProduct> addonProducts,
   });
 }

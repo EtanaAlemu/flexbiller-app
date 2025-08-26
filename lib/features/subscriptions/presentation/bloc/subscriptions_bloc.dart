@@ -11,6 +11,8 @@ import '../../domain/usecases/get_subscription_custom_fields_usecase.dart';
 import '../../domain/usecases/update_subscription_custom_fields_usecase.dart';
 import '../../domain/usecases/remove_subscription_custom_fields_usecase.dart';
 import '../../domain/usecases/block_subscription_usecase.dart';
+import '../../domain/usecases/create_subscription_with_addons_usecase.dart';
+import '../../domain/entities/subscription_addon_product.dart';
 import 'subscriptions_event.dart';
 import 'subscriptions_state.dart';
 
@@ -27,6 +29,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   final UpdateSubscriptionCustomFieldsUseCase _updateSubscriptionCustomFieldsUseCase;
   final RemoveSubscriptionCustomFieldsUseCase _removeSubscriptionCustomFieldsUseCase;
   final BlockSubscriptionUseCase _blockSubscriptionUseCase;
+  final CreateSubscriptionWithAddOnsUseCase _createSubscriptionWithAddOnsUseCase;
 
   SubscriptionsBloc(
     this._getRecentSubscriptionsUseCase,
@@ -40,6 +43,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     this._updateSubscriptionCustomFieldsUseCase,
     this._removeSubscriptionCustomFieldsUseCase,
     this._blockSubscriptionUseCase,
+    this._createSubscriptionWithAddOnsUseCase,
   ) : super(SubscriptionsInitial()) {
     on<LoadRecentSubscriptions>(_onLoadRecentSubscriptions);
     on<RefreshRecentSubscriptions>(_onRefreshRecentSubscriptions);
@@ -53,6 +57,7 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     on<UpdateSubscriptionCustomFields>(_onUpdateSubscriptionCustomFields);
     on<RemoveSubscriptionCustomFields>(_onRemoveSubscriptionCustomFields);
     on<BlockSubscription>(_onBlockSubscription);
+    on<CreateSubscriptionWithAddOns>(_onCreateSubscriptionWithAddOns);
   }
 
   Future<void> _onLoadRecentSubscriptions(
@@ -226,6 +231,31 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       emit(BlockSubscriptionSuccess(result, event.subscriptionId));
     } catch (e) {
       emit(BlockSubscriptionError(e.toString(), event.subscriptionId));
+    }
+  }
+
+  Future<void> _onCreateSubscriptionWithAddOns(
+    CreateSubscriptionWithAddOns event,
+    Emitter<SubscriptionsState> emit,
+  ) async {
+    emit(CreateSubscriptionWithAddOnsLoading());
+    try {
+      final addonProducts = event.addonProducts.map((addon) => 
+        SubscriptionAddonProduct(
+          accountId: addon['accountId']!,
+          productName: addon['productName']!,
+          productCategory: addon['productCategory']!,
+          billingPeriod: addon['billingPeriod']!,
+          priceList: addon['priceList']!,
+        )
+      ).toList();
+
+      final result = await _createSubscriptionWithAddOnsUseCase(
+        addonProducts: addonProducts,
+      );
+      emit(CreateSubscriptionWithAddOnsSuccess(result));
+    } catch (e) {
+      emit(CreateSubscriptionWithAddOnsError(e.toString()));
     }
   }
 }

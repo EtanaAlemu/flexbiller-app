@@ -200,6 +200,8 @@ import 'features/subscriptions/domain/usecases/cancel_subscription_usecase.dart'
     as _i1005;
 import 'features/subscriptions/domain/usecases/create_subscription_usecase.dart'
     as _i862;
+import 'features/subscriptions/domain/usecases/create_subscription_with_addons_usecase.dart'
+    as _i814;
 import 'features/subscriptions/domain/usecases/get_recent_subscriptions_usecase.dart'
     as _i825;
 import 'features/subscriptions/domain/usecases/get_subscription_by_id_usecase.dart'
@@ -540,6 +542,11 @@ _i174.GetIt $initGetIt(
   gh.factory<_i497.BlockSubscriptionUseCase>(
     () => _i497.BlockSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
   );
+  gh.factory<_i814.CreateSubscriptionWithAddOnsUseCase>(
+    () => _i814.CreateSubscriptionWithAddOnsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
   gh.factory<_i336.DeleteAccountCustomFieldUseCase>(
     () => _i336.DeleteAccountCustomFieldUseCase(
       gh<_i221.AccountCustomFieldsRepository>(),
@@ -580,11 +587,6 @@ _i174.GetIt $initGetIt(
       gh<_i827.ChildAccountRemoteDataSource>(),
     ),
   );
-  gh.factory<_i729.GetAccountBlockingStatesUseCase>(
-    () => _i729.GetAccountBlockingStatesUseCase(
-      gh<_i696.AccountBlockingStatesRepository>(),
-    ),
-  );
   gh.factory<_i675.SubscriptionsBloc>(
     () => _i675.SubscriptionsBloc(
       gh<_i825.GetRecentSubscriptionsUseCase>(),
@@ -598,6 +600,12 @@ _i174.GetIt $initGetIt(
       gh<_i354.UpdateSubscriptionCustomFieldsUseCase>(),
       gh<_i175.RemoveSubscriptionCustomFieldsUseCase>(),
       gh<_i497.BlockSubscriptionUseCase>(),
+      gh<_i814.CreateSubscriptionWithAddOnsUseCase>(),
+    ),
+  );
+  gh.factory<_i729.GetAccountBlockingStatesUseCase>(
+    () => _i729.GetAccountBlockingStatesUseCase(
+      gh<_i696.AccountBlockingStatesRepository>(),
     ),
   );
   gh.factory<_i580.SetDefaultPaymentMethodUseCase>(

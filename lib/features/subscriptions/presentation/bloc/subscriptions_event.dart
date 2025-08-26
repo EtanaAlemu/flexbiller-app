@@ -126,3 +126,15 @@ class BlockSubscription extends SubscriptionsEvent {
   @override
   List<Object?> get props => [subscriptionId, blockingData];
 }
+
+// Create Subscription with Add-ons event
+class CreateSubscriptionWithAddOns extends SubscriptionsEvent {
+  final List<Map<String, String>> addonProducts;
+
+  const CreateSubscriptionWithAddOns({
+    required this.addonProducts,
+  });
+
+  @override
+  List<Object?> get props => [addonProducts];
+}

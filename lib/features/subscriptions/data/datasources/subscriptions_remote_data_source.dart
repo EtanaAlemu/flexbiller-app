@@ -9,6 +9,8 @@ import '../models/remove_subscription_custom_fields_request_model.dart';
 import '../models/remove_subscription_custom_fields_response_model.dart';
 import '../models/block_subscription_request_model.dart';
 import '../models/block_subscription_response_model.dart';
+import '../models/create_subscription_with_addons_request_model.dart';
+import '../models/create_subscription_with_addons_response_model.dart';
 import '../../../../core/constants/api_endpoints.dart';
 
 abstract class SubscriptionsRemoteDataSource {
@@ -43,6 +45,11 @@ abstract class SubscriptionsRemoteDataSource {
   Future<BlockSubscriptionResponseModel> blockSubscription({
     required String subscriptionId,
     required BlockSubscriptionRequestModel request,
+  });
+
+  // Create Subscription with Add-ons method
+  Future<CreateSubscriptionWithAddonsResponseModel> createSubscriptionWithAddOns({
+    required List<CreateSubscriptionWithAddonsRequestModel> addonProducts,
   });
 }
 
@@ -263,6 +270,27 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
       }
     } catch (e) {
       throw Exception('Failed to block subscription: $e');
+    }
+  }
+
+  @override
+  Future<CreateSubscriptionWithAddonsResponseModel> createSubscriptionWithAddOns({
+    required List<CreateSubscriptionWithAddonsRequestModel> addonProducts,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.createSubscriptionWithAddOns,
+        data: addonProducts.map((addon) => addon.toJson()).toList(),
+      );
+
+      if (response.statusCode == 201) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        return CreateSubscriptionWithAddonsResponseModel.fromJson(data);
+      } else {
+        throw Exception('Failed to create subscription with add-ons');
+      }
+    } catch (e) {
+      throw Exception('Failed to create subscription with add-ons: $e');
     }
   }
 }
