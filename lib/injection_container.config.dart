@@ -26,6 +26,8 @@ import 'features/accounts/data/datasources/account_blocking_states_remote_data_s
     as _i819;
 import 'features/accounts/data/datasources/account_bundles_remote_data_source.dart'
     as _i326;
+import 'features/accounts/data/datasources/account_cba_rebalancing_remote_data_source.dart'
+    as _i951;
 import 'features/accounts/data/datasources/account_custom_fields_remote_data_source.dart'
     as _i608;
 import 'features/accounts/data/datasources/account_emails_remote_data_source.dart'
@@ -50,6 +52,8 @@ import 'features/accounts/data/repositories/account_audit_logs_repository_impl.d
     as _i510;
 import 'features/accounts/data/repositories/account_blocking_states_repository_impl.dart'
     as _i552;
+import 'features/accounts/data/repositories/account_cba_rebalancing_repository_impl.dart'
+    as _i761;
 import 'features/accounts/data/repositories/account_custom_fields_repository_impl.dart'
     as _i762;
 import 'features/accounts/data/repositories/account_emails_repository_impl.dart'
@@ -74,6 +78,8 @@ import 'features/accounts/domain/repositories/account_audit_logs_repository.dart
     as _i271;
 import 'features/accounts/domain/repositories/account_blocking_states_repository.dart'
     as _i696;
+import 'features/accounts/domain/repositories/account_cba_rebalancing_repository.dart'
+    as _i1067;
 import 'features/accounts/domain/repositories/account_custom_fields_repository.dart'
     as _i221;
 import 'features/accounts/domain/repositories/account_emails_repository.dart'
@@ -139,6 +145,7 @@ import 'features/accounts/domain/usecases/get_overdue_state_usecase.dart'
     as _i512;
 import 'features/accounts/domain/usecases/get_paginated_invoices_usecase.dart'
     as _i887;
+import 'features/accounts/domain/usecases/rebalance_cba_usecase.dart' as _i84;
 import 'features/accounts/domain/usecases/refresh_payment_methods_usecase.dart'
     as _i905;
 import 'features/accounts/domain/usecases/remove_multiple_tags_from_account_usecase.dart'
@@ -221,6 +228,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i976.AccountInvoicePaymentsRemoteDataSource>(
     () => _i976.AccountInvoicePaymentsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
+  gh.factory<_i951.AccountCbaRebalancingRemoteDataSource>(
+    () => _i951.AccountCbaRebalancingRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
   gh.factory<_i271.AccountAuditLogsRepository>(
     () => _i510.AccountAuditLogsRepositoryImpl(
       gh<_i276.AccountAuditLogsRemoteDataSource>(),
@@ -266,6 +276,11 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i42.AccountsRepository>(
     () => _i395.AccountsRepositoryImpl(gh<_i852.AccountsRemoteDataSource>()),
+  );
+  gh.factory<_i1067.AccountCbaRebalancingRepository>(
+    () => _i761.AccountCbaRebalancingRepositoryImpl(
+      gh<_i951.AccountCbaRebalancingRemoteDataSource>(),
+    ),
   );
   gh.factory<_i330.AccountEmailsRepository>(
     () => _i31.AccountEmailsRepositoryImpl(
@@ -342,6 +357,10 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i334.GetAccountEmailsUseCase>(
     () => _i334.GetAccountEmailsUseCase(gh<_i330.AccountEmailsRepository>()),
+  );
+  gh.factory<_i84.RebalanceCbaUseCase>(
+    () =>
+        _i84.RebalanceCbaUseCase(gh<_i1067.AccountCbaRebalancingRepository>()),
   );
   gh.factory<_i446.AccountTimelineRepository>(
     () => _i735.AccountTimelineRepositoryImpl(

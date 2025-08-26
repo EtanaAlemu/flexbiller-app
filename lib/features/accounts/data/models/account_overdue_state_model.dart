@@ -7,19 +7,19 @@ part 'account_overdue_state_model.g.dart';
 class AccountOverdueStateModel {
   @JsonKey(name: 'name')
   final String name;
-  
+
   @JsonKey(name: 'externalMessage')
   final String externalMessage;
-  
+
   @JsonKey(name: 'isDisableEntitlementAndChangesBlocked')
   final bool isDisableEntitlementAndChangesBlocked;
-  
+
   @JsonKey(name: 'isBlockChanges')
   final bool isBlockChanges;
-  
+
   @JsonKey(name: 'isClearState')
   final bool isClearState;
-  
+
   @JsonKey(name: 'reevaluationIntervalDays')
   final int? reevaluationIntervalDays;
 
@@ -42,7 +42,8 @@ class AccountOverdueStateModel {
     return AccountOverdueStateModel(
       name: entity.name,
       externalMessage: entity.externalMessage,
-      isDisableEntitlementAndChangesBlocked: entity.isDisableEntitlementAndChangesBlocked,
+      isDisableEntitlementAndChangesBlocked:
+          entity.isDisableEntitlementAndChangesBlocked,
       isBlockChanges: entity.isBlockChanges,
       isClearState: entity.isClearState,
       reevaluationIntervalDays: entity.reevaluationIntervalDays,
@@ -54,7 +55,8 @@ class AccountOverdueStateModel {
     return AccountOverdueState(
       name: name,
       externalMessage: externalMessage,
-      isDisableEntitlementAndChangesBlocked: isDisableEntitlementAndChangesBlocked,
+      isDisableEntitlementAndChangesBlocked:
+          isDisableEntitlementAndChangesBlocked,
       isBlockChanges: isBlockChanges,
       isClearState: isClearState,
       reevaluationIntervalDays: reevaluationIntervalDays,
