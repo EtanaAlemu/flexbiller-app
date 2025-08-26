@@ -43,16 +43,24 @@ class AccountCustomFieldModel {
       accountId: objectId, // Map objectId to accountId
       name: name,
       value: value,
-      auditLogs: auditLogs?.map((log) => CustomFieldAuditLog(
-        changeType: log['changeType'] ?? 'UNKNOWN',
-        changeDate: DateTime.tryParse(log['changeDate'] ?? '') ?? DateTime.now(),
-        changedBy: log['changedBy'] ?? 'Unknown',
-        reasonCode: log['reasonCode'],
-        comments: log['comments'],
-        objectType: log['objectType'],
-        objectId: log['objectId'],
-        userToken: log['userToken'],
-      )).toList() ?? [],
+      auditLogs:
+          auditLogs
+              ?.map(
+                (log) => CustomFieldAuditLog(
+                  changeType: log['changeType'] ?? 'UNKNOWN',
+                  changeDate:
+                      DateTime.tryParse(log['changeDate'] ?? '') ??
+                      DateTime.now(),
+                  changedBy: log['changedBy'] ?? 'Unknown',
+                  reasonCode: log['reasonCode'],
+                  comments: log['comments'],
+                  objectType: log['objectType'],
+                  objectId: log['objectId'],
+                  userToken: log['userToken'],
+                ),
+              )
+              .toList() ??
+          [],
     );
   }
 }
