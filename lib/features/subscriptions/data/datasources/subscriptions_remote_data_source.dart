@@ -12,6 +12,7 @@ abstract class SubscriptionsRemoteDataSource {
     String accountId,
     String planName,
   );
+  Future<SubscriptionModel> updateSubscription(String subscriptionId, Map<String, dynamic> updateData);
 }
 
 @Injectable(as: SubscriptionsRemoteDataSource)
@@ -99,6 +100,25 @@ class SubscriptionsRemoteDataSourceImpl
       }
     } catch (e) {
       throw Exception('Failed to create subscription: $e');
+    }
+  }
+
+  @override
+  Future<SubscriptionModel> updateSubscription(String subscriptionId, Map<String, dynamic> updateData) async {
+    try {
+      final response = await _dio.put(
+        '${ApiEndpoints.getSubscriptionById}/$subscriptionId',
+        data: updateData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        return SubscriptionModel.fromJson(data);
+      } else {
+        throw Exception('Failed to update subscription');
+      }
+    } catch (e) {
+      throw Exception('Failed to update subscription: $e');
     }
   }
 }

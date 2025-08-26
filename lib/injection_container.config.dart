@@ -200,6 +200,8 @@ import 'features/subscriptions/domain/usecases/get_subscription_by_id_usecase.da
     as _i815;
 import 'features/subscriptions/domain/usecases/get_subscriptions_for_account_usecase.dart'
     as _i233;
+import 'features/subscriptions/domain/usecases/update_subscription_usecase.dart'
+    as _i676;
 import 'features/subscriptions/presentation/bloc/subscriptions_bloc.dart'
     as _i675;
 
@@ -447,6 +449,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i862.CreateSubscriptionUseCase>(
     () => _i862.CreateSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
   );
+  gh.factory<_i676.UpdateSubscriptionUseCase>(
+    () => _i676.UpdateSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
   gh.factory<_i336.DeleteAccountCustomFieldUseCase>(
     () => _i336.DeleteAccountCustomFieldUseCase(
       gh<_i221.AccountCustomFieldsRepository>(),
@@ -547,6 +552,7 @@ _i174.GetIt $initGetIt(
       gh<_i815.GetSubscriptionByIdUseCase>(),
       gh<_i233.GetSubscriptionsForAccountUseCase>(),
       gh<_i862.CreateSubscriptionUseCase>(),
+      gh<_i676.UpdateSubscriptionUseCase>(),
     ),
   );
   gh.factory<_i795.AccountsBloc>(

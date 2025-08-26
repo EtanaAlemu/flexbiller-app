@@ -38,3 +38,16 @@ class CreateSubscription extends SubscriptionsEvent {
   @override
   List<Object?> get props => [accountId, planName];
 }
+
+class UpdateSubscription extends SubscriptionsEvent {
+  final String subscriptionId;
+  final Map<String, dynamic> updateData;
+
+  const UpdateSubscription({
+    required this.subscriptionId,
+    required this.updateData,
+  });
+
+  @override
+  List<Object?> get props => [subscriptionId, updateData];
+}

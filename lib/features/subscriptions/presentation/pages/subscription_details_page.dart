@@ -5,6 +5,7 @@ import '../bloc/subscriptions_bloc.dart';
 import '../bloc/subscriptions_event.dart';
 import '../bloc/subscriptions_state.dart';
 import '../../domain/entities/subscription.dart';
+import 'update_subscription_page.dart';
 
 class SubscriptionDetailsPage extends StatelessWidget {
   final String subscriptionId;
@@ -77,7 +78,16 @@ class SubscriptionDetailsPage extends StatelessWidget {
     final dateFormat = DateFormat('MMM dd, yyyy HH:mm');
 
     return Scaffold(
-      appBar: AppBar(title: Text('${subscription.productName} Details')),
+      appBar: AppBar(
+        title: Text('${subscription.productName} Details'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () => _editSubscription(context, subscription),
+            tooltip: 'Edit Subscription',
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -98,6 +108,25 @@ class SubscriptionDetailsPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _editSubscription(BuildContext context, Subscription subscription) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => UpdateSubscriptionPage(
+          subscription: subscription,
+        ),
+      ),
+    );
+
+    // If subscription was updated successfully, refresh the details
+    if (result == true) {
+      if (context.mounted) {
+        context.read<SubscriptionsBloc>().add(
+          LoadSubscriptionById(subscriptionId),
+        );
+      }
+    }
   }
 
   Widget _buildStatusCard(BuildContext context, Subscription subscription) {
@@ -361,9 +390,9 @@ class SubscriptionDetailsPage extends StatelessWidget {
             decoration: BoxDecoration(
               color:
                   event['isBlockedBilling'] == true ||
-                      event['isBlockedEntitlement'] == true
-                  ? Colors.red
-                  : Colors.green,
+                          event['isBlockedEntitlement'] == true
+                      ? Colors.red
+                      : Colors.green,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -436,6 +465,8 @@ class SubscriptionDetailsPage extends StatelessWidget {
         return Colors.orange;
       case 'PAUSED':
         return Colors.yellow.shade700;
+      case 'PENDING':
+        return Colors.blue;
       default:
         return Colors.grey;
     }

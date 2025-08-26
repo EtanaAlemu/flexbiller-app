@@ -5,4 +5,5 @@ abstract class SubscriptionsRepository {
   Future<Subscription> getSubscriptionById(String subscriptionId);
   Future<List<Subscription>> getSubscriptionsForAccount(String accountId);
   Future<Subscription> createSubscription(String accountId, String planName);
+  Future<Subscription> updateSubscription(String subscriptionId, Map<String, dynamic> updateData);
 }

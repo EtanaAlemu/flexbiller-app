@@ -93,3 +93,23 @@ class CreateSubscriptionError extends SubscriptionsState {
   @override
   List<Object?> get props => [message];
 }
+
+class UpdateSubscriptionLoading extends SubscriptionsState {}
+
+class UpdateSubscriptionSuccess extends SubscriptionsState {
+  final Subscription subscription;
+
+  const UpdateSubscriptionSuccess(this.subscription);
+
+  @override
+  List<Object?> get props => [subscription];
+}
+
+class UpdateSubscriptionError extends SubscriptionsState {
+  final String message;
+
+  const UpdateSubscriptionError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
