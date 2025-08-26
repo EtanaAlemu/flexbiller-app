@@ -7,4 +7,10 @@ class ApiEndpoints {
   static const String forgotPassword = '/auth/forgot-password';
   static const String changePassword = '/auth/change-password';
   static const String resetPassword = '/auth/reset-password';
+
+  // Subscriptions endpoints
+  static const String recentSubscriptions =
+      '/api/analytics/recent-subscriptions';
+  static const String getSubscriptionById = '/api/subscriptions';
+  static const String getSubscriptionsForAccount = '/api/subscriptions/account';
 }

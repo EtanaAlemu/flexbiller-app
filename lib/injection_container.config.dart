@@ -156,6 +156,8 @@ import 'features/accounts/domain/usecases/get_account_timeline_usecase.dart'
 import 'features/accounts/domain/usecases/get_accounts_usecase.dart' as _i684;
 import 'features/accounts/domain/usecases/get_all_tags_for_account_usecase.dart'
     as _i384;
+import 'features/accounts/domain/usecases/get_child_accounts_usecase.dart'
+    as _i88;
 import 'features/accounts/domain/usecases/get_invoices_usecase.dart' as _i747;
 import 'features/accounts/domain/usecases/get_overdue_state_usecase.dart'
     as _i512;
@@ -184,6 +186,22 @@ import 'features/auth/domain/usecases/forgot_password_usecase.dart' as _i993;
 import 'features/auth/domain/usecases/login_usecase.dart' as _i206;
 import 'features/auth/domain/usecases/reset_password_usecase.dart' as _i1070;
 import 'features/auth/presentation/bloc/auth_bloc.dart' as _i363;
+import 'features/subscriptions/data/datasources/subscriptions_remote_data_source.dart'
+    as _i976;
+import 'features/subscriptions/data/repositories/subscriptions_repository_impl.dart'
+    as _i234;
+import 'features/subscriptions/domain/repositories/subscriptions_repository.dart'
+    as _i154;
+import 'features/subscriptions/domain/usecases/create_subscription_usecase.dart'
+    as _i862;
+import 'features/subscriptions/domain/usecases/get_recent_subscriptions_usecase.dart'
+    as _i825;
+import 'features/subscriptions/domain/usecases/get_subscription_by_id_usecase.dart'
+    as _i815;
+import 'features/subscriptions/domain/usecases/get_subscriptions_for_account_usecase.dart'
+    as _i233;
+import 'features/subscriptions/presentation/bloc/subscriptions_bloc.dart'
+    as _i675;
 
 // initializes the registration of main-scope dependencies inside of GetIt
 _i174.GetIt $initGetIt(
@@ -283,6 +301,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i361.AccountPaymentMethodsRemoteDataSource>(
     () => _i361.AccountPaymentMethodsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
+  gh.factory<_i976.SubscriptionsRemoteDataSource>(
+    () => _i976.SubscriptionsRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
   gh.factory<_i767.AuthRemoteDataSource>(
     () => _i767.AuthRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
@@ -375,6 +396,11 @@ _i174.GetIt $initGetIt(
       gh<_i702.AccountInvoicesRemoteDataSource>(),
     ),
   );
+  gh.factory<_i154.SubscriptionsRepository>(
+    () => _i234.SubscriptionsRepositoryImpl(
+      gh<_i976.SubscriptionsRemoteDataSource>(),
+    ),
+  );
   gh.factory<_i378.AccountInvoicePaymentsRepository>(
     () => _i636.AccountInvoicePaymentsRepositoryImpl(
       gh<_i976.AccountInvoicePaymentsRemoteDataSource>(),
@@ -404,6 +430,22 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i747.GetInvoicesUseCase>(
     () => _i747.GetInvoicesUseCase(gh<_i521.AccountInvoicesRepository>()),
+  );
+  gh.factory<_i825.GetRecentSubscriptionsUseCase>(
+    () => _i825.GetRecentSubscriptionsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i815.GetSubscriptionByIdUseCase>(
+    () => _i815.GetSubscriptionByIdUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
+  gh.factory<_i233.GetSubscriptionsForAccountUseCase>(
+    () => _i233.GetSubscriptionsForAccountUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i862.CreateSubscriptionUseCase>(
+    () => _i862.CreateSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
   );
   gh.factory<_i336.DeleteAccountCustomFieldUseCase>(
     () => _i336.DeleteAccountCustomFieldUseCase(
@@ -499,6 +541,14 @@ _i174.GetIt $initGetIt(
       gh<_i378.AccountInvoicePaymentsRepository>(),
     ),
   );
+  gh.factory<_i675.SubscriptionsBloc>(
+    () => _i675.SubscriptionsBloc(
+      gh<_i825.GetRecentSubscriptionsUseCase>(),
+      gh<_i815.GetSubscriptionByIdUseCase>(),
+      gh<_i233.GetSubscriptionsForAccountUseCase>(),
+      gh<_i862.CreateSubscriptionUseCase>(),
+    ),
+  );
   gh.factory<_i795.AccountsBloc>(
     () => _i795.AccountsBloc(
       getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
@@ -549,6 +599,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i743.CreateChildAccountUseCase>(
     () => _i743.CreateChildAccountUseCase(gh<_i596.ChildAccountRepository>()),
+  );
+  gh.factory<_i88.GetChildAccountsUseCase>(
+    () => _i88.GetChildAccountsUseCase(gh<_i596.ChildAccountRepository>()),
   );
   return getIt;
 }

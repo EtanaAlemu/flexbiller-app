@@ -4,9 +4,7 @@ import '../../../../core/errors/exceptions.dart';
 import '../models/child_account_model.dart';
 
 abstract class ChildAccountRemoteDataSource {
-  Future<ChildAccountModel> createChildAccount(
-    ChildAccountModel childAccount,
-  );
+  Future<ChildAccountModel> createChildAccount(ChildAccountModel childAccount);
   Future<List<ChildAccountModel>> getChildAccounts(String parentAccountId);
 }
 
@@ -79,7 +77,9 @@ class ChildAccountRemoteDataSourceImpl implements ChildAccountRemoteDataSource {
   }
 
   @override
-  Future<List<ChildAccountModel>> getChildAccounts(String parentAccountId) async {
+  Future<List<ChildAccountModel>> getChildAccounts(
+    String parentAccountId,
+  ) async {
     try {
       final response = await _dio.get('/accounts/$parentAccountId/children');
 
@@ -87,17 +87,27 @@ class ChildAccountRemoteDataSourceImpl implements ChildAccountRemoteDataSource {
         final responseData = response.data;
 
         // Handle new response format with children array
-        if (responseData['children'] != null && responseData['children'] is List) {
-          final List<dynamic> childrenData = responseData['children'] as List<dynamic>;
+        if (responseData['children'] != null &&
+            responseData['children'] is List) {
+          final List<dynamic> childrenData =
+              responseData['children'] as List<dynamic>;
           return childrenData
-              .map((item) => ChildAccountModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    ChildAccountModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
         // Handle response format with data array (empty or populated)
-        else if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> childrenData = responseData['data'] as List<dynamic>;
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
+          final List<dynamic> childrenData =
+              responseData['data'] as List<dynamic>;
           return childrenData
-              .map((item) => ChildAccountModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    ChildAccountModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           // Return empty list if no children found
