@@ -52,9 +52,7 @@ class MyApp extends StatelessWidget {
             },
 
             home: const LoginPage(),
-            routes: {
-              '/dashboard': (context) => const DashboardPage(),
-            },
+            routes: {'/dashboard': (context) => const DashboardPage()},
             debugShowCheckedModeBanner: false,
           );
         },

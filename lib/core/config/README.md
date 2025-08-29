@@ -112,3 +112,4 @@ flutter run --flavor development
 flutter run --flavor staging
 flutter run --flavor production
 ```
+

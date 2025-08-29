@@ -277,6 +277,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i569.AccountTagsRemoteDataSource>(
     () => _i569.AccountTagsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
+  gh.factory<_i45.DioClient>(
+    () => _i45.DioClient(gh<_i361.Dio>(), gh<_i558.FlutterSecureStorage>()),
+  );
   gh.factory<_i606.AccountEmailsRemoteDataSource>(
     () => _i606.AccountEmailsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
@@ -328,9 +331,6 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i326.AccountBundlesRemoteDataSource>(
     () => _i326.AccountBundlesRemoteDataSourceImpl(gh<_i361.Dio>()),
-  );
-  gh.factory<_i45.DioClient>(
-    () => _i45.DioClient(gh<_i558.FlutterSecureStorage>()),
   );
   gh.factory<_i734.TagsRepository>(
     () => _i990.TagsRepositoryImpl(gh<_i376.TagsRemoteDataSource>()),

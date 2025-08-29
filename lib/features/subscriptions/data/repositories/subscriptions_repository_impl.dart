@@ -26,7 +26,8 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
   @override
   Future<List<Subscription>> getRecentSubscriptions() async {
     try {
-      final subscriptionModels = await _remoteDataSource.getRecentSubscriptions();
+      final subscriptionModels = await _remoteDataSource
+          .getRecentSubscriptions();
       return subscriptionModels.map((model) => model.toEntity()).toList();
     } catch (e) {
       rethrow;
@@ -44,9 +45,12 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
   }
 
   @override
-  Future<List<Subscription>> getSubscriptionsForAccount(String accountId) async {
+  Future<List<Subscription>> getSubscriptionsForAccount(
+    String accountId,
+  ) async {
     try {
-      final subscriptionModels = await _remoteDataSource.getSubscriptionsForAccount(accountId);
+      final subscriptionModels = await _remoteDataSource
+          .getSubscriptionsForAccount(accountId);
       return subscriptionModels.map((model) => model.toEntity()).toList();
     } catch (e) {
       rethrow;
@@ -64,7 +68,9 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
         planName: planName,
       );
 
-      final subscriptionModel = await _remoteDataSource.createSubscription(request);
+      final subscriptionModel = await _remoteDataSource.createSubscription(
+        request,
+      );
       return subscriptionModel.toEntity();
     } catch (e) {
       rethrow;
@@ -102,12 +108,14 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
     required List<Map<String, String>> customFields,
   }) async {
     try {
-      final customFieldModels = customFields.map((field) =>
-        AddSubscriptionCustomFieldsRequestModel(
-          name: field['name']!,
-          value: field['value']!,
-        )
-      ).toList();
+      final customFieldModels = customFields
+          .map(
+            (field) => AddSubscriptionCustomFieldsRequestModel(
+              name: field['name']!,
+              value: field['value']!,
+            ),
+          )
+          .toList();
 
       final result = await _remoteDataSource.addSubscriptionCustomFields(
         subscriptionId: subscriptionId,
@@ -120,9 +128,12 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
   }
 
   @override
-  Future<List<SubscriptionCustomField>> getSubscriptionCustomFields(String subscriptionId) async {
+  Future<List<SubscriptionCustomField>> getSubscriptionCustomFields(
+    String subscriptionId,
+  ) async {
     try {
-      final customFieldModels = await _remoteDataSource.getSubscriptionCustomFields(subscriptionId);
+      final customFieldModels = await _remoteDataSource
+          .getSubscriptionCustomFields(subscriptionId);
       return customFieldModels.map((model) => model.toEntity()).toList();
     } catch (e) {
       rethrow;
@@ -135,13 +146,15 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
     required List<Map<String, String>> customFields,
   }) async {
     try {
-      final customFieldModels = customFields.map((field) =>
-        UpdateSubscriptionCustomFieldsRequestModel(
-          customFieldId: field['customFieldId']!,
-          name: field['name']!,
-          value: field['value']!,
-        )
-      ).toList();
+      final customFieldModels = customFields
+          .map(
+            (field) => UpdateSubscriptionCustomFieldsRequestModel(
+              customFieldId: field['customFieldId']!,
+              name: field['name']!,
+              value: field['value']!,
+            ),
+          )
+          .toList();
 
       final result = await _remoteDataSource.updateSubscriptionCustomFields(
         subscriptionId: subscriptionId,
@@ -189,7 +202,8 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
         isBlockChange: blockingData['isBlockChange'] ?? true,
         isBlockEntitlement: blockingData['isBlockEntitlement'] ?? true,
         isBlockBilling: blockingData['isBlockBilling'] ?? true,
-        effectiveDate: blockingData['effectiveDate'] ?? DateTime.now().toIso8601String(),
+        effectiveDate:
+            blockingData['effectiveDate'] ?? DateTime.now().toIso8601String(),
         type: blockingData['type'] ?? 'SUBSCRIPTION',
       );
 
@@ -217,15 +231,17 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
     required List<SubscriptionAddonProduct> addonProducts,
   }) async {
     try {
-      final addonProductModels = addonProducts.map((addon) =>
-        CreateSubscriptionWithAddonsRequestModel(
-          accountId: addon.accountId,
-          productName: addon.productName,
-          productCategory: addon.productCategory,
-          billingPeriod: addon.billingPeriod,
-          priceList: addon.priceList,
-        )
-      ).toList();
+      final addonProductModels = addonProducts
+          .map(
+            (addon) => CreateSubscriptionWithAddonsRequestModel(
+              accountId: addon.accountId,
+              productName: addon.productName,
+              productCategory: addon.productCategory,
+              billingPeriod: addon.billingPeriod,
+              priceList: addon.priceList,
+            ),
+          )
+          .toList();
 
       final result = await _remoteDataSource.createSubscriptionWithAddOns(
         addonProducts: addonProductModels,
@@ -243,11 +259,16 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
   }
 
   @override
-  Future<List<SubscriptionAuditLog>> getSubscriptionAuditLogsWithHistory(String subscriptionId) async {
+  Future<List<SubscriptionAuditLog>> getSubscriptionAuditLogsWithHistory(
+    String subscriptionId,
+  ) async {
     try {
-      final result = await _remoteDataSource.getSubscriptionAuditLogsWithHistory(subscriptionId);
-      
-      return result.data.map((model) => _mapAuditLogModelToEntity(model)).toList();
+      final result = await _remoteDataSource
+          .getSubscriptionAuditLogsWithHistory(subscriptionId);
+
+      return result.data
+          .map((model) => _mapAuditLogModelToEntity(model))
+          .toList();
     } catch (e) {
       rethrow;
     }
@@ -263,7 +284,9 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
         accountId: bcdUpdate.accountId,
         bundleId: bcdUpdate.bundleId,
         subscriptionId: bcdUpdate.subscriptionId,
-        startDate: bcdUpdate.startDate.toIso8601String().split('T')[0], // Format as YYYY-MM-DD
+        startDate: bcdUpdate.startDate.toIso8601String().split(
+          'T',
+        )[0], // Format as YYYY-MM-DD
         productName: bcdUpdate.productName,
         productCategory: bcdUpdate.productCategory,
         billingPeriod: bcdUpdate.billingPeriod,
@@ -310,9 +333,13 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
       'billingEndDate': model.billingEndDate,
       'billCycleDayLocal': model.billCycleDayLocal,
       'quantity': model.quantity,
-      'events': model.events?.map((event) => _mapEventModelToMap(event)).toList(),
+      'events': model.events
+          ?.map((event) => _mapEventModelToMap(event))
+          .toList(),
       'priceOverrides': model.priceOverrides,
-      'prices': model.prices?.map((price) => _mapPriceModelToMap(price)).toList(),
+      'prices': model.prices
+          ?.map((price) => _mapPriceModelToMap(price))
+          .toList(),
       'auditLogs': model.auditLogs,
     };
   }
@@ -347,34 +374,52 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
     };
   }
 
-  SubscriptionAuditLog _mapAuditLogModelToEntity(SubscriptionAuditLogModel model) {
+  SubscriptionAuditLog _mapAuditLogModelToEntity(
+    SubscriptionAuditLogModel model,
+  ) {
     return SubscriptionAuditLog(
       changeType: model.changeType,
-      changeDate: model.changeDate != null ? DateTime.parse(model.changeDate!) : null,
+      changeDate: model.changeDate != null
+          ? DateTime.parse(model.changeDate!)
+          : null,
       objectType: model.objectType,
       objectId: model.objectId,
       changedBy: model.changedBy,
       reasonCode: model.reasonCode,
       comments: model.comments,
       userToken: model.userToken,
-      history: model.history != null ? _mapAuditHistoryModelToEntity(model.history!) : null,
+      history: model.history != null
+          ? _mapAuditHistoryModelToEntity(model.history!)
+          : null,
     );
   }
 
-  SubscriptionAuditHistory _mapAuditHistoryModelToEntity(SubscriptionAuditHistoryModel model) {
+  SubscriptionAuditHistory _mapAuditHistoryModelToEntity(
+    SubscriptionAuditHistoryModel model,
+  ) {
     return SubscriptionAuditHistory(
       id: model.id,
-      createdDate: model.createdDate != null ? DateTime.parse(model.createdDate!) : null,
-      updatedDate: model.updatedDate != null ? DateTime.parse(model.updatedDate!) : null,
+      createdDate: model.createdDate != null
+          ? DateTime.parse(model.createdDate!)
+          : null,
+      updatedDate: model.updatedDate != null
+          ? DateTime.parse(model.updatedDate!)
+          : null,
       recordId: model.recordId,
       accountRecordId: model.accountRecordId,
       tenantRecordId: model.tenantRecordId,
       bundleId: model.bundleId,
       externalKey: model.externalKey,
       category: model.category,
-      startDate: model.startDate != null ? DateTime.parse(model.startDate!) : null,
-      bundleStartDate: model.bundleStartDate != null ? DateTime.parse(model.bundleStartDate!) : null,
-      chargedThroughDate: model.chargedThroughDate != null ? DateTime.parse(model.chargedThroughDate!) : null,
+      startDate: model.startDate != null
+          ? DateTime.parse(model.startDate!)
+          : null,
+      bundleStartDate: model.bundleStartDate != null
+          ? DateTime.parse(model.bundleStartDate!)
+          : null,
+      chargedThroughDate: model.chargedThroughDate != null
+          ? DateTime.parse(model.chargedThroughDate!)
+          : null,
       migrated: model.migrated,
       tableName: model.tableName,
       historyTableName: model.historyTableName,

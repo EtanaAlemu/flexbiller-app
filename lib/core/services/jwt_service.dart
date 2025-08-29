@@ -2,19 +2,22 @@ import 'package:injectable/injectable.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../models/jwt_token.dart';
 import '../errors/exceptions.dart';
+import 'package:logger/logger.dart';
 
 @injectable
 class JwtService {
+  final Logger _logger = Logger();
+
   /// Decodes a JWT token and returns the payload as a JwtToken object
   JwtToken decodeToken(String token) {
     try {
       // Decode the JWT token
       final decodedToken = JwtDecoder.decode(token);
-      
+
       // Debug: Log the actual JWT payload structure
-      print('🔍 JWT Payload Structure:');
+      _logger.i('🔍 JWT Payload Structure:');
       decodedToken.forEach((key, value) {
-        print('  $key: $value (${value.runtimeType})');
+        _logger.i('  $key: $value (${value.runtimeType})');
       });
 
       // Convert to JwtToken object

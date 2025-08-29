@@ -44,10 +44,19 @@ class AuthRepositoryImpl implements AuthRepository {
       final authResponse = await _remoteDataSource.login(email, password);
       _logger.i('Login successful, received access token');
 
-      // Store tokens in secure storage
+      // Store tokens and expiration time in secure storage
       await _secureStorage.saveAuthToken(authResponse.accessToken);
       await _secureStorage.saveRefreshToken(authResponse.refreshToken);
-      _logger.i('Tokens stored in secure storage');
+      await _secureStorage.saveTokenExpiration(authResponse.expiresIn);
+      _logger.i('Tokens and expiration time stored in secure storage');
+      
+      // Log token expiration info
+      final expirationTime = await _secureStorage.getTokenExpiration();
+      if (expirationTime != null) {
+        _logger.i('Token expires at: $expirationTime');
+        _logger.i('Current time: ${DateTime.now()}');
+        _logger.i('Token valid for: ${authResponse.expiresIn} seconds');
+      }
 
       // Decode JWT token to extract user information
       _logger.i('Decoding JWT token...');
@@ -71,8 +80,12 @@ class AuthRepositoryImpl implements AuthRepository {
       _logger.i('User Email: ${jwtToken.email ?? 'Unknown'}');
       _logger.i('User Role: ${jwtToken.appMetadata?.role ?? 'Unknown'}');
       _logger.i('Tenant ID: ${jwtToken.userMetadata?.tenantId ?? 'Unknown'}');
-      _logger.i('Company: ${jwtToken.userMetadata?.metadata?.company ?? 'Unknown'}');
-      _logger.i('Department: ${jwtToken.userMetadata?.metadata?.department ?? 'Unknown'}');
+      _logger.i(
+        'Company: ${jwtToken.userMetadata?.metadata?.company ?? 'Unknown'}',
+      );
+      _logger.i(
+        'Department: ${jwtToken.userMetadata?.metadata?.department ?? 'Unknown'}',
+      );
       _logger.i(
         'API Key Available: ${(jwtToken.userMetadata?.apiKey?.isNotEmpty ?? false)}',
       );
@@ -132,9 +145,10 @@ class AuthRepositoryImpl implements AuthRepository {
         name,
       );
 
-      // Store tokens in secure storage
+      // Store tokens and expiration time in secure storage
       await _secureStorage.saveAuthToken(authResponse.accessToken);
       await _secureStorage.saveRefreshToken(authResponse.refreshToken);
+      await _secureStorage.saveTokenExpiration(authResponse.expiresIn);
 
       // Decode JWT token to extract user information
       final jwtToken = _jwtService.decodeToken(authResponse.accessToken);
@@ -179,6 +193,11 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<bool> isAuthenticated() async {
+    return await _secureStorage.hasValidToken();
+  }
+
+  @override
   Future<void> logout() async {
     try {
       await _remoteDataSource.logout();
@@ -199,8 +218,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = await _secureStorage.getAuthToken();
       if (token == null) return null;
 
-      // Check if token is expired
-      if (_jwtService.isTokenExpired(token)) {
+      // Check if token is expired using secure storage
+      if (await _secureStorage.isTokenExpired()) {
         await _secureStorage.clearAuthTokens();
         return null;
       }
@@ -237,17 +256,11 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  @override
-  Future<bool> isAuthenticated() async {
-    try {
-      final token = await _secureStorage.getAuthToken();
-      if (token == null) return false;
 
-      // Check if token is expired
-      return !_jwtService.isTokenExpired(token);
-    } catch (e) {
-      return false;
-    }
+
+  @override
+  Future<Map<String, dynamic>> getTokenStatus() async {
+    return await _secureStorage.getTokenInfo();
   }
 
   @override
@@ -262,9 +275,10 @@ class AuthRepositoryImpl implements AuthRepository {
       // Call remote data source to refresh token
       final authResponse = await _remoteDataSource.refreshToken(refreshToken);
 
-      // Store new tokens
+      // Store new tokens and expiration time
       await _secureStorage.saveAuthToken(authResponse.accessToken);
       await _secureStorage.saveRefreshToken(authResponse.refreshToken);
+      await _secureStorage.saveTokenExpiration(authResponse.expiresIn);
 
       return authResponse;
     } catch (e) {

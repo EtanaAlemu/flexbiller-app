@@ -58,6 +58,58 @@ class SecureStorageService {
   Future<void> clearAuthTokens() async {
     await delete(AppConstants.authTokenKey);
     await delete(AppConstants.refreshTokenKey);
+    await delete(AppConstants.tokenExpirationKey);
+  }
+
+  // Token expiration methods
+  Future<void> saveTokenExpiration(int expiresIn) async {
+    // Calculate expiration timestamp (current time + expires_in seconds)
+    final expirationTimestamp = DateTime.now().millisecondsSinceEpoch + (expiresIn * 1000);
+    await write(AppConstants.tokenExpirationKey, expirationTimestamp.toString());
+  }
+
+  Future<DateTime?> getTokenExpiration() async {
+    final timestamp = await read(AppConstants.tokenExpirationKey);
+    if (timestamp != null) {
+      return DateTime.fromMillisecondsSinceEpoch(int.parse(timestamp));
+    }
+    return null;
+  }
+
+  Future<bool> isTokenExpired() async {
+    final expiration = await getTokenExpiration();
+    if (expiration == null) return true;
+    
+    // Check if current time is past expiration (with 30 second buffer)
+    final now = DateTime.now();
+    final bufferTime = Duration(seconds: 30);
+    return now.isAfter(expiration.subtract(bufferTime));
+  }
+
+  Future<bool> hasValidToken() async {
+    final token = await getAuthToken();
+    if (token == null) return false;
+    
+    return !await isTokenExpired();
+  }
+
+  // Debug method to get token information
+  Future<Map<String, dynamic>> getTokenInfo() async {
+    final token = await getAuthToken();
+    final refreshToken = await getRefreshToken();
+    final expiration = await getTokenExpiration();
+    final isExpired = await isTokenExpired();
+    
+    return {
+      'hasAccessToken': token != null,
+      'hasRefreshToken': refreshToken != null,
+      'expirationTime': expiration?.toIso8601String(),
+      'isExpired': isExpired,
+      'currentTime': DateTime.now().toIso8601String(),
+      'timeUntilExpiration': expiration != null 
+          ? expiration.difference(DateTime.now()).inSeconds 
+          : null,
+    };
   }
   
   // User data methods

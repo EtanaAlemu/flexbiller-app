@@ -27,11 +27,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<AuthResponse> login(String email, String password) async {
     try {
-      _logger.i('🌐 Making login request to: ${dio.options.baseUrl}${ApiEndpoints.login}');
+      _logger.i(
+        '🌐 Making login request to: ${dio.options.baseUrl}${ApiEndpoints.login}',
+      );
       _logger.i('📤 Request data: ${AuthDao.loginBody(email, password)}');
       _logger.i('⏱️ Connection timeout: ${dio.options.connectTimeout}');
       _logger.i('⏱️ Receive timeout: ${dio.options.receiveTimeout}');
-      
+
       final response = await dio.post(
         ApiEndpoints.login,
         data: AuthDao.loginBody(email, password),
@@ -74,7 +76,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       _logger.e('❌ DioException request URL: ${e.requestOptions.uri}');
       _logger.e('❌ DioException request method: ${e.requestOptions.method}');
       _logger.e('❌ DioException request data: ${e.requestOptions.data}');
-      
+
       if (e.response?.statusCode == 401) {
         throw AuthException('Invalid credentials');
       } else if (e.response?.statusCode == 400) {

@@ -10,6 +10,7 @@ class AppConstants {
   // Storage Keys
   static const String authTokenKey = 'auth_token';
   static const String refreshTokenKey = 'refresh_token';
+  static const String tokenExpirationKey = 'token_expiration';
   static const String userIdKey = 'user_id';
   static const String userEmailKey = 'user_email';
 

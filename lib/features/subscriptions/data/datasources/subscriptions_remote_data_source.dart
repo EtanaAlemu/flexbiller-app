@@ -28,18 +28,21 @@ abstract class SubscriptionsRemoteDataSource {
     required Map<String, dynamic> payload,
   });
   Future<void> cancelSubscription(String id);
-  
+
   // Custom Fields methods
   Future<List<SubscriptionCustomFieldModel>> addSubscriptionCustomFields({
     required String subscriptionId,
     required List<AddSubscriptionCustomFieldsRequestModel> customFields,
   });
-  Future<List<SubscriptionCustomFieldModel>> getSubscriptionCustomFields(String subscriptionId);
+  Future<List<SubscriptionCustomFieldModel>> getSubscriptionCustomFields(
+    String subscriptionId,
+  );
   Future<List<SubscriptionCustomFieldModel>> updateSubscriptionCustomFields({
     required String subscriptionId,
     required List<UpdateSubscriptionCustomFieldsRequestModel> customFields,
   });
-  Future<RemoveSubscriptionCustomFieldsResponseModel> removeSubscriptionCustomFields({
+  Future<RemoveSubscriptionCustomFieldsResponseModel>
+  removeSubscriptionCustomFields({
     required String subscriptionId,
     required RemoveSubscriptionCustomFieldsRequestModel request,
   });
@@ -51,12 +54,14 @@ abstract class SubscriptionsRemoteDataSource {
   });
 
   // Create Subscription with Add-ons method
-  Future<CreateSubscriptionWithAddonsResponseModel> createSubscriptionWithAddOns({
+  Future<CreateSubscriptionWithAddonsResponseModel>
+  createSubscriptionWithAddOns({
     required List<CreateSubscriptionWithAddonsRequestModel> addonProducts,
   });
 
   // Get Subscription Audit Logs method
-  Future<SubscriptionAuditLogsResponseModel> getSubscriptionAuditLogsWithHistory(String subscriptionId);
+  Future<SubscriptionAuditLogsResponseModel>
+  getSubscriptionAuditLogsWithHistory(String subscriptionId);
 
   // Update Subscription BCD method
   Future<UpdateSubscriptionBcdResponseModel> updateSubscriptionBcd({
@@ -66,7 +71,8 @@ abstract class SubscriptionsRemoteDataSource {
 }
 
 @Injectable(as: SubscriptionsRemoteDataSource)
-class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource {
+class SubscriptionsRemoteDataSourceImpl
+    implements SubscriptionsRemoteDataSource {
   final Dio _dio;
 
   SubscriptionsRemoteDataSourceImpl(this._dio);
@@ -90,7 +96,9 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
   @override
   Future<SubscriptionModel> getSubscriptionById(String id) async {
     try {
-      final response = await _dio.get('${ApiEndpoints.getSubscriptionById}/$id');
+      final response = await _dio.get(
+        '${ApiEndpoints.getSubscriptionById}/$id',
+      );
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as Map<String, dynamic>;
@@ -104,7 +112,9 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
   }
 
   @override
-  Future<List<SubscriptionModel>> getSubscriptionsForAccount(String accountId) async {
+  Future<List<SubscriptionModel>> getSubscriptionsForAccount(
+    String accountId,
+  ) async {
     try {
       final response = await _dio.get(
         '${ApiEndpoints.getSubscriptionsForAccount}/$accountId',
@@ -192,7 +202,9 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
 
       if (response.statusCode == 201) {
         final data = response.data['data'] as List;
-        return data.map((json) => SubscriptionCustomFieldModel.fromJson(json)).toList();
+        return data
+            .map((json) => SubscriptionCustomFieldModel.fromJson(json))
+            .toList();
       } else {
         throw Exception('Failed to add subscription custom fields');
       }
@@ -202,7 +214,9 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
   }
 
   @override
-  Future<List<SubscriptionCustomFieldModel>> getSubscriptionCustomFields(String subscriptionId) async {
+  Future<List<SubscriptionCustomFieldModel>> getSubscriptionCustomFields(
+    String subscriptionId,
+  ) async {
     try {
       final response = await _dio.get(
         '${ApiEndpoints.subscriptionCustomFields}/$subscriptionId/customFields',
@@ -210,7 +224,9 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List;
-        return data.map((json) => SubscriptionCustomFieldModel.fromJson(json)).toList();
+        return data
+            .map((json) => SubscriptionCustomFieldModel.fromJson(json))
+            .toList();
       } else {
         throw Exception('Failed to load subscription custom fields');
       }
@@ -232,7 +248,9 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List;
-        return data.map((json) => SubscriptionCustomFieldModel.fromJson(json)).toList();
+        return data
+            .map((json) => SubscriptionCustomFieldModel.fromJson(json))
+            .toList();
       } else {
         throw Exception('Failed to update subscription custom fields');
       }
@@ -242,7 +260,8 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
   }
 
   @override
-  Future<RemoveSubscriptionCustomFieldsResponseModel> removeSubscriptionCustomFields({
+  Future<RemoveSubscriptionCustomFieldsResponseModel>
+  removeSubscriptionCustomFields({
     required String subscriptionId,
     required RemoveSubscriptionCustomFieldsRequestModel request,
   }) async {
@@ -286,7 +305,8 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
   }
 
   @override
-  Future<CreateSubscriptionWithAddonsResponseModel> createSubscriptionWithAddOns({
+  Future<CreateSubscriptionWithAddonsResponseModel>
+  createSubscriptionWithAddOns({
     required List<CreateSubscriptionWithAddonsRequestModel> addonProducts,
   }) async {
     try {
@@ -307,7 +327,8 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
   }
 
   @override
-  Future<SubscriptionAuditLogsResponseModel> getSubscriptionAuditLogsWithHistory(String subscriptionId) async {
+  Future<SubscriptionAuditLogsResponseModel>
+  getSubscriptionAuditLogsWithHistory(String subscriptionId) async {
     try {
       final response = await _dio.get(
         '${ApiEndpoints.getSubscriptionAuditLogsWithHistory}/$subscriptionId/auditLogsWithHistory',

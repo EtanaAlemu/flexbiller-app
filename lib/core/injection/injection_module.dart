@@ -7,25 +7,22 @@ import '../constants/app_constants.dart';
 abstract class InjectionModule {
   @singleton
   FlutterSecureStorage get secureStorage => const FlutterSecureStorage(
-        aOptions: AndroidOptions(
-          encryptedSharedPreferences: true,
-        ),
-        iOptions: IOSOptions(
-          accessibility: KeychainAccessibility.first_unlock_this_device,
-        ),
-      );
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
 
   @singleton
   Dio get dio => Dio(
-        BaseOptions(
-          baseUrl: AppConstants.baseUrl,
-          connectTimeout: Duration(milliseconds: AppConstants.connectionTimeout),
-          receiveTimeout: Duration(milliseconds: AppConstants.receiveTimeout),
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
-      );
+    BaseOptions(
+      baseUrl: AppConstants.baseUrl,
+      connectTimeout: Duration(milliseconds: AppConstants.connectionTimeout),
+      receiveTimeout: Duration(milliseconds: AppConstants.receiveTimeout),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ),
+  );
 }
-

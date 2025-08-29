@@ -37,3 +37,4 @@ class EnvConfig {
   static bool get enableLogging => kDebugMode;
   static bool get enableAnalytics => kReleaseMode;
 }
+
