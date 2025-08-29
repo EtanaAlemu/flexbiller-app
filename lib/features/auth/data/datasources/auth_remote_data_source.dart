@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 import '../models/auth_response.dart';
 import '../../../../core/models/api_response.dart';
 import '../../../../core/errors/exceptions.dart';
@@ -19,12 +20,18 @@ abstract class AuthRemoteDataSource {
 @Injectable(as: AuthRemoteDataSource)
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final Dio dio;
+  final Logger _logger = Logger();
 
   AuthRemoteDataSourceImpl(this.dio);
 
   @override
   Future<AuthResponse> login(String email, String password) async {
     try {
+      _logger.i('🌐 Making login request to: ${dio.options.baseUrl}${ApiEndpoints.login}');
+      _logger.i('📤 Request data: ${AuthDao.loginBody(email, password)}');
+      _logger.i('⏱️ Connection timeout: ${dio.options.connectTimeout}');
+      _logger.i('⏱️ Receive timeout: ${dio.options.receiveTimeout}');
+      
       final response = await dio.post(
         ApiEndpoints.login,
         data: AuthDao.loginBody(email, password),
@@ -59,6 +66,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
     } on DioException catch (e) {
+      _logger.e('❌ DioException caught: ${e.type}');
+      _logger.e('❌ DioException message: ${e.message}');
+      _logger.e('❌ DioException error: ${e.error}');
+      _logger.e('❌ DioException response status: ${e.response?.statusCode}');
+      _logger.e('❌ DioException response data: ${e.response?.data}');
+      _logger.e('❌ DioException request URL: ${e.requestOptions.uri}');
+      _logger.e('❌ DioException request method: ${e.requestOptions.method}');
+      _logger.e('❌ DioException request data: ${e.requestOptions.data}');
+      
       if (e.response?.statusCode == 401) {
         throw AuthException('Invalid credentials');
       } else if (e.response?.statusCode == 400) {

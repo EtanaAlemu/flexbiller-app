@@ -25,6 +25,17 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<User> login(String email, String password) async {
     try {
       _logger.i('Starting login process for email: $email');
+      
+      // Debug: Check if we can access the remote data source
+      _logger.i('Remote data source type: ${_remoteDataSource.runtimeType}');
+      
+      // Debug: Check if we can access the Dio client
+      if (_remoteDataSource is AuthRemoteDataSourceImpl) {
+        final dioClient = (_remoteDataSource as AuthRemoteDataSourceImpl).dio;
+        _logger.i('Dio client base URL: ${dioClient.options.baseUrl}');
+        _logger.i('Dio client connection timeout: ${dioClient.options.connectTimeout}');
+        _logger.i('Dio client receive timeout: ${dioClient.options.receiveTimeout}');
+      }
 
       final authResponse = await _remoteDataSource.login(email, password);
       _logger.i('Login successful, received access token');
