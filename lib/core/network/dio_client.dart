@@ -45,8 +45,18 @@ class DioClient {
           final token = await _secureStorage.read(
             key: AppConstants.authTokenKey,
           );
+          _logger.d(
+            '🔑 Dio Interceptor - Token retrieved: ${token != null ? 'YES (${token.length} chars)' : 'NO'}',
+          );
+          _logger.d(
+            '🔑 Dio Interceptor - Looking for key: ${AppConstants.authTokenKey}',
+          );
+
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
+            _logger.d(
+              '🔑 Dio Interceptor - Authorization header added: Bearer ${token.substring(0, 10)}...',
+            );
 
             // Add API key and secret from JWT metadata if available
             try {
@@ -66,6 +76,10 @@ class DioClient {
             } catch (e) {
               // JWT decode failed, continue without API headers
             }
+          } else {
+            _logger.w(
+              '⚠️ Dio Interceptor - No token found, request will proceed without authorization',
+            );
           }
           return handler.next(options);
         },

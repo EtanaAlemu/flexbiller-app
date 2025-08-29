@@ -6,6 +6,8 @@ import '../../../../core/models/api_response.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/dao/auth_dao.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/network/dio_client.dart';
 
 abstract class AuthRemoteDataSource {
   Future<AuthResponse> login(String email, String password);
@@ -19,22 +21,27 @@ abstract class AuthRemoteDataSource {
 
 @Injectable(as: AuthRemoteDataSource)
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  final Dio dio;
+  final DioClient _dioClient;
   final Logger _logger = Logger();
 
-  AuthRemoteDataSourceImpl(this.dio);
+  AuthRemoteDataSourceImpl(this._dioClient);
+
+  // Public getter for DioClient to allow access from repository for debugging
+  DioClient get dioClient => _dioClient;
 
   @override
   Future<AuthResponse> login(String email, String password) async {
     try {
       _logger.i(
-        '🌐 Making login request to: ${dio.options.baseUrl}${ApiEndpoints.login}',
+        '🌐 Making login request to: ${_dioClient.dio.options.baseUrl}${ApiEndpoints.login}',
       );
       _logger.i('📤 Request data: ${AuthDao.loginBody(email, password)}');
-      _logger.i('⏱️ Connection timeout: ${dio.options.connectTimeout}');
-      _logger.i('⏱️ Receive timeout: ${dio.options.receiveTimeout}');
+      _logger.i(
+        '⏱️ Connection timeout: ${_dioClient.dio.options.connectTimeout}',
+      );
+      _logger.i('⏱️ Receive timeout: ${_dioClient.dio.options.receiveTimeout}');
 
-      final response = await dio.post(
+      final response = await _dioClient.dio.post(
         ApiEndpoints.login,
         data: AuthDao.loginBody(email, password),
       );
@@ -103,7 +110,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     String name,
   ) async {
     try {
-      final response = await dio.post(
+      final response = await _dioClient.dio.post(
         ApiEndpoints.register,
         data: AuthDao.registerBody(email, password, name),
       );
@@ -159,7 +166,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> logout() async {
     try {
-      final response = await dio.post(ApiEndpoints.logout);
+      final response = await _dioClient.dio.post(ApiEndpoints.logout);
       if (response.statusCode == 204) {
         // Handle 204 No Content
         return;
@@ -190,7 +197,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<AuthResponse> refreshToken(String refreshToken) async {
     try {
-      final response = await dio.post(
+      final response = await _dioClient.dio.post(
         ApiEndpoints.refreshToken,
         data: AuthDao.refreshTokenBody(refreshToken),
       );
@@ -246,7 +253,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> forgotPassword(String email) async {
     try {
-      final response = await dio.post(
+      final response = await _dioClient.dio.post(
         ApiEndpoints.forgotPassword,
         data: AuthDao.forgotPasswordBody(email),
       );
@@ -294,60 +301,95 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> changePassword(String oldPassword, String newPassword) async {
+    _logger.i('🌐 AuthRemoteDataSource.changePassword() - Starting API call');
+    _logger.d(
+      '📝 API Input: Old password length: ${oldPassword.length}, New password length: ${newPassword.length}',
+    );
+    _logger.i('🔗 Endpoint: ${ApiEndpoints.changePassword}');
+
     try {
-      final response = await dio.post(
+      _logger.i('📤 Making POST request to change password endpoint...');
+      final response = await _dioClient.dio.post(
         ApiEndpoints.changePassword,
         data: AuthDao.changePasswordBody(oldPassword, newPassword),
       );
 
+      _logger.i('📥 Response received - Status: ${response.statusCode}');
+      _logger.d('📊 Response Headers: ${response.headers}');
+
       if (response.statusCode == 200) {
+        _logger.i('✅ HTTP 200 - Processing successful response');
         final apiResponse = ApiResponse<Map<String, dynamic>>.fromJson(
           response.data,
           (json) => json,
         );
 
+        _logger.d('📋 API Response: ${apiResponse.toJson((data) => data)}');
+
         if (apiResponse.success) {
-          // Password changed successfully
+          _logger.i('🎉 Password changed successfully via API');
           return;
         } else {
+          _logger.w(
+            '⚠️ API returned success: false - Message: ${apiResponse.message}',
+          );
           throw ServerException(
             apiResponse.message ?? 'Failed to change password',
             response.statusCode,
           );
         }
       } else {
+        _logger.w('⚠️ Non-200 status code: ${response.statusCode}');
         throw ServerException(
           'Password change failed with status: ${response.statusCode}',
           response.statusCode,
         );
       }
     } on DioException catch (e) {
+      _logger.e(
+        '❌ DioException during password change: ${e.type} - ${e.message}',
+      );
+      _logger.d('🔗 Request URL: ${e.requestOptions.uri}');
+      _logger.d('📊 Response Status: ${e.response?.statusCode}');
+      _logger.d('📥 Response Data: ${e.response?.data}');
+
       if (e.response?.statusCode == 401) {
         if (e.response?.data?['error'] == 'Unauthorized') {
+          _logger.e('🔒 Unauthorized: No authorization token provided');
           throw AuthException('No authorization token provided');
         } else {
+          _logger.e('🔒 Unauthorized: Invalid or expired token');
           throw AuthException('Invalid or expired token');
         }
       } else if (e.response?.statusCode == 400) {
+        _logger.e('❌ Bad Request: Invalid password format');
         throw ValidationException('Invalid password format');
       } else if (e.response?.statusCode == 500) {
         final errorData = e.response?.data;
         if (errorData != null && errorData['error'] == 'CONNECTION_ERROR') {
+          _logger.e('❌ Server Error: Current password is incorrect');
           throw AuthException('Current password is incorrect');
         } else {
+          _logger.e(
+            '❌ Server Error: ${errorData?['error'] ?? 'Unknown server error'}',
+          );
           throw ServerException('Server error occurred');
         }
       } else if (e.type == DioExceptionType.connectionTimeout) {
+        _logger.e('⏰ Connection Timeout');
         throw NetworkException('Connection timeout');
       } else if (e.type == DioExceptionType.receiveTimeout) {
+        _logger.e('⏰ Receive Timeout');
         throw NetworkException('Request timeout');
       } else {
+        _logger.e('❌ Network Error: ${e.message}');
         throw ServerException(
           e.message ?? 'Network error occurred',
           e.response?.statusCode,
         );
       }
     } catch (e) {
+      _logger.e('❌ Unexpected error during password change: $e');
       throw ServerException('Unexpected error: $e');
     }
   }
@@ -355,7 +397,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> resetPassword(String token, String newPassword) async {
     try {
-      final response = await dio.post(
+      final response = await _dioClient.dio.post(
         ApiEndpoints.resetPassword,
         data: AuthDao.resetPasswordBody(token, newPassword),
       );

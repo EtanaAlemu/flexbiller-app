@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/forgot_password_usecase.dart';
@@ -16,6 +17,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ForgotPasswordUseCase _forgotPasswordUseCase;
   final ChangePasswordUseCase _changePasswordUseCase;
   final ResetPasswordUseCase _resetPasswordUseCase;
+  final Logger _logger = Logger();
 
   AuthBloc({
     required LoginUseCase loginUseCase,
@@ -185,16 +187,47 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     ChangePasswordRequested event,
     Emitter<AuthState> emit,
   ) async {
+    _logger.i(
+      '🔄 Change Password Requested - Starting password change process',
+    );
+    _logger.d(
+      '📝 Change Password Details: Old password length: ${event.oldPassword.length}, New password length: ${event.newPassword.length}',
+    );
+
     emit(ChangePasswordLoading());
+    _logger.i('⏳ Change Password Loading State Emitted');
+
     try {
+      _logger.i('🚀 Executing ChangePasswordUseCase...');
       await _changePasswordUseCase(event.oldPassword, event.newPassword);
+
+      _logger.i('✅ Password changed successfully via API');
       emit(
         ChangePasswordSuccess(
           'Password changed successfully. Please log in with your new password.',
         ),
       );
+      _logger.i('🎉 ChangePasswordSuccess State Emitted');
+    } on AuthException catch (e) {
+      _logger.e('❌ AuthException during password change: ${e.message}');
+      emit(ChangePasswordFailure(e.message));
+      _logger.i('💥 ChangePasswordFailure State Emitted (AuthException)');
+    } on ValidationException catch (e) {
+      _logger.e('❌ ValidationException during password change: ${e.message}');
+      emit(ChangePasswordFailure(e.message));
+      _logger.i('💥 ChangePasswordFailure State Emitted (ValidationException)');
+    } on NetworkException catch (e) {
+      _logger.e('❌ NetworkException during password change: ${e.message}');
+      emit(ChangePasswordFailure(e.message));
+      _logger.i('💥 ChangePasswordFailure State Emitted (NetworkException)');
+    } on ServerException catch (e) {
+      _logger.e('❌ ServerException during password change: ${e.message}');
+      emit(ChangePasswordFailure(e.message));
+      _logger.i('💥 ChangePasswordFailure State Emitted (ServerException)');
     } catch (e) {
+      _logger.e('❌ Unexpected error during password change: $e');
       emit(ChangePasswordFailure(e.toString()));
+      _logger.i('💥 ChangePasswordFailure State Emitted (Unexpected Error)');
     }
   }
 

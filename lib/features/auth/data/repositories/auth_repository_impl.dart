@@ -35,13 +35,14 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Debug: Check if we can access the Dio client
       if (_remoteDataSource is AuthRemoteDataSourceImpl) {
-        final dioClient = (_remoteDataSource as AuthRemoteDataSourceImpl).dio;
-        _logger.i('Dio client base URL: ${dioClient.options.baseUrl}');
+        final dioClient =
+            (_remoteDataSource as AuthRemoteDataSourceImpl).dioClient;
+        _logger.i('Dio client base URL: ${dioClient.dio.options.baseUrl}');
         _logger.i(
-          'Dio client connection timeout: ${dioClient.options.connectTimeout}',
+          'Dio client connection timeout: ${dioClient.dio.options.connectTimeout}',
         );
         _logger.i(
-          'Dio client receive timeout: ${dioClient.options.receiveTimeout}',
+          'Dio client receive timeout: ${dioClient.dio.options.receiveTimeout}',
         );
       }
 
@@ -342,9 +343,19 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> changePassword(String oldPassword, String newPassword) async {
+    _logger.i(
+      '🏗️ AuthRepository.changePassword() - Starting password change operation',
+    );
+    _logger.d(
+      '📝 Repository Input: Old password length: ${oldPassword.length}, New password length: ${newPassword.length}',
+    );
+
     try {
+      _logger.i('📡 Calling RemoteDataSource.changePassword()...');
       await _remoteDataSource.changePassword(oldPassword, newPassword);
+      _logger.i('✅ AuthRepository.changePassword() completed successfully');
     } catch (e) {
+      _logger.e('❌ AuthRepository.changePassword() failed: $e');
       rethrow;
     }
   }
