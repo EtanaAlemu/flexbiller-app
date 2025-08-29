@@ -40,19 +40,45 @@ class SecureStorageService {
 
   // Auth token specific methods
   Future<void> saveAuthToken(String token) async {
-    await write(AppConstants.authTokenKey, token);
+    try {
+      await write(AppConstants.authTokenKey, token);
+      print('DEBUG: Access token saved successfully');
+    } catch (e) {
+      print('DEBUG: Error saving access token: $e');
+      rethrow;
+    }
   }
 
   Future<String?> getAuthToken() async {
-    return await read(AppConstants.authTokenKey);
+    try {
+      final token = await read(AppConstants.authTokenKey);
+      print('DEBUG: Retrieved access token: ${token != null ? 'YES' : 'NO'}');
+      return token;
+    } catch (e) {
+      print('DEBUG: Error retrieving access token: $e');
+      return null;
+    }
   }
 
   Future<void> saveRefreshToken(String token) async {
-    await write(AppConstants.refreshTokenKey, token);
+    try {
+      await write(AppConstants.refreshTokenKey, token);
+      print('DEBUG: Refresh token saved successfully');
+    } catch (e) {
+      print('DEBUG: Error saving refresh token: $e');
+      rethrow;
+    }
   }
 
   Future<String?> getRefreshToken() async {
-    return await read(AppConstants.refreshTokenKey);
+    try {
+      final token = await read(AppConstants.refreshTokenKey);
+      print('DEBUG: Retrieved refresh token: ${token != null ? 'YES' : 'NO'}');
+      return token;
+    } catch (e) {
+      print('DEBUG: Error retrieving refresh token: $e');
+      return null;
+    }
   }
 
   Future<void> clearAuthTokens() async {
@@ -63,13 +89,19 @@ class SecureStorageService {
 
   // Token expiration methods
   Future<void> saveTokenExpiration(int expiresIn) async {
-    // Calculate expiration timestamp (current time + expires_in seconds)
-    final expirationTimestamp =
-        DateTime.now().millisecondsSinceEpoch + (expiresIn * 1000);
-    await write(
-      AppConstants.tokenExpirationKey,
-      expirationTimestamp.toString(),
-    );
+    try {
+      // Calculate expiration timestamp (current time + expires_in seconds)
+      final expirationTimestamp =
+          DateTime.now().millisecondsSinceEpoch + (expiresIn * 1000);
+      await write(
+        AppConstants.tokenExpirationKey,
+        expirationTimestamp.toString(),
+      );
+      print('DEBUG: Token expiration saved successfully');
+    } catch (e) {
+      print('DEBUG: Error saving token expiration: $e');
+      rethrow;
+    }
   }
 
   Future<DateTime?> getTokenExpiration() async {

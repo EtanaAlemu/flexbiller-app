@@ -45,10 +45,28 @@ class AuthRepositoryImpl implements AuthRepository {
       _logger.i('Login successful, received access token');
 
       // Store tokens and expiration time in secure storage
+      _logger.i('Saving access token...');
       await _secureStorage.saveAuthToken(authResponse.accessToken);
+      _logger.i('Access token saved');
+      
+      _logger.i('Saving refresh token...');
       await _secureStorage.saveRefreshToken(authResponse.refreshToken);
+      _logger.i('Refresh token saved');
+      
+      _logger.i('Saving token expiration...');
       await _secureStorage.saveTokenExpiration(authResponse.expiresIn);
-      _logger.i('Tokens and expiration time stored in secure storage');
+      _logger.i('Token expiration saved');
+      
+      _logger.i('All tokens and expiration time stored in secure storage');
+      
+      // Verify tokens were saved
+      final savedAccessToken = await _secureStorage.getAuthToken();
+      final savedRefreshToken = await _secureStorage.getRefreshToken();
+      final savedExpiration = await _secureStorage.getTokenExpiration();
+      
+      _logger.i('Verification - Saved access token: ${savedAccessToken != null ? 'YES' : 'NO'}');
+      _logger.i('Verification - Saved refresh token: ${savedRefreshToken != null ? 'YES' : 'NO'}');
+      _logger.i('Verification - Saved expiration: ${savedExpiration != null ? 'YES' : 'NO'}');
 
       // Log token expiration info
       final expirationTime = await _secureStorage.getTokenExpiration();

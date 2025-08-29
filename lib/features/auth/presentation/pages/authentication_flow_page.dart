@@ -72,7 +72,7 @@ class _AuthenticationFlowPageState extends State<AuthenticationFlowPage> {
       _isLoading = true;
       _statusMessage = 'Login successful, checking authentication...';
     });
-    
+
     // Add a small delay to ensure tokens are fully written to secure storage
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
