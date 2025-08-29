@@ -11,12 +11,16 @@ class JwtToken {
   final int? iat;
   final String? email;
   final String? phone;
+  @JsonKey(name: 'app_metadata')
   final AppMetadata? appMetadata;
+  @JsonKey(name: 'user_metadata')
   final UserMetadata? userMetadata;
   final String? role;
   final String? aal;
   final List<Amr>? amr;
+  @JsonKey(name: 'session_id')
   final String? sessionId;
+  @JsonKey(name: 'is_anonymous')
   final bool? isAnonymous;
 
   JwtToken({
@@ -51,17 +55,18 @@ class JwtToken {
     if (exp == null) return null;
     return DateTime.fromMillisecondsSinceEpoch(exp! * 1000);
   }
-  
+
   DateTime? get issuedAtDate {
     if (iat == null) return null;
     return DateTime.fromMillisecondsSinceEpoch(iat! * 1000);
   }
 
   String get fullName {
-    if (userMetadata?.firstName == null || userMetadata?.lastName == null) return '';
+    if (userMetadata?.firstName == null || userMetadata?.lastName == null)
+      return '';
     return '${userMetadata!.firstName} ${userMetadata!.lastName}';
   }
-  
+
   String get company => userMetadata?.metadata?.company ?? '';
   String get department => userMetadata?.metadata?.department ?? '';
   String get location => userMetadata?.metadata?.location ?? '';
@@ -78,14 +83,10 @@ class AppMetadata {
   final String? provider;
   final List<String>? providers;
   final String? role;
+  @JsonKey(name: 'role_id')
   final String? roleId;
 
-  AppMetadata({
-    this.provider,
-    this.providers,
-    this.role,
-    this.roleId,
-  });
+  AppMetadata({this.provider, this.providers, this.role, this.roleId});
 
   factory AppMetadata.fromJson(Map<String, dynamic> json) =>
       _$AppMetadataFromJson(json);
@@ -96,11 +97,16 @@ class AppMetadata {
 class UserMetadata {
   final String? apiKey;
   final String? apiSecret;
+  @JsonKey(name: 'emailVerified')
   final bool? emailVerified;
+  @JsonKey(name: 'firstName')
   final String? firstName;
+  @JsonKey(name: 'lastName')
   final String? lastName;
   final UserMetadataDetails? metadata;
+  @JsonKey(name: 'roleId')
   final String? roleId;
+  @JsonKey(name: 'tenantId')
   final String? tenantId;
 
   UserMetadata({
