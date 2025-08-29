@@ -90,6 +90,20 @@ class AuthRepositoryImpl implements AuthRepository {
       return user;
     } catch (e) {
       _logger.e('Login failed: $e');
+
+      // Add more detailed error logging for debugging
+      if (e is ServerException) {
+        _logger.e(
+          'Server Exception - Status: ${e.statusCode}, Message: ${e.message}',
+        );
+      } else if (e is NetworkException) {
+        _logger.e('Network Exception - Message: ${e.message}');
+      } else if (e is AuthException) {
+        _logger.e('Auth Exception - Message: ${e.message}');
+      } else {
+        _logger.e('Unexpected Exception Type: ${e.runtimeType} - Message: $e');
+      }
+
       rethrow;
     }
   }
