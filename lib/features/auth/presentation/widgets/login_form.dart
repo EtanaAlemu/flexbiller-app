@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/localization/app_strings.dart';
+import '../../../../core/config/build_config.dart';
 import '../bloc/auth_bloc.dart';
 import '../pages/forgot_password_page.dart';
 import '../pages/change_password_page.dart';
@@ -18,16 +19,28 @@ class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-populate with environment-specific credentials
+    if (BuildConfig.isDevelopment) {
+      _emailController.text = BuildConfig.email;
+      _passwordController.text = BuildConfig.password;
+    }
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
-  void _submitForm() {
+  void _submitForm(BuildContext context) {
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
         LoginRequested(
@@ -99,9 +112,7 @@ class _LoginFormState extends State<LoginForm> {
           }
         },
         builder: (context, state) {
-          if (state is AuthLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          final isLoading = state is AuthLoading || state is LoginLoading;
 
           return Form(
             key: _formKey,
@@ -132,15 +143,16 @@ class _LoginFormState extends State<LoginForm> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                Text(
-                  AppStrings.testCredentials,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  enabled: !isLoading,
+                  onFieldSubmitted: (_) {
+                    if (!isLoading) {
+                      _passwordFocusNode.requestFocus();
+                    }
+                  },
                   decoration: InputDecoration(
                     labelText: AppStrings.email,
                     hintText: AppStrings.emailHint,
@@ -161,7 +173,15 @@ class _LoginFormState extends State<LoginForm> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
+                  focusNode: _passwordFocusNode,
                   obscureText: _obscurePassword,
+                  enabled: !isLoading,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) {
+                    if (!isLoading) {
+                      _submitForm(context);
+                    }
+                  },
                   decoration: InputDecoration(
                     labelText: AppStrings.password,
                     hintText: AppStrings.passwordHint,
@@ -172,11 +192,13 @@ class _LoginFormState extends State<LoginForm> {
                             ? Icons.visibility
                             : Icons.visibility_off,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
                     ),
                   ),
                   validator: (value) {
@@ -191,43 +213,59 @@ class _LoginFormState extends State<LoginForm> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _submitForm,
-                  child: Text(
-                    AppStrings.loginButton,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  onPressed: isLoading ? null : () => _submitForm(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
+                  child: isLoading
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.onPrimary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Logging in...',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          AppStrings.loginButton,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const ForgotPasswordPage(),
-                      ),
-                    );
-                  },
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const ForgotPasswordPage(),
+                            ),
+                          );
+                        },
                   child: Text(AppStrings.forgotPassword),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const ChangePasswordPage(),
-                      ),
-                    );
-                  },
-                  child: Text(AppStrings.changePassword),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    // TODO: Navigate to register page
-                  },
-                  child: Text(AppStrings.dontHaveAccount),
                 ),
               ],
             ),
