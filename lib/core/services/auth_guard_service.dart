@@ -129,7 +129,13 @@ class AuthGuardService {
       
       // Check if we have valid tokens
       final hasValidToken = await _secureStorage.hasValidToken();
+      _logger.i('Token validation check: hasValidToken = $hasValidToken');
+      
       if (!hasValidToken) {
+        // Get detailed token info for debugging
+        final tokenInfo = await _secureStorage.getTokenInfo();
+        _logger.i('Token info for debugging: $tokenInfo');
+        
         _logger.i('No valid tokens, proceeding to email/password login');
         return {
           'success': false,

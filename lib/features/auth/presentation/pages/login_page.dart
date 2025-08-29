@@ -5,7 +5,7 @@ import '../widgets/login_form.dart';
 
 class LoginPage extends StatelessWidget {
   final VoidCallback? onLoginSuccess;
-  
+
   const LoginPage({Key? key, this.onLoginSuccess}) : super(key: key);
 
   @override

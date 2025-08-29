@@ -10,7 +10,7 @@ import '../../../../injection_container.dart';
 
 class LoginForm extends StatefulWidget {
   final VoidCallback? onLoginSuccess;
-  
+
   const LoginForm({Key? key, this.onLoginSuccess}) : super(key: key);
 
   @override

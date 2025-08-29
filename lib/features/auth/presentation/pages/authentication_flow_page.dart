@@ -18,7 +18,7 @@ class AuthenticationFlowPage extends StatefulWidget {
 class _AuthenticationFlowPageState extends State<AuthenticationFlowPage> {
   final Logger _logger = Logger();
   late final AuthGuardService _authGuard;
-  
+
   bool _isLoading = true;
   bool _shouldShowLogin = false;
   String _statusMessage = 'Checking authentication...';
@@ -40,17 +40,20 @@ class _AuthenticationFlowPageState extends State<AuthenticationFlowPage> {
   Future<void> _checkAuthentication() async {
     try {
       _logger.i('Starting authentication check...');
-      
+
       final authResult = await _authGuard.authenticateWithFallback();
-      
+
       if (mounted) {
         setState(() {
           _isLoading = false;
           _shouldShowLogin = authResult['requiresLogin'] == true;
-          _statusMessage = authResult['message'] ?? 'Authentication check completed';
+          _statusMessage =
+              authResult['message'] ?? 'Authentication check completed';
         });
-        
-        _logger.i('Authentication result: ${authResult['method']} - ${authResult['message']}');
+
+        _logger.i(
+          'Authentication result: ${authResult['method']} - ${authResult['message']}',
+        );
       }
     } catch (e) {
       _logger.e('Error during authentication check: $e');
@@ -69,7 +72,13 @@ class _AuthenticationFlowPageState extends State<AuthenticationFlowPage> {
       _isLoading = true;
       _statusMessage = 'Login successful, checking authentication...';
     });
-    _checkAuthentication();
+    
+    // Add a small delay to ensure tokens are fully written to secure storage
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _checkAuthentication();
+      }
+    });
   }
 
   @override
