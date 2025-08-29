@@ -12,7 +12,7 @@ class DashboardPage extends StatelessWidget {
         title: const Text('Dashboard'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,11 +31,14 @@ class DashboardPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            Expanded(
+            SizedBox(
+              height: 400, // Fixed height for the grid
               child: GridView.count(
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
                   _buildFeatureCard(
                     context,
