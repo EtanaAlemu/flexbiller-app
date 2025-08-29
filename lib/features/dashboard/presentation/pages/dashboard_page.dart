@@ -32,13 +32,14 @@ class DashboardPage extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             SizedBox(
-              height: 400, // Fixed height for the grid
+              height: 300, // Reduced height for better fit
               child: GridView.count(
                 crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+                crossAxisSpacing: 12, // Reduced spacing
+                mainAxisSpacing: 12, // Reduced spacing
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 1.2, // Adjust aspect ratio for better fit
                 children: [
                   _buildFeatureCard(
                     context,
@@ -122,28 +123,31 @@ class DashboardPage extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(16.0), // Reduced padding
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min, // Use minimum space needed
             children: [
-              Icon(icon, size: 48, color: color),
-              const SizedBox(height: 16),
+              Icon(icon, size: 32, color: color), // Reduced icon size
+              const SizedBox(height: 8), // Reduced spacing
               Text(
                 title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.7),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith( // Smaller text
+                  fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 1, // Limit to 1 line
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4), // Reduced spacing
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith( // Smaller text
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2, // Limit to 2 lines
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
