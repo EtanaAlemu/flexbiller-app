@@ -132,7 +132,8 @@ class DashboardPage extends StatelessWidget {
               const SizedBox(height: 8), // Reduced spacing
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith( // Smaller text
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  // Smaller text
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
@@ -142,8 +143,11 @@ class DashboardPage extends StatelessWidget {
               const SizedBox(height: 4), // Reduced spacing
               Text(
                 subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith( // Smaller text
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  // Smaller text
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.7),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2, // Limit to 2 lines
