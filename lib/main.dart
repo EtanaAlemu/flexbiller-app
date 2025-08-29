@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'injection_container.dart' as di;
 import 'features/auth/presentation/pages/login_page.dart';
+import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/localization/app_localizations.dart';
@@ -51,6 +52,9 @@ class MyApp extends StatelessWidget {
             },
 
             home: const LoginPage(),
+            routes: {
+              '/dashboard': (context) => const DashboardPage(),
+            },
             debugShowCheckedModeBanner: false,
           );
         },
