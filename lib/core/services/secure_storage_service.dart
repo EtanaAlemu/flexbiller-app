@@ -104,6 +104,20 @@ class SecureStorageService {
     }
   }
 
+  // Save token expiration using actual DateTime
+  Future<void> saveTokenExpirationDateTime(DateTime expirationTime) async {
+    try {
+      await write(
+        AppConstants.tokenExpirationKey,
+        expirationTime.millisecondsSinceEpoch.toString(),
+      );
+      print('DEBUG: Token expiration DateTime saved successfully');
+    } catch (e) {
+      print('DEBUG: Error saving token expiration DateTime: $e');
+      rethrow;
+    }
+  }
+
   Future<DateTime?> getTokenExpiration() async {
     final timestamp = await read(AppConstants.tokenExpirationKey);
     if (timestamp != null) {

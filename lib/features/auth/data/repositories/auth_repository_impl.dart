@@ -44,42 +44,46 @@ class AuthRepositoryImpl implements AuthRepository {
       final authResponse = await _remoteDataSource.login(email, password);
       _logger.i('Login successful, received access token');
 
-      // Store tokens and expiration time in secure storage
+      // Store tokens in secure storage
       _logger.i('Saving access token...');
       await _secureStorage.saveAuthToken(authResponse.accessToken);
       _logger.i('Access token saved');
-      
+
       _logger.i('Saving refresh token...');
       await _secureStorage.saveRefreshToken(authResponse.refreshToken);
       _logger.i('Refresh token saved');
-      
-      _logger.i('Saving token expiration...');
-      await _secureStorage.saveTokenExpiration(authResponse.expiresIn);
+
+      // Decode JWT token first to get actual expiration time
+      _logger.i('Decoding JWT token to get actual expiration time...');
+      final jwtToken = _jwtService.decodeToken(authResponse.accessToken);
+      _logger.i('JWT token decoded successfully');
+
+      // Use JWT's actual expiration time instead of calculating from expires_in
+      final actualExpirationTime = DateTime.fromMillisecondsSinceEpoch(jwtToken.exp! * 1000);
+      _logger.i('JWT expiration time: $actualExpirationTime');
+      _logger.i('Current time: ${DateTime.now()}');
+      _logger.i('Token valid for: ${authResponse.expiresIn} seconds');
+
+      _logger.i('Saving actual JWT expiration time...');
+      await _secureStorage.saveTokenExpirationDateTime(actualExpirationTime);
       _logger.i('Token expiration saved');
-      
+
       _logger.i('All tokens and expiration time stored in secure storage');
-      
+
       // Verify tokens were saved
       final savedAccessToken = await _secureStorage.getAuthToken();
       final savedRefreshToken = await _secureStorage.getRefreshToken();
       final savedExpiration = await _secureStorage.getTokenExpiration();
-      
-      _logger.i('Verification - Saved access token: ${savedAccessToken != null ? 'YES' : 'NO'}');
-      _logger.i('Verification - Saved refresh token: ${savedRefreshToken != null ? 'YES' : 'NO'}');
-      _logger.i('Verification - Saved expiration: ${savedExpiration != null ? 'YES' : 'NO'}');
 
-      // Log token expiration info
-      final expirationTime = await _secureStorage.getTokenExpiration();
-      if (expirationTime != null) {
-        _logger.i('Token expires at: $expirationTime');
-        _logger.i('Current time: ${DateTime.now()}');
-        _logger.i('Token valid for: ${authResponse.expiresIn} seconds');
-      }
-
-      // Decode JWT token to extract user information
-      _logger.i('Decoding JWT token...');
-      final jwtToken = _jwtService.decodeToken(authResponse.accessToken);
-      _logger.i('JWT token decoded successfully');
+      _logger.i(
+        'Verification - Saved access token: ${savedAccessToken != null ? 'YES' : 'NO'}',
+      );
+      _logger.i(
+        'Verification - Saved refresh token: ${savedRefreshToken != null ? 'YES' : 'NO'}',
+      );
+      _logger.i(
+        'Verification - Saved expiration: ${savedExpiration != null ? 'YES' : 'NO'}',
+      );
 
       // Check if user role is allowed for mobile app
       if (jwtToken.appMetadata?.role == 'EASYBILL_ADMIN') {
