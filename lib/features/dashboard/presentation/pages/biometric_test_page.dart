@@ -13,8 +13,12 @@ class BiometricTestPage extends StatefulWidget {
 }
 
 class _BiometricTestPageState extends State<BiometricTestPage> {
-  final BiometricAuthService _biometricAuth = BiometricAuthService(LocalAuthentication());
-  final SecureStorageService _secureStorage = SecureStorageService(const FlutterSecureStorage());
+  final BiometricAuthService _biometricAuth = BiometricAuthService(
+    LocalAuthentication(),
+  );
+  final SecureStorageService _secureStorage = SecureStorageService(
+    const FlutterSecureStorage(),
+  );
   final AuthGuardService _authGuard = AuthGuardService(
     SecureStorageService(const FlutterSecureStorage()),
     BiometricAuthService(LocalAuthentication()),
@@ -37,9 +41,9 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
           children: [
             Text(
               'Biometric Authentication Test',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Card(
@@ -65,7 +69,9 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                               icon: const Icon(Icons.info),
                               label: const Text('Check Biometric Availability'),
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                               ),
                             ),
                           ),
@@ -75,11 +81,19 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                             child: ElevatedButton.icon(
                               onPressed: _testBiometricAuth,
                               icon: const Icon(Icons.fingerprint),
-                              label: const Text('Test Biometric Authentication'),
+                              label: const Text(
+                                'Test Biometric Authentication',
+                              ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.secondary,
-                                foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.secondary,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onSecondary,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                               ),
                             ),
                           ),
@@ -91,9 +105,15 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                               icon: const Icon(Icons.security),
                               label: const Text('Test Auth Guard'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.tertiary,
-                                foregroundColor: Theme.of(context).colorScheme.onTertiary,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.tertiary,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onTertiary,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                               ),
                             ),
                           ),
@@ -110,17 +130,19 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
+
                 if (snapshot.hasError) {
                   return Text(
                     'Error: ${snapshot.error}',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   );
                 }
-                
+
                 final status = snapshot.data;
                 if (status == null) return const Text('No status available');
-                
+
                 return Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -129,19 +151,37 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                       children: [
                         Text(
                           'Detailed Status',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
-                        _buildStatusRow('Biometric Available', status['isBiometricEnabled']),
-                        _buildStatusRow('Has Valid Token', status['hasValidToken']),
-                        _buildStatusRow('Needs Biometric', status['needsBiometric']),
-                        _buildStatusRow('Can Access App', status['canAccessApp']),
+                        _buildStatusRow(
+                          'Biometric Available',
+                          status['isBiometricEnabled'],
+                        ),
+                        _buildStatusRow(
+                          'Has Valid Token',
+                          status['hasValidToken'],
+                        ),
+                        _buildStatusRow(
+                          'Needs Biometric',
+                          status['needsBiometric'],
+                        ),
+                        _buildStatusRow(
+                          'Can Access App',
+                          status['canAccessApp'],
+                        ),
                         if (status['biometricTypes'] != null)
-                          _buildStatusRow('Available Methods', status['biometricTypes'].join(', ')),
+                          _buildStatusRow(
+                            'Available Methods',
+                            status['biometricTypes'].join(', '),
+                          ),
                         if (status['error'] != null)
-                          _buildStatusRow('Error', status['error'], isError: true),
+                          _buildStatusRow(
+                            'Error',
+                            status['error'],
+                            isError: true,
+                          ),
                       ],
                     ),
                   ),
@@ -187,9 +227,10 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
       final isAvailable = await _biometricAuth.isBiometricAvailable();
       final hasHardware = await _biometricAuth.hasBiometricHardware();
       final biometricTypes = await _biometricAuth.getAvailableBiometrics();
-      
+
       setState(() {
-        _status = 'Biometric Available: $isAvailable, Hardware: $hasHardware, Types: ${biometricTypes.map((t) => _biometricAuth.getBiometricTypeName(t)).join(', ')}';
+        _status =
+            'Biometric Available: $isAvailable, Hardware: $hasHardware, Types: ${biometricTypes.map((t) => _biometricAuth.getBiometricTypeName(t)).join(', ')}';
       });
     } catch (e) {
       setState(() {
@@ -212,9 +253,11 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
       final result = await _biometricAuth.authenticate(
         reason: 'Please authenticate to test biometric functionality',
       );
-      
+
       setState(() {
-        _status = result ? 'Biometric authentication successful!' : 'Biometric authentication failed or cancelled';
+        _status = result
+            ? 'Biometric authentication successful!'
+            : 'Biometric authentication failed or cancelled';
       });
     } catch (e) {
       setState(() {
@@ -235,9 +278,11 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
 
     try {
       final canAccess = await _authGuard.canAccessApp();
-      
+
       setState(() {
-        _status = canAccess ? 'Auth guard passed - access granted!' : 'Auth guard failed - access denied';
+        _status = canAccess
+            ? 'Auth guard passed - access granted!'
+            : 'Auth guard failed - access denied';
       });
     } catch (e) {
       setState(() {

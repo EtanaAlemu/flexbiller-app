@@ -162,12 +162,13 @@ class DashboardPage extends StatelessWidget {
                     FutureBuilder<Map<String, dynamic>>(
                       future: _getAuthStatus(context),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const Center(
                             child: CircularProgressIndicator(),
                           );
                         }
-                        
+
                         if (snapshot.hasError) {
                           return Text(
                             'Error loading auth status',
@@ -176,48 +177,70 @@ class DashboardPage extends StatelessWidget {
                             ),
                           );
                         }
-                        
+
                         final authStatus = snapshot.data;
                         if (authStatus == null) {
                           return const Text('No auth status available');
                         }
-                        
+
                         return Column(
                           children: [
                             _buildStatusRow(
                               'Biometric Available',
-                              authStatus['isBiometricEnabled'] ? '✅ Yes' : '❌ No',
-                              authStatus['isBiometricEnabled'] ? Colors.green : Colors.red,
+                              authStatus['isBiometricEnabled']
+                                  ? '✅ Yes'
+                                  : '❌ No',
+                              authStatus['isBiometricEnabled']
+                                  ? Colors.green
+                                  : Colors.red,
                             ),
-                            if (authStatus['biometricTypes'] != null && 
-                                (authStatus['biometricTypes'] as List).isNotEmpty)
+                            if (authStatus['biometricTypes'] != null &&
+                                (authStatus['biometricTypes'] as List)
+                                    .isNotEmpty)
                               _buildStatusRow(
                                 'Available Methods',
-                                (authStatus['biometricTypes'] as List).join(', '),
+                                (authStatus['biometricTypes'] as List).join(
+                                  ', ',
+                                ),
                                 Colors.blue,
                               ),
                             _buildStatusRow(
                               'Biometric Required',
                               authStatus['needsBiometric'] ? '✅ Yes' : '❌ No',
-                              authStatus['needsBiometric'] ? Colors.orange : Colors.grey,
+                              authStatus['needsBiometric']
+                                  ? Colors.orange
+                                  : Colors.grey,
                             ),
                             _buildStatusRow(
                               'App Access',
-                              authStatus['canAccessApp'] ? '✅ Granted' : '❌ Denied',
-                              authStatus['canAccessApp'] ? Colors.green : Colors.red,
+                              authStatus['canAccessApp']
+                                  ? '✅ Granted'
+                                  : '❌ Denied',
+                              authStatus['canAccessApp']
+                                  ? Colors.green
+                                  : Colors.red,
                             ),
                             const SizedBox(height: 16),
                             if (authStatus['needsBiometric'] == true)
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
-                                  onPressed: () => _triggerBiometricAuth(context),
+                                  onPressed: () =>
+                                      _triggerBiometricAuth(context),
                                   icon: const Icon(Icons.fingerprint),
-                                  label: const Text('Authenticate with Biometrics'),
+                                  label: const Text(
+                                    'Authenticate with Biometrics',
+                                  ),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                                    foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                    foregroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.onSecondary,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -446,9 +469,9 @@ class DashboardPage extends StatelessWidget {
         SecureStorageService(const FlutterSecureStorage()),
         BiometricAuthService(LocalAuthentication()),
       );
-      
+
       final result = await authGuard.authenticateIfRequired();
-      
+
       if (result) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -473,10 +496,7 @@ class DashboardPage extends StatelessWidget {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
   }
