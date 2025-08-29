@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:local_auth/local_auth.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/secure_storage_service.dart';
+import '../../../../core/services/auth_guard_service.dart';
+import '../../../../core/services/biometric_auth_service.dart';
 import '../../../accounts/presentation/pages/accounts_page.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
+import 'biometric_test_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -52,9 +56,8 @@ class DashboardPage extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'Authentication Status',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -62,12 +65,13 @@ class DashboardPage extends StatelessWidget {
                     FutureBuilder<Map<String, dynamic>>(
                       future: _getTokenStatus(context),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const Center(
                             child: CircularProgressIndicator(),
                           );
                         }
-                        
+
                         if (snapshot.hasError) {
                           return Text(
                             'Error loading token status',
@@ -76,28 +80,38 @@ class DashboardPage extends StatelessWidget {
                             ),
                           );
                         }
-                        
+
                         final tokenInfo = snapshot.data;
                         if (tokenInfo == null) {
                           return const Text('No token information available');
                         }
-                        
+
                         return Column(
                           children: [
                             _buildStatusRow(
                               'Access Token',
-                              tokenInfo['hasAccessToken'] ? '✅ Available' : '❌ Not Available',
-                              tokenInfo['hasAccessToken'] ? Colors.green : Colors.red,
+                              tokenInfo['hasAccessToken']
+                                  ? '✅ Available'
+                                  : '❌ Not Available',
+                              tokenInfo['hasAccessToken']
+                                  ? Colors.green
+                                  : Colors.red,
                             ),
                             _buildStatusRow(
                               'Refresh Token',
-                              tokenInfo['hasRefreshToken'] ? '✅ Available' : '❌ Not Available',
-                              tokenInfo['hasRefreshToken'] ? Colors.green : Colors.red,
+                              tokenInfo['hasRefreshToken']
+                                  ? '✅ Available'
+                                  : '❌ Not Available',
+                              tokenInfo['hasRefreshToken']
+                                  ? Colors.green
+                                  : Colors.red,
                             ),
                             _buildStatusRow(
                               'Token Status',
                               tokenInfo['isExpired'] ? '❌ Expired' : '✅ Valid',
-                              tokenInfo['isExpired'] ? Colors.red : Colors.green,
+                              tokenInfo['isExpired']
+                                  ? Colors.red
+                                  : Colors.green,
                             ),
                             if (tokenInfo['expirationTime'] != null)
                               _buildStatusRow(
@@ -109,13 +123,131 @@ class DashboardPage extends StatelessWidget {
                               _buildStatusRow(
                                 'Time Remaining',
                                 '${tokenInfo['timeUntilExpiration']} seconds',
-                                tokenInfo['timeUntilExpiration']! > 300 ? Colors.green : Colors.orange,
+                                tokenInfo['timeUntilExpiration']! > 300
+                                    ? Colors.green
+                                    : Colors.orange,
                               ),
                           ],
                         );
                       },
                     ),
                   ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Biometric Authentication Card
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.fingerprint,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Biometric Authentication',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    FutureBuilder<Map<String, dynamic>>(
+                      future: _getAuthStatus(context),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        
+                        if (snapshot.hasError) {
+                          return Text(
+                            'Error loading auth status',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                        }
+                        
+                        final authStatus = snapshot.data;
+                        if (authStatus == null) {
+                          return const Text('No auth status available');
+                        }
+                        
+                        return Column(
+                          children: [
+                            _buildStatusRow(
+                              'Biometric Available',
+                              authStatus['isBiometricEnabled'] ? '✅ Yes' : '❌ No',
+                              authStatus['isBiometricEnabled'] ? Colors.green : Colors.red,
+                            ),
+                            if (authStatus['biometricTypes'] != null && 
+                                (authStatus['biometricTypes'] as List).isNotEmpty)
+                              _buildStatusRow(
+                                'Available Methods',
+                                (authStatus['biometricTypes'] as List).join(', '),
+                                Colors.blue,
+                              ),
+                            _buildStatusRow(
+                              'Biometric Required',
+                              authStatus['needsBiometric'] ? '✅ Yes' : '❌ No',
+                              authStatus['needsBiometric'] ? Colors.orange : Colors.grey,
+                            ),
+                            _buildStatusRow(
+                              'App Access',
+                              authStatus['canAccessApp'] ? '✅ Granted' : '❌ Denied',
+                              authStatus['canAccessApp'] ? Colors.green : Colors.red,
+                            ),
+                            const SizedBox(height: 16),
+                            if (authStatus['needsBiometric'] == true)
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _triggerBiometricAuth(context),
+                                  icon: const Icon(Icons.fingerprint),
+                                  label: const Text('Authenticate with Biometrics'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                                    foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Biometric Test Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BiometricTestPage(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.science),
+                label: const Text('Test Biometric Authentication'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.tertiary,
+                  foregroundColor: Theme.of(context).colorScheme.onTertiary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
             ),
@@ -256,9 +388,7 @@ class DashboardPage extends StatelessWidget {
       return await authRepository.getTokenStatus();
     } catch (e) {
       // Fallback to secure storage service if auth repository is not available
-      final secureStorage = SecureStorageService(
-        const FlutterSecureStorage(),
-      );
+      final secureStorage = SecureStorageService(const FlutterSecureStorage());
       return await secureStorage.getTokenInfo();
     }
   }
@@ -270,16 +400,10 @@ class DashboardPage extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
           Text(
             value,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -293,6 +417,67 @@ class DashboardPage extends StatelessWidget {
       return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
     } catch (e) {
       return isoString;
+    }
+  }
+
+  // Helper method to get auth status
+  Future<Map<String, dynamic>> _getAuthStatus(BuildContext context) async {
+    try {
+      final authGuard = AuthGuardService(
+        SecureStorageService(const FlutterSecureStorage()),
+        BiometricAuthService(LocalAuthentication()),
+      );
+      return await authGuard.getAuthStatus();
+    } catch (e) {
+      return {
+        'hasValidToken': false,
+        'isBiometricEnabled': false,
+        'needsBiometric': false,
+        'canAccessApp': false,
+        'error': e.toString(),
+      };
+    }
+  }
+
+  // Helper method to trigger biometric authentication
+  Future<void> _triggerBiometricAuth(BuildContext context) async {
+    try {
+      final authGuard = AuthGuardService(
+        SecureStorageService(const FlutterSecureStorage()),
+        BiometricAuthService(LocalAuthentication()),
+      );
+      
+      final result = await authGuard.authenticateIfRequired();
+      
+      if (result) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Biometric authentication successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Refresh the page to update status
+        if (context.mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardPage()),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Biometric authentication failed or cancelled'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }

@@ -51,6 +51,9 @@ dependencies:
   sqflite_sqlcipher: ^2.1.0
   shared_preferences: ^2.2.2
 
+  # Biometric Authentication
+  local_auth: ^2.1.8
+
   # Utilities
   equatable: ^2.0.5
   json_annotation: ^4.8.1

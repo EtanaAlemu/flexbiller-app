@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:dio/dio.dart';
+import 'package:local_auth/local_auth.dart';
 import '../constants/app_constants.dart';
 
 @module
@@ -25,4 +26,7 @@ abstract class InjectionModule {
       },
     ),
   );
+
+  @singleton
+  LocalAuthentication get localAuth => LocalAuthentication();
 }

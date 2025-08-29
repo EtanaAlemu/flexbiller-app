@@ -49,7 +49,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _secureStorage.saveRefreshToken(authResponse.refreshToken);
       await _secureStorage.saveTokenExpiration(authResponse.expiresIn);
       _logger.i('Tokens and expiration time stored in secure storage');
-      
+
       // Log token expiration info
       final expirationTime = await _secureStorage.getTokenExpiration();
       if (expirationTime != null) {
@@ -255,8 +255,6 @@ class AuthRepositoryImpl implements AuthRepository {
       return null;
     }
   }
-
-
 
   @override
   Future<Map<String, dynamic>> getTokenStatus() async {
