@@ -25,16 +25,20 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<User> login(String email, String password) async {
     try {
       _logger.i('Starting login process for email: $email');
-      
+
       // Debug: Check if we can access the remote data source
       _logger.i('Remote data source type: ${_remoteDataSource.runtimeType}');
-      
+
       // Debug: Check if we can access the Dio client
       if (_remoteDataSource is AuthRemoteDataSourceImpl) {
         final dioClient = (_remoteDataSource as AuthRemoteDataSourceImpl).dio;
         _logger.i('Dio client base URL: ${dioClient.options.baseUrl}');
-        _logger.i('Dio client connection timeout: ${dioClient.options.connectTimeout}');
-        _logger.i('Dio client receive timeout: ${dioClient.options.receiveTimeout}');
+        _logger.i(
+          'Dio client connection timeout: ${dioClient.options.connectTimeout}',
+        );
+        _logger.i(
+          'Dio client receive timeout: ${dioClient.options.receiveTimeout}',
+        );
       }
 
       final authResponse = await _remoteDataSource.login(email, password);
@@ -51,9 +55,9 @@ class AuthRepositoryImpl implements AuthRepository {
       _logger.i('JWT token decoded successfully');
 
       // Check if user role is allowed for mobile app
-      if (jwtToken.appMetadata.role == 'EASYBILL_ADMIN') {
+      if (jwtToken.appMetadata?.role == 'EASYBILL_ADMIN') {
         _logger.w(
-          'EASYBILL_ADMIN user attempted to login to mobile app: ${jwtToken.email}',
+          'EASYBILL_ADMIN user attempted to login to mobile app: ${jwtToken.email ?? 'Unknown'}',
         );
         // Clear any stored tokens
         await _secureStorage.clearAuthTokens();
@@ -62,39 +66,39 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      // Log extracted information
-      _logger.i('User ID: ${jwtToken.sub}');
-      _logger.i('User Email: ${jwtToken.email}');
-      _logger.i('User Role: ${jwtToken.appMetadata.role}');
-      _logger.i('Tenant ID: ${jwtToken.userMetadata.tenantId}');
-      _logger.i('Company: ${jwtToken.userMetadata.metadata.company}');
-      _logger.i('Department: ${jwtToken.userMetadata.metadata.department}');
+      // Log extracted information with null safety
+      _logger.i('User ID: ${jwtToken.sub ?? 'Unknown'}');
+      _logger.i('User Email: ${jwtToken.email ?? 'Unknown'}');
+      _logger.i('User Role: ${jwtToken.appMetadata?.role ?? 'Unknown'}');
+      _logger.i('Tenant ID: ${jwtToken.userMetadata?.tenantId ?? 'Unknown'}');
+      _logger.i('Company: ${jwtToken.userMetadata?.metadata?.company ?? 'Unknown'}');
+      _logger.i('Department: ${jwtToken.userMetadata?.metadata?.department ?? 'Unknown'}');
       _logger.i(
-        'API Key Available: ${jwtToken.userMetadata.apiKey.isNotEmpty}',
+        'API Key Available: ${(jwtToken.userMetadata?.apiKey?.isNotEmpty ?? false)}',
       );
       _logger.i(
-        'Phone Verification: ${jwtToken.appMetadata.providers.contains('phone')}',
+        'Phone Verification: ${jwtToken.appMetadata?.providers?.contains('phone') ?? false}',
       );
 
-      // Create user entity with JWT data
+      // Create user entity with JWT data using safe access
       final user = User.fromJwtData(
-        id: jwtToken.sub,
-        email: jwtToken.email,
-        role: jwtToken.appMetadata.role,
-        phone: jwtToken.phone,
-        tenantId: jwtToken.userMetadata.tenantId,
-        roleId: jwtToken.userMetadata.roleId,
-        apiKey: jwtToken.userMetadata.apiKey,
-        apiSecret: jwtToken.userMetadata.apiSecret,
-        emailVerified: jwtToken.userMetadata.emailVerified,
-        firstName: jwtToken.userMetadata.firstName,
-        lastName: jwtToken.userMetadata.lastName,
-        company: jwtToken.userMetadata.metadata.company,
-        department: jwtToken.userMetadata.metadata.department,
-        location: jwtToken.userMetadata.metadata.location,
-        position: jwtToken.userMetadata.metadata.position,
-        sessionId: jwtToken.sessionId,
-        isAnonymous: jwtToken.isAnonymous,
+        id: jwtToken.sub ?? '',
+        email: jwtToken.email ?? '',
+        role: jwtToken.appMetadata?.role ?? '',
+        phone: jwtToken.phone ?? '',
+        tenantId: jwtToken.userMetadata?.tenantId ?? '',
+        roleId: jwtToken.userMetadata?.roleId ?? '',
+        apiKey: jwtToken.userMetadata?.apiKey ?? '',
+        apiSecret: jwtToken.userMetadata?.apiSecret ?? '',
+        emailVerified: jwtToken.userMetadata?.emailVerified ?? false,
+        firstName: jwtToken.userMetadata?.firstName ?? '',
+        lastName: jwtToken.userMetadata?.lastName ?? '',
+        company: jwtToken.userMetadata?.metadata?.company ?? '',
+        department: jwtToken.userMetadata?.metadata?.department ?? '',
+        location: jwtToken.userMetadata?.metadata?.location ?? '',
+        position: jwtToken.userMetadata?.metadata?.position ?? '',
+        sessionId: jwtToken.sessionId ?? '',
+        isAnonymous: jwtToken.isAnonymous ?? false,
       );
 
       _logger.i('User entity created successfully: ${user.displayName}');
@@ -136,9 +140,9 @@ class AuthRepositoryImpl implements AuthRepository {
       final jwtToken = _jwtService.decodeToken(authResponse.accessToken);
 
       // Check if user role is allowed for mobile app
-      if (jwtToken.appMetadata.role == 'EASYBILL_ADMIN') {
+      if (jwtToken.appMetadata?.role == 'EASYBILL_ADMIN') {
         _logger.w(
-          'EASYBILL_ADMIN user attempted to register on mobile app: ${jwtToken.email}',
+          'EASYBILL_ADMIN user attempted to register on mobile app: ${jwtToken.email ?? 'Unknown'}',
         );
         // Clear any stored tokens
         await _secureStorage.clearAuthTokens();
@@ -147,25 +151,25 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      // Create user entity with JWT data
+      // Create user entity with JWT data using safe access
       final user = User.fromJwtData(
-        id: jwtToken.sub,
-        email: jwtToken.email,
-        role: jwtToken.appMetadata.role,
-        phone: jwtToken.phone,
-        tenantId: jwtToken.userMetadata.tenantId,
-        roleId: jwtToken.userMetadata.roleId,
-        apiKey: jwtToken.userMetadata.apiKey,
-        apiSecret: jwtToken.userMetadata.apiSecret,
-        emailVerified: jwtToken.userMetadata.emailVerified,
-        firstName: jwtToken.userMetadata.firstName,
-        lastName: jwtToken.userMetadata.lastName,
-        company: jwtToken.userMetadata.metadata.company,
-        department: jwtToken.userMetadata.metadata.department,
-        location: jwtToken.userMetadata.metadata.location,
-        position: jwtToken.userMetadata.metadata.position,
-        sessionId: jwtToken.sessionId,
-        isAnonymous: jwtToken.isAnonymous,
+        id: jwtToken.sub ?? '',
+        email: jwtToken.email ?? '',
+        role: jwtToken.appMetadata?.role ?? '',
+        phone: jwtToken.phone ?? '',
+        tenantId: jwtToken.userMetadata?.tenantId ?? '',
+        roleId: jwtToken.userMetadata?.roleId ?? '',
+        apiKey: jwtToken.userMetadata?.apiKey ?? '',
+        apiSecret: jwtToken.userMetadata?.apiSecret ?? '',
+        emailVerified: jwtToken.userMetadata?.emailVerified ?? false,
+        firstName: jwtToken.userMetadata?.firstName ?? '',
+        lastName: jwtToken.userMetadata?.lastName ?? '',
+        company: jwtToken.userMetadata?.metadata?.company ?? '',
+        department: jwtToken.userMetadata?.metadata?.department ?? '',
+        location: jwtToken.userMetadata?.metadata?.location ?? '',
+        position: jwtToken.userMetadata?.metadata?.position ?? '',
+        sessionId: jwtToken.sessionId ?? '',
+        isAnonymous: jwtToken.isAnonymous ?? false,
       );
 
       return user;
@@ -204,25 +208,25 @@ class AuthRepositoryImpl implements AuthRepository {
       // Decode JWT token to get user information
       final jwtToken = _jwtService.decodeToken(token);
 
-      // Create user entity with JWT data
+      // Create user entity with JWT data using safe access
       final user = User.fromJwtData(
-        id: jwtToken.sub,
-        email: jwtToken.email,
-        role: jwtToken.appMetadata.role,
-        phone: jwtToken.phone,
-        tenantId: jwtToken.userMetadata.tenantId,
-        roleId: jwtToken.userMetadata.roleId,
-        apiKey: jwtToken.userMetadata.apiKey,
-        apiSecret: jwtToken.userMetadata.apiSecret,
-        emailVerified: jwtToken.userMetadata.emailVerified,
-        firstName: jwtToken.userMetadata.firstName,
-        lastName: jwtToken.userMetadata.lastName,
-        company: jwtToken.userMetadata.metadata.company,
-        department: jwtToken.userMetadata.metadata.department,
-        location: jwtToken.userMetadata.metadata.location,
-        position: jwtToken.userMetadata.metadata.position,
-        sessionId: jwtToken.sessionId,
-        isAnonymous: jwtToken.isAnonymous,
+        id: jwtToken.sub ?? '',
+        email: jwtToken.email ?? '',
+        role: jwtToken.appMetadata?.role ?? '',
+        phone: jwtToken.phone ?? '',
+        tenantId: jwtToken.userMetadata?.tenantId ?? '',
+        roleId: jwtToken.userMetadata?.roleId ?? '',
+        apiKey: jwtToken.userMetadata?.apiKey ?? '',
+        apiSecret: jwtToken.userMetadata?.apiSecret ?? '',
+        emailVerified: jwtToken.userMetadata?.emailVerified ?? false,
+        firstName: jwtToken.userMetadata?.firstName ?? '',
+        lastName: jwtToken.userMetadata?.lastName ?? '',
+        company: jwtToken.userMetadata?.metadata?.company ?? '',
+        department: jwtToken.userMetadata?.metadata?.department ?? '',
+        location: jwtToken.userMetadata?.metadata?.location ?? '',
+        position: jwtToken.userMetadata?.metadata?.position ?? '',
+        sessionId: jwtToken.sessionId ?? '',
+        isAnonymous: jwtToken.isAnonymous ?? false,
       );
 
       return user;
