@@ -1,17 +1,78 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:local_auth/local_auth.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/secure_storage_service.dart';
-import '../../../../core/services/auth_guard_service.dart';
-import '../../../../core/services/biometric_auth_service.dart';
+import '../../../../injection_container.dart';
 import '../../../accounts/presentation/pages/accounts_page.dart';
-import '../../../auth/domain/repositories/auth_repository.dart';
-import 'biometric_test_page.dart';
+import '../../../auth/presentation/pages/login_page.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  int _currentIndex = 0;
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      _DashboardContent(onNavigateToTab: _switchTab),
+      const AccountsPage(),
+      const _ReportsPage(),
+      const _ProfilePage(),
+    ];
+  }
+
+  void _switchTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _pages[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(
+          context,
+        ).colorScheme.onSurface.withOpacity(0.6),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance),
+            label: 'Accounts',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.analytics),
+            label: 'Reports',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashboardContent extends StatelessWidget {
+  const _DashboardContent({required this.onNavigateToTab});
+
+  final Function(int) onNavigateToTab;
 
   @override
   Widget build(BuildContext context) {
@@ -39,251 +100,15 @@ class DashboardPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            // Token Status Card
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.security,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Authentication Status',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    FutureBuilder<Map<String, dynamic>>(
-                      future: _getTokenStatus(context),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-
-                        if (snapshot.hasError) {
-                          return Text(
-                            'Error loading token status',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          );
-                        }
-
-                        final tokenInfo = snapshot.data;
-                        if (tokenInfo == null) {
-                          return const Text('No token information available');
-                        }
-
-                        return Column(
-                          children: [
-                            _buildStatusRow(
-                              'Access Token',
-                              tokenInfo['hasAccessToken']
-                                  ? '✅ Available'
-                                  : '❌ Not Available',
-                              tokenInfo['hasAccessToken']
-                                  ? Colors.green
-                                  : Colors.red,
-                            ),
-                            _buildStatusRow(
-                              'Refresh Token',
-                              tokenInfo['hasRefreshToken']
-                                  ? '✅ Available'
-                                  : '❌ Not Available',
-                              tokenInfo['hasRefreshToken']
-                                  ? Colors.green
-                                  : Colors.red,
-                            ),
-                            _buildStatusRow(
-                              'Token Status',
-                              tokenInfo['isExpired'] ? '❌ Expired' : '✅ Valid',
-                              tokenInfo['isExpired']
-                                  ? Colors.red
-                                  : Colors.green,
-                            ),
-                            if (tokenInfo['expirationTime'] != null)
-                              _buildStatusRow(
-                                'Expires At',
-                                _formatDateTime(tokenInfo['expirationTime']),
-                                Colors.blue,
-                              ),
-                            if (tokenInfo['timeUntilExpiration'] != null)
-                              _buildStatusRow(
-                                'Time Remaining',
-                                '${tokenInfo['timeUntilExpiration']} seconds',
-                                tokenInfo['timeUntilExpiration']! > 300
-                                    ? Colors.green
-                                    : Colors.orange,
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Biometric Authentication Card
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.fingerprint,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Biometric Authentication',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    FutureBuilder<Map<String, dynamic>>(
-                      future: _getAuthStatus(context),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-
-                        if (snapshot.hasError) {
-                          return Text(
-                            'Error loading auth status',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          );
-                        }
-
-                        final authStatus = snapshot.data;
-                        if (authStatus == null) {
-                          return const Text('No auth status available');
-                        }
-
-                        return Column(
-                          children: [
-                            _buildStatusRow(
-                              'Biometric Available',
-                              authStatus['isBiometricEnabled']
-                                  ? '✅ Yes'
-                                  : '❌ No',
-                              authStatus['isBiometricEnabled']
-                                  ? Colors.green
-                                  : Colors.red,
-                            ),
-                            if (authStatus['biometricTypes'] != null &&
-                                (authStatus['biometricTypes'] as List)
-                                    .isNotEmpty)
-                              _buildStatusRow(
-                                'Available Methods',
-                                (authStatus['biometricTypes'] as List).join(
-                                  ', ',
-                                ),
-                                Colors.blue,
-                              ),
-                            _buildStatusRow(
-                              'Biometric Required',
-                              authStatus['needsBiometric'] ? '✅ Yes' : '❌ No',
-                              authStatus['needsBiometric']
-                                  ? Colors.orange
-                                  : Colors.grey,
-                            ),
-                            _buildStatusRow(
-                              'App Access',
-                              authStatus['canAccessApp']
-                                  ? '✅ Granted'
-                                  : '❌ Denied',
-                              authStatus['canAccessApp']
-                                  ? Colors.green
-                                  : Colors.red,
-                            ),
-                            const SizedBox(height: 16),
-                            if (authStatus['needsBiometric'] == true)
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: () =>
-                                      _triggerBiometricAuth(context),
-                                  icon: const Icon(Icons.fingerprint),
-                                  label: const Text(
-                                    'Authenticate with Biometrics',
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                    foregroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.onSecondary,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Biometric Test Button
             SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const BiometricTestPage(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.science),
-                label: const Text('Test Biometric Authentication'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.tertiary,
-                  foregroundColor: Theme.of(context).colorScheme.onTertiary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 300, // Reduced height for better fit
+              height: 320, // Increased height to prevent overflow
               child: GridView.count(
                 crossAxisCount: 2,
-                crossAxisSpacing: 12, // Reduced spacing
-                mainAxisSpacing: 12, // Reduced spacing
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 1.2, // Adjust aspect ratio for better fit
+                childAspectRatio: 1.1, // Adjusted aspect ratio for better fit
                 children: [
                   _buildFeatureCard(
                     context,
@@ -294,12 +119,8 @@ class DashboardPage extends StatelessWidget {
                       Theme.of(context).brightness,
                     ),
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AccountsPage(),
-                        ),
-                      );
+                      // Navigate to accounts tab (index 1)
+                      onNavigateToTab(1);
                     },
                   ),
                   _buildFeatureCard(
@@ -337,11 +158,8 @@ class DashboardPage extends StatelessWidget {
                     subtitle: 'View business analytics',
                     color: Colors.purple,
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Reports feature - Coming Soon!'),
-                        ),
-                      );
+                      // Navigate to reports tab (index 2)
+                      onNavigateToTab(2);
                     },
                   ),
                 ],
@@ -367,35 +185,38 @@ class DashboardPage extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16.0), // Reduced padding
+          padding: const EdgeInsets.all(12.0), // Reduced padding
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min, // Use minimum space needed
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 32, color: color), // Reduced icon size
-              const SizedBox(height: 8), // Reduced spacing
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  // Smaller text
-                  fontWeight: FontWeight.bold,
+              Icon(icon, size: 28, color: color), // Reduced icon size
+              const SizedBox(height: 6), // Reduced spacing
+              Flexible(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ), // Smaller text
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1, // Limit to 1 line
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4), // Reduced spacing
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  // Smaller text
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.7),
+              const SizedBox(height: 3), // Reduced spacing
+              Flexible(
+                child: Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 11, // Smaller font size
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2, // Limit to 2 lines
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -403,101 +224,116 @@ class DashboardPage extends StatelessWidget {
       ),
     );
   }
+}
 
-  // Helper method to get token status
-  Future<Map<String, dynamic>> _getTokenStatus(BuildContext context) async {
-    try {
-      final authRepository = context.read<AuthRepository>();
-      return await authRepository.getTokenStatus();
-    } catch (e) {
-      // Fallback to secure storage service if auth repository is not available
-      final secureStorage = SecureStorageService(const FlutterSecureStorage());
-      return await secureStorage.getTokenInfo();
-    }
-  }
+class _ReportsPage extends StatelessWidget {
+  const _ReportsPage();
 
-  // Helper method to build status rows
-  Widget _buildStatusRow(String label, String value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-          Text(
-            value,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold),
-          ),
-        ],
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Reports'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.analytics, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Reports Coming Soon',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Business analytics and reporting features\nwill be available soon.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  // Helper method to format date time
-  String _formatDateTime(String isoString) {
+class _ProfilePage extends StatelessWidget {
+  const _ProfilePage();
+
+  Future<void> _logout(BuildContext context) async {
     try {
-      final dateTime = DateTime.parse(isoString);
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return isoString;
-    }
-  }
+      final secureStorage = getIt<SecureStorageService>();
+      await secureStorage.clearAuthTokens();
 
-  // Helper method to get auth status
-  Future<Map<String, dynamic>> _getAuthStatus(BuildContext context) async {
-    try {
-      final authGuard = AuthGuardService(
-        SecureStorageService(const FlutterSecureStorage()),
-        BiometricAuthService(LocalAuthentication()),
-      );
-      return await authGuard.getAuthStatus();
-    } catch (e) {
-      return {
-        'hasValidToken': false,
-        'isBiometricEnabled': false,
-        'needsBiometric': false,
-        'canAccessApp': false,
-        'error': e.toString(),
-      };
-    }
-  }
-
-  // Helper method to trigger biometric authentication
-  Future<void> _triggerBiometricAuth(BuildContext context) async {
-    try {
-      final authGuard = AuthGuardService(
-        SecureStorageService(const FlutterSecureStorage()),
-        BiometricAuthService(LocalAuthentication()),
-      );
-
-      final result = await authGuard.authenticateIfRequired();
-
-      if (result) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Biometric authentication successful!'),
-            backgroundColor: Colors.green,
-          ),
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
         );
-        // Refresh the page to update status
-        if (context.mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const DashboardPage()),
-          );
-        }
-      } else {
+      }
+    } catch (e) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ Biometric authentication failed or cancelled'),
+          SnackBar(
+            content: Text('Error during logout: $e'),
             backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-      );
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 32),
+            const Icon(Icons.person, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            const Text(
+              'Profile Coming Soon',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'User profile and settings features\nwill be available soon.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _logout(context),
+                icon: const Icon(Icons.logout),
+                label: const Text('Logout'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

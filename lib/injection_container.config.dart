@@ -14,11 +14,13 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:local_auth/local_auth.dart' as _i152;
+import 'package:logger/logger.dart' as _i974;
 
 import 'core/injection/injection_module.dart' as _i670;
 import 'core/network/dio_client.dart' as _i45;
 import 'core/network/network_info.dart' as _i75;
 import 'core/services/auth_guard_service.dart' as _i280;
+import 'core/services/authentication_state_service.dart' as _i751;
 import 'core/services/biometric_auth_service.dart' as _i626;
 import 'core/services/database_service.dart' as _i916;
 import 'core/services/jwt_service.dart' as _i842;
@@ -261,6 +263,7 @@ _i174.GetIt $initGetIt(
   gh.factory<_i842.JwtService>(() => _i842.JwtService());
   gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
   gh.factory<_i75.NetworkInfoImpl>(() => _i75.NetworkInfoImpl());
+  gh.singleton<_i974.Logger>(() => injectionModule.logger);
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
   gh.singleton<_i152.LocalAuthentication>(() => injectionModule.localAuth);
@@ -325,6 +328,12 @@ _i174.GetIt $initGetIt(
   gh.factory<_i951.AccountCbaRebalancingRemoteDataSource>(
     () => _i951.AccountCbaRebalancingRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
+  gh.factory<_i493.SecureStorageService>(
+    () => _i493.SecureStorageService(
+      gh<_i558.FlutterSecureStorage>(),
+      gh<_i974.Logger>(),
+    ),
+  );
   gh.factory<_i271.AccountAuditLogsRepository>(
     () => _i510.AccountAuditLogsRepositoryImpl(
       gh<_i276.AccountAuditLogsRemoteDataSource>(),
@@ -372,6 +381,12 @@ _i174.GetIt $initGetIt(
       gh<_i910.AccountOverdueStateRemoteDataSource>(),
     ),
   );
+  gh.factory<_i751.AuthenticationStateService>(
+    () => _i751.AuthenticationStateService(
+      gh<_i493.SecureStorageService>(),
+      gh<_i974.Logger>(),
+    ),
+  );
   gh.factory<_i221.AccountCustomFieldsRepository>(
     () => _i762.AccountCustomFieldsRepositoryImpl(
       gh<_i608.AccountCustomFieldsRemoteDataSource>(),
@@ -401,18 +416,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i348.GetAllTagsUseCase>(
     () => _i348.GetAllTagsUseCase(gh<_i734.TagsRepository>()),
   );
-  gh.factory<_i493.SecureStorageService>(
-    () => _i493.SecureStorageService(gh<_i558.FlutterSecureStorage>()),
-  );
   gh.factory<_i930.AccountExportRepository>(
     () => _i973.AccountExportRepositoryImpl(
       gh<_i690.AccountExportRemoteDataSource>(),
-    ),
-  );
-  gh.factory<_i280.AuthGuardService>(
-    () => _i280.AuthGuardService(
-      gh<_i493.SecureStorageService>(),
-      gh<_i626.BiometricAuthService>(),
     ),
   );
   gh.factory<_i377.AssignMultipleTagsToAccountUseCase>(
@@ -631,6 +637,14 @@ _i174.GetIt $initGetIt(
   gh.factory<_i600.GetAccountPaymentMethodsUseCase>(
     () => _i600.GetAccountPaymentMethodsUseCase(
       gh<_i845.AccountPaymentMethodsRepository>(),
+    ),
+  );
+  gh.factory<_i280.AuthGuardService>(
+    () => _i280.AuthGuardService(
+      gh<_i493.SecureStorageService>(),
+      gh<_i626.BiometricAuthService>(),
+      gh<_i751.AuthenticationStateService>(),
+      gh<_i974.Logger>(),
     ),
   );
   gh.factory<_i993.ForgotPasswordUseCase>(

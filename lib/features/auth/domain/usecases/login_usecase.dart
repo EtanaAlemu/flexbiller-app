@@ -5,10 +5,14 @@ import '../entities/user.dart';
 @injectable
 class LoginUseCase {
   final AuthRepository repository;
-  
+
   LoginUseCase(this.repository);
-  
-  Future<User> call(String email, String password) async {
-    return await repository.login(email, password);
+
+  Future<User> call(
+    String email,
+    String password, {
+    bool rememberMe = false,
+  }) async {
+    return await repository.login(email, password, rememberMe: rememberMe);
   }
 }

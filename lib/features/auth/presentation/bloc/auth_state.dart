@@ -36,6 +36,32 @@ class AuthFailure extends AuthState {
 
 class AuthUnauthenticated extends AuthState {}
 
+class UserAuthenticated extends AuthState {
+  final bool isAuthenticated;
+  final String? method; // 'email_password' or 'biometric'
+  final DateTime authenticatedAt;
+
+  UserAuthenticated({
+    required this.isAuthenticated,
+    this.method,
+    required this.authenticatedAt,
+  });
+}
+
+class BiometricAuthenticationLoading extends AuthState {}
+
+class BiometricAuthenticationSuccess extends AuthState {
+  final DateTime authenticatedAt;
+
+  BiometricAuthenticationSuccess({required this.authenticatedAt});
+}
+
+class BiometricAuthenticationFailure extends AuthState {
+  final String message;
+
+  BiometricAuthenticationFailure({required this.message});
+}
+
 class ForgotPasswordLoading extends AuthState {}
 
 class ForgotPasswordSuccess extends AuthState {

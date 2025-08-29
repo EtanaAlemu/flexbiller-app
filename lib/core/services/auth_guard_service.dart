@@ -1,23 +1,39 @@
-import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import 'package:injectable/injectable.dart';
 import 'secure_storage_service.dart';
 import 'biometric_auth_service.dart';
+import 'authentication_state_service.dart';
 
 @injectable
 class AuthGuardService {
   final SecureStorageService _secureStorage;
   final BiometricAuthService _biometricAuth;
-  final Logger _logger = Logger();
+  final AuthenticationStateService _authStateService;
+  final Logger _logger;
 
-  AuthGuardService(this._secureStorage, this._biometricAuth);
+  AuthGuardService(
+    this._secureStorage,
+    this._biometricAuth,
+    this._authStateService,
+    this._logger,
+  );
 
   /// Check if user needs biometric authentication
   Future<bool> needsBiometricAuth() async {
     try {
-      // Check if user has valid tokens
-      final hasValidToken = await _secureStorage.hasValidToken();
-      if (!hasValidToken) {
-        _logger.i('No valid tokens found, biometric auth not needed');
+      // Use the authentication state service to check if user is authenticated
+      final isAuthenticated = await _authStateService.isUserAuthenticated();
+      if (!isAuthenticated) {
+        _logger.i('User not authenticated, biometric auth not needed');
+        return false;
+      }
+
+      // Get the authentication method
+      final method = await _authStateService.getAuthenticationMethod();
+      if (method == 'email_password') {
+        _logger.i(
+          'User authenticated via email/password, biometric auth not needed',
+        );
         return false;
       }
 
@@ -66,10 +82,10 @@ class AuthGuardService {
   /// Check if user can access the app (has valid tokens and passed biometric auth if required)
   Future<bool> canAccessApp() async {
     try {
-      // First check if tokens are valid
-      final hasValidToken = await _secureStorage.hasValidToken();
-      if (!hasValidToken) {
-        _logger.i('No valid tokens, access denied');
+      // Use the authentication state service to check if user is authenticated
+      final isAuthenticated = await _authStateService.isUserAuthenticated();
+      if (!isAuthenticated) {
+        _logger.i('User not authenticated, access denied');
         return false;
       }
 
@@ -79,14 +95,16 @@ class AuthGuardService {
         final biometricResult = await _biometricAuth.authenticate(
           reason: 'Please authenticate to access FlexBiller',
         );
-        
+
         if (!biometricResult) {
           _logger.w('Biometric authentication failed, access denied');
           return false;
         }
       }
 
-      _logger.i('Access granted - valid tokens and biometric auth passed');
+      _logger.i(
+        'Access granted - user authenticated and biometric auth passed if required',
+      );
       return true;
     } catch (e) {
       _logger.e('Error checking app access: $e');
@@ -97,17 +115,18 @@ class AuthGuardService {
   /// Get authentication status for display
   Future<Map<String, dynamic>> getAuthStatus() async {
     try {
-      final hasValidToken = await _secureStorage.hasValidToken();
+      final authInfo = await _authStateService.getAuthenticationInfo();
       final isBiometricEnabled = await _biometricAuth.isBiometricEnabled();
       final needsBiometric = await needsBiometricAuth();
-      
+
       return {
-        'hasValidToken': hasValidToken,
+        'hasValidToken': authInfo['hasValidToken'],
         'isBiometricEnabled': isBiometricEnabled,
         'needsBiometric': needsBiometric,
         'canAccessApp': await canAccessApp(),
         'tokenInfo': await _secureStorage.getTokenInfo(),
         'biometricTypes': await _biometricAuth.getAvailableBiometricNames(),
+        'authInfo': authInfo,
       };
     } catch (e) {
       _logger.e('Error getting auth status: $e');
@@ -126,33 +145,55 @@ class AuthGuardService {
   Future<Map<String, dynamic>> authenticateWithFallback() async {
     try {
       _logger.i('Starting authentication flow with fallback...');
-      
-      // Check if we have valid tokens
-      final hasValidToken = await _secureStorage.hasValidToken();
-      _logger.i('Token validation check: hasValidToken = $hasValidToken');
-      
-      if (!hasValidToken) {
-        // Get detailed token info for debugging
-        final tokenInfo = await _secureStorage.getTokenInfo();
-        _logger.i('Token info for debugging: $tokenInfo');
-        
-        _logger.i('No valid tokens, proceeding to email/password login');
+
+      // Use the authentication state service to check if user is authenticated
+      final isAuthenticated = await _authStateService.isUserAuthenticated();
+      _logger.i(
+        'Authentication state check: isAuthenticated = $isAuthenticated',
+      );
+
+      if (!isAuthenticated) {
+        _logger.i('User not authenticated, proceeding to email/password login');
         return {
           'success': false,
           'method': 'none',
-          'message': 'No valid tokens found. Please login with email and password.',
+          'message': 'Please login with email and password.',
           'requiresLogin': true,
         };
       }
 
+      // Get the authentication method
+      final method = await _authStateService.getAuthenticationMethod();
+      _logger.i('Authentication method: $method');
+
+      if (method == 'email_password') {
+        _logger.i(
+          'User authenticated via email/password - granting direct access',
+        );
+        return {
+          'success': true,
+          'method': 'direct_access',
+          'message': 'Access granted.',
+          'requiresLogin': false,
+        };
+      }
+
+      // If method is 'biometric', proceed with biometric authentication
+      _logger.i(
+        'Biometric authentication required - proceeding with biometric check',
+      );
+
       // Check if biometric is available and enabled
       final isBiometricEnabled = await _biometricAuth.isBiometricEnabled();
       if (!isBiometricEnabled) {
-        _logger.i('Biometric not available, proceeding to email/password login');
+        _logger.i(
+          'Biometric not available, proceeding to email/password login',
+        );
         return {
           'success': false,
           'method': 'none',
-          'message': 'Biometric authentication not available. Please login with email and password.',
+          'message':
+              'Biometric authentication not available. Please login with email and password.',
           'requiresLogin': true,
         };
       }
@@ -172,11 +213,14 @@ class AuthGuardService {
           'requiresLogin': false,
         };
       } else {
-        _logger.i('Biometric authentication failed, offering fallback to email/password');
+        _logger.i(
+          'Biometric authentication failed, offering fallback to email/password',
+        );
         return {
           'success': false,
           'method': 'fallback',
-          'message': 'Biometric authentication failed. Please login with email and password.',
+          'message':
+              'Biometric authentication failed. Please login with email and password.',
           'requiresLogin': true,
         };
       }
@@ -185,7 +229,7 @@ class AuthGuardService {
       return {
         'success': false,
         'method': 'error',
-        'message': 'Authentication error: $e',
+        'message': 'An error occurred during authentication: $e',
         'requiresLogin': true,
       };
     }

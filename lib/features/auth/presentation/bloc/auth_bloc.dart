@@ -31,6 +31,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<ChangePasswordRequested>(_onChangePasswordRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
+    on<SetUserAuthenticated>(_onSetUserAuthenticated);
+    on<BiometricAuthenticationRequested>(_onBiometricAuthenticationRequested);
+    on<BiometricAuthSuccess>(_onBiometricAuthSuccess);
+    on<BiometricAuthFailure>(_onBiometricAuthFailure);
   }
 
   Future<void> _onLoginRequested(
@@ -39,8 +43,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(LoginLoading());
     try {
-      final user = await _loginUseCase(event.email, event.password);
+      final user = await _loginUseCase(
+        event.email,
+        event.password,
+        rememberMe: event.rememberMe,
+      );
       emit(LoginSuccess(user));
+
+      // Also emit the user authenticated state
+      emit(
+        UserAuthenticated(
+          isAuthenticated: true,
+          method: 'email_password',
+          authenticatedAt: DateTime.now(),
+        ),
+      );
     } on AuthException catch (e) {
       // Handle specific EASYBILL_ADMIN restriction
       if (e.message.contains('EASYBILL_ADMIN users must use the web version')) {
@@ -104,6 +121,47 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       emit(AuthFailure(e.toString()));
     }
+  }
+
+  Future<void> _onSetUserAuthenticated(
+    SetUserAuthenticated event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(
+      UserAuthenticated(
+        isAuthenticated: event.isAuthenticated,
+        method: event.method,
+        authenticatedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  Future<void> _onBiometricAuthenticationRequested(
+    BiometricAuthenticationRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(BiometricAuthenticationLoading());
+  }
+
+  Future<void> _onBiometricAuthSuccess(
+    BiometricAuthSuccess event,
+    Emitter<AuthState> emit,
+  ) async {
+    // Update the user authenticated state
+    emit(
+      UserAuthenticated(
+        isAuthenticated: true,
+        method: 'biometric',
+        authenticatedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  Future<void> _onBiometricAuthFailure(
+    BiometricAuthFailure event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(BiometricAuthenticationFailure(message: event.message));
   }
 
   Future<void> _onForgotPasswordRequested(

@@ -2,15 +2,20 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:dio/dio.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:logger/logger.dart';
 import '../constants/app_constants.dart';
 
 @module
 abstract class InjectionModule {
   @singleton
+  Logger get logger => Logger();
+
+  @singleton
   FlutterSecureStorage get secureStorage => const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,
+      synchronizable: false,
     ),
   );
 

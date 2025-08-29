@@ -22,7 +22,11 @@ class AuthRepositoryImpl implements AuthRepository {
   );
 
   @override
-  Future<User> login(String email, String password) async {
+  Future<User> login(
+    String email,
+    String password, {
+    bool rememberMe = false,
+  }) async {
     try {
       _logger.i('Starting login process for email: $email');
 
@@ -59,7 +63,9 @@ class AuthRepositoryImpl implements AuthRepository {
       _logger.i('JWT token decoded successfully');
 
       // Use JWT's actual expiration time instead of calculating from expires_in
-      final actualExpirationTime = DateTime.fromMillisecondsSinceEpoch(jwtToken.exp! * 1000);
+      final actualExpirationTime = DateTime.fromMillisecondsSinceEpoch(
+        jwtToken.exp! * 1000,
+      );
       _logger.i('JWT expiration time: $actualExpirationTime');
       _logger.i('Current time: ${DateTime.now()}');
       _logger.i('Token valid for: ${authResponse.expiresIn} seconds');
@@ -70,7 +76,26 @@ class AuthRepositoryImpl implements AuthRepository {
 
       _logger.i('All tokens and expiration time stored in secure storage');
 
-      // Verify tokens were saved
+      // Verify tokens were saved and are accessible
+      final storageVerified = await _secureStorage.verifyTokenStorage();
+      if (!storageVerified) {
+        _logger.e('Token storage verification failed after saving');
+        throw AuthException('Failed to store authentication tokens securely');
+      }
+
+      _logger.i('Token storage verification successful');
+
+      // Mark this as a fresh login to skip biometric authentication
+      await _secureStorage.markFreshLogin();
+      _logger.i(
+        'Fresh login marked - user will not be prompted for biometric authentication',
+      );
+
+      // Save Remember Me preference
+      await _secureStorage.setRememberMe(rememberMe);
+      _logger.i('Remember Me preference saved: $rememberMe');
+
+      // Additional verification - check individual tokens
       final savedAccessToken = await _secureStorage.getAuthToken();
       final savedRefreshToken = await _secureStorage.getRefreshToken();
       final savedExpiration = await _secureStorage.getTokenExpiration();

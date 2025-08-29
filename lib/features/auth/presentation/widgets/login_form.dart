@@ -23,6 +23,7 @@ class _LoginFormState extends State<LoginForm> {
   final _passwordController = TextEditingController();
   final _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
+  bool _rememberMe = false; // Add Remember Me state
 
   @override
   void initState() {
@@ -48,6 +49,7 @@ class _LoginFormState extends State<LoginForm> {
         LoginRequested(
           email: _emailController.text,
           password: _passwordController.text,
+          rememberMe: _rememberMe,
         ),
       );
     }
@@ -218,6 +220,35 @@ class _LoginFormState extends State<LoginForm> {
                   },
                 ),
                 const SizedBox(height: 24),
+                // Remember Me checkbox
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _rememberMe,
+                      onChanged: isLoading
+                          ? null
+                          : (value) {
+                              setState(() {
+                                _rememberMe = value ?? false;
+                              });
+                            },
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Remember Me',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onBackground,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: isLoading ? null : () => _submitForm(context),
                   style: ElevatedButton.styleFrom(
