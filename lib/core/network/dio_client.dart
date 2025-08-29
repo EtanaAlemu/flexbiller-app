@@ -14,25 +14,14 @@ class DioClient {
   final FlutterSecureStorage _secureStorage;
   final Logger _logger = Logger();
 
-  DioClient(this._secureStorage)
-    : _dio = Dio(
-        BaseOptions(
-          baseUrl: AppConstants.baseUrl,
-          connectTimeout: Duration(
-            milliseconds: AppConstants.connectionTimeout,
-          ),
-          receiveTimeout: Duration(milliseconds: AppConstants.receiveTimeout),
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
-      ) {
+  DioClient(this._dio, this._secureStorage) {
     // Debug: Log the base URL being used
     if (BuildConfig.enableLogging) {
-      _logger.i('🌐 Dio Client initialized with base URL: ${AppConstants.baseUrl}');
-      _logger.i('⏱️ Connection timeout: ${AppConstants.connectionTimeout}ms');
-      _logger.i('⏱️ Receive timeout: ${AppConstants.receiveTimeout}ms');
+      _logger.i(
+        '🌐 Dio Client initialized with base URL: ${_dio.options.baseUrl}',
+      );
+      _logger.i('⏱️ Connection timeout: ${_dio.options.connectTimeout}');
+      _logger.i('⏱️ Receive timeout: ${_dio.options.receiveTimeout}');
     }
     _setupInterceptors();
   }
