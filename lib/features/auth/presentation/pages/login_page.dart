@@ -4,7 +4,9 @@ import '../../../../core/localization/language_selector_widget.dart';
 import '../widgets/login_form.dart';
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  final VoidCallback? onLoginSuccess;
+  
+  const LoginPage({Key? key, this.onLoginSuccess}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +23,7 @@ class LoginPage extends StatelessWidget {
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
-          child: Column(children: [LoginForm()]),
+          child: Column(children: [LoginForm(onLoginSuccess: onLoginSuccess)]),
         ),
       ),
     );

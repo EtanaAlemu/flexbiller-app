@@ -9,7 +9,9 @@ import '../pages/change_password_page.dart';
 import '../../../../injection_container.dart';
 
 class LoginForm extends StatefulWidget {
-  const LoginForm({Key? key}) : super(key: key);
+  final VoidCallback? onLoginSuccess;
+  
+  const LoginForm({Key? key, this.onLoginSuccess}) : super(key: key);
 
   @override
   State<LoginForm> createState() => _LoginFormState();
@@ -68,8 +70,12 @@ class _LoginFormState extends State<LoginForm> {
                 ),
               ),
             );
-            // Navigate to dashboard or home page
-            Navigator.pushReplacementNamed(context, '/dashboard');
+            // Call the success callback if provided, otherwise navigate
+            if (widget.onLoginSuccess != null) {
+              widget.onLoginSuccess!();
+            } else {
+              Navigator.pushReplacementNamed(context, '/dashboard');
+            }
           } else if (state is LoginFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

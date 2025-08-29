@@ -59,7 +59,9 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                         color: Theme.of(context).colorScheme.surfaceVariant,
                         borderRadius: BorderRadius.circular(8.0),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withOpacity(0.2),
                         ),
                       ),
                       child: Column(
@@ -67,9 +69,8 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                         children: [
                           Text(
                             'Status:',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
                           Text(

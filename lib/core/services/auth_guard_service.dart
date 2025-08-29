@@ -120,4 +120,79 @@ class AuthGuardService {
       };
     }
   }
+
+  /// Complete authentication flow with biometric + fallback
+  /// Returns: {'success': bool, 'method': 'biometric'|'fallback'|'none', 'message': string}
+  Future<Map<String, dynamic>> authenticateWithFallback() async {
+    try {
+      _logger.i('Starting authentication flow with fallback...');
+      
+      // Check if we have valid tokens
+      final hasValidToken = await _secureStorage.hasValidToken();
+      if (!hasValidToken) {
+        _logger.i('No valid tokens, proceeding to email/password login');
+        return {
+          'success': false,
+          'method': 'none',
+          'message': 'No valid tokens found. Please login with email and password.',
+          'requiresLogin': true,
+        };
+      }
+
+      // Check if biometric is available and enabled
+      final isBiometricEnabled = await _biometricAuth.isBiometricEnabled();
+      if (!isBiometricEnabled) {
+        _logger.i('Biometric not available, proceeding to email/password login');
+        return {
+          'success': false,
+          'method': 'none',
+          'message': 'Biometric authentication not available. Please login with email and password.',
+          'requiresLogin': true,
+        };
+      }
+
+      // Try biometric authentication
+      _logger.i('Attempting biometric authentication...');
+      final biometricResult = await _biometricAuth.authenticate(
+        reason: 'Please authenticate to access FlexBiller',
+      );
+
+      if (biometricResult) {
+        _logger.i('Biometric authentication successful');
+        return {
+          'success': true,
+          'method': 'biometric',
+          'message': 'Biometric authentication successful!',
+          'requiresLogin': false,
+        };
+      } else {
+        _logger.i('Biometric authentication failed, offering fallback to email/password');
+        return {
+          'success': false,
+          'method': 'fallback',
+          'message': 'Biometric authentication failed. Please login with email and password.',
+          'requiresLogin': true,
+        };
+      }
+    } catch (e) {
+      _logger.e('Error during authentication flow: $e');
+      return {
+        'success': false,
+        'method': 'error',
+        'message': 'Authentication error: $e',
+        'requiresLogin': true,
+      };
+    }
+  }
+
+  /// Check if user should be redirected to login page
+  Future<bool> shouldRedirectToLogin() async {
+    try {
+      final authResult = await authenticateWithFallback();
+      return authResult['requiresLogin'] == true;
+    } catch (e) {
+      _logger.e('Error checking if should redirect to login: $e');
+      return true; // Default to requiring login on error
+    }
+  }
 }
