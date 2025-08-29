@@ -59,21 +59,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onRegisterRequested(
-    RegisterRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(AuthLoading());
-    try {
-      // TODO: Implement register use case
-      // final user = await _registerUseCase(event.email, event.password, event.name);
-      // emit(AuthSuccess(user));
-      emit(AuthFailure('Register not implemented yet'));
-    } catch (e) {
-      emit(AuthFailure(e.toString()));
-    }
-  }
-
   Future<void> _onLogoutRequested(
     LogoutRequested event,
     Emitter<AuthState> emit,
