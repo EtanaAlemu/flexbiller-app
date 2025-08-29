@@ -218,7 +218,7 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
   }) async {
     try {
       final addonProductModels = addonProducts.map((addon) =>
-        CreateSubscriptionWithAddOnsRequestModel(
+        CreateSubscriptionWithAddonsRequestModel(
           accountId: addon.accountId,
           productName: addon.productName,
           productCategory: addon.productCategory,

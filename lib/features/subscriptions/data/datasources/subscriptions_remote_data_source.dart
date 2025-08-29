@@ -51,8 +51,8 @@ abstract class SubscriptionsRemoteDataSource {
   });
 
   // Create Subscription with Add-ons method
-  Future<CreateSubscriptionWithAddOnsResponseModel> createSubscriptionWithAddOns({
-    required List<CreateSubscriptionWithAddOnsRequestModel> addonProducts,
+  Future<CreateSubscriptionWithAddonsResponseModel> createSubscriptionWithAddOns({
+    required List<CreateSubscriptionWithAddonsRequestModel> addonProducts,
   });
 
   // Get Subscription Audit Logs method
@@ -287,7 +287,7 @@ class SubscriptionsRemoteDataSourceImpl implements SubscriptionsRemoteDataSource
 
   @override
   Future<CreateSubscriptionWithAddonsResponseModel> createSubscriptionWithAddOns({
-    required List<CreateSubscriptionWithAddOnsRequestModel> addonProducts,
+    required List<CreateSubscriptionWithAddonsRequestModel> addonProducts,
   }) async {
     try {
       final response = await _dio.post(
