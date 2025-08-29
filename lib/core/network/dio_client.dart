@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:logger/logger.dart';
 import '../constants/app_constants.dart';
 import '../constants/api_endpoints.dart';
 import '../errors/exceptions.dart';
@@ -11,6 +12,7 @@ import '../config/build_config.dart';
 class DioClient {
   final Dio _dio;
   final FlutterSecureStorage _secureStorage;
+  final Logger _logger = Logger();
 
   DioClient(this._secureStorage)
     : _dio = Dio(
@@ -26,6 +28,12 @@ class DioClient {
           },
         ),
       ) {
+    // Debug: Log the base URL being used
+    if (BuildConfig.enableLogging) {
+      _logger.i('🌐 Dio Client initialized with base URL: ${AppConstants.baseUrl}');
+      _logger.i('⏱️ Connection timeout: ${AppConstants.connectionTimeout}ms');
+      _logger.i('⏱️ Receive timeout: ${AppConstants.receiveTimeout}ms');
+    }
     _setupInterceptors();
   }
 
@@ -37,10 +45,10 @@ class DioClient {
         onRequest: (options, handler) async {
           // Debug logging for development
           if (BuildConfig.enableLogging) {
-            print('🌐 Dio Request: ${options.method} ${options.uri}');
-            print('📤 Headers: ${options.headers}');
+            _logger.i('🌐 Dio Request: ${options.method} ${options.uri}');
+            _logger.i('📤 Headers: ${options.headers}');
             if (options.data != null) {
-              print('📦 Data: ${options.data}');
+              _logger.i('📦 Data: ${options.data}');
             }
           }
 
@@ -75,20 +83,20 @@ class DioClient {
         onResponse: (response, handler) {
           // Debug logging for development
           if (BuildConfig.enableLogging) {
-            print(
+            _logger.i(
               '✅ Dio Response: ${response.statusCode} ${response.requestOptions.uri}',
             );
-            print('📥 Data: ${response.data}');
+            _logger.i('📥 Data: ${response.data}');
           }
           return handler.next(response);
         },
         onError: (error, handler) async {
           // Debug logging for development
           if (BuildConfig.enableLogging) {
-            print('❌ Dio Error: ${error.type} - ${error.message}');
-            print('🔗 URL: ${error.requestOptions.uri}');
-            print('📊 Status: ${error.response?.statusCode}');
-            print('📥 Response Data: ${error.response?.data}');
+            _logger.e('❌ Dio Error: ${error.type} - ${error.message}');
+            _logger.e('🔗 URL: ${error.requestOptions.uri}');
+            _logger.e('📊 Status: ${error.response?.statusCode}');
+            _logger.e('📥 Response Data: ${error.response?.data}');
           }
 
           if (error.response?.statusCode == 401) {
