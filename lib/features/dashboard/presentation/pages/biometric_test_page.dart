@@ -52,9 +52,34 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Status: $_status',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(8.0),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Status:',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _status,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            maxLines: 5,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                     if (_isLoading)
@@ -67,10 +92,16 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                             child: ElevatedButton.icon(
                               onPressed: _testBiometricAvailability,
                               icon: const Icon(Icons.info),
-                              label: const Text('Check Biometric Availability'),
+                              label: const Text(
+                                'Check Biometric Availability',
+                                maxLines: 2,
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
+                                  horizontal: 16,
                                 ),
                               ),
                             ),
@@ -83,6 +114,9 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                               icon: const Icon(Icons.fingerprint),
                               label: const Text(
                                 'Test Biometric Authentication',
+                                maxLines: 2,
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(
@@ -93,6 +127,7 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                                 ).colorScheme.onSecondary,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
+                                  horizontal: 16,
                                 ),
                               ),
                             ),
@@ -103,7 +138,12 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                             child: ElevatedButton.icon(
                               onPressed: _testAuthGuard,
                               icon: const Icon(Icons.security),
-                              label: const Text('Test Auth Guard'),
+                              label: const Text(
+                                'Test Auth Guard',
+                                maxLines: 2,
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(
                                   context,
@@ -113,6 +153,7 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
                                 ).colorScheme.onTertiary,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
+                                  horizontal: 16,
                                 ),
                               ),
                             ),
@@ -226,11 +267,11 @@ class _BiometricTestPageState extends State<BiometricTestPage> {
     try {
       final isAvailable = await _biometricAuth.isBiometricAvailable();
       final hasHardware = await _biometricAuth.hasBiometricHardware();
-      final biometricTypes = await _biometricAuth.getAvailableBiometrics();
+      final biometricNames = await _biometricAuth.getAvailableBiometricNames();
 
       setState(() {
         _status =
-            'Biometric Available: $isAvailable, Hardware: $hasHardware, Types: ${biometricTypes.map((t) => _biometricAuth.getBiometricTypeName(t)).join(', ')}';
+            'Biometric Available: $isAvailable, Hardware: $hasHardware, Types: ${biometricNames.join(', ')}';
       });
     } catch (e) {
       setState(() {
