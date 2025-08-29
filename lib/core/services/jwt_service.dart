@@ -10,6 +10,12 @@ class JwtService {
     try {
       // Decode the JWT token
       final decodedToken = JwtDecoder.decode(token);
+      
+      // Debug: Log the actual JWT payload structure
+      print('🔍 JWT Payload Structure:');
+      decodedToken.forEach((key, value) {
+        print('  $key: $value (${value.runtimeType})');
+      });
 
       // Convert to JwtToken object
       return JwtToken.fromJson(decodedToken);
