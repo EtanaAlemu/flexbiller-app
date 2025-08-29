@@ -5,6 +5,7 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import '../constants/app_constants.dart';
 import '../constants/api_endpoints.dart';
 import '../errors/exceptions.dart';
+import '../config/build_config.dart';
 
 @injectable
 class DioClient {
@@ -34,6 +35,15 @@ class DioClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          // Debug logging for development
+          if (BuildConfig.enableLogging) {
+            print('🌐 Dio Request: ${options.method} ${options.uri}');
+            print('📤 Headers: ${options.headers}');
+            if (options.data != null) {
+              print('📦 Data: ${options.data}');
+            }
+          }
+
           // Add auth token if available
           final token = await _secureStorage.read(
             key: AppConstants.authTokenKey,
@@ -63,9 +73,24 @@ class DioClient {
           return handler.next(options);
         },
         onResponse: (response, handler) {
+          // Debug logging for development
+          if (BuildConfig.enableLogging) {
+            print(
+              '✅ Dio Response: ${response.statusCode} ${response.requestOptions.uri}',
+            );
+            print('📥 Data: ${response.data}');
+          }
           return handler.next(response);
         },
         onError: (error, handler) async {
+          // Debug logging for development
+          if (BuildConfig.enableLogging) {
+            print('❌ Dio Error: ${error.type} - ${error.message}');
+            print('🔗 URL: ${error.requestOptions.uri}');
+            print('📊 Status: ${error.response?.statusCode}');
+            print('📥 Response Data: ${error.response?.data}');
+          }
+
           if (error.response?.statusCode == 401) {
             // Token expired, try to refresh
             final refreshToken = await _secureStorage.read(
