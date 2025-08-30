@@ -46,7 +46,7 @@ class _DashboardPageState extends State<DashboardPage> {
           selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: Theme.of(
             context,
-          ).colorScheme.onSurface.withOpacity(0.6),
+          ).colorScheme.onSurface.withValues(alpha: 0.6),
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard),
@@ -93,7 +93,9 @@ class _DashboardContent extends StatelessWidget {
             Text(
               'Manage your billing and accounts efficiently',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 32),
