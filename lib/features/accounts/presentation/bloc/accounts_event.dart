@@ -18,6 +18,20 @@ class LoadAccounts extends AccountsEvent {
   List<Object?> get props => [params];
 }
 
+class GetAllAccounts extends AccountsEvent {
+  const GetAllAccounts();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class RefreshAllAccounts extends AccountsEvent {
+  const RefreshAllAccounts();
+
+  @override
+  List<Object?> get props => [];
+}
+
 class RefreshAccounts extends AccountsEvent {
   final AccountsQueryParams params;
 
@@ -250,7 +264,12 @@ class UpdateAccountCustomField extends AccountsEvent {
   final String name;
   final String value;
 
-  const UpdateAccountCustomField(this.accountId, this.customFieldId, this.name, this.value);
+  const UpdateAccountCustomField(
+    this.accountId,
+    this.customFieldId,
+    this.name,
+    this.value,
+  );
 
   @override
   List<Object?> get props => [accountId, customFieldId, name, value];
@@ -387,7 +406,13 @@ class CreateInvoicePayment extends AccountsEvent {
   });
 
   @override
-  List<Object?> get props => [accountId, paymentAmount, currency, paymentMethod, notes];
+  List<Object?> get props => [
+    accountId,
+    paymentAmount,
+    currency,
+    paymentMethod,
+    notes,
+  ];
 }
 
 class LoadAccountAuditLogs extends AccountsEvent {
@@ -491,13 +516,13 @@ class CreateAccountPayment extends AccountsEvent {
 
   @override
   List<Object?> get props => [
-        accountId,
-        paymentMethodId,
-        transactionType,
-        amount,
-        currency,
-        effectiveDate,
-        description,
-        properties,
-      ];
+    accountId,
+    paymentMethodId,
+    transactionType,
+    amount,
+    currency,
+    effectiveDate,
+    description,
+    properties,
+  ];
 }

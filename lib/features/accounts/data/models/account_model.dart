@@ -153,8 +153,8 @@ class AuditLogModel {
   @JsonKey(name: 'changedBy')
   final String changedBy;
   @JsonKey(name: 'reasonCode')
-  final String reasonCode;
-  final String comments;
+  final String? reasonCode;
+  final String? comments;
   @JsonKey(name: 'objectType')
   final String objectType;
   @JsonKey(name: 'objectId')
@@ -166,8 +166,8 @@ class AuditLogModel {
     required this.changeType,
     required this.changeDate,
     required this.changedBy,
-    required this.reasonCode,
-    required this.comments,
+    this.reasonCode,
+    this.comments,
     required this.objectType,
     required this.objectId,
     required this.userToken,

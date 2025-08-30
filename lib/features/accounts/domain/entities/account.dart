@@ -59,33 +59,33 @@ class Account extends Equatable {
 
   @override
   List<Object?> get props => [
-        accountId,
-        name,
-        firstNameLength,
-        externalKey,
-        email,
-        billCycleDayLocal,
-        currency,
-        parentAccountId,
-        isPaymentDelegatedToParent,
-        paymentMethodId,
-        referenceTime,
-        timeZone,
-        address1,
-        address2,
-        postalCode,
-        company,
-        city,
-        state,
-        country,
-        locale,
-        phone,
-        notes,
-        isMigrated,
-        accountBalance,
-        accountCBA,
-        auditLogs,
-      ];
+    accountId,
+    name,
+    firstNameLength,
+    externalKey,
+    email,
+    billCycleDayLocal,
+    currency,
+    parentAccountId,
+    isPaymentDelegatedToParent,
+    paymentMethodId,
+    referenceTime,
+    timeZone,
+    address1,
+    address2,
+    postalCode,
+    company,
+    city,
+    state,
+    country,
+    locale,
+    phone,
+    notes,
+    isMigrated,
+    accountBalance,
+    accountCBA,
+    auditLogs,
+  ];
 
   @override
   String toString() {
@@ -109,8 +109,11 @@ class Account extends Equatable {
   bool get hasBalance => accountBalance != null && accountBalance != 0;
   bool get hasCba => accountCBA != null && accountCBA != 0;
 
-  String get formattedBalance => accountBalance != null ? '\$${accountBalance!.toStringAsFixed(2)}' : 'N/A';
-  String get formattedCba => accountCBA != null ? '\$${accountCBA!.toStringAsFixed(2)}' : 'N/A';
+  String get formattedBalance => accountBalance != null
+      ? '\$${accountBalance!.toStringAsFixed(2)}'
+      : 'N/A';
+  String get formattedCba =>
+      accountCBA != null ? '\$${accountCBA!.toStringAsFixed(2)}' : 'N/A';
 
   // Legacy getter for backward compatibility
   String get id => accountId;
@@ -154,7 +157,8 @@ class Account extends Equatable {
       billCycleDayLocal: billCycleDayLocal ?? this.billCycleDayLocal,
       currency: currency ?? this.currency,
       parentAccountId: parentAccountId ?? this.parentAccountId,
-      isPaymentDelegatedToParent: isPaymentDelegatedToParent ?? this.isPaymentDelegatedToParent,
+      isPaymentDelegatedToParent:
+          isPaymentDelegatedToParent ?? this.isPaymentDelegatedToParent,
       paymentMethodId: paymentMethodId ?? this.paymentMethodId,
       referenceTime: referenceTime ?? this.referenceTime,
       timeZone: timeZone ?? this.timeZone,
@@ -180,8 +184,8 @@ class AuditLog extends Equatable {
   final String changeType;
   final DateTime changeDate;
   final String changedBy;
-  final String reasonCode;
-  final String comments;
+  final String? reasonCode;
+  final String? comments;
   final String objectType;
   final String objectId;
   final String userToken;
@@ -190,8 +194,8 @@ class AuditLog extends Equatable {
     required this.changeType,
     required this.changeDate,
     required this.changedBy,
-    required this.reasonCode,
-    required this.comments,
+    this.reasonCode,
+    this.comments,
     required this.objectType,
     required this.objectId,
     required this.userToken,

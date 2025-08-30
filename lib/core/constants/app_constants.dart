@@ -5,7 +5,8 @@ class AppConstants {
   static String get baseUrl => '${BuildConfig.baseUrl}/api';
   static int get connectionTimeout =>
       BuildConfig.connectionTimeout.inMilliseconds;
-  static int get receiveTimeout => 10000; // 10 seconds for receive timeout
+  static int get receiveTimeout =>
+      60000; // 60 seconds for receive timeout (increased from 10s)
 
   // Storage Keys
   static const String authTokenKey = 'auth_token';

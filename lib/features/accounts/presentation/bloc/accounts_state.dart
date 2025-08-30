@@ -29,6 +29,32 @@ class AccountsLoading extends AccountsState {
   List<Object?> get props => [params];
 }
 
+class GetAllAccountsLoading extends AccountsState {
+  const GetAllAccountsLoading();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class AllAccountsLoaded extends AccountsState {
+  final List<Account> accounts;
+  final int totalCount;
+
+  const AllAccountsLoaded({required this.accounts, required this.totalCount});
+
+  @override
+  List<Object?> get props => [accounts, totalCount];
+}
+
+class AllAccountsRefreshing extends AccountsState {
+  final List<Account> accounts;
+
+  const AllAccountsRefreshing(this.accounts);
+
+  @override
+  List<Object?> get props => [accounts];
+}
+
 class AccountsLoaded extends AccountsState {
   final List<Account> accounts;
   final bool hasReachedMax;
@@ -1007,7 +1033,11 @@ class SetDefaultPaymentMethodFailure extends AccountsState {
   final String accountId;
   final String paymentMethodId;
 
-  const SetDefaultPaymentMethodFailure(this.message, this.accountId, this.paymentMethodId);
+  const SetDefaultPaymentMethodFailure(
+    this.message,
+    this.accountId,
+    this.paymentMethodId,
+  );
 
   @override
   List<Object?> get props => [message, accountId, paymentMethodId];
@@ -1114,5 +1144,11 @@ class CreateAccountPaymentFailure extends AccountsState {
   );
 
   @override
-  List<Object?> get props => [message, accountId, transactionType, amount, currency];
+  List<Object?> get props => [
+    message,
+    accountId,
+    transactionType,
+    amount,
+    currency,
+  ];
 }

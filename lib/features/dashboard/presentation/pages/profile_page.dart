@@ -525,7 +525,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Expanded(
             flex: 2,
             child: Text(
-              label, 
+              label,
               style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
           ),

@@ -19,6 +19,162 @@ class AccountsListWidget extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
+        if (state is GetAllAccountsLoading) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Loading all accounts...'),
+              ],
+            ),
+          );
+        }
+
+        if (state is AllAccountsLoaded) {
+          if (state.accounts.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.account_circle_outlined,
+                    size: 64,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No accounts found',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No accounts available in the system',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Showing all ${state.totalCount} accounts',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(
+                          const LoadAccounts(AccountsQueryParams()),
+                        );
+                      },
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Back to Paginated View'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(
+                          const RefreshAllAccounts(),
+                        );
+                      },
+                      icon: BlocBuilder<AccountsBloc, AccountsState>(
+                        builder: (context, state) {
+                          if (state is AllAccountsRefreshing) {
+                            return const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            );
+                          }
+                          return const Icon(Icons.refresh);
+                        },
+                      ),
+                      tooltip: 'Refresh All Accounts',
+                      style: IconButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: _buildAccountsList(
+                  context,
+                  state.accounts,
+                  true, // hasReachedMax
+                  0, // currentOffset
+                ),
+              ),
+            ],
+          );
+        }
+
+        if (state is AllAccountsRefreshing) {
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Refreshing all accounts...',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Refreshing accounts...',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
         if (state is AccountsFailure) {
           return Center(
             child: Column(

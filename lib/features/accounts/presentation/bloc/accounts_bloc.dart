@@ -152,6 +152,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
        _accountEmailsRepository = accountEmailsRepository,
        super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
+    on<GetAllAccounts>(_onGetAllAccounts);
+    on<RefreshAllAccounts>(_onRefreshAllAccounts);
     on<SearchAccounts>(_onSearchAccounts);
     on<RefreshAccounts>(_onRefreshAccounts);
     on<LoadMoreAccounts>(_onLoadMoreAccounts);
@@ -222,6 +224,44 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     }
   }
 
+  Future<void> _onGetAllAccounts(
+    GetAllAccounts event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(const GetAllAccountsLoading());
+      final accounts = await _getAccountsUseCase(const AccountsQueryParams());
+      emit(AllAccountsLoaded(accounts: accounts, totalCount: accounts.length));
+    } catch (e) {
+      emit(AccountsFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onRefreshAllAccounts(
+    RefreshAllAccounts event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      final currentState = state;
+      if (currentState is AllAccountsLoaded) {
+        emit(AllAccountsRefreshing(currentState.accounts));
+      }
+
+      final accounts = await _getAccountsUseCase(const AccountsQueryParams());
+
+      emit(AllAccountsLoaded(accounts: accounts, totalCount: accounts.length));
+    } catch (e) {
+      final currentState = state;
+      if (currentState is AllAccountsRefreshing) {
+        emit(
+          AccountsFailure('Failed to refresh all accounts: ${e.toString()}'),
+        );
+      } else {
+        emit(AccountsFailure(e.toString()));
+      }
+    }
+  }
+
   Future<void> _onRefreshAccounts(
     RefreshAccounts event,
     Emitter<AccountsState> emit,
@@ -245,12 +285,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     } catch (e) {
       final currentState = state;
       if (currentState is AccountsRefreshing) {
-        emit(
-          AccountsFailure(
-            e.toString(),
-            previousAccounts: currentState.accounts,
-          ),
-        );
+        emit(AccountsFailure('Failed to refresh accounts: ${e.toString()}'));
       } else {
         emit(AccountsFailure(e.toString()));
       }
@@ -1079,12 +1114,14 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
-      emit(CreatingAccountPayment(
-        event.accountId,
-        event.transactionType,
-        event.amount,
-        event.currency,
-      ));
+      emit(
+        CreatingAccountPayment(
+          event.accountId,
+          event.transactionType,
+          event.amount,
+          event.currency,
+        ),
+      );
       final createdPayment = await _createAccountPaymentUseCase(
         accountId: event.accountId,
         paymentMethodId: event.paymentMethodId,
