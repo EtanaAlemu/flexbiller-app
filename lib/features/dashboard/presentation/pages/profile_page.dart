@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -19,7 +20,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final SecureStorageService _secureStorage = getIt<SecureStorageService>();
   final AuthRepository _authRepository = getIt<AuthRepository>();
-  
+
   User? _currentUser;
   bool _isLoading = true;
   String? _errorMessage;
@@ -27,7 +28,23 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    print('DEBUG: ProfilePage initState called');
+    
+    // Test dependency injection
+    try {
+      print('DEBUG: Testing dependency injection...');
+      print('DEBUG: AuthRepository: ${_authRepository.runtimeType}');
+      print('DEBUG: SecureStorageService: ${_secureStorage.runtimeType}');
+    } catch (e) {
+      print('DEBUG: Dependency injection error: $e');
+    }
+    
+    // Add a small delay to ensure dependencies are properly initialized
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _loadUserData();
+      }
+    });
   }
 
   Future<void> _loadUserData() async {
@@ -37,15 +54,47 @@ class _ProfilePageState extends State<ProfilePage> {
         _errorMessage = null;
       });
 
-      final user = await _authRepository.getCurrentUser();
+      print('DEBUG: Starting to load user data...');
       
+      // First check if user is authenticated
+      final isAuthenticated = await _authRepository.isAuthenticated();
+      print('DEBUG: Is authenticated: $isAuthenticated');
+      
+      if (!isAuthenticated) {
+        print('DEBUG: User not authenticated, setting error state');
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'User not authenticated. Please log in again.';
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+      
+      // Add timeout to prevent infinite loading
+      final user = await _authRepository.getCurrentUser().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('User data loading timed out', const Duration(seconds: 10));
+        },
+      );
+      
+      print('DEBUG: User data loaded successfully: ${user?.email ?? 'null'}');
+
       if (mounted) {
         setState(() {
           _currentUser = user;
           _isLoading = false;
         });
+        
+        // If no user data, try to get basic info from secure storage
+        if (user == null) {
+          print('DEBUG: No user data returned, trying secure storage fallback...');
+          _trySecureStorageFallback();
+        }
       }
     } catch (e) {
+      print('DEBUG: Error loading user data: $e');
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to load user data: $e';
@@ -81,14 +130,9 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(
-                color: theme.colorScheme.primary,
-              ),
+              CircularProgressIndicator(color: theme.colorScheme.primary),
               const SizedBox(height: 16),
-              Text(
-                'Loading profile...',
-                style: theme.textTheme.bodyLarge,
-              ),
+              Text('Loading profile...', style: theme.textTheme.bodyLarge),
             ],
           ),
         ),
@@ -119,11 +163,38 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: theme.textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loadUserData,
-                child: const Text('Retry'),
-              ),
+                                  const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed: _loadUserData,
+                          child: const Text('Retry'),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            print('DEBUG: Manual refresh requested');
+                            _loadUserData();
+                          },
+                          child: const Text('Refresh'),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton(
+                          onPressed: () async {
+                            print('DEBUG: Testing authentication directly...');
+                            try {
+                              final isAuth = await _authRepository.isAuthenticated();
+                              final user = await _authRepository.getCurrentUser();
+                              print('DEBUG: Direct test - IsAuth: $isAuth, User: ${user?.email ?? 'null'}');
+                            } catch (e) {
+                              print('DEBUG: Direct test error: $e');
+                            }
+                          },
+                          child: const Text('Test Auth'),
+                        ),
+                      ],
+                    ),
             ],
           ),
         ),
@@ -197,8 +268,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _currentUser!.displayName.isNotEmpty 
-                        ? _currentUser!.displayName 
+                    _currentUser!.displayName.isNotEmpty
+                        ? _currentUser!.displayName
                         : _currentUser!.name,
                     style: const TextStyle(
                       fontSize: 24,
@@ -265,8 +336,16 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 16),
                     _buildInfoRow('User ID', _currentUser!.id),
-                    _buildInfoRow('Account Status', _currentUser!.emailVerified == true ? 'Verified' : 'Pending Verification'),
-                    _buildInfoRow('Role', _currentUser!.role.replaceAll('_', ' ').toUpperCase()),
+                    _buildInfoRow(
+                      'Account Status',
+                      _currentUser!.emailVerified == true
+                          ? 'Verified'
+                          : 'Pending Verification',
+                    ),
+                    _buildInfoRow(
+                      'Role',
+                      _currentUser!.role.replaceAll('_', ' ').toUpperCase(),
+                    ),
                     if (_currentUser!.company?.isNotEmpty == true)
                       _buildInfoRow('Company', _currentUser!.company!),
                     if (_currentUser!.department?.isNotEmpty == true)
@@ -277,8 +356,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       _buildInfoRow('Location', _currentUser!.location!),
                     if (_currentUser!.phone?.isNotEmpty == true)
                       _buildInfoRow('Phone', _currentUser!.phone!),
-                    _buildInfoRow('Member Since', _formatDate(_currentUser!.createdAt)),
-                    _buildInfoRow('Last Updated', _formatDate(_currentUser!.updatedAt)),
+                    _buildInfoRow(
+                      'Member Since',
+                      _formatDate(_currentUser!.createdAt),
+                    ),
+                    _buildInfoRow(
+                      'Last Updated',
+                      _formatDate(_currentUser!.updatedAt),
+                    ),
                   ],
                 ),
               ),
@@ -606,5 +691,35 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _formatDate(DateTime date) {
     return DateFormat('MMM dd, yyyy').format(date);
+  }
+
+  Future<void> _trySecureStorageFallback() async {
+    try {
+      print('DEBUG: Trying secure storage fallback...');
+      final userId = await _secureStorage.getUserId();
+      final userEmail = await _secureStorage.getUserEmail();
+      
+      print('DEBUG: Fallback data - User ID: $userId, Email: $userEmail');
+      
+      if (userId != null && userEmail != null) {
+        // Create a minimal user object with available data
+        final fallbackUser = User(
+          id: userId,
+          email: userEmail,
+          name: userEmail.split('@').first, // Use email prefix as name
+          role: 'USER', // Default role
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+        
+        if (mounted) {
+          setState(() {
+            _currentUser = fallbackUser;
+          });
+        }
+      }
+    } catch (e) {
+      print('DEBUG: Fallback also failed: $e');
+    }
   }
 }
