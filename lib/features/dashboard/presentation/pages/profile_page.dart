@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../injection_container.dart';
+import '../../../auth/domain/entities/user.dart';
+import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../auth/presentation/pages/change_password_page.dart';
 
@@ -15,6 +18,42 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final SecureStorageService _secureStorage = getIt<SecureStorageService>();
+  final AuthRepository _authRepository = getIt<AuthRepository>();
+  
+  User? _currentUser;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final user = await _authRepository.getCurrentUser();
+      
+      if (mounted) {
+        setState(() {
+          _currentUser = user;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load user data: $e';
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   void _logout() async {
     await _secureStorage.clearAuthTokens();
@@ -35,6 +74,94 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Loading profile...',
+                style: theme.textTheme.bodyLarge,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: theme.colorScheme.error,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Error loading profile',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _errorMessage!,
+                style: theme.textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadUserData,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_currentUser == null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.person_off,
+                size: 64,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No user data available',
+                style: theme.textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please log in again to view your profile',
+                style: theme.textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _logout,
+                child: const Text('Go to Login'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -69,18 +196,20 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'John Doe',
-                    style: TextStyle(
+                  Text(
+                    _currentUser!.displayName.isNotEmpty 
+                        ? _currentUser!.displayName 
+                        : _currentUser!.name,
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'john.doe@example.com',
-                    style: TextStyle(fontSize: 16, color: Colors.white70),
+                  Text(
+                    _currentUser!.email,
+                    style: const TextStyle(fontSize: 16, color: Colors.white70),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -92,9 +221,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Administrator',
-                      style: TextStyle(
+                    child: Text(
+                      _currentUser!.role.replaceAll('_', ' ').toUpperCase(),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -135,10 +264,21 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _buildInfoRow('User ID', 'USR001'),
-                    _buildInfoRow('Account Status', 'Active'),
-                    _buildInfoRow('Last Login', 'Today at 2:30 PM'),
-                    _buildInfoRow('Member Since', 'January 2024'),
+                    _buildInfoRow('User ID', _currentUser!.id),
+                    _buildInfoRow('Account Status', _currentUser!.emailVerified == true ? 'Verified' : 'Pending Verification'),
+                    _buildInfoRow('Role', _currentUser!.role.replaceAll('_', ' ').toUpperCase()),
+                    if (_currentUser!.company?.isNotEmpty == true)
+                      _buildInfoRow('Company', _currentUser!.company!),
+                    if (_currentUser!.department?.isNotEmpty == true)
+                      _buildInfoRow('Department', _currentUser!.department!),
+                    if (_currentUser!.position?.isNotEmpty == true)
+                      _buildInfoRow('Position', _currentUser!.position!),
+                    if (_currentUser!.location?.isNotEmpty == true)
+                      _buildInfoRow('Location', _currentUser!.location!),
+                    if (_currentUser!.phone?.isNotEmpty == true)
+                      _buildInfoRow('Phone', _currentUser!.phone!),
+                    _buildInfoRow('Member Since', _formatDate(_currentUser!.createdAt)),
+                    _buildInfoRow('Last Updated', _formatDate(_currentUser!.updatedAt)),
                   ],
                 ),
               ),
@@ -462,5 +602,9 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat('MMM dd, yyyy').format(date);
   }
 }
