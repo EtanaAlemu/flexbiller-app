@@ -29,7 +29,7 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     print('DEBUG: ProfilePage initState called');
-    
+
     // Test dependency injection
     try {
       print('DEBUG: Testing dependency injection...');
@@ -38,7 +38,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       print('DEBUG: Dependency injection error: $e');
     }
-    
+
     // Add a small delay to ensure dependencies are properly initialized
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -55,11 +55,11 @@ class _ProfilePageState extends State<ProfilePage> {
       });
 
       print('DEBUG: Starting to load user data...');
-      
+
       // First check if user is authenticated
       final isAuthenticated = await _authRepository.isAuthenticated();
       print('DEBUG: Is authenticated: $isAuthenticated');
-      
+
       if (!isAuthenticated) {
         print('DEBUG: User not authenticated, setting error state');
         if (mounted) {
@@ -70,15 +70,18 @@ class _ProfilePageState extends State<ProfilePage> {
         }
         return;
       }
-      
+
       // Add timeout to prevent infinite loading
       final user = await _authRepository.getCurrentUser().timeout(
         const Duration(seconds: 10),
         onTimeout: () {
-          throw TimeoutException('User data loading timed out', const Duration(seconds: 10));
+          throw TimeoutException(
+            'User data loading timed out',
+            const Duration(seconds: 10),
+          );
         },
       );
-      
+
       print('DEBUG: User data loaded successfully: ${user?.email ?? 'null'}');
 
       if (mounted) {
@@ -86,10 +89,12 @@ class _ProfilePageState extends State<ProfilePage> {
           _currentUser = user;
           _isLoading = false;
         });
-        
+
         // If no user data, try to get basic info from secure storage
         if (user == null) {
-          print('DEBUG: No user data returned, trying secure storage fallback...');
+          print(
+            'DEBUG: No user data returned, trying secure storage fallback...',
+          );
           _trySecureStorageFallback();
         }
       }
@@ -98,6 +103,41 @@ class _ProfilePageState extends State<ProfilePage> {
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to load user data: $e';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // Alternative method to check authentication status
+  Future<void> _checkAuthStatus() async {
+    try {
+      print('DEBUG: Checking authentication status...');
+      
+      // Check secure storage directly
+      final hasToken = await _secureStorage.hasValidToken();
+      print('DEBUG: Has valid token: $hasToken');
+      
+      if (hasToken) {
+        final tokenInfo = await _secureStorage.getTokenInfo();
+        print('DEBUG: Token info: $tokenInfo');
+        
+        // Try to load user data again
+        await _loadUserData();
+      } else {
+        print('DEBUG: No valid token found');
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'No valid authentication token found. Please log in again.';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('DEBUG: Error checking auth status: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error checking authentication: $e';
           _isLoading = false;
         });
       }
@@ -163,38 +203,66 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: theme.textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
-                                  const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
-                          onPressed: _loadUserData,
-                          child: const Text('Retry'),
-                        ),
-                        const SizedBox(width: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            print('DEBUG: Manual refresh requested');
-                            _loadUserData();
-                          },
-                          child: const Text('Refresh'),
-                        ),
-                        const SizedBox(width: 16),
-                        ElevatedButton(
-                          onPressed: () async {
-                            print('DEBUG: Testing authentication directly...');
-                            try {
-                              final isAuth = await _authRepository.isAuthenticated();
-                              final user = await _authRepository.getCurrentUser();
-                              print('DEBUG: Direct test - IsAuth: $isAuth, User: ${user?.email ?? 'null'}');
-                            } catch (e) {
-                              print('DEBUG: Direct test error: $e');
-                            }
-                          },
-                          child: const Text('Test Auth'),
-                        ),
-                      ],
-                    ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: _loadUserData,
+                    child: const Text('Retry'),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      print('DEBUG: Manual refresh requested');
+                      _loadUserData();
+                    },
+                    child: const Text('Refresh'),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () async {
+                      print('DEBUG: Testing authentication directly...');
+                      try {
+                        final isAuth = await _authRepository.isAuthenticated();
+                        final user = await _authRepository.getCurrentUser();
+                        print(
+                          'DEBUG: Direct test - IsAuth: $isAuth, User: ${user?.email ?? 'null'}',
+                        );
+                      } catch (e) {
+                        print('DEBUG: Direct test error: $e');
+                      }
+                    },
+                    child: const Text('Test Auth'),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: _checkAuthStatus,
+                    child: const Text('Check Auth'),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () async {
+                      print('DEBUG: Checking secure storage directly...');
+                      try {
+                        final allKeys = await _secureStorage.getAllKeys();
+                        print('DEBUG: All secure storage keys: $allKeys');
+                        
+                        final hasToken = await _secureStorage.hasValidToken();
+                        print('DEBUG: Has valid token: $hasToken');
+                        
+                        if (hasToken) {
+                          final tokenInfo = await _secureStorage.getTokenInfo();
+                          print('DEBUG: Token info: $tokenInfo');
+                        }
+                      } catch (e) {
+                        print('DEBUG: Secure storage check error: $e');
+                      }
+                    },
+                    child: const Text('Check Storage'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -698,9 +766,9 @@ class _ProfilePageState extends State<ProfilePage> {
       print('DEBUG: Trying secure storage fallback...');
       final userId = await _secureStorage.getUserId();
       final userEmail = await _secureStorage.getUserEmail();
-      
+
       print('DEBUG: Fallback data - User ID: $userId, Email: $userEmail');
-      
+
       if (userId != null && userEmail != null) {
         // Create a minimal user object with available data
         final fallbackUser = User(
@@ -711,7 +779,7 @@ class _ProfilePageState extends State<ProfilePage> {
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
-        
+
         if (mounted) {
           setState(() {
             _currentUser = fallbackUser;
