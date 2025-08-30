@@ -113,22 +113,23 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _checkAuthStatus() async {
     try {
       print('DEBUG: Checking authentication status...');
-      
+
       // Check secure storage directly
       final hasToken = await _secureStorage.hasValidToken();
       print('DEBUG: Has valid token: $hasToken');
-      
+
       if (hasToken) {
         final tokenInfo = await _secureStorage.getTokenInfo();
         print('DEBUG: Token info: $tokenInfo');
-        
+
         // Try to load user data again
         await _loadUserData();
       } else {
         print('DEBUG: No valid token found');
         if (mounted) {
           setState(() {
-            _errorMessage = 'No valid authentication token found. Please log in again.';
+            _errorMessage =
+                'No valid authentication token found. Please log in again.';
             _isLoading = false;
           });
         }
@@ -204,14 +205,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
                 children: [
                   ElevatedButton(
                     onPressed: _loadUserData,
                     child: const Text('Retry'),
                   ),
-                  const SizedBox(width: 16),
                   ElevatedButton(
                     onPressed: () {
                       print('DEBUG: Manual refresh requested');
@@ -219,7 +221,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     },
                     child: const Text('Refresh'),
                   ),
-                  const SizedBox(width: 16),
                   ElevatedButton(
                     onPressed: () async {
                       print('DEBUG: Testing authentication directly...');
@@ -235,22 +236,20 @@ class _ProfilePageState extends State<ProfilePage> {
                     },
                     child: const Text('Test Auth'),
                   ),
-                  const SizedBox(width: 16),
                   ElevatedButton(
                     onPressed: _checkAuthStatus,
                     child: const Text('Check Auth'),
                   ),
-                  const SizedBox(width: 16),
                   ElevatedButton(
                     onPressed: () async {
                       print('DEBUG: Checking secure storage directly...');
                       try {
                         final allKeys = await _secureStorage.getAllKeys();
                         print('DEBUG: All secure storage keys: $allKeys');
-                        
+
                         final hasToken = await _secureStorage.hasValidToken();
                         print('DEBUG: Has valid token: $hasToken');
-                        
+
                         if (hasToken) {
                           final tokenInfo = await _secureStorage.getTokenInfo();
                           print('DEBUG: Token info: $tokenInfo');
@@ -521,12 +520,24 @@ class _ProfilePageState extends State<ProfilePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label, 
+              style: const TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
