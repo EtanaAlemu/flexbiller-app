@@ -49,6 +49,13 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
       return await AccountDao.getAll(db, orderBy: 'name ASC');
     } catch (e) {
       _logger.e('Error getting cached accounts: $e');
+      
+      // If table doesn't exist, return empty list instead of throwing
+      if (e.toString().contains('no such table: accounts')) {
+        _logger.w('Accounts table does not exist yet, returning empty list');
+        return [];
+      }
+      
       rethrow;
     }
   }
@@ -159,6 +166,13 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
       );
     } catch (e) {
       _logger.e('Error getting cached accounts by query: $e');
+      
+      // If table doesn't exist, return empty list instead of throwing
+      if (e.toString().contains('no such table: accounts')) {
+        _logger.w('Accounts table does not exist yet, returning empty list');
+        return [];
+      }
+      
       rethrow;
     }
   }

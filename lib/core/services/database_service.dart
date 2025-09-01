@@ -14,6 +14,10 @@ class DatabaseService {
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDatabase();
+    
+    // Ensure accounts table exists after database initialization
+    await _ensureAccountsTableExists();
+    
     return _database!;
   }
 
@@ -125,13 +129,32 @@ class DatabaseService {
       _logger.d('Upgrading database from version $oldVersion to $newVersion');
 
       if (oldVersion < 2) {
-        // Add new columns or tables for version 2
-        // await db.execute('ALTER TABLE users ADD COLUMN phone TEXT');
+        // Create accounts table for version 2
+        _logger.d('Creating accounts table for version 2');
+        await db.execute(AccountDao.createTableSQL);
+        _logger.d('Accounts table created successfully');
       }
 
       _logger.d('Database upgrade completed');
     } catch (e) {
       _logger.e('Error upgrading database: $e');
+      rethrow;
+    }
+  }
+
+  // Check and create accounts table if it doesn't exist
+  Future<void> _ensureAccountsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query('sqlite_master', where: 'type = ? AND name = ?', whereArgs: ['table', 'accounts']);
+      
+      if (tables.isEmpty) {
+        _logger.d('Accounts table does not exist, creating it...');
+        await db.execute(AccountDao.createTableSQL);
+        _logger.d('Accounts table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring accounts table exists: $e');
       rethrow;
     }
   }
