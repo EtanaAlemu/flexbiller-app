@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../core/errors/exceptions.dart';
@@ -15,6 +16,12 @@ class AccountsRepositoryImpl implements AccountsRepository {
   final AccountsLocalDataSource _localDataSource;
   final NetworkInfo _networkInfo;
   final Logger _logger = Logger();
+  
+  // Stream controllers for reactive UI updates
+  final StreamController<List<Account>> _accountsStreamController = 
+      StreamController<List<Account>>.broadcast();
+  final StreamController<Account> _accountStreamController = 
+      StreamController<Account>.broadcast();
 
   AccountsRepositoryImpl({
     required AccountsRemoteDataSource remoteDataSource,
@@ -23,6 +30,10 @@ class AccountsRepositoryImpl implements AccountsRepository {
   }) : _remoteDataSource = remoteDataSource,
        _localDataSource = localDataSource,
        _networkInfo = networkInfo;
+
+  // Stream getters for reactive UI updates
+  Stream<List<Account>> get accountsStream => _accountsStreamController.stream;
+  Stream<Account> get accountStream => _accountStreamController.stream;
 
   @override
   Future<List<Account>> getAccounts(AccountsQueryParams params) async {
@@ -580,7 +591,12 @@ class AccountsRepositoryImpl implements AccountsRepository {
       if (await _networkInfo.isConnected) {
         final remoteAccounts = await _remoteDataSource.getAccounts(params);
         await _localDataSource.cacheAccounts(remoteAccounts);
-        _logger.d('Background sync completed for accounts');
+        
+        // 🔥 KEY: Update UI with fresh data via stream
+        final freshAccounts = remoteAccounts.map((model) => model.toEntity()).toList();
+        _accountsStreamController.add(freshAccounts);
+        
+        _logger.d('Background sync completed for accounts - UI updated with fresh data');
       }
     } catch (e) {
       _logger.w('Background sync failed for accounts: $e');
@@ -592,10 +608,21 @@ class AccountsRepositoryImpl implements AccountsRepository {
       if (await _networkInfo.isConnected) {
         final remoteAccount = await _remoteDataSource.getAccountById(accountId);
         await _localDataSource.updateCachedAccount(remoteAccount);
-        _logger.d('Background sync completed for account: $accountId');
+        
+        // 🔥 KEY: Update UI with fresh data via stream
+        final freshAccount = remoteAccount.toEntity();
+        _accountStreamController.add(freshAccount);
+        
+        _logger.d('Background sync completed for account: $accountId - UI updated with fresh data');
       }
     } catch (e) {
       _logger.w('Background sync failed for account $accountId: $e');
     }
+  }
+
+  // Clean up stream controllers
+  void dispose() {
+    _accountsStreamController.close();
+    _accountStreamController.close();
   }
 }
