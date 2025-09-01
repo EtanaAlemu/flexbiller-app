@@ -276,9 +276,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i164.AccountPaymentsRemoteDataSource>(
     () => _i164.AccountPaymentsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
-  gh.factory<_i852.AccountsRemoteDataSource>(
-    () => _i852.AccountsRemoteDataSourceImpl(gh<_i361.Dio>()),
-  );
   gh.factory<_i1054.AccountPaymentsRepository>(
     () => _i626.AccountPaymentsRepositoryImpl(
       gh<_i164.AccountPaymentsRemoteDataSource>(),
@@ -441,36 +438,14 @@ _i174.GetIt $initGetIt(
   gh.factory<_i553.ExportAccountDataUseCase>(
     () => _i553.ExportAccountDataUseCase(gh<_i930.AccountExportRepository>()),
   );
-  gh.lazySingleton<_i42.AccountsRepository>(
-    () => _i395.AccountsRepositoryImpl(
-      remoteDataSource: gh<_i852.AccountsRemoteDataSource>(),
-      localDataSource: gh<_i1023.AccountsLocalDataSource>(),
-      networkInfo: gh<_i75.NetworkInfo>(),
-    ),
+  gh.factory<_i852.AccountsRemoteDataSource>(
+    () => _i852.AccountsRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
   gh.factory<_i767.AuthRemoteDataSource>(
     () => _i767.AuthRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
   gh.factory<_i254.UserLocalDataSource>(
     () => _i254.UserLocalDataSourceImpl(gh<_i916.DatabaseService>()),
-  );
-  gh.factory<_i400.GetAccountByIdUseCase>(
-    () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
-  );
-  gh.factory<_i651.UpdateAccountUseCase>(
-    () => _i651.UpdateAccountUseCase(gh<_i42.AccountsRepository>()),
-  );
-  gh.factory<_i684.GetAccountsUseCase>(
-    () => _i684.GetAccountsUseCase(gh<_i42.AccountsRepository>()),
-  );
-  gh.factory<_i823.DeleteAccountUseCase>(
-    () => _i823.DeleteAccountUseCase(gh<_i42.AccountsRepository>()),
-  );
-  gh.factory<_i266.SearchAccountsUseCase>(
-    () => _i266.SearchAccountsUseCase(gh<_i42.AccountsRepository>()),
-  );
-  gh.factory<_i968.CreateAccountUseCase>(
-    () => _i968.CreateAccountUseCase(gh<_i42.AccountsRepository>()),
   );
   gh.factory<_i1015.AuthRepository>(
     () => _i111.AuthRepositoryImpl(
@@ -719,6 +694,13 @@ _i174.GetIt $initGetIt(
     () =>
         _i711.GetAccountTimelineUseCase(gh<_i446.AccountTimelineRepository>()),
   );
+  gh.lazySingleton<_i42.AccountsRepository>(
+    () => _i395.AccountsRepositoryImpl(
+      remoteDataSource: gh<_i852.AccountsRemoteDataSource>(),
+      localDataSource: gh<_i1023.AccountsLocalDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
+    ),
+  );
   gh.factory<_i363.AuthBloc>(
     () => _i363.AuthBloc(
       loginUseCase: gh<_i206.LoginUseCase>(),
@@ -726,6 +708,24 @@ _i174.GetIt $initGetIt(
       changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
       resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
     ),
+  );
+  gh.factory<_i400.GetAccountByIdUseCase>(
+    () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
+  );
+  gh.factory<_i651.UpdateAccountUseCase>(
+    () => _i651.UpdateAccountUseCase(gh<_i42.AccountsRepository>()),
+  );
+  gh.factory<_i684.GetAccountsUseCase>(
+    () => _i684.GetAccountsUseCase(gh<_i42.AccountsRepository>()),
+  );
+  gh.factory<_i823.DeleteAccountUseCase>(
+    () => _i823.DeleteAccountUseCase(gh<_i42.AccountsRepository>()),
+  );
+  gh.factory<_i266.SearchAccountsUseCase>(
+    () => _i266.SearchAccountsUseCase(gh<_i42.AccountsRepository>()),
+  );
+  gh.factory<_i968.CreateAccountUseCase>(
+    () => _i968.CreateAccountUseCase(gh<_i42.AccountsRepository>()),
   );
   gh.factory<_i350.CreateInvoicePaymentUseCase>(
     () => _i350.CreateInvoicePaymentUseCase(

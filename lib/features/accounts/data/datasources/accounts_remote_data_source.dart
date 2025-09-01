@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/models/api_response.dart';
 import '../models/account_model.dart';
@@ -16,14 +17,14 @@ abstract class AccountsRemoteDataSource {
 
 @Injectable(as: AccountsRemoteDataSource)
 class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountsRemoteDataSourceImpl(this._dio);
+  AccountsRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountModel>> getAccounts(AccountsQueryParams params) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts',
         queryParameters: params.toQueryParameters(),
       );
@@ -81,7 +82,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
   @override
   Future<AccountModel> getAccountById(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId');
+      final response = await _dioClient.dio.get('/accounts/$accountId');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -148,7 +149,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
   @override
   Future<List<AccountModel>> searchAccounts(String searchKey) async {
     try {
-      final response = await _dio.get('/accounts/search/$searchKey');
+      final response = await _dioClient.dio.get('/accounts/search/$searchKey');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -203,7 +204,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
   @override
   Future<AccountModel> createAccount(AccountModel account) async {
     try {
-      final response = await _dio.post('/accounts', data: account.toJson());
+      final response = await _dioClient.dio.post('/accounts', data: account.toJson());
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final responseData = response.data;
@@ -271,7 +272,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
   @override
   Future<AccountModel> updateAccount(AccountModel account) async {
     try {
-      final response = await _dio.put(
+      final response = await _dioClient.dio.put(
         '/accounts/${account.accountId}',
         data: account.toJson(),
       );
@@ -343,7 +344,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
   @override
   Future<void> deleteAccount(String accountId) async {
     try {
-      final response = await _dio.delete('/accounts/$accountId');
+      final response = await _dioClient.dio.delete('/accounts/$accountId');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
