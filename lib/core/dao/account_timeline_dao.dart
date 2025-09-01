@@ -4,7 +4,7 @@ import '../../features/accounts/data/models/account_timeline_model.dart';
 
 class AccountTimelineDao {
   static const String tableName = 'account_timelines';
-  
+
   // Column names
   static const String columnId = 'id';
   static const String columnAccountId = 'account_id';
@@ -13,7 +13,8 @@ class AccountTimelineDao {
   static const String columnUpdatedAt = 'updated_at';
   static const String columnSyncStatus = 'sync_status';
 
-  static String get createTableSQL => '''
+  static String get createTableSQL =>
+      '''
     CREATE TABLE $tableName (
       $columnId TEXT PRIMARY KEY,
       $columnAccountId TEXT NOT NULL,
@@ -28,7 +29,9 @@ class AccountTimelineDao {
     return {
       columnId: timeline.account.accountId, // Use account ID as primary key
       columnAccountId: timeline.account.accountId,
-      columnTimelineData: jsonEncode(timeline.toJson()), // Store as proper JSON string
+      columnTimelineData: jsonEncode(
+        timeline.toJson(),
+      ), // Store as proper JSON string
       columnCreatedAt: DateTime.now().toIso8601String(),
       columnUpdatedAt: DateTime.now().toIso8601String(),
       columnSyncStatus: 'synced',
@@ -44,8 +47,9 @@ class AccountTimelineDao {
       }
 
       // Parse the JSON string back to a Map
-      final Map<String, dynamic> timelineData = jsonDecode(timelineDataString) as Map<String, dynamic>;
-      
+      final Map<String, dynamic> timelineData =
+          jsonDecode(timelineDataString) as Map<String, dynamic>;
+
       // Use the fromJson factory to create the AccountTimelineModel
       return AccountTimelineModel.fromJson(timelineData);
     } catch (e) {
@@ -78,13 +82,16 @@ class AccountTimelineDao {
   }
 
   // Get timeline by account ID
-  static Future<Map<String, dynamic>?> getByAccountId(Database db, String accountId) async {
+  static Future<Map<String, dynamic>?> getByAccountId(
+    Database db,
+    String accountId,
+  ) async {
     final maps = await db.query(
       tableName,
       where: '$columnAccountId = ?',
       whereArgs: [accountId],
     );
-    
+
     if (maps.isNotEmpty) {
       return maps.first;
     }
@@ -120,7 +127,10 @@ class AccountTimelineDao {
   }
 
   // Check if timeline exists for account
-  static Future<bool> hasTimelineForAccount(Database db, String accountId) async {
+  static Future<bool> hasTimelineForAccount(
+    Database db,
+    String accountId,
+  ) async {
     final result = await db.query(
       tableName,
       where: '$columnAccountId = ?',

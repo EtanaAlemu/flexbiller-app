@@ -340,9 +340,6 @@ _i174.GetIt $initGetIt(
       gh<_i975.AccountPaymentMethodsRemoteDataSource>(),
     ),
   );
-  gh.factory<_i172.AccountAuditLogsRemoteDataSource>(
-    () => _i172.AccountAuditLogsRemoteDataSourceImpl(gh<_i361.Dio>()),
-  );
   gh.factory<_i976.SubscriptionsRemoteDataSource>(
     () => _i976.SubscriptionsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
@@ -398,11 +395,6 @@ _i174.GetIt $initGetIt(
       gh<_i961.AccountInvoicePaymentsRemoteDataSource>(),
     ),
   );
-  gh.factory<_i271.AccountAuditLogsRepository>(
-    () => _i510.AccountAuditLogsRepositoryImpl(
-      gh<_i172.AccountAuditLogsRemoteDataSource>(),
-    ),
-  );
   gh.factory<_i474.AccountTimelineLocalDataSource>(
     () => _i474.AccountTimelineLocalDataSourceImpl(gh<_i916.DatabaseService>()),
   );
@@ -416,6 +408,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i895.ChildAccountLocalDataSource>(
     () => _i895.ChildAccountLocalDataSourceImpl(gh<_i916.DatabaseService>()),
+  );
+  gh.factory<_i172.AccountAuditLogsRemoteDataSource>(
+    () => _i172.AccountAuditLogsRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
   gh.factory<_i767.AuthRemoteDataSource>(
     () => _i767.AuthRemoteDataSourceImpl(gh<_i45.DioClient>()),
@@ -635,11 +630,6 @@ _i174.GetIt $initGetIt(
       gh<_i221.AccountCustomFieldsRepository>(),
     ),
   );
-  gh.factory<_i657.GetAccountAuditLogsUseCase>(
-    () => _i657.GetAccountAuditLogsUseCase(
-      gh<_i271.AccountAuditLogsRepository>(),
-    ),
-  );
   gh.factory<_i363.AccountTagsRepository>(
     () => _i813.AccountTagsRepositoryImpl(
       gh<_i1042.AccountTagsRemoteDataSource>(),
@@ -688,6 +678,11 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i915.UserPersistenceService>(
     () => _i915.UserPersistenceService(gh<_i254.UserLocalDataSource>()),
+  );
+  gh.factory<_i271.AccountAuditLogsRepository>(
+    () => _i510.AccountAuditLogsRepositoryImpl(
+      gh<_i172.AccountAuditLogsRemoteDataSource>(),
+    ),
   );
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
@@ -762,6 +757,20 @@ _i174.GetIt $initGetIt(
   gh.factory<_i968.CreateAccountUseCase>(
     () => _i968.CreateAccountUseCase(gh<_i42.AccountsRepository>()),
   );
+  gh.factory<_i65.TagDefinitionsBloc>(
+    () => _i65.TagDefinitionsBloc(
+      gh<_i235.GetTagDefinitionsUseCase>(),
+      gh<_i732.CreateTagDefinitionUseCase>(),
+      gh<_i448.GetTagDefinitionByIdUseCase>(),
+      gh<_i982.GetTagDefinitionAuditLogsWithHistoryUseCase>(),
+      gh<_i528.DeleteTagDefinitionUseCase>(),
+    ),
+  );
+  gh.factory<_i657.GetAccountAuditLogsUseCase>(
+    () => _i657.GetAccountAuditLogsUseCase(
+      gh<_i271.AccountAuditLogsRepository>(),
+    ),
+  );
   gh.factory<_i795.AccountsBloc>(
     () => _i795.AccountsBloc(
       getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
@@ -808,15 +817,6 @@ _i174.GetIt $initGetIt(
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
       accountEmailsRepository: gh<_i330.AccountEmailsRepository>(),
-    ),
-  );
-  gh.factory<_i65.TagDefinitionsBloc>(
-    () => _i65.TagDefinitionsBloc(
-      gh<_i235.GetTagDefinitionsUseCase>(),
-      gh<_i732.CreateTagDefinitionUseCase>(),
-      gh<_i448.GetTagDefinitionByIdUseCase>(),
-      gh<_i982.GetTagDefinitionAuditLogsWithHistoryUseCase>(),
-      gh<_i528.DeleteTagDefinitionUseCase>(),
     ),
   );
   return getIt;

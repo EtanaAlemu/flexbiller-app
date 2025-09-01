@@ -1,6 +1,7 @@
                                                     import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_audit_log_model.dart';
 
 abstract class AccountAuditLogsRemoteDataSource {
@@ -17,14 +18,14 @@ abstract class AccountAuditLogsRemoteDataSource {
 
 @Injectable(as: AccountAuditLogsRemoteDataSource)
 class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountAuditLogsRemoteDataSourceImpl(this._dio);
+  AccountAuditLogsRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountAuditLogModel>> getAccountAuditLogs(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/auditLogs');
+      final response = await _dioClient.dio.get('/accounts/$accountId/auditLogs');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -67,7 +68,7 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   @override
   Future<AccountAuditLogModel> getAccountAuditLog(String accountId, String logId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/auditLogs/$logId');
+      final response = await _dioClient.dio.get('/accounts/$accountId/auditLogs/$logId');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -109,7 +110,7 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   @override
   Future<List<AccountAuditLogModel>> getAuditLogsByAction(String accountId, String action) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/action',
         queryParameters: {'action': action},
       );
@@ -153,7 +154,7 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   @override
   Future<List<AccountAuditLogModel>> getAuditLogsByEntityType(String accountId, String entityType) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/entityType',
         queryParameters: {'entityType': entityType},
       );
@@ -197,7 +198,7 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   @override
   Future<List<AccountAuditLogModel>> getAuditLogsByUser(String accountId, String userId) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/user',
         queryParameters: {'userId': userId},
       );
@@ -245,7 +246,7 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
     DateTime endDate,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/dateRange',
         queryParameters: {
           'startDate': startDate.toIso8601String(),
@@ -296,7 +297,7 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
     int pageSize,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/pagination',
         queryParameters: {
           'page': page,
@@ -343,7 +344,7 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   @override
   Future<Map<String, dynamic>> getAuditLogStatistics(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/auditLogs/statistics');
+      final response = await _dioClient.dio.get('/accounts/$accountId/auditLogs/statistics');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -381,7 +382,7 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   @override
   Future<List<AccountAuditLogModel>> searchAuditLogs(String accountId, String searchTerm) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/search',
         queryParameters: {'searchTerm': searchTerm},
       );
