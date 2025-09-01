@@ -17,6 +17,7 @@ import '../widgets/account_audit_logs_widget.dart';
 import '../widgets/account_payment_methods_widget.dart';
 import '../widgets/account_payments_widget.dart'; // Added import
 import '../../../../injection_container.dart';
+import '../../../../core/services/user_persistence_service.dart';
 
 class AccountDetailsPage extends StatelessWidget {
   final String accountId;
@@ -97,6 +98,14 @@ class AccountDetailsView extends StatelessWidget {
 
         if (state is AccountDetailsLoaded) {
           final account = state.account;
+          if (account == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Account Details')),
+              body: const Center(
+                child: Text('Account not found'),
+              ),
+            );
+          }
           return BlocListener<AccountsBloc, AccountsState>(
             listener: (context, state) {
               if (state is TagAssigned ||
@@ -255,7 +264,20 @@ class AccountDetailsView extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountHeader(BuildContext context, dynamic account) {
+  Widget _buildAccountHeader(BuildContext context, Account account) {
+    // Defensive null checking
+    if (account.displayName.isEmpty && account.email.isEmpty) {
+      return const Card(
+        elevation: 4,
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Center(
+            child: Text('Invalid account data'),
+          ),
+        ),
+      );
+    }
+    
     return Card(
       elevation: 4,
       child: Padding(
@@ -287,10 +309,11 @@ class AccountDetailsView extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (account.company.isNotEmpty) ...[
+                  if (account.company != null &&
+                      account.company!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      account.company,
+                      account.company!,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(
                           context,
