@@ -1,36 +1,46 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_email_model.dart';
 
 abstract class AccountEmailsRemoteDataSource {
   Future<List<AccountEmailModel>> getAccountEmails(String accountId);
   Future<AccountEmailModel> getAccountEmail(String accountId, String emailId);
   Future<AccountEmailModel> createAccountEmail(String accountId, String email);
-  Future<AccountEmailModel> updateAccountEmail(String accountId, String emailId, String email);
+  Future<AccountEmailModel> updateAccountEmail(
+    String accountId,
+    String emailId,
+    String email,
+  );
   Future<void> deleteAccountEmail(String accountId, String emailId);
   Future<List<AccountEmailModel>> searchEmailsByAddress(String emailAddress);
   Future<List<AccountEmailModel>> getEmailsByDomain(String domain);
 }
 
 @Injectable(as: AccountEmailsRemoteDataSource)
-class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource {
-  final Dio _dio;
+class AccountEmailsRemoteDataSourceImpl
+    implements AccountEmailsRemoteDataSource {
+  final DioClient _dioClient;
 
-  AccountEmailsRemoteDataSourceImpl(this._dio);
+  AccountEmailsRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountEmailModel>> getAccountEmails(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/emails');
+      final response = await _dioClient.dio.get('/accounts/$accountId/emails');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> emailsData = responseData['data'] as List<dynamic>;
+          final List<dynamic> emailsData =
+              responseData['data'] as List<dynamic>;
           return emailsData
-              .map((item) => AccountEmailModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountEmailModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -38,7 +48,9 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
           );
         }
       } else {
-        throw ServerException('Failed to fetch account emails: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account emails: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -51,7 +63,9 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
         throw ValidationException('Account not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account emails');
+        throw NetworkException(
+          'Connection timeout while fetching account emails',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -63,9 +77,14 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
   }
 
   @override
-  Future<AccountEmailModel> getAccountEmail(String accountId, String emailId) async {
+  Future<AccountEmailModel> getAccountEmail(
+    String accountId,
+    String emailId,
+  ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/emails/$emailId');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/emails/$emailId',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -80,7 +99,9 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
           );
         }
       } else {
-        throw ServerException('Failed to fetch account email: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account email: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -93,7 +114,9 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
         throw ValidationException('Account email not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account email');
+        throw NetworkException(
+          'Connection timeout while fetching account email',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -105,9 +128,12 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
   }
 
   @override
-  Future<AccountEmailModel> createAccountEmail(String accountId, String email) async {
+  Future<AccountEmailModel> createAccountEmail(
+    String accountId,
+    String email,
+  ) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.dio.post(
         '/accounts/$accountId/emails',
         data: {'email': email},
       );
@@ -116,12 +142,11 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
         // Since the API returns 201 for successful creation but doesn't return the created email data,
         // we'll create a model with the provided data and a generated ID
         // In a real scenario, the API might return the created email data
-        return AccountEmailModel(
-          accountId: accountId,
-          email: email,
-        );
+        return AccountEmailModel(accountId: accountId, email: email);
       } else {
-        throw ServerException('Failed to create account email: ${response.statusCode}');
+        throw ServerException(
+          'Failed to create account email: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -136,7 +161,9 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
         throw ValidationException('Account not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while creating account email');
+        throw NetworkException(
+          'Connection timeout while creating account email',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -148,9 +175,13 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
   }
 
   @override
-  Future<AccountEmailModel> updateAccountEmail(String accountId, String emailId, String email) async {
+  Future<AccountEmailModel> updateAccountEmail(
+    String accountId,
+    String emailId,
+    String email,
+  ) async {
     try {
-      final response = await _dio.put(
+      final response = await _dioClient.dio.put(
         '/accounts/$accountId/emails/$emailId', // emailId is actually the email address
         data: {'email': email},
       );
@@ -158,12 +189,11 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
       if (response.statusCode == 200) {
         // Since the API returns 200 for successful update but doesn't return the updated email data,
         // we'll create a model with the provided data
-        return AccountEmailModel(
-          accountId: accountId,
-          email: email,
-        );
+        return AccountEmailModel(accountId: accountId, email: email);
       } else {
-        throw ServerException('Failed to update account email: ${response.statusCode}');
+        throw ServerException(
+          'Failed to update account email: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -178,7 +208,9 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
         throw ValidationException('Account or email not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while updating account email');
+        throw NetworkException(
+          'Connection timeout while updating account email',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -192,13 +224,17 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
   @override
   Future<void> deleteAccountEmail(String accountId, String emailId) async {
     try {
-      final response = await _dio.delete('/accounts/$accountId/emails/$emailId');
+      final response = await _dioClient.dio.delete(
+        '/accounts/$accountId/emails/$emailId',
+      );
 
       if (response.statusCode == 200) {
         // Successfully deleted - API returns 200 with success message
         return;
       } else {
-        throw ServerException('Failed to delete account email: ${response.statusCode}');
+        throw ServerException(
+          'Failed to delete account email: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -211,7 +247,9 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
         throw ValidationException('Account or email not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while deleting account email');
+        throw NetworkException(
+          'Connection timeout while deleting account email',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
@@ -223,17 +261,26 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
   }
 
   @override
-  Future<List<AccountEmailModel>> searchEmailsByAddress(String emailAddress) async {
+  Future<List<AccountEmailModel>> searchEmailsByAddress(
+    String emailAddress,
+  ) async {
     try {
-      final response = await _dio.get('/accounts/emails/search', queryParameters: {'email': emailAddress});
+      final response = await _dioClient.dio.get(
+        '/accounts/emails/search',
+        queryParameters: {'email': emailAddress},
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> emailsData = responseData['data'] as List<dynamic>;
+          final List<dynamic> emailsData =
+              responseData['data'] as List<dynamic>;
           return emailsData
-              .map((item) => AccountEmailModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountEmailModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -241,7 +288,9 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
           );
         }
       } else {
-        throw ServerException('Failed to search emails: ${response.statusCode}');
+        throw ServerException(
+          'Failed to search emails: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -266,15 +315,22 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
   @override
   Future<List<AccountEmailModel>> getEmailsByDomain(String domain) async {
     try {
-      final response = await _dio.get('/accounts/emails/domain', queryParameters: {'domain': domain});
+      final response = await _dioClient.dio.get(
+        '/accounts/emails/domain',
+        queryParameters: {'domain': domain},
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> emailsData = responseData['data'] as List<dynamic>;
+          final List<dynamic> emailsData =
+              responseData['data'] as List<dynamic>;
           return emailsData
-              .map((item) => AccountEmailModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountEmailModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -282,7 +338,9 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
           );
         }
       } else {
-        throw ServerException('Failed to fetch emails by domain: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch emails by domain: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -293,7 +351,9 @@ class AccountEmailsRemoteDataSourceImpl implements AccountEmailsRemoteDataSource
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching emails by domain');
+        throw NetworkException(
+          'Connection timeout while fetching emails by domain',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {

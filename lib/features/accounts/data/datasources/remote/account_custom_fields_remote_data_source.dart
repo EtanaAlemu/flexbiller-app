@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_custom_field_model.dart';
 
 abstract class AccountCustomFieldsRemoteDataSource {
@@ -41,16 +42,18 @@ abstract class AccountCustomFieldsRemoteDataSource {
 @Injectable(as: AccountCustomFieldsRemoteDataSource)
 class AccountCustomFieldsRemoteDataSourceImpl
     implements AccountCustomFieldsRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountCustomFieldsRemoteDataSourceImpl(this._dio);
+  AccountCustomFieldsRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountCustomFieldModel>> getAllCustomFields(
     String accountId,
   ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/allCustomFields');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/allCustomFields',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -121,7 +124,9 @@ class AccountCustomFieldsRemoteDataSourceImpl
     String accountId,
   ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/customFields');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/customFields',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -176,7 +181,7 @@ class AccountCustomFieldsRemoteDataSourceImpl
     String customFieldId,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/customFields/$customFieldId',
       );
 
@@ -228,7 +233,7 @@ class AccountCustomFieldsRemoteDataSourceImpl
     String value,
   ) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.dio.post(
         '/accounts/$accountId/customFields',
         data: [
           {'name': name, 'value': value},
@@ -328,7 +333,7 @@ class AccountCustomFieldsRemoteDataSourceImpl
     List<Map<String, String>> customFields,
   ) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.dio.post(
         '/accounts/$accountId/customFields/bulk',
         data: customFields,
       );
@@ -414,7 +419,7 @@ class AccountCustomFieldsRemoteDataSourceImpl
     String value,
   ) async {
     try {
-      final response = await _dio.put(
+      final response = await _dioClient.dio.put(
         '/accounts/$accountId/customFields',
         data: [
           {'customFieldId': customFieldId, 'name': name, 'value': value},
@@ -516,7 +521,7 @@ class AccountCustomFieldsRemoteDataSourceImpl
     List<Map<String, dynamic>> customFields,
   ) async {
     try {
-      final response = await _dio.put(
+      final response = await _dioClient.dio.put(
         '/accounts/$accountId/customFields/bulk',
         data: customFields,
       );
@@ -613,7 +618,7 @@ class AccountCustomFieldsRemoteDataSourceImpl
   @override
   Future<void> deleteCustomField(String accountId, String customFieldId) async {
     try {
-      final response = await _dio.delete(
+      final response = await _dioClient.dio.delete(
         '/accounts/$accountId/customFields',
         queryParameters: {'customField': customFieldId},
       );
@@ -680,7 +685,7 @@ class AccountCustomFieldsRemoteDataSourceImpl
     List<String> customFieldIds,
   ) async {
     try {
-      final response = await _dio.delete(
+      final response = await _dioClient.dio.delete(
         '/accounts/$accountId/customFields/bulk',
         queryParameters: {'customFieldIds': customFieldIds.join(',')},
       );

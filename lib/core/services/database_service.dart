@@ -8,6 +8,11 @@ import '../dao/account_timeline_dao.dart';
 import '../dao/account_tag_dao.dart';
 import '../dao/account_audit_log_dao.dart';
 import '../dao/account_blocking_state_dao.dart';
+import '../dao/account_custom_field_dao.dart';
+import '../dao/account_email_dao.dart';
+import '../dao/account_invoice_payment_dao.dart';
+import '../dao/account_payment_method_dao.dart';
+import '../dao/account_payment_dao.dart';
 import 'package:logger/logger.dart';
 
 @injectable
@@ -37,6 +42,21 @@ class DatabaseService {
 
     // Ensure account_blocking_states table exists after database initialization
     await _ensureAccountBlockingStatesTableExists();
+
+    // Ensure account_custom_fields table exists after database initialization
+    await _ensureAccountCustomFieldsTableExists();
+
+    // Ensure account_emails table exists after database initialization
+    await _ensureAccountEmailsTableExists();
+
+    // Ensure account_invoice_payments table exists after database initialization
+    await _ensureAccountInvoicePaymentsTableExists();
+
+    // Ensure account_payment_methods table exists after database initialization
+    await _ensureAccountPaymentMethodsTableExists();
+
+    // Ensure account_payments table exists after database initialization
+    await _ensureAccountPaymentsTableExists();
 
     return _database!;
   }
@@ -152,6 +172,21 @@ class DatabaseService {
       // Create account_blocking_states table
       await db.execute(AccountBlockingStateDao.createTableSQL);
 
+      // Create account_custom_fields table
+      await db.execute(AccountCustomFieldDao.createTableSQL);
+
+      // Create account_emails table
+      await db.execute(AccountEmailDao.createTableSQL);
+
+      // Create account_invoice_payments table
+      await db.execute(AccountInvoicePaymentDao.createTableSQL);
+
+      // Create account_payment_methods table
+      await db.execute(AccountPaymentMethodDao.createTableSQL);
+
+      // Create account_payments table
+      await db.execute(AccountPaymentDao.createTableSQL);
+
       _logger.d('Database tables created successfully');
     } catch (e) {
       _logger.e('Error creating database tables: $e');
@@ -196,6 +231,36 @@ class DatabaseService {
       // Create account_blocking_states table
       await db.execute(AccountBlockingStateDao.createTableSQL);
       _logger.d('Created account_blocking_states table');
+    }
+
+    if (oldVersion < 8) {
+      // Create account_custom_fields table
+      await db.execute(AccountCustomFieldDao.createTableSQL);
+      _logger.d('Created account_custom_fields table');
+    }
+
+    if (oldVersion < 9) {
+      // Create account_emails table
+      await db.execute(AccountEmailDao.createTableSQL);
+      _logger.d('Created account_emails table');
+    }
+
+    if (oldVersion < 10) {
+      // Create account_invoice_payments table
+      await db.execute(AccountInvoicePaymentDao.createTableSQL);
+      _logger.d('Created account_invoice_payments table');
+    }
+
+    if (oldVersion < 11) {
+      // Create account_payment_methods table
+      await db.execute(AccountPaymentMethodDao.createTableSQL);
+      _logger.d('Created account_payment_methods table');
+    }
+
+    if (oldVersion < 12) {
+      // Create account_payments table
+      await db.execute(AccountPaymentDao.createTableSQL);
+      _logger.d('Created account_payments table');
     }
 
     _logger.d('Database upgrade completed successfully');
@@ -324,6 +389,113 @@ class DatabaseService {
       }
     } catch (e) {
       _logger.e('Error ensuring account blocking states table exists: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureAccountCustomFieldsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'account_custom_fields'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Account custom fields table does not exist, creating it...');
+        await db.execute(AccountCustomFieldDao.createTableSQL);
+        _logger.d('Account custom fields table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring account custom fields table exists: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureAccountEmailsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'account_emails'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Account emails table does not exist, creating it...');
+        await db.execute(AccountEmailDao.createTableSQL);
+        _logger.d('Account emails table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring account emails table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Check and create account_invoice_payments table if it doesn't exist
+  Future<void> _ensureAccountInvoicePaymentsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'account_invoice_payments'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d(
+          'Account invoice payments table does not exist, creating it...',
+        );
+        await db.execute(AccountInvoicePaymentDao.createTableSQL);
+        _logger.d('Account invoice payments table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring account invoice payments table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Check and create account_payment_methods table if it doesn't exist
+  Future<void> _ensureAccountPaymentMethodsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'account_payment_methods'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d(
+          'Account payment methods table does not exist, creating it...',
+        );
+        await db.execute(AccountPaymentMethodDao.createTableSQL);
+        _logger.d('Account payment methods table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring account payment methods table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Check and create account_payments table if it doesn't exist
+  Future<void> _ensureAccountPaymentsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'account_payments'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Account payments table does not exist, creating it...');
+        await db.execute(AccountPaymentDao.createTableSQL);
+        _logger.d('Account payments table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring account payments table exists: $e');
       rethrow;
     }
   }

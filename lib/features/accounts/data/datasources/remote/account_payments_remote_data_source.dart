@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_payment_model.dart';
 
 abstract class AccountPaymentsRemoteDataSource {
@@ -66,14 +67,16 @@ abstract class AccountPaymentsRemoteDataSource {
 @Injectable(as: AccountPaymentsRemoteDataSource)
 class AccountPaymentsRemoteDataSourceImpl
     implements AccountPaymentsRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountPaymentsRemoteDataSourceImpl(this._dio);
+  AccountPaymentsRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountPaymentModel>> getAccountPayments(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/payments');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/payments',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -141,7 +144,7 @@ class AccountPaymentsRemoteDataSourceImpl
     String paymentId,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/payments/$paymentId',
       );
 
@@ -192,7 +195,7 @@ class AccountPaymentsRemoteDataSourceImpl
     String status,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/payments/status',
         queryParameters: {'status': status},
       );
@@ -264,7 +267,7 @@ class AccountPaymentsRemoteDataSourceImpl
     String type,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/payments/type',
         queryParameters: {'type': type},
       );
@@ -337,7 +340,7 @@ class AccountPaymentsRemoteDataSourceImpl
     DateTime endDate,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/payments/dateRange',
         queryParameters: {
           'startDate': startDate.toIso8601String(),
@@ -415,7 +418,7 @@ class AccountPaymentsRemoteDataSourceImpl
     int pageSize,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/payments/paginated',
         queryParameters: {'page': page, 'pageSize': pageSize},
       );
@@ -488,7 +491,7 @@ class AccountPaymentsRemoteDataSourceImpl
     String accountId,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/payments/statistics',
       );
 
@@ -538,7 +541,7 @@ class AccountPaymentsRemoteDataSourceImpl
     String searchTerm,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/payments/search',
         queryParameters: {'searchTerm': searchTerm},
       );
@@ -608,7 +611,9 @@ class AccountPaymentsRemoteDataSourceImpl
     String accountId,
   ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/payments/refunded');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/payments/refunded',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -673,7 +678,9 @@ class AccountPaymentsRemoteDataSourceImpl
   @override
   Future<List<AccountPaymentModel>> getFailedPayments(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/payments/failed');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/payments/failed',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -738,7 +745,7 @@ class AccountPaymentsRemoteDataSourceImpl
     String accountId,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/payments/successful',
       );
 
@@ -805,7 +812,9 @@ class AccountPaymentsRemoteDataSourceImpl
   @override
   Future<List<AccountPaymentModel>> getPendingPayments(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/payments/pending');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/payments/pending',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -877,7 +886,7 @@ class AccountPaymentsRemoteDataSourceImpl
     Map<String, dynamic>? properties,
   }) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.dio.post(
         '/accounts/$accountId/payments',
         data: {
           'paymentMethodId': paymentMethodId,
@@ -959,7 +968,7 @@ class AccountPaymentsRemoteDataSourceImpl
     List<Map<String, dynamic>>? properties,
   }) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.dio.post(
         '/accounts/payments',
         queryParameters: {
           'externalKey': externalKey,

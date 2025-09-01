@@ -1,27 +1,35 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_export_model.dart';
 
 abstract class AccountExportRemoteDataSource {
-  Future<AccountExportModel> exportAccountData(String accountId, {String? format});
+  Future<AccountExportModel> exportAccountData(
+    String accountId, {
+    String? format,
+  });
 }
 
 @Injectable(as: AccountExportRemoteDataSource)
-class AccountExportRemoteDataSourceImpl implements AccountExportRemoteDataSource {
-  final Dio _dio;
+class AccountExportRemoteDataSourceImpl
+    implements AccountExportRemoteDataSource {
+  final DioClient _dioClient;
 
-  AccountExportRemoteDataSourceImpl(this._dio);
+  AccountExportRemoteDataSourceImpl(this._dioClient);
 
   @override
-  Future<AccountExportModel> exportAccountData(String accountId, {String? format}) async {
+  Future<AccountExportModel> exportAccountData(
+    String accountId, {
+    String? format,
+  }) async {
     try {
       final Map<String, dynamic> queryParams = {};
       if (format != null) {
         queryParams['format'] = format;
       }
 
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/export',
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
@@ -36,7 +44,8 @@ class AccountExportRemoteDataSourceImpl implements AccountExportRemoteDataSource
           );
         }
         // Handle old response format with data field
-        else if (responseData['success'] == true && responseData['data'] != null) {
+        else if (responseData['success'] == true &&
+            responseData['data'] != null) {
           return AccountExportModel.fromJson(
             responseData['data'] as Map<String, dynamic>,
           );
@@ -69,9 +78,7 @@ class AccountExportRemoteDataSourceImpl implements AccountExportRemoteDataSource
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException(
-          'Failed to export account data: ${e.message}',
-        );
+        throw ServerException('Failed to export account data: ${e.message}');
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_overdue_state_model.dart';
 
 abstract class AccountOverdueStateRemoteDataSource {
@@ -10,14 +11,14 @@ abstract class AccountOverdueStateRemoteDataSource {
 @Injectable(as: AccountOverdueStateRemoteDataSource)
 class AccountOverdueStateRemoteDataSourceImpl
     implements AccountOverdueStateRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountOverdueStateRemoteDataSourceImpl(this._dio);
+  AccountOverdueStateRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<AccountOverdueStateModel> getOverdueState(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/overdue');
+      final response = await _dioClient.dio.get('/accounts/$accountId/overdue');
 
       if (response.statusCode == 200) {
         final responseData = response.data;

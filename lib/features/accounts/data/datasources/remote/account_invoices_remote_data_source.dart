@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_invoice_model.dart';
 
 abstract class AccountInvoicesRemoteDataSource {
@@ -11,14 +12,14 @@ abstract class AccountInvoicesRemoteDataSource {
 @Injectable(as: AccountInvoicesRemoteDataSource)
 class AccountInvoicesRemoteDataSourceImpl
     implements AccountInvoicesRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountInvoicesRemoteDataSourceImpl(this._dio);
+  AccountInvoicesRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountInvoiceModel>> getInvoices(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/invoices');
+      final response = await _dioClient.dio.get('/accounts/$accountId/invoices');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -85,7 +86,7 @@ class AccountInvoicesRemoteDataSourceImpl
     String accountId,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/invoices/pagination',
       );
 

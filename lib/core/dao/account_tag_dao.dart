@@ -19,7 +19,8 @@ class AccountTagDao {
   static const String columnSyncStatus = 'syncStatus';
 
   // SQL to create the table
-  static String get createTableSQL => '''
+  static String get createTableSQL =>
+      '''
     CREATE TABLE $tableName (
       $columnId TEXT PRIMARY KEY,
       $columnName TEXT NOT NULL,
@@ -71,11 +72,17 @@ class AccountTagDao {
   }
 
   // Helper methods for common operations - using dynamic to handle both Database and Transaction
-  static Future<void> insertTag(dynamic db, Map<String, dynamic> tagData) async {
+  static Future<void> insertTag(
+    dynamic db,
+    Map<String, dynamic> tagData,
+  ) async {
     await db.insert(tableName, toMap(tagData));
   }
 
-  static Future<void> updateTag(dynamic db, Map<String, dynamic> tagData) async {
+  static Future<void> updateTag(
+    dynamic db,
+    Map<String, dynamic> tagData,
+  ) async {
     await db.update(
       tableName,
       toMap(tagData),
@@ -85,14 +92,13 @@ class AccountTagDao {
   }
 
   static Future<void> deleteTag(dynamic db, String tagId) async {
-    await db.delete(
-      tableName,
-      where: '$columnId = ?',
-      whereArgs: [tagId],
-    );
+    await db.delete(tableName, where: '$columnId = ?', whereArgs: [tagId]);
   }
 
-  static Future<Map<String, dynamic>?> getTagById(dynamic db, String tagId) async {
+  static Future<Map<String, dynamic>?> getTagById(
+    dynamic db,
+    String tagId,
+  ) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
       where: '$columnId = ?',
@@ -107,10 +113,16 @@ class AccountTagDao {
 
   static Future<List<Map<String, dynamic>>> getAllTags(dynamic db) async {
     final List<Map<String, dynamic>> maps = await db.query(tableName);
-    return maps.map((map) => fromMap(map)).whereType<Map<String, dynamic>>().toList();
+    return maps
+        .map((map) => fromMap(map))
+        .whereType<Map<String, dynamic>>()
+        .toList();
   }
 
-  static Future<List<Map<String, dynamic>>> getTagsByAccount(dynamic db, String accountId) async {
+  static Future<List<Map<String, dynamic>>> getTagsByAccount(
+    dynamic db,
+    String accountId,
+  ) async {
     // This would need a join table for account-tag relationships
     // For now, return all tags
     return getAllTags(db);

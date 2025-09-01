@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_payment_method_model.dart';
 
 abstract class AccountPaymentMethodsRemoteDataSource {
@@ -52,16 +53,16 @@ abstract class AccountPaymentMethodsRemoteDataSource {
 @Injectable(as: AccountPaymentMethodsRemoteDataSource)
 class AccountPaymentMethodsRemoteDataSourceImpl
     implements AccountPaymentMethodsRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountPaymentMethodsRemoteDataSourceImpl(this._dio);
+  AccountPaymentMethodsRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountPaymentMethodModel>> getAccountPaymentMethods(
     String accountId,
   ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/paymentMethods');
+      final response = await _dioClient.dio.get('/accounts/$accountId/paymentMethods');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -134,7 +135,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     String paymentMethodId,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/paymentMethods/$paymentMethodId',
       );
 
@@ -186,7 +187,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     String accountId,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/paymentMethods/default',
       );
 
@@ -239,7 +240,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     String accountId,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/paymentMethods/active',
       );
 
@@ -296,7 +297,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     String type,
   ) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/paymentMethods/type',
         queryParameters: {'type': type},
       );
@@ -356,7 +357,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     bool payAllUnpaidInvoices,
   ) async {
     try {
-      final response = await _dio.put(
+      final response = await _dioClient.dio.put(
         '/accounts/$accountId/paymentMethods/$paymentMethodId/setDefault',
         queryParameters: {'payAllUnpaidInvoices': payAllUnpaidInvoices},
       );
@@ -443,7 +444,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     Map<String, dynamic> paymentDetails,
   ) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.dio.post(
         '/accounts/$accountId/paymentMethods',
         data: {
           'paymentMethodType': paymentMethodType,
@@ -500,7 +501,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     Map<String, dynamic> updates,
   ) async {
     try {
-      final response = await _dio.put(
+      final response = await _dioClient.dio.put(
         '/accounts/$accountId/paymentMethods/$paymentMethodId',
         data: updates,
       );
@@ -554,7 +555,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     String paymentMethodId,
   ) async {
     try {
-      final response = await _dio.delete(
+      final response = await _dioClient.dio.delete(
         '/accounts/$accountId/paymentMethods/$paymentMethodId',
       );
 
@@ -601,7 +602,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     String paymentMethodId,
   ) async {
     try {
-      final response = await _dio.put(
+      final response = await _dioClient.dio.put(
         '/accounts/$accountId/paymentMethods/$paymentMethodId/deactivate',
       );
 
@@ -654,7 +655,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     String paymentMethodId,
   ) async {
     try {
-      final response = await _dio.put(
+      final response = await _dioClient.dio.put(
         '/accounts/$accountId/paymentMethods/$paymentMethodId/reactivate',
       );
 
@@ -706,7 +707,7 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     String accountId,
   ) async {
     try {
-      final response = await _dio.put(
+      final response = await _dioClient.dio.put(
         '/accounts/$accountId/paymentMethods/refresh',
       );
 

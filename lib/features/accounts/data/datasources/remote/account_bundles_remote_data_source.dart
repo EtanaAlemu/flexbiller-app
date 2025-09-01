@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_bundle_model.dart';
 
 abstract class AccountBundlesRemoteDataSource {
@@ -10,14 +11,14 @@ abstract class AccountBundlesRemoteDataSource {
 @Injectable(as: AccountBundlesRemoteDataSource)
 class AccountBundlesRemoteDataSourceImpl
     implements AccountBundlesRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountBundlesRemoteDataSourceImpl(this._dio);
+  AccountBundlesRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountBundleModel>> getAccountBundles(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/bundles');
+      final response = await _dioClient.dio.get('/accounts/$accountId/bundles');
 
       if (response.statusCode == 200) {
         final responseData = response.data;

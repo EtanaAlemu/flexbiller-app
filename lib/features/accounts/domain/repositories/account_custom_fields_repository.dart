@@ -1,6 +1,10 @@
+import 'dart:async';
 import '../entities/account_custom_field.dart';
 
 abstract class AccountCustomFieldsRepository {
+  /// Stream for reactive UI updates of all custom fields
+  Stream<List<AccountCustomField>> get customFieldsStream;
+
   /// Get all custom fields for a specific account
   Future<List<AccountCustomField>> getAccountCustomFields(String accountId);
 
