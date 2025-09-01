@@ -26,6 +26,8 @@ import 'core/services/database_service.dart' as _i916;
 import 'core/services/jwt_service.dart' as _i842;
 import 'core/services/secure_storage_service.dart' as _i493;
 import 'core/services/user_persistence_service.dart' as _i915;
+import 'features/accounts/data/datasources/local/account_timeline_local_data_source.dart'
+    as _i474;
 import 'features/accounts/data/datasources/local/accounts_local_data_source.dart'
     as _i339;
 import 'features/accounts/data/datasources/local/child_account_local_data_source.dart'
@@ -348,9 +350,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i241.AccountCustomFieldsRemoteDataSource>(
     () => _i241.AccountCustomFieldsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
-  gh.factory<_i5.AccountTimelineRemoteDataSource>(
-    () => _i5.AccountTimelineRemoteDataSourceImpl(gh<_i361.Dio>()),
-  );
   gh.factory<_i363.AccountTagsRepository>(
     () => _i813.AccountTagsRepositoryImpl(
       gh<_i1042.AccountTagsRemoteDataSource>(),
@@ -407,6 +406,9 @@ _i174.GetIt $initGetIt(
       gh<_i172.AccountAuditLogsRemoteDataSource>(),
     ),
   );
+  gh.factory<_i474.AccountTimelineLocalDataSource>(
+    () => _i474.AccountTimelineLocalDataSourceImpl(gh<_i916.DatabaseService>()),
+  );
   gh.factory<_i221.AccountCustomFieldsRepository>(
     () => _i762.AccountCustomFieldsRepositoryImpl(
       gh<_i241.AccountCustomFieldsRemoteDataSource>(),
@@ -436,6 +438,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i3.AccountsRemoteDataSource>(
     () => _i3.AccountsRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
+  gh.factory<_i5.AccountTimelineRemoteDataSource>(
+    () => _i5.AccountTimelineRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
   gh.factory<_i254.UserLocalDataSource>(
     () => _i254.UserLocalDataSourceImpl(gh<_i916.DatabaseService>()),

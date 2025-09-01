@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../../../../core/errors/exceptions.dart';
 import '../../models/account_timeline_model.dart';
 
@@ -14,14 +15,14 @@ abstract class AccountTimelineRemoteDataSource {
 
 @Injectable(as: AccountTimelineRemoteDataSource)
 class AccountTimelineRemoteDataSourceImpl implements AccountTimelineRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountTimelineRemoteDataSourceImpl(this._dio);
+  AccountTimelineRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<AccountTimelineModel> getAccountTimeline(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/timeline');
+      final response = await _dioClient.dio.get('/accounts/$accountId/timeline');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -69,7 +70,7 @@ class AccountTimelineRemoteDataSourceImpl implements AccountTimelineRemoteDataSo
     int limit = 50,
   }) async {
     try {
-      final response = await _dio.get(
+      final response = await _dioClient.dio.get(
         '/accounts/$accountId/timeline',
         queryParameters: {
           'offset': offset,

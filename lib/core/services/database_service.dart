@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../constants/app_constants.dart';
 import '../dao/account_dao.dart';
 import '../dao/child_account_dao.dart';
+import '../dao/account_timeline_dao.dart';
 import 'package:logger/logger.dart';
 
 @injectable
@@ -21,6 +22,9 @@ class DatabaseService {
 
     // Ensure child_accounts table exists after database initialization
     await _ensureChildAccountsTableExists();
+    
+    // Ensure account_timelines table exists after database initialization
+    await _ensureAccountTimelinesTableExists();
 
     return _database!;
   }
@@ -124,6 +128,9 @@ class DatabaseService {
       // Create child_accounts table
       await db.execute(ChildAccountDao.createTableSQL);
 
+      // Create account_timelines table
+      await db.execute(AccountTimelineDao.createTableSQL);
+
       _logger.d('Database tables created successfully');
     } catch (e) {
       _logger.e('Error creating database tables: $e');
@@ -147,6 +154,13 @@ class DatabaseService {
         _logger.d('Creating child_accounts table for version 3');
         await db.execute(ChildAccountDao.createTableSQL);
         _logger.d('Child accounts table created successfully');
+      }
+
+      if (oldVersion < 4) {
+        // Create account_timelines table for version 4
+        _logger.d('Creating account_timelines table for version 4');
+        await db.execute(AccountTimelineDao.createTableSQL);
+        _logger.d('Account timelines table created successfully');
       }
 
       _logger.d('Database upgrade completed');
@@ -194,6 +208,27 @@ class DatabaseService {
       }
     } catch (e) {
       _logger.e('Error ensuring child accounts table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Check and create account_timelines table if it doesn't exist
+  Future<void> _ensureAccountTimelinesTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'account_timelines'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Account timelines table does not exist, creating it...');
+        await db.execute(AccountTimelineDao.createTableSQL);
+        _logger.d('Account timelines table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring account timelines table exists: $e');
       rethrow;
     }
   }
