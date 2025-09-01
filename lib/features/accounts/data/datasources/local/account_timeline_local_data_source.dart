@@ -39,12 +39,15 @@ class AccountTimelineLocalDataSourceImpl implements AccountTimelineLocalDataSour
       final timelineData = await AccountTimelineDao.getByAccountId(db, accountId);
       
       if (timelineData != null) {
-        // Parse the JSON string back to model
-        final timelineJsonString = timelineData[AccountTimelineDao.columnTimelineData] as String;
-        // Note: This is a simplified approach - in production you might want to use proper JSON parsing
-        // For now, we'll return null and handle this in the repository
-        _logger.d('Retrieved cached timeline for account: $accountId');
-        return null; // TODO: Implement proper JSON parsing
+        // Use the DAO's fromMap method to properly parse the timeline data
+        final timeline = AccountTimelineDao.fromMap(timelineData);
+        if (timeline != null) {
+          _logger.d('Retrieved cached timeline for account: $accountId');
+          return timeline;
+        } else {
+          _logger.w('Failed to parse cached timeline for account: $accountId');
+          return null;
+        }
       }
       return null;
     } catch (e) {

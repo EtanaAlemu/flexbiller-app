@@ -26,17 +26,17 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
   Future<void> cacheTags(List<AccountTagModel> tags) async {
     try {
       final db = await _databaseService.database;
-      
+
       // Use a transaction for better performance
       await db.transaction((txn) async {
         for (final tag in tags) {
           final tagData = tag.toJson();
           tagData['syncStatus'] = 'synced';
-          
+
           await AccountTagDao.insertTag(txn, tagData);
         }
       });
-      
+
       _logger.d('Cached ${tags.length} tags successfully');
     } catch (e) {
       _logger.e('Error caching tags: $e');
@@ -48,12 +48,12 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
   Future<void> cacheTag(AccountTagModel tag) async {
     try {
       final db = await _databaseService.database;
-      
+
       final tagData = tag.toJson();
       tagData['syncStatus'] = 'synced';
-      
+
       await AccountTagDao.insertTag(db, tagData);
-      
+
       _logger.d('Cached tag: ${tag.id} successfully');
     } catch (e) {
       _logger.e('Error caching tag: ${tag.id} - $e');
@@ -66,13 +66,13 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
     try {
       final db = await _databaseService.database;
       final tagsData = await AccountTagDao.getAllTags(db);
-      
+
       final tags = tagsData
           .map((data) => AccountTagModel.fromJson(data))
           .where((tag) => tag != null)
           .cast<AccountTagModel>()
           .toList();
-      
+
       _logger.d('Retrieved ${tags.length} cached tags');
       return tags;
     } catch (e) {
@@ -87,13 +87,13 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
     try {
       final db = await _databaseService.database;
       final tagData = await AccountTagDao.getTagById(db, tagId);
-      
+
       if (tagData != null) {
         final tag = AccountTagModel.fromJson(tagData);
         _logger.d('Retrieved cached tag: $tagId');
         return tag;
       }
-      
+
       _logger.d('No cached tag found for: $tagId');
       return null;
     } catch (e) {
@@ -103,17 +103,19 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
   }
 
   @override
-  Future<List<AccountTagModel>> getCachedTagsForAccount(String accountId) async {
+  Future<List<AccountTagModel>> getCachedTagsForAccount(
+    String accountId,
+  ) async {
     try {
       final db = await _databaseService.database;
       final tagsData = await AccountTagDao.getTagsByAccount(db, accountId);
-      
+
       final tags = tagsData
           .map((data) => AccountTagModel.fromJson(data))
           .where((tag) => tag != null)
           .cast<AccountTagModel>()
           .toList();
-      
+
       _logger.d('Retrieved ${tags.length} cached tags for account: $accountId');
       return tags;
     } catch (e) {
@@ -127,12 +129,12 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
   Future<void> updateCachedTag(AccountTagModel tag) async {
     try {
       final db = await _databaseService.database;
-      
+
       final tagData = tag.toJson();
       tagData['syncStatus'] = 'synced';
-      
+
       await AccountTagDao.updateTag(db, tagData);
-      
+
       _logger.d('Updated cached tag: ${tag.id} successfully');
     } catch (e) {
       _logger.e('Error updating cached tag: ${tag.id} - $e');
@@ -145,7 +147,7 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
     try {
       final db = await _databaseService.database;
       await AccountTagDao.deleteTag(db, tagId);
-      
+
       _logger.d('Deleted cached tag: $tagId successfully');
     } catch (e) {
       _logger.e('Error deleting cached tag: $tagId - $e');
@@ -158,7 +160,7 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
     try {
       final db = await _databaseService.database;
       await db.delete(AccountTagDao.tableName);
-      
+
       _logger.d('Cleared all cached tags successfully');
     } catch (e) {
       _logger.e('Error clearing cached tags: $e');

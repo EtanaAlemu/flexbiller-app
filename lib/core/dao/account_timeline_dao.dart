@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import '../../features/accounts/data/models/account_timeline_model.dart';
 
@@ -27,7 +28,7 @@ class AccountTimelineDao {
     return {
       columnId: timeline.account.accountId, // Use account ID as primary key
       columnAccountId: timeline.account.accountId,
-      columnTimelineData: timeline.toJson().toString(), // Store as JSON string
+      columnTimelineData: jsonEncode(timeline.toJson()), // Store as proper JSON string
       columnCreatedAt: DateTime.now().toIso8601String(),
       columnUpdatedAt: DateTime.now().toIso8601String(),
       columnSyncStatus: 'synced',
@@ -36,12 +37,21 @@ class AccountTimelineDao {
 
   static AccountTimelineModel? fromMap(Map<String, dynamic> map) {
     try {
-      // Parse the JSON string back to model
-      final timelineData = map[columnTimelineData] as String;
-      // Note: This is a simplified approach - in production you might want to use proper JSON parsing
-      // For now, we'll return null and handle this in the local data source
-      return null;
+      // Get the JSON string from the database
+      final timelineDataString = map[columnTimelineData] as String?;
+      if (timelineDataString == null || timelineDataString.isEmpty) {
+        return null;
+      }
+
+      // Parse the JSON string back to a Map
+      final Map<String, dynamic> timelineData = jsonDecode(timelineDataString) as Map<String, dynamic>;
+      
+      // Use the fromJson factory to create the AccountTimelineModel
+      return AccountTimelineModel.fromJson(timelineData);
     } catch (e) {
+      // Log the error for debugging (in production, you might want to use a proper logger)
+      print('Error parsing AccountTimelineModel from database: $e');
+      print('Raw data: ${map[columnTimelineData]}');
       return null;
     }
   }
