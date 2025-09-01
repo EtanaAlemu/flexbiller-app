@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_tag_model.dart';
 
 abstract class AccountTagsRemoteDataSource {
@@ -27,16 +28,16 @@ abstract class AccountTagsRemoteDataSource {
 
 @Injectable(as: AccountTagsRemoteDataSource)
 class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountTagsRemoteDataSourceImpl(this._dio);
+  AccountTagsRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountTagAssignmentModel>> getAccountTags(
     String accountId,
   ) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/tags');
+      final response = await _dioClient.dio.get('/accounts/$accountId/tags');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -85,7 +86,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   @override
   Future<List<AccountTagModel>> getAllTags() async {
     try {
-      final response = await _dio.get('/tags');
+      final response = await _dioClient.dio.get('/tags');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -128,7 +129,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   @override
   Future<List<AccountTagModel>> getAllTagsForAccount(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/allTags');
+      final response = await _dioClient.dio.get('/accounts/$accountId/allTags');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -186,7 +187,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   @override
   Future<AccountTagModel> createTag(AccountTagModel tag) async {
     try {
-      final response = await _dio.post('/tags', data: tag.toJson());
+      final response = await _dioClient.dio.post('/tags', data: tag.toJson());
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final responseData = response.data;
@@ -228,7 +229,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   @override
   Future<AccountTagModel> updateTag(AccountTagModel tag) async {
     try {
-      final response = await _dio.put('/tags/${tag.id}', data: tag.toJson());
+      final response = await _dioClient.dio.put('/tags/${tag.id}', data: tag.toJson());
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -272,7 +273,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   @override
   Future<void> deleteTag(String tagId) async {
     try {
-      final response = await _dio.delete('/tags/$tagId');
+      final response = await _dioClient.dio.delete('/tags/$tagId');
 
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw ServerException('Failed to delete tag: ${response.statusCode}');
@@ -305,7 +306,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
     String tagId,
   ) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.dio.post(
         '/accounts/$accountId/tags',
         data: {
           'tagDefIds': [tagId],
@@ -359,7 +360,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
     List<String> tagIds,
   ) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.dio.post(
         '/accounts/$accountId/tags',
         data: {'tagDefIds': tagIds},
       );
@@ -428,7 +429,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   @override
   Future<void> removeTagFromAccount(String accountId, String tagId) async {
     try {
-      final response = await _dio.delete(
+      final response = await _dioClient.dio.delete(
         '/accounts/$accountId/tags',
         data: {
           'tagDefIds': [tagId],
@@ -491,7 +492,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
     List<String> tagIds,
   ) async {
     try {
-      final response = await _dio.delete(
+      final response = await _dioClient.dio.delete(
         '/accounts/$accountId/tags',
         data: {'tagDefIds': tagIds},
       );

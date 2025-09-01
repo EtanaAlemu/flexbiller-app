@@ -280,9 +280,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i913.AccountPaymentsRemoteDataSource>(
     () => _i913.AccountPaymentsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
-  gh.factory<_i1042.AccountTagsRemoteDataSource>(
-    () => _i1042.AccountTagsRemoteDataSourceImpl(gh<_i361.Dio>()),
-  );
   gh.factory<_i676.AccountEmailsRemoteDataSource>(
     () => _i676.AccountEmailsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
@@ -350,11 +347,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i241.AccountCustomFieldsRemoteDataSource>(
     () => _i241.AccountCustomFieldsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
-  gh.factory<_i363.AccountTagsRepository>(
-    () => _i813.AccountTagsRepositoryImpl(
-      gh<_i1042.AccountTagsRemoteDataSource>(),
-    ),
-  );
   gh.factory<_i580.SetDefaultPaymentMethodUseCase>(
     () => _i580.SetDefaultPaymentMethodUseCase(
       gh<_i845.AccountPaymentMethodsRepository>(),
@@ -409,6 +401,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i474.AccountTimelineLocalDataSource>(
     () => _i474.AccountTimelineLocalDataSourceImpl(gh<_i916.DatabaseService>()),
   );
+  gh.factory<_i1042.AccountTagsRemoteDataSource>(
+    () => _i1042.AccountTagsRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
   gh.factory<_i221.AccountCustomFieldsRepository>(
     () => _i762.AccountCustomFieldsRepositoryImpl(
       gh<_i241.AccountCustomFieldsRemoteDataSource>(),
@@ -416,22 +411,6 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i895.ChildAccountLocalDataSource>(
     () => _i895.ChildAccountLocalDataSourceImpl(gh<_i916.DatabaseService>()),
-  );
-  gh.factory<_i377.AssignMultipleTagsToAccountUseCase>(
-    () => _i377.AssignMultipleTagsToAccountUseCase(
-      gh<_i363.AccountTagsRepository>(),
-    ),
-  );
-  gh.factory<_i582.RemoveMultipleTagsFromAccountUseCase>(
-    () => _i582.RemoveMultipleTagsFromAccountUseCase(
-      gh<_i363.AccountTagsRepository>(),
-    ),
-  );
-  gh.factory<_i227.GetAccountTagsUseCase>(
-    () => _i227.GetAccountTagsUseCase(gh<_i363.AccountTagsRepository>()),
-  );
-  gh.factory<_i384.GetAllTagsForAccountUseCase>(
-    () => _i384.GetAllTagsForAccountUseCase(gh<_i363.AccountTagsRepository>()),
   );
   gh.factory<_i767.AuthRemoteDataSource>(
     () => _i767.AuthRemoteDataSourceImpl(gh<_i45.DioClient>()),
@@ -656,6 +635,11 @@ _i174.GetIt $initGetIt(
       gh<_i271.AccountAuditLogsRepository>(),
     ),
   );
+  gh.factory<_i363.AccountTagsRepository>(
+    () => _i813.AccountTagsRepositoryImpl(
+      gh<_i1042.AccountTagsRemoteDataSource>(),
+    ),
+  );
   gh.factory<_i280.AuthGuardService>(
     () => _i280.AuthGuardService(
       gh<_i493.SecureStorageService>(),
@@ -727,6 +711,22 @@ _i174.GetIt $initGetIt(
   gh.factory<_i711.GetAccountTimelineUseCase>(
     () =>
         _i711.GetAccountTimelineUseCase(gh<_i446.AccountTimelineRepository>()),
+  );
+  gh.factory<_i377.AssignMultipleTagsToAccountUseCase>(
+    () => _i377.AssignMultipleTagsToAccountUseCase(
+      gh<_i363.AccountTagsRepository>(),
+    ),
+  );
+  gh.factory<_i582.RemoveMultipleTagsFromAccountUseCase>(
+    () => _i582.RemoveMultipleTagsFromAccountUseCase(
+      gh<_i363.AccountTagsRepository>(),
+    ),
+  );
+  gh.factory<_i227.GetAccountTagsUseCase>(
+    () => _i227.GetAccountTagsUseCase(gh<_i363.AccountTagsRepository>()),
+  );
+  gh.factory<_i384.GetAllTagsForAccountUseCase>(
+    () => _i384.GetAllTagsForAccountUseCase(gh<_i363.AccountTagsRepository>()),
   );
   gh.factory<_i553.ExportAccountDataUseCase>(
     () => _i553.ExportAccountDataUseCase(gh<_i930.AccountExportRepository>()),
