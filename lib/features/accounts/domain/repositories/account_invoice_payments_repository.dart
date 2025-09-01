@@ -1,14 +1,25 @@
 import '../entities/account_invoice_payment.dart';
 
 abstract class AccountInvoicePaymentsRepository {
+  /// Stream of account invoice payments for reactive UI updates
+  Stream<List<AccountInvoicePayment>> get accountInvoicePaymentsStream;
+
   /// Get all invoice payments for a specific account
-  Future<List<AccountInvoicePayment>> getAccountInvoicePayments(String accountId);
+  Future<List<AccountInvoicePayment>> getAccountInvoicePayments(
+    String accountId,
+  );
 
   /// Get a specific invoice payment by ID
-  Future<AccountInvoicePayment> getAccountInvoicePayment(String accountId, String paymentId);
+  Future<AccountInvoicePayment> getAccountInvoicePayment(
+    String accountId,
+    String paymentId,
+  );
 
   /// Get invoice payments by status
-  Future<List<AccountInvoicePayment>> getInvoicePaymentsByStatus(String accountId, String status);
+  Future<List<AccountInvoicePayment>> getInvoicePaymentsByStatus(
+    String accountId,
+    String status,
+  );
 
   /// Get invoice payments by date range
   Future<List<AccountInvoicePayment>> getInvoicePaymentsByDateRange(
@@ -18,10 +29,16 @@ abstract class AccountInvoicePaymentsRepository {
   );
 
   /// Get invoice payments by payment method
-  Future<List<AccountInvoicePayment>> getInvoicePaymentsByMethod(String accountId, String paymentMethod);
+  Future<List<AccountInvoicePayment>> getInvoicePaymentsByMethod(
+    String accountId,
+    String paymentMethod,
+  );
 
   /// Get invoice payments by invoice number
-  Future<List<AccountInvoicePayment>> getInvoicePaymentsByInvoiceNumber(String accountId, String invoiceNumber);
+  Future<List<AccountInvoicePayment>> getInvoicePaymentsByInvoiceNumber(
+    String accountId,
+    String invoiceNumber,
+  );
 
   /// Get invoice payments with pagination
   Future<List<AccountInvoicePayment>> getInvoicePaymentsWithPagination(

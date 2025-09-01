@@ -36,6 +36,8 @@ import 'features/accounts/data/datasources/local/account_emails_local_data_sourc
     as _i929;
 import 'features/accounts/data/datasources/local/account_invoice_payments_local_data_source.dart'
     as _i250;
+import 'features/accounts/data/datasources/local/account_invoices_local_data_source.dart'
+    as _i377;
 import 'features/accounts/data/datasources/local/account_payment_methods_local_data_source.dart'
     as _i275;
 import 'features/accounts/data/datasources/local/account_payments_local_data_source.dart'
@@ -397,13 +399,14 @@ _i174.GetIt $initGetIt(
   gh.factory<_i5.AccountTimelineRemoteDataSource>(
     () => _i5.AccountTimelineRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
+  gh.factory<_i377.AccountInvoicesLocalDataSource>(
+    () => _i377.AccountInvoicesLocalDataSourceImpl(
+      gh<_i916.DatabaseService>(),
+      gh<_i974.Logger>(),
+    ),
+  );
   gh.factory<_i254.UserLocalDataSource>(
     () => _i254.UserLocalDataSourceImpl(gh<_i916.DatabaseService>()),
-  );
-  gh.factory<_i330.AccountEmailsRepository>(
-    () => _i31.AccountEmailsRepositoryImpl(
-      gh<_i676.AccountEmailsRemoteDataSource>(),
-    ),
   );
   gh.factory<_i275.AccountPaymentMethodsLocalDataSource>(
     () => _i275.AccountPaymentMethodsLocalDataSourceImpl(
@@ -472,11 +475,6 @@ _i174.GetIt $initGetIt(
       gh<_i692.TagDefinitionsRemoteDataSource>(),
     ),
   );
-  gh.factory<_i521.AccountInvoicesRepository>(
-    () => _i309.AccountInvoicesRepositoryImpl(
-      gh<_i225.AccountInvoicesRemoteDataSource>(),
-    ),
-  );
   gh.factory<_i154.SubscriptionsRepository>(
     () => _i234.SubscriptionsRepositoryImpl(
       gh<_i976.SubscriptionsRemoteDataSource>(),
@@ -493,9 +491,6 @@ _i174.GetIt $initGetIt(
       localDataSource: gh<_i273.AccountAuditLogsLocalDataSource>(),
       networkInfo: gh<_i75.NetworkInfo>(),
     ),
-  );
-  gh.factory<_i334.GetAccountEmailsUseCase>(
-    () => _i334.GetAccountEmailsUseCase(gh<_i330.AccountEmailsRepository>()),
   );
   gh.lazySingleton<_i42.AccountsRepository>(
     () => _i395.AccountsRepositoryImpl(
@@ -536,6 +531,14 @@ _i174.GetIt $initGetIt(
   gh.factory<_i374.GetAccountPaymentsUseCase>(
     () =>
         _i374.GetAccountPaymentsUseCase(gh<_i1054.AccountPaymentsRepository>()),
+  );
+  gh.factory<_i521.AccountInvoicesRepository>(
+    () => _i309.AccountInvoicesRepositoryImpl(
+      gh<_i225.AccountInvoicesRemoteDataSource>(),
+      gh<_i377.AccountInvoicesLocalDataSource>(),
+      gh<_i75.NetworkInfo>(),
+      gh<_i974.Logger>(),
+    ),
   );
   gh.factory<_i887.GetPaginatedInvoicesUseCase>(
     () => _i887.GetPaginatedInvoicesUseCase(
@@ -604,6 +607,14 @@ _i174.GetIt $initGetIt(
   gh.factory<_i1005.CancelSubscriptionUseCase>(
     () => _i1005.CancelSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
   );
+  gh.factory<_i378.AccountInvoicePaymentsRepository>(
+    () => _i636.AccountInvoicePaymentsRepositoryImpl(
+      gh<_i961.AccountInvoicePaymentsRemoteDataSource>(),
+      gh<_i250.AccountInvoicePaymentsLocalDataSource>(),
+      gh<_i75.NetworkInfo>(),
+      gh<_i974.Logger>(),
+    ),
+  );
   gh.factory<_i82.DeleteMultipleAccountCustomFieldsUseCase>(
     () => _i82.DeleteMultipleAccountCustomFieldsUseCase(
       gh<_i221.AccountCustomFieldsRepository>(),
@@ -642,6 +653,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i845.AccountPaymentMethodsRepository>(
     () => _i421.AccountPaymentMethodsRepositoryImpl(
       gh<_i975.AccountPaymentMethodsRemoteDataSource>(),
+      gh<_i275.AccountPaymentMethodsLocalDataSource>(),
+      gh<_i75.NetworkInfo>(),
+      gh<_i974.Logger>(),
     ),
   );
   gh.factory<_i657.GetAccountAuditLogsUseCase>(
@@ -715,13 +729,16 @@ _i174.GetIt $initGetIt(
     () =>
         _i732.CreateTagDefinitionUseCase(gh<_i866.TagDefinitionsRepository>()),
   );
+  gh.factory<_i330.AccountEmailsRepository>(
+    () => _i31.AccountEmailsRepositoryImpl(
+      gh<_i676.AccountEmailsRemoteDataSource>(),
+      gh<_i929.AccountEmailsLocalDataSource>(),
+      gh<_i75.NetworkInfo>(),
+      gh<_i974.Logger>(),
+    ),
+  );
   gh.factory<_i915.UserPersistenceService>(
     () => _i915.UserPersistenceService(gh<_i254.UserLocalDataSource>()),
-  );
-  gh.factory<_i378.AccountInvoicePaymentsRepository>(
-    () => _i636.AccountInvoicePaymentsRepositoryImpl(
-      gh<_i961.AccountInvoicePaymentsRemoteDataSource>(),
-    ),
   );
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
@@ -812,6 +829,9 @@ _i174.GetIt $initGetIt(
     () => _i584.GetAccountInvoicePaymentsUseCase(
       gh<_i378.AccountInvoicePaymentsRepository>(),
     ),
+  );
+  gh.factory<_i334.GetAccountEmailsUseCase>(
+    () => _i334.GetAccountEmailsUseCase(gh<_i330.AccountEmailsRepository>()),
   );
   gh.factory<_i84.RebalanceCbaUseCase>(
     () =>

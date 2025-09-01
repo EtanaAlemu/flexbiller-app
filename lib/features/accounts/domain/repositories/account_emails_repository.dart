@@ -1,6 +1,9 @@
 import '../entities/account_email.dart';
 
 abstract class AccountEmailsRepository {
+  /// Stream of account emails for reactive UI updates
+  Stream<List<AccountEmail>> get accountEmailsStream;
+
   /// Get all emails for a specific account
   Future<List<AccountEmail>> getAccountEmails(String accountId);
 
@@ -11,7 +14,11 @@ abstract class AccountEmailsRepository {
   Future<AccountEmail> createAccountEmail(String accountId, String email);
 
   /// Update an existing email
-  Future<AccountEmail> updateAccountEmail(String accountId, String emailId, String email);
+  Future<AccountEmail> updateAccountEmail(
+    String accountId,
+    String emailId,
+    String email,
+  );
 
   /// Delete an email from an account
   Future<void> deleteAccountEmail(String accountId, String emailId);

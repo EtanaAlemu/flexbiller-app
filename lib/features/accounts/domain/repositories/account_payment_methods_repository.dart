@@ -1,6 +1,9 @@
 import '../entities/account_payment_method.dart';
 
 abstract class AccountPaymentMethodsRepository {
+  /// Stream of payment methods for reactive UI updates
+  Stream<List<AccountPaymentMethod>> get accountPaymentMethodsStream;
+
   /// Get all payment methods for a specific account
   Future<List<AccountPaymentMethod>> getAccountPaymentMethods(String accountId);
 
