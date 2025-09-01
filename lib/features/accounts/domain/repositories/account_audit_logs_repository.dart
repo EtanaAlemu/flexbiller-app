@@ -1,6 +1,13 @@
+import 'dart:async';
 import '../entities/account_audit_log.dart';
 
 abstract class AccountAuditLogsRepository {
+  /// Stream for reactive UI updates when audit logs change
+  Stream<List<AccountAuditLog>> get auditLogsStream;
+
+  /// Stream for reactive UI updates when paginated audit logs change
+  Stream<List<AccountAuditLog>> get auditLogsPaginatedStream;
+
   /// Get all audit logs for a specific account
   Future<List<AccountAuditLog>> getAccountAuditLogs(String accountId);
 
@@ -8,13 +15,22 @@ abstract class AccountAuditLogsRepository {
   Future<AccountAuditLog> getAccountAuditLog(String accountId, String logId);
 
   /// Get audit logs by action type
-  Future<List<AccountAuditLog>> getAuditLogsByAction(String accountId, String action);
+  Future<List<AccountAuditLog>> getAuditLogsByAction(
+    String accountId,
+    String action,
+  );
 
   /// Get audit logs by entity type
-  Future<List<AccountAuditLog>> getAuditLogsByEntityType(String accountId, String entityType);
+  Future<List<AccountAuditLog>> getAuditLogsByEntityType(
+    String accountId,
+    String entityType,
+  );
 
   /// Get audit logs by user
-  Future<List<AccountAuditLog>> getAuditLogsByUser(String accountId, String userId);
+  Future<List<AccountAuditLog>> getAuditLogsByUser(
+    String accountId,
+    String userId,
+  );
 
   /// Get audit logs by date range
   Future<List<AccountAuditLog>> getAuditLogsByDateRange(
@@ -34,5 +50,8 @@ abstract class AccountAuditLogsRepository {
   Future<Map<String, dynamic>> getAuditLogStatistics(String accountId);
 
   /// Search audit logs by description or other fields
-  Future<List<AccountAuditLog>> searchAuditLogs(String accountId, String searchTerm);
+  Future<List<AccountAuditLog>> searchAuditLogs(
+    String accountId,
+    String searchTerm,
+  );
 }

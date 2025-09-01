@@ -1,11 +1,21 @@
+import 'dart:async';
 import '../entities/account_blocking_state.dart';
 
 abstract class AccountBlockingStatesRepository {
+  /// Stream for reactive UI updates of all blocking states
+  Stream<List<AccountBlockingState>> get blockingStatesStream;
+
+  /// Stream for reactive UI updates of active blocking states
+  Stream<List<AccountBlockingState>> get activeBlockingStatesStream;
+
   /// Get all blocking states for a specific account
   Future<List<AccountBlockingState>> getAccountBlockingStates(String accountId);
 
   /// Get a specific blocking state by ID
-  Future<AccountBlockingState> getAccountBlockingState(String accountId, String stateId);
+  Future<AccountBlockingState> getAccountBlockingState(
+    String accountId,
+    String stateId,
+  );
 
   /// Create a new blocking state for an account
   Future<AccountBlockingState> createAccountBlockingState(
@@ -35,7 +45,10 @@ abstract class AccountBlockingStatesRepository {
   Future<void> deleteAccountBlockingState(String accountId, String stateId);
 
   /// Get blocking states by service
-  Future<List<AccountBlockingState>> getBlockingStatesByService(String accountId, String service);
+  Future<List<AccountBlockingState>> getBlockingStatesByService(
+    String accountId,
+    String service,
+  );
 
   /// Get active blocking states (effective date in the past or present)
   Future<List<AccountBlockingState>> getActiveBlockingStates(String accountId);

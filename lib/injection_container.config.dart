@@ -26,6 +26,10 @@ import 'core/services/database_service.dart' as _i916;
 import 'core/services/jwt_service.dart' as _i842;
 import 'core/services/secure_storage_service.dart' as _i493;
 import 'core/services/user_persistence_service.dart' as _i915;
+import 'features/accounts/data/datasources/local/account_audit_logs_local_data_source.dart'
+    as _i273;
+import 'features/accounts/data/datasources/local/account_blocking_states_local_data_source.dart'
+    as _i804;
 import 'features/accounts/data/datasources/local/account_tags_local_data_source.dart'
     as _i201;
 import 'features/accounts/data/datasources/local/account_timeline_local_data_source.dart'
@@ -291,19 +295,11 @@ _i174.GetIt $initGetIt(
   gh.factory<_i1020.AccountExportRemoteDataSource>(
     () => _i1020.AccountExportRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
-  gh.factory<_i1063.AccountBlockingStatesRemoteDataSource>(
-    () => _i1063.AccountBlockingStatesRemoteDataSourceImpl(gh<_i361.Dio>()),
-  );
   gh.factory<_i45.DioClient>(
     () => _i45.DioClient(gh<_i361.Dio>(), gh<_i558.FlutterSecureStorage>()),
   );
   gh.factory<_i225.AccountInvoicesRemoteDataSource>(
     () => _i225.AccountInvoicesRemoteDataSourceImpl(gh<_i361.Dio>()),
-  );
-  gh.factory<_i696.AccountBlockingStatesRepository>(
-    () => _i552.AccountBlockingStatesRepositoryImpl(
-      gh<_i1063.AccountBlockingStatesRemoteDataSource>(),
-    ),
   );
   gh.factory<_i975.AccountPaymentMethodsRemoteDataSource>(
     () => _i975.AccountPaymentMethodsRemoteDataSourceImpl(gh<_i361.Dio>()),
@@ -329,11 +325,6 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i734.TagsRepository>(
     () => _i990.TagsRepositoryImpl(gh<_i376.TagsRemoteDataSource>()),
-  );
-  gh.factory<_i729.GetAccountBlockingStatesUseCase>(
-    () => _i729.GetAccountBlockingStatesUseCase(
-      gh<_i696.AccountBlockingStatesRepository>(),
-    ),
   );
   gh.factory<_i845.AccountPaymentMethodsRepository>(
     () => _i421.AccountPaymentMethodsRepositoryImpl(
@@ -395,6 +386,10 @@ _i174.GetIt $initGetIt(
       gh<_i961.AccountInvoicePaymentsRemoteDataSource>(),
     ),
   );
+  gh.factory<_i1063.AccountBlockingStatesRemoteDataSource>(
+    () =>
+        _i1063.AccountBlockingStatesRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
   gh.factory<_i474.AccountTimelineLocalDataSource>(
     () => _i474.AccountTimelineLocalDataSourceImpl(gh<_i916.DatabaseService>()),
   );
@@ -444,6 +439,11 @@ _i174.GetIt $initGetIt(
       gh<_i378.AccountInvoicePaymentsRepository>(),
     ),
   );
+  gh.factory<_i804.AccountBlockingStatesLocalDataSource>(
+    () => _i804.AccountBlockingStatesLocalDataSourceImpl(
+      gh<_i916.DatabaseService>(),
+    ),
+  );
   gh.factory<_i1015.AuthRepository>(
     () => _i111.AuthRepositoryImpl(
       gh<_i767.AuthRemoteDataSource>(),
@@ -456,6 +456,10 @@ _i174.GetIt $initGetIt(
     () => _i681.AccountOverdueStateRepositoryImpl(
       gh<_i505.AccountOverdueStateRemoteDataSource>(),
     ),
+  );
+  gh.factory<_i273.AccountAuditLogsLocalDataSource>(
+    () =>
+        _i273.AccountAuditLogsLocalDataSourceImpl(gh<_i916.DatabaseService>()),
   );
   gh.factory<_i512.GetOverdueStateUseCase>(
     () =>
@@ -479,6 +483,13 @@ _i174.GetIt $initGetIt(
   gh.factory<_i930.AccountExportRepository>(
     () => _i973.AccountExportRepositoryImpl(
       gh<_i1020.AccountExportRemoteDataSource>(),
+    ),
+  );
+  gh.lazySingleton<_i271.AccountAuditLogsRepository>(
+    () => _i510.AccountAuditLogsRepositoryImpl(
+      remoteDataSource: gh<_i172.AccountAuditLogsRemoteDataSource>(),
+      localDataSource: gh<_i273.AccountAuditLogsLocalDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
     ),
   );
   gh.factory<_i334.GetAccountEmailsUseCase>(
@@ -630,6 +641,11 @@ _i174.GetIt $initGetIt(
       gh<_i221.AccountCustomFieldsRepository>(),
     ),
   );
+  gh.factory<_i657.GetAccountAuditLogsUseCase>(
+    () => _i657.GetAccountAuditLogsUseCase(
+      gh<_i271.AccountAuditLogsRepository>(),
+    ),
+  );
   gh.factory<_i363.AccountTagsRepository>(
     () => _i813.AccountTagsRepositoryImpl(
       gh<_i1042.AccountTagsRemoteDataSource>(),
@@ -679,11 +695,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i915.UserPersistenceService>(
     () => _i915.UserPersistenceService(gh<_i254.UserLocalDataSource>()),
   );
-  gh.factory<_i271.AccountAuditLogsRepository>(
-    () => _i510.AccountAuditLogsRepositoryImpl(
-      gh<_i172.AccountAuditLogsRemoteDataSource>(),
-    ),
-  );
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
   );
@@ -706,6 +717,13 @@ _i174.GetIt $initGetIt(
       gh<_i814.CreateSubscriptionWithAddOnsUseCase>(),
       gh<_i887.GetSubscriptionAuditLogsWithHistoryUseCase>(),
       gh<_i400.UpdateSubscriptionBcdUseCase>(),
+    ),
+  );
+  gh.lazySingleton<_i696.AccountBlockingStatesRepository>(
+    () => _i552.AccountBlockingStatesRepositoryImpl(
+      localDataSource: gh<_i804.AccountBlockingStatesLocalDataSource>(),
+      remoteDataSource: gh<_i1063.AccountBlockingStatesRemoteDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
     ),
   );
   gh.factory<_i711.GetAccountTimelineUseCase>(
@@ -766,9 +784,9 @@ _i174.GetIt $initGetIt(
       gh<_i528.DeleteTagDefinitionUseCase>(),
     ),
   );
-  gh.factory<_i657.GetAccountAuditLogsUseCase>(
-    () => _i657.GetAccountAuditLogsUseCase(
-      gh<_i271.AccountAuditLogsRepository>(),
+  gh.factory<_i729.GetAccountBlockingStatesUseCase>(
+    () => _i729.GetAccountBlockingStatesUseCase(
+      gh<_i696.AccountBlockingStatesRepository>(),
     ),
   );
   gh.factory<_i795.AccountsBloc>(

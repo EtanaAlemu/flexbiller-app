@@ -6,6 +6,8 @@ import '../dao/account_dao.dart';
 import '../dao/child_account_dao.dart';
 import '../dao/account_timeline_dao.dart';
 import '../dao/account_tag_dao.dart';
+import '../dao/account_audit_log_dao.dart';
+import '../dao/account_blocking_state_dao.dart';
 import 'package:logger/logger.dart';
 
 @injectable
@@ -29,6 +31,12 @@ class DatabaseService {
 
     // Ensure account_tags table exists after database initialization
     await _ensureAccountTagsTableExists();
+
+    // Ensure account_audit_logs table exists after database initialization
+    await _ensureAccountAuditLogsTableExists();
+
+    // Ensure account_blocking_states table exists after database initialization
+    await _ensureAccountBlockingStatesTableExists();
 
     return _database!;
   }
@@ -138,6 +146,12 @@ class DatabaseService {
       // Create account_tags table
       await db.execute(AccountTagDao.createTableSQL);
 
+      // Create account_audit_logs table
+      await db.execute(AccountAuditLogDao.createTableSQL);
+
+      // Create account_blocking_states table
+      await db.execute(AccountBlockingStateDao.createTableSQL);
+
       _logger.d('Database tables created successfully');
     } catch (e) {
       _logger.e('Error creating database tables: $e');
@@ -146,42 +160,45 @@ class DatabaseService {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    try {
-      _logger.d('Upgrading database from version $oldVersion to $newVersion');
+    _logger.d('Upgrading database from version $oldVersion to $newVersion');
 
-      if (oldVersion < 2) {
-        // Create accounts table for version 2
-        _logger.d('Creating accounts table for version 2');
-        await db.execute(AccountDao.createTableSQL);
-        _logger.d('Accounts table created successfully');
-      }
-
-      if (oldVersion < 3) {
-        // Create child_accounts table for version 3
-        _logger.d('Creating child_accounts table for version 3');
-        await db.execute(ChildAccountDao.createTableSQL);
-        _logger.d('Child accounts table created successfully');
-      }
-
-      if (oldVersion < 4) {
-        // Create account_timelines table for version 4
-        _logger.d('Creating account_timelines table for version 4');
-        await db.execute(AccountTimelineDao.createTableSQL);
-        _logger.d('Account timelines table created successfully');
-      }
-
-      if (oldVersion < 5) {
-        // Create account_tags table for version 5
-        _logger.d('Creating account_tags table for version 5');
-        await db.execute(AccountTagDao.createTableSQL);
-        _logger.d('Account tags table created successfully');
-      }
-
-      _logger.d('Database upgrade completed');
-    } catch (e) {
-      _logger.e('Error upgrading database: $e');
-      rethrow;
+    if (oldVersion < 2) {
+      // Create child_accounts table
+      await db.execute(ChildAccountDao.createTableSQL);
+      _logger.d('Created child_accounts table');
     }
+
+    if (oldVersion < 3) {
+      // Create account_timeline table
+      await db.execute(AccountTimelineDao.createTableSQL);
+      _logger.d('Created account_timeline table');
+    }
+
+    if (oldVersion < 4) {
+      // Create account_tags table
+      await db.execute(AccountTagDao.createTableSQL);
+      _logger.d('Created account_tags table');
+    }
+
+    if (oldVersion < 5) {
+      // Create account_audit_logs table
+      await db.execute(AccountAuditLogDao.createTableSQL);
+      _logger.d('Created account_audit_logs table');
+    }
+
+    if (oldVersion < 6) {
+      // Create account_audit_logs table (if not already created)
+      await _ensureAccountAuditLogsTableExists();
+      _logger.d('Ensured account_audit_logs table exists');
+    }
+
+    if (oldVersion < 7) {
+      // Create account_blocking_states table
+      await db.execute(AccountBlockingStateDao.createTableSQL);
+      _logger.d('Created account_blocking_states table');
+    }
+
+    _logger.d('Database upgrade completed successfully');
   }
 
   // Check and create accounts table if it doesn't exist
@@ -264,6 +281,49 @@ class DatabaseService {
       }
     } catch (e) {
       _logger.e('Error ensuring account tags table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Check and create account_audit_logs table if it doesn't exist
+  Future<void> _ensureAccountAuditLogsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'account_audit_logs'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Account audit logs table does not exist, creating it...');
+        await db.execute(AccountAuditLogDao.createTableSQL);
+        _logger.d('Account audit logs table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring account audit logs table exists: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureAccountBlockingStatesTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'account_blocking_states'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d(
+          'Account blocking states table does not exist, creating it...',
+        );
+        await db.execute(AccountBlockingStateDao.createTableSQL);
+        _logger.d('Account blocking states table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring account blocking states table exists: $e');
       rethrow;
     }
   }

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../models/account_blocking_state_model.dart';
 
 abstract class AccountBlockingStatesRemoteDataSource {
@@ -33,14 +34,14 @@ abstract class AccountBlockingStatesRemoteDataSource {
 
 @Injectable(as: AccountBlockingStatesRemoteDataSource)
 class AccountBlockingStatesRemoteDataSourceImpl implements AccountBlockingStatesRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  AccountBlockingStatesRemoteDataSourceImpl(this._dio);
+  AccountBlockingStatesRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountBlockingStateModel>> getAccountBlockingStates(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/block');
+      final response = await _dioClient.dio.get('/accounts/$accountId/block');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -83,7 +84,7 @@ class AccountBlockingStatesRemoteDataSourceImpl implements AccountBlockingStates
   @override
   Future<AccountBlockingStateModel> getAccountBlockingState(String accountId, String stateId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/block/$stateId');
+      final response = await _dioClient.dio.get('/accounts/$accountId/block/$stateId');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -134,7 +135,7 @@ class AccountBlockingStatesRemoteDataSourceImpl implements AccountBlockingStates
     String type,
   ) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.dio.post(
         '/accounts/$accountId/block',
         data: {
           'stateName': stateName,
@@ -197,7 +198,7 @@ class AccountBlockingStatesRemoteDataSourceImpl implements AccountBlockingStates
     DateTime effectiveDate,
   ) async {
     try {
-      final response = await _dio.put(
+      final response = await _dioClient.dio.put(
         '/accounts/$accountId/block/$stateId',
         data: {
           'stateName': stateName,
@@ -251,7 +252,7 @@ class AccountBlockingStatesRemoteDataSourceImpl implements AccountBlockingStates
   @override
   Future<void> deleteAccountBlockingState(String accountId, String stateId) async {
     try {
-      final response = await _dio.delete('/accounts/$accountId/block/$stateId');
+      final response = await _dioClient.dio.delete('/accounts/$accountId/block/$stateId');
 
       if (response.statusCode == 204) {
         // Successfully deleted - no content returned
@@ -284,7 +285,7 @@ class AccountBlockingStatesRemoteDataSourceImpl implements AccountBlockingStates
   @override
   Future<List<AccountBlockingStateModel>> getBlockingStatesByService(String accountId, String service) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/block/service', queryParameters: {'service': service});
+      final response = await _dioClient.dio.get('/accounts/$accountId/block/service', queryParameters: {'service': service});
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -325,7 +326,7 @@ class AccountBlockingStatesRemoteDataSourceImpl implements AccountBlockingStates
   @override
   Future<List<AccountBlockingStateModel>> getActiveBlockingStates(String accountId) async {
     try {
-      final response = await _dio.get('/accounts/$accountId/block/active');
+      final response = await _dioClient.dio.get('/accounts/$accountId/block/active');
 
       if (response.statusCode == 200) {
         final responseData = response.data;

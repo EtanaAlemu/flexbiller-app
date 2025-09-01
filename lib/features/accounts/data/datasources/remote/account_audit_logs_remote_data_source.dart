@@ -1,4 +1,4 @@
-                                                    import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/errors/exceptions.dart';
 import '../../../../../core/network/dio_client.dart';
@@ -6,26 +6,54 @@ import '../../models/account_audit_log_model.dart';
 
 abstract class AccountAuditLogsRemoteDataSource {
   Future<List<AccountAuditLogModel>> getAccountAuditLogs(String accountId);
-  Future<AccountAuditLogModel> getAccountAuditLog(String accountId, String logId);
-  Future<List<AccountAuditLogModel>> getAuditLogsByAction(String accountId, String action);
-  Future<List<AccountAuditLogModel>> getAuditLogsByEntityType(String accountId, String entityType);
-  Future<List<AccountAuditLogModel>> getAuditLogsByUser(String accountId, String userId);
-  Future<List<AccountAuditLogModel>> getAuditLogsByDateRange(String accountId, DateTime startDate, DateTime endDate);
-  Future<List<AccountAuditLogModel>> getAuditLogsWithPagination(String accountId, int page, int pageSize);
+  Future<AccountAuditLogModel> getAccountAuditLog(
+    String accountId,
+    String logId,
+  );
+  Future<List<AccountAuditLogModel>> getAuditLogsByAction(
+    String accountId,
+    String action,
+  );
+  Future<List<AccountAuditLogModel>> getAuditLogsByEntityType(
+    String accountId,
+    String entityType,
+  );
+  Future<List<AccountAuditLogModel>> getAuditLogsByUser(
+    String accountId,
+    String userId,
+  );
+  Future<List<AccountAuditLogModel>> getAuditLogsByDateRange(
+    String accountId,
+    DateTime startDate,
+    DateTime endDate,
+  );
+  Future<List<AccountAuditLogModel>> getAuditLogsWithPagination(
+    String accountId,
+    int page,
+    int pageSize,
+  );
   Future<Map<String, dynamic>> getAuditLogStatistics(String accountId);
-  Future<List<AccountAuditLogModel>> searchAuditLogs(String accountId, String searchTerm);
+  Future<List<AccountAuditLogModel>> searchAuditLogs(
+    String accountId,
+    String searchTerm,
+  );
 }
 
 @Injectable(as: AccountAuditLogsRemoteDataSource)
-class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteDataSource {
+class AccountAuditLogsRemoteDataSourceImpl
+    implements AccountAuditLogsRemoteDataSource {
   final DioClient _dioClient;
 
   AccountAuditLogsRemoteDataSourceImpl(this._dioClient);
 
   @override
-  Future<List<AccountAuditLogModel>> getAccountAuditLogs(String accountId) async {
+  Future<List<AccountAuditLogModel>> getAccountAuditLogs(
+    String accountId,
+  ) async {
     try {
-      final response = await _dioClient.dio.get('/accounts/$accountId/auditLogs');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/auditLogs',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -33,7 +61,10 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> logsData = responseData['data'] as List<dynamic>;
           return logsData
-              .map((item) => AccountAuditLogModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountAuditLogModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -41,7 +72,9 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
           );
         }
       } else {
-        throw ServerException('Failed to fetch account audit logs: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account audit logs: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -54,11 +87,15 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         throw ValidationException('Account not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account audit logs');
+        throw NetworkException(
+          'Connection timeout while fetching account audit logs',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch account audit logs: ${e.message}');
+        throw ServerException(
+          'Failed to fetch account audit logs: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -66,9 +103,14 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   }
 
   @override
-  Future<AccountAuditLogModel> getAccountAuditLog(String accountId, String logId) async {
+  Future<AccountAuditLogModel> getAccountAuditLog(
+    String accountId,
+    String logId,
+  ) async {
     try {
-      final response = await _dioClient.dio.get('/accounts/$accountId/auditLogs/$logId');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/auditLogs/$logId',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -83,7 +125,9 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
           );
         }
       } else {
-        throw ServerException('Failed to fetch account audit log: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch account audit log: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -96,11 +140,15 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         throw ValidationException('Account audit log not found');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching account audit log');
+        throw NetworkException(
+          'Connection timeout while fetching account audit log',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch account audit log: ${e.message}');
+        throw ServerException(
+          'Failed to fetch account audit log: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -108,7 +156,10 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   }
 
   @override
-  Future<List<AccountAuditLogModel>> getAuditLogsByAction(String accountId, String action) async {
+  Future<List<AccountAuditLogModel>> getAuditLogsByAction(
+    String accountId,
+    String action,
+  ) async {
     try {
       final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/action',
@@ -121,7 +172,10 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> logsData = responseData['data'] as List<dynamic>;
           return logsData
-              .map((item) => AccountAuditLogModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountAuditLogModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -129,7 +183,9 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
           );
         }
       } else {
-        throw ServerException('Failed to fetch audit logs by action: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch audit logs by action: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -140,11 +196,15 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching audit logs by action');
+        throw NetworkException(
+          'Connection timeout while fetching audit logs by action',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch audit logs by action: ${e.message}');
+        throw ServerException(
+          'Failed to fetch audit logs by action: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -152,7 +212,10 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   }
 
   @override
-  Future<List<AccountAuditLogModel>> getAuditLogsByEntityType(String accountId, String entityType) async {
+  Future<List<AccountAuditLogModel>> getAuditLogsByEntityType(
+    String accountId,
+    String entityType,
+  ) async {
     try {
       final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/entityType',
@@ -165,15 +228,21 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> logsData = responseData['data'] as List<dynamic>;
           return logsData
-              .map((item) => AccountAuditLogModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountAuditLogModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to fetch audit logs by entity type',
+            responseData['message'] ??
+                'Failed to fetch audit logs by entity type',
           );
         }
       } else {
-        throw ServerException('Failed to fetch audit logs by entity type: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch audit logs by entity type: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -184,11 +253,15 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching audit logs by entity type');
+        throw NetworkException(
+          'Connection timeout while fetching audit logs by entity type',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch audit logs by entity type: ${e.message}');
+        throw ServerException(
+          'Failed to fetch audit logs by entity type: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -196,7 +269,10 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   }
 
   @override
-  Future<List<AccountAuditLogModel>> getAuditLogsByUser(String accountId, String userId) async {
+  Future<List<AccountAuditLogModel>> getAuditLogsByUser(
+    String accountId,
+    String userId,
+  ) async {
     try {
       final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/user',
@@ -209,7 +285,10 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> logsData = responseData['data'] as List<dynamic>;
           return logsData
-              .map((item) => AccountAuditLogModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountAuditLogModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -217,7 +296,9 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
           );
         }
       } else {
-        throw ServerException('Failed to fetch audit logs by user: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch audit logs by user: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -228,11 +309,15 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching audit logs by user');
+        throw NetworkException(
+          'Connection timeout while fetching audit logs by user',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch audit logs by user: ${e.message}');
+        throw ServerException(
+          'Failed to fetch audit logs by user: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -260,15 +345,21 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> logsData = responseData['data'] as List<dynamic>;
           return logsData
-              .map((item) => AccountAuditLogModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountAuditLogModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to fetch audit logs by date range',
+            responseData['message'] ??
+                'Failed to fetch audit logs by date range',
           );
         }
       } else {
-        throw ServerException('Failed to fetch audit logs by date range: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch audit logs by date range: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -279,11 +370,15 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching audit logs by date range');
+        throw NetworkException(
+          'Connection timeout while fetching audit logs by date range',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch audit logs by date range: ${e.message}');
+        throw ServerException(
+          'Failed to fetch audit logs by date range: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -299,10 +394,7 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
     try {
       final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/pagination',
-        queryParameters: {
-          'page': page,
-          'pageSize': pageSize,
-        },
+        queryParameters: {'page': page, 'pageSize': pageSize},
       );
 
       if (response.statusCode == 200) {
@@ -311,15 +403,21 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> logsData = responseData['data'] as List<dynamic>;
           return logsData
-              .map((item) => AccountAuditLogModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountAuditLogModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to fetch audit logs with pagination',
+            responseData['message'] ??
+                'Failed to fetch audit logs with pagination',
           );
         }
       } else {
-        throw ServerException('Failed to fetch audit logs with pagination: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch audit logs with pagination: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -330,11 +428,15 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching audit logs with pagination');
+        throw NetworkException(
+          'Connection timeout while fetching audit logs with pagination',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch audit logs with pagination: ${e.message}');
+        throw ServerException(
+          'Failed to fetch audit logs with pagination: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -344,7 +446,9 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   @override
   Future<Map<String, dynamic>> getAuditLogStatistics(String accountId) async {
     try {
-      final response = await _dioClient.dio.get('/accounts/$accountId/auditLogs/statistics');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/auditLogs/statistics',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -357,7 +461,9 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
           );
         }
       } else {
-        throw ServerException('Failed to fetch audit log statistics: ${response.statusCode}');
+        throw ServerException(
+          'Failed to fetch audit log statistics: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -368,11 +474,15 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         );
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout while fetching audit log statistics');
+        throw NetworkException(
+          'Connection timeout while fetching audit log statistics',
+        );
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection');
       } else {
-        throw ServerException('Failed to fetch audit log statistics: ${e.message}');
+        throw ServerException(
+          'Failed to fetch audit log statistics: ${e.message}',
+        );
       }
     } catch (e) {
       throw ServerException('Unexpected error: $e');
@@ -380,7 +490,10 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
   }
 
   @override
-  Future<List<AccountAuditLogModel>> searchAuditLogs(String accountId, String searchTerm) async {
+  Future<List<AccountAuditLogModel>> searchAuditLogs(
+    String accountId,
+    String searchTerm,
+  ) async {
     try {
       final response = await _dioClient.dio.get(
         '/accounts/$accountId/auditLogs/search',
@@ -393,7 +506,10 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
         if (responseData['success'] == true && responseData['data'] != null) {
           final List<dynamic> logsData = responseData['data'] as List<dynamic>;
           return logsData
-              .map((item) => AccountAuditLogModel.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) =>
+                    AccountAuditLogModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         } else {
           throw ServerException(
@@ -401,7 +517,9 @@ class AccountAuditLogsRemoteDataSourceImpl implements AccountAuditLogsRemoteData
           );
         }
       } else {
-        throw ServerException('Failed to search audit logs: ${response.statusCode}');
+        throw ServerException(
+          'Failed to search audit logs: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
