@@ -26,6 +26,8 @@ import 'core/services/database_service.dart' as _i916;
 import 'core/services/jwt_service.dart' as _i842;
 import 'core/services/secure_storage_service.dart' as _i493;
 import 'core/services/user_persistence_service.dart' as _i915;
+import 'features/accounts/data/datasources/local/account_tags_local_data_source.dart'
+    as _i201;
 import 'features/accounts/data/datasources/local/account_timeline_local_data_source.dart'
     as _i474;
 import 'features/accounts/data/datasources/local/accounts_local_data_source.dart'
@@ -370,6 +372,9 @@ _i174.GetIt $initGetIt(
       gh<_i493.SecureStorageService>(),
       gh<_i974.Logger>(),
     ),
+  );
+  gh.factory<_i201.AccountTagsLocalDataSource>(
+    () => _i201.AccountTagsLocalDataSourceImpl(gh<_i916.DatabaseService>()),
   );
   gh.factory<_i1067.AccountCbaRebalancingRepository>(
     () => _i761.AccountCbaRebalancingRepositoryImpl(

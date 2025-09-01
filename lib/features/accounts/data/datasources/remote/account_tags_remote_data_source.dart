@@ -142,7 +142,8 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
                 (tag) => AccountTagModel.fromJson(tag as Map<String, dynamic>),
               )
               .toList();
-        } else if (responseData['success'] == true && responseData['data'] != null) {
+        } else if (responseData['success'] == true &&
+            responseData['data'] != null) {
           // Fallback to standard response structure
           final List<dynamic> tagsData = responseData['data'] as List<dynamic>;
           return tagsData
@@ -229,7 +230,10 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
   @override
   Future<AccountTagModel> updateTag(AccountTagModel tag) async {
     try {
-      final response = await _dioClient.dio.put('/tags/${tag.id}', data: tag.toJson());
+      final response = await _dioClient.dio.put(
+        '/tags/${tag.id}',
+        data: tag.toJson(),
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -373,7 +377,7 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
           final assignmentResponse = AccountTagAssignmentResponseModel.fromJson(
             responseData['data'] as Map<String, dynamic>,
           );
-          
+
           // Convert to AccountTagAssignmentModel for backward compatibility
           return assignmentResponse.toAccountTagAssignmentModels();
         } else {
@@ -401,12 +405,15 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
       } else if (e.response?.statusCode == 500) {
         // Handle 500 error which might indicate tag definition issues
         final responseData = e.response?.data;
-        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+        if (responseData != null &&
+            responseData['error'] == 'CONNECTION_ERROR') {
           final details = responseData['details'];
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
             if (originalError.contains("does not exist")) {
-              throw ValidationException('One or more tag definitions do not exist');
+              throw ValidationException(
+                'One or more tag definitions do not exist',
+              );
             }
           }
         }
@@ -469,7 +476,9 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         if (responseData != null && responseData['message'] != null) {
           final message = responseData['message'] as String;
           if (message.contains("does not exist")) {
-            throw ValidationException('One or more tag definitions do not exist');
+            throw ValidationException(
+              'One or more tag definitions do not exist',
+            );
           }
         }
         throw ServerException('Server error while removing tags from account');
@@ -505,7 +514,8 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
           return;
         } else {
           throw ServerException(
-            responseData['message'] ?? 'Failed to remove multiple tags from account',
+            responseData['message'] ??
+                'Failed to remove multiple tags from account',
           );
         }
       } else if (response.statusCode != 204) {
@@ -530,7 +540,9 @@ class AccountTagsRemoteDataSourceImpl implements AccountTagsRemoteDataSource {
         if (responseData != null && responseData['message'] != null) {
           final message = responseData['message'] as String;
           if (message.contains("does not exist")) {
-            throw ValidationException('One or more tag definitions do not exist');
+            throw ValidationException(
+              'One or more tag definitions do not exist',
+            );
           }
         }
         throw ServerException('Server error while removing tags from account');

@@ -5,6 +5,7 @@ import '../constants/app_constants.dart';
 import '../dao/account_dao.dart';
 import '../dao/child_account_dao.dart';
 import '../dao/account_timeline_dao.dart';
+import '../dao/account_tag_dao.dart';
 import 'package:logger/logger.dart';
 
 @injectable
@@ -25,6 +26,9 @@ class DatabaseService {
 
     // Ensure account_timelines table exists after database initialization
     await _ensureAccountTimelinesTableExists();
+
+    // Ensure account_tags table exists after database initialization
+    await _ensureAccountTagsTableExists();
 
     return _database!;
   }
@@ -131,6 +135,9 @@ class DatabaseService {
       // Create account_timelines table
       await db.execute(AccountTimelineDao.createTableSQL);
 
+      // Create account_tags table
+      await db.execute(AccountTagDao.createTableSQL);
+
       _logger.d('Database tables created successfully');
     } catch (e) {
       _logger.e('Error creating database tables: $e');
@@ -161,6 +168,13 @@ class DatabaseService {
         _logger.d('Creating account_timelines table for version 4');
         await db.execute(AccountTimelineDao.createTableSQL);
         _logger.d('Account timelines table created successfully');
+      }
+
+      if (oldVersion < 5) {
+        // Create account_tags table for version 5
+        _logger.d('Creating account_tags table for version 5');
+        await db.execute(AccountTagDao.createTableSQL);
+        _logger.d('Account tags table created successfully');
       }
 
       _logger.d('Database upgrade completed');
@@ -229,6 +243,27 @@ class DatabaseService {
       }
     } catch (e) {
       _logger.e('Error ensuring account timelines table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Check and create account_tags table if it doesn't exist
+  Future<void> _ensureAccountTagsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'account_tags'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Account tags table does not exist, creating it...');
+        await db.execute(AccountTagDao.createTableSQL);
+        _logger.d('Account tags table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring account tags table exists: $e');
       rethrow;
     }
   }

@@ -17,7 +17,7 @@ class AppConstants {
 
   // Database
   static const String databaseName = 'flexbiller.db';
-  static const int databaseVersion = 4;
+  static const int databaseVersion = 5;
 
   // App Info
   static const String appName = 'FlexBiller';
