@@ -1,6 +1,9 @@
 import '../entities/account_payment.dart';
 
 abstract class AccountPaymentsRepository {
+  /// Stream of account payments for reactive UI updates
+  Stream<List<AccountPayment>> get accountPaymentsStream;
+
   /// Get all payments for a specific account
   Future<List<AccountPayment>> getAccountPayments(String accountId);
 

@@ -420,11 +420,6 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
-  gh.factory<_i1054.AccountPaymentsRepository>(
-    () => _i626.AccountPaymentsRepositoryImpl(
-      gh<_i913.AccountPaymentsRemoteDataSource>(),
-    ),
-  );
   gh.factory<_i1023.AccountPaymentsLocalDataSource>(
     () => _i1023.AccountPaymentsLocalDataSourceImpl(
       gh<_i916.DatabaseService>(),
@@ -518,24 +513,18 @@ _i174.GetIt $initGetIt(
   gh.factory<_i743.CreateChildAccountUseCase>(
     () => _i743.CreateChildAccountUseCase(gh<_i596.ChildAccountRepository>()),
   );
-  gh.factory<_i1047.CreateGlobalPaymentUseCase>(
-    () => _i1047.CreateGlobalPaymentUseCase(
-      gh<_i1054.AccountPaymentsRepository>(),
-    ),
-  );
-  gh.factory<_i463.CreateAccountPaymentUseCase>(
-    () => _i463.CreateAccountPaymentUseCase(
-      gh<_i1054.AccountPaymentsRepository>(),
-    ),
-  );
-  gh.factory<_i374.GetAccountPaymentsUseCase>(
-    () =>
-        _i374.GetAccountPaymentsUseCase(gh<_i1054.AccountPaymentsRepository>()),
-  );
   gh.factory<_i521.AccountInvoicesRepository>(
     () => _i309.AccountInvoicesRepositoryImpl(
       gh<_i225.AccountInvoicesRemoteDataSource>(),
       gh<_i377.AccountInvoicesLocalDataSource>(),
+      gh<_i75.NetworkInfo>(),
+      gh<_i974.Logger>(),
+    ),
+  );
+  gh.factory<_i1054.AccountPaymentsRepository>(
+    () => _i626.AccountPaymentsRepositoryImpl(
+      gh<_i913.AccountPaymentsRemoteDataSource>(),
+      gh<_i1023.AccountPaymentsLocalDataSource>(),
       gh<_i75.NetworkInfo>(),
       gh<_i974.Logger>(),
     ),
@@ -836,6 +825,20 @@ _i174.GetIt $initGetIt(
   gh.factory<_i84.RebalanceCbaUseCase>(
     () =>
         _i84.RebalanceCbaUseCase(gh<_i1067.AccountCbaRebalancingRepository>()),
+  );
+  gh.factory<_i1047.CreateGlobalPaymentUseCase>(
+    () => _i1047.CreateGlobalPaymentUseCase(
+      gh<_i1054.AccountPaymentsRepository>(),
+    ),
+  );
+  gh.factory<_i463.CreateAccountPaymentUseCase>(
+    () => _i463.CreateAccountPaymentUseCase(
+      gh<_i1054.AccountPaymentsRepository>(),
+    ),
+  );
+  gh.factory<_i374.GetAccountPaymentsUseCase>(
+    () =>
+        _i374.GetAccountPaymentsUseCase(gh<_i1054.AccountPaymentsRepository>()),
   );
   gh.factory<_i65.TagDefinitionsBloc>(
     () => _i65.TagDefinitionsBloc(

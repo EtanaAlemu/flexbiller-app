@@ -8,13 +8,15 @@ import '../datasources/remote/account_payment_methods_remote_data_source.dart';
 import '../datasources/local/account_payment_methods_local_data_source.dart';
 
 @Injectable(as: AccountPaymentMethodsRepository)
-class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsRepository {
+class AccountPaymentMethodsRepositoryImpl
+    implements AccountPaymentMethodsRepository {
   final AccountPaymentMethodsRemoteDataSource _remoteDataSource;
   final AccountPaymentMethodsLocalDataSource _localDataSource;
   final NetworkInfo _networkInfo;
   final Logger _logger;
 
-  final StreamController<List<AccountPaymentMethod>> _accountPaymentMethodsController =
+  final StreamController<List<AccountPaymentMethod>>
+  _accountPaymentMethodsController =
       StreamController<List<AccountPaymentMethod>>.broadcast();
 
   AccountPaymentMethodsRepositoryImpl(
@@ -29,14 +31,19 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
       _accountPaymentMethodsController.stream;
 
   @override
-  Future<List<AccountPaymentMethod>> getAccountPaymentMethods(String accountId) async {
+  Future<List<AccountPaymentMethod>> getAccountPaymentMethods(
+    String accountId,
+  ) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedMethods = await _localDataSource.getCachedAccountPaymentMethods(accountId);
-      
+      final cachedMethods = await _localDataSource
+          .getCachedAccountPaymentMethods(accountId);
+
       // Emit cached data immediately for UI responsiveness
       if (cachedMethods.isNotEmpty) {
-        final entities = cachedMethods.map((model) => model.toEntity()).toList();
+        final entities = cachedMethods
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentMethodsController.add(entities);
       }
 
@@ -44,15 +51,21 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remoteMethods = await _remoteDataSource.getAccountPaymentMethods(accountId);
-          
+          final remoteMethods = await _remoteDataSource
+              .getAccountPaymentMethods(accountId);
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPaymentMethods(accountId, remoteMethods);
-          
+          await _localDataSource.cacheAccountPaymentMethods(
+            accountId,
+            remoteMethods,
+          );
+
           // Emit updated data
-          final entities = remoteMethods.map((model) => model.toEntity()).toList();
+          final entities = remoteMethods
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentMethodsController.add(entities);
-          
+
           _logger.d('Synchronized payment methods for account: $accountId');
           return entities;
         } catch (e) {
@@ -64,7 +77,9 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached payment methods for account: $accountId');
+        _logger.d(
+          'Device offline, using cached payment methods for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedMethods.isNotEmpty) {
           return cachedMethods.map((model) => model.toEntity()).toList();
@@ -78,11 +93,16 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
   }
 
   @override
-  Future<AccountPaymentMethod> getAccountPaymentMethod(String accountId, String paymentMethodId) async {
+  Future<AccountPaymentMethod> getAccountPaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  ) async {
     try {
       // First, try to get from local cache
-      final cachedMethod = await _localDataSource.getCachedAccountPaymentMethod(paymentMethodId);
-      
+      final cachedMethod = await _localDataSource.getCachedAccountPaymentMethod(
+        paymentMethodId,
+      );
+
       if (cachedMethod != null) {
         return cachedMethod.toEntity();
       }
@@ -90,18 +110,25 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
       // If not in cache and online, fetch from remote
       if (await _networkInfo.isConnected) {
         try {
-          final remoteMethod = await _remoteDataSource.getAccountPaymentMethod(accountId, paymentMethodId);
-          
+          final remoteMethod = await _remoteDataSource.getAccountPaymentMethod(
+            accountId,
+            paymentMethodId,
+          );
+
           // Cache the fetched data
           await _localDataSource.cacheAccountPaymentMethod(remoteMethod);
-          
+
           return remoteMethod.toEntity();
         } catch (e) {
-          _logger.w('Remote fetch failed for payment method $paymentMethodId: $e');
+          _logger.w(
+            'Remote fetch failed for payment method $paymentMethodId: $e',
+          );
           rethrow;
         }
       } else {
-        throw Exception('Payment method not found in cache and device is offline');
+        throw Exception(
+          'Payment method not found in cache and device is offline',
+        );
       }
     } catch (e) {
       _logger.e('Error getting payment method $paymentMethodId: $e');
@@ -110,11 +137,15 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
   }
 
   @override
-  Future<AccountPaymentMethod?> getDefaultPaymentMethod(String accountId) async {
+  Future<AccountPaymentMethod?> getDefaultPaymentMethod(
+    String accountId,
+  ) async {
     try {
       // First, try to get from local cache
-      final cachedMethod = await _localDataSource.getCachedDefaultPaymentMethod(accountId);
-      
+      final cachedMethod = await _localDataSource.getCachedDefaultPaymentMethod(
+        accountId,
+      );
+
       if (cachedMethod != null) {
         return cachedMethod.toEntity();
       }
@@ -122,13 +153,15 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
       // If not in cache and online, fetch from remote
       if (await _networkInfo.isConnected) {
         try {
-          final remoteMethod = await _remoteDataSource.getDefaultPaymentMethod(accountId);
-          
+          final remoteMethod = await _remoteDataSource.getDefaultPaymentMethod(
+            accountId,
+          );
+
           if (remoteMethod != null) {
             // Cache the fetched data
             await _localDataSource.cacheAccountPaymentMethod(remoteMethod);
           }
-          
+
           return remoteMethod?.toEntity();
         } catch (e) {
           _logger.w('Remote fetch failed for default payment method: $e');
@@ -138,20 +171,27 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
         return null;
       }
     } catch (e) {
-      _logger.e('Error getting default payment method for account $accountId: $e');
+      _logger.e(
+        'Error getting default payment method for account $accountId: $e',
+      );
       rethrow;
     }
   }
 
   @override
-  Future<List<AccountPaymentMethod>> getActivePaymentMethods(String accountId) async {
+  Future<List<AccountPaymentMethod>> getActivePaymentMethods(
+    String accountId,
+  ) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedMethods = await _localDataSource.getCachedActivePaymentMethods(accountId);
-      
+      final cachedMethods = await _localDataSource
+          .getCachedActivePaymentMethods(accountId);
+
       // Emit cached data immediately for UI responsiveness
       if (cachedMethods.isNotEmpty) {
-        final entities = cachedMethods.map((model) => model.toEntity()).toList();
+        final entities = cachedMethods
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentMethodsController.add(entities);
       }
 
@@ -159,16 +199,25 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remoteMethods = await _remoteDataSource.getActivePaymentMethods(accountId);
-          
+          final remoteMethods = await _remoteDataSource.getActivePaymentMethods(
+            accountId,
+          );
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPaymentMethods(accountId, remoteMethods);
-          
+          await _localDataSource.cacheAccountPaymentMethods(
+            accountId,
+            remoteMethods,
+          );
+
           // Emit updated data
-          final entities = remoteMethods.map((model) => model.toEntity()).toList();
+          final entities = remoteMethods
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentMethodsController.add(entities);
-          
-          _logger.d('Synchronized active payment methods for account: $accountId');
+
+          _logger.d(
+            'Synchronized active payment methods for account: $accountId',
+          );
           return entities;
         } catch (e) {
           _logger.w('Remote sync failed for active payment methods: $e');
@@ -179,7 +228,9 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached active payment methods for account: $accountId');
+        _logger.d(
+          'Device offline, using cached active payment methods for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedMethods.isNotEmpty) {
           return cachedMethods.map((model) => model.toEntity()).toList();
@@ -187,20 +238,28 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
         throw Exception('No cached data available and device is offline');
       }
     } catch (e) {
-      _logger.e('Error getting active payment methods for account $accountId: $e');
+      _logger.e(
+        'Error getting active payment methods for account $accountId: $e',
+      );
       rethrow;
     }
   }
 
   @override
-  Future<List<AccountPaymentMethod>> getPaymentMethodsByType(String accountId, String type) async {
+  Future<List<AccountPaymentMethod>> getPaymentMethodsByType(
+    String accountId,
+    String type,
+  ) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedMethods = await _localDataSource.getCachedPaymentMethodsByType(accountId, type);
-      
+      final cachedMethods = await _localDataSource
+          .getCachedPaymentMethodsByType(accountId, type);
+
       // Emit cached data immediately for UI responsiveness
       if (cachedMethods.isNotEmpty) {
-        final entities = cachedMethods.map((model) => model.toEntity()).toList();
+        final entities = cachedMethods
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentMethodsController.add(entities);
       }
 
@@ -208,16 +267,26 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remoteMethods = await _remoteDataSource.getPaymentMethodsByType(accountId, type);
-          
+          final remoteMethods = await _remoteDataSource.getPaymentMethodsByType(
+            accountId,
+            type,
+          );
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPaymentMethods(accountId, remoteMethods);
-          
+          await _localDataSource.cacheAccountPaymentMethods(
+            accountId,
+            remoteMethods,
+          );
+
           // Emit updated data
-          final entities = remoteMethods.map((model) => model.toEntity()).toList();
+          final entities = remoteMethods
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentMethodsController.add(entities);
-          
-          _logger.d('Synchronized payment methods by type $type for account: $accountId');
+
+          _logger.d(
+            'Synchronized payment methods by type $type for account: $accountId',
+          );
           return entities;
         } catch (e) {
           _logger.w('Remote sync failed for payment methods by type $type: $e');
@@ -228,7 +297,9 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached payment methods by type $type for account: $accountId');
+        _logger.d(
+          'Device offline, using cached payment methods by type $type for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedMethods.isNotEmpty) {
           return cachedMethods.map((model) => model.toEntity()).toList();
@@ -236,7 +307,9 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
         throw Exception('No cached data available and device is offline');
       }
     } catch (e) {
-      _logger.e('Error getting payment methods by type $type for account $accountId: $e');
+      _logger.e(
+        'Error getting payment methods by type $type for account $accountId: $e',
+      );
       rethrow;
     }
   }
@@ -249,12 +322,18 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
   ) async {
     try {
       // First, update local cache for immediate UI response
-      await _localDataSource.setCachedDefaultPaymentMethod(accountId, paymentMethodId);
-      
+      await _localDataSource.setCachedDefaultPaymentMethod(
+        accountId,
+        paymentMethodId,
+      );
+
       // Emit updated data immediately
-      final cachedMethods = await _localDataSource.getCachedAccountPaymentMethods(accountId);
+      final cachedMethods = await _localDataSource
+          .getCachedAccountPaymentMethods(accountId);
       if (cachedMethods.isNotEmpty) {
-        final entities = cachedMethods.map((model) => model.toEntity()).toList();
+        final entities = cachedMethods
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentMethodsController.add(entities);
       }
 
@@ -266,30 +345,41 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
             paymentMethodId,
             payAllUnpaidInvoices,
           );
-          
+
           // Update local cache with remote response
           await _localDataSource.cacheAccountPaymentMethod(remoteMethod);
-          
+
           // Emit final updated data
-          final finalMethods = await _localDataSource.getCachedAccountPaymentMethods(accountId);
-          final entities = finalMethods.map((model) => model.toEntity()).toList();
+          final finalMethods = await _localDataSource
+              .getCachedAccountPaymentMethods(accountId);
+          final entities = finalMethods
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentMethodsController.add(entities);
-          
-          _logger.d('Set default payment method $paymentMethodId for account: $accountId');
+
+          _logger.d(
+            'Set default payment method $paymentMethodId for account: $accountId',
+          );
           return remoteMethod.toEntity();
         } catch (e) {
-          _logger.w('Remote sync failed for setting default payment method: $e');
+          _logger.w(
+            'Remote sync failed for setting default payment method: $e',
+          );
           // Return cached data if remote sync fails
-          final cachedMethod = await _localDataSource.getCachedAccountPaymentMethod(paymentMethodId);
+          final cachedMethod = await _localDataSource
+              .getCachedAccountPaymentMethod(paymentMethodId);
           if (cachedMethod != null) {
             return cachedMethod.toEntity();
           }
           rethrow;
         }
       } else {
-        _logger.d('Device offline, updated local cache for default payment method');
+        _logger.d(
+          'Device offline, updated local cache for default payment method',
+        );
         // Return cached data if offline
-        final cachedMethod = await _localDataSource.getCachedAccountPaymentMethod(paymentMethodId);
+        final cachedMethod = await _localDataSource
+            .getCachedAccountPaymentMethod(paymentMethodId);
         if (cachedMethod != null) {
           return cachedMethod.toEntity();
         }
@@ -318,16 +408,21 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
             paymentMethodName,
             paymentDetails,
           );
-          
+
           // Cache the created payment method locally
           await _localDataSource.cacheAccountPaymentMethod(remoteMethod);
-          
+
           // Emit updated data
-          final cachedMethods = await _localDataSource.getCachedAccountPaymentMethods(accountId);
-          final entities = cachedMethods.map((model) => model.toEntity()).toList();
+          final cachedMethods = await _localDataSource
+              .getCachedAccountPaymentMethods(accountId);
+          final entities = cachedMethods
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentMethodsController.add(entities);
-          
-          _logger.d('Created payment method ${remoteMethod.id} for account: $accountId');
+
+          _logger.d(
+            'Created payment method ${remoteMethod.id} for account: $accountId',
+          );
           return remoteMethod.toEntity();
         } catch (e) {
           _logger.w('Remote creation failed: $e');
@@ -357,16 +452,21 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
             paymentMethodId,
             updates,
           );
-          
+
           // Update local cache
           await _localDataSource.updateCachedPaymentMethod(remoteMethod);
-          
+
           // Emit updated data
-          final cachedMethods = await _localDataSource.getCachedAccountPaymentMethods(accountId);
-          final entities = cachedMethods.map((model) => model.toEntity()).toList();
+          final cachedMethods = await _localDataSource
+              .getCachedAccountPaymentMethods(accountId);
+          final entities = cachedMethods
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentMethodsController.add(entities);
-          
-          _logger.d('Updated payment method $paymentMethodId for account: $accountId');
+
+          _logger.d(
+            'Updated payment method $paymentMethodId for account: $accountId',
+          );
           return remoteMethod.toEntity();
         } catch (e) {
           _logger.w('Remote update failed: $e');
@@ -382,22 +482,33 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
   }
 
   @override
-  Future<void> deletePaymentMethod(String accountId, String paymentMethodId) async {
+  Future<void> deletePaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  ) async {
     try {
       // If online, delete on remote first
       if (await _networkInfo.isConnected) {
         try {
-          await _remoteDataSource.deletePaymentMethod(accountId, paymentMethodId);
-          
+          await _remoteDataSource.deletePaymentMethod(
+            accountId,
+            paymentMethodId,
+          );
+
           // Remove from local cache
           await _localDataSource.deleteCachedPaymentMethod(paymentMethodId);
-          
+
           // Emit updated data
-          final cachedMethods = await _localDataSource.getCachedAccountPaymentMethods(accountId);
-          final entities = cachedMethods.map((model) => model.toEntity()).toList();
+          final cachedMethods = await _localDataSource
+              .getCachedAccountPaymentMethods(accountId);
+          final entities = cachedMethods
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentMethodsController.add(entities);
-          
-          _logger.d('Deleted payment method $paymentMethodId for account: $accountId');
+
+          _logger.d(
+            'Deleted payment method $paymentMethodId for account: $accountId',
+          );
         } catch (e) {
           _logger.w('Remote deletion failed: $e');
           rethrow;
@@ -412,22 +523,33 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
   }
 
   @override
-  Future<AccountPaymentMethod> deactivatePaymentMethod(String accountId, String paymentMethodId) async {
+  Future<AccountPaymentMethod> deactivatePaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  ) async {
     try {
       // If online, deactivate on remote first
       if (await _networkInfo.isConnected) {
         try {
-          final remoteMethod = await _remoteDataSource.deactivatePaymentMethod(accountId, paymentMethodId);
-          
+          final remoteMethod = await _remoteDataSource.deactivatePaymentMethod(
+            accountId,
+            paymentMethodId,
+          );
+
           // Update local cache
           await _localDataSource.updateCachedPaymentMethod(remoteMethod);
-          
+
           // Emit updated data
-          final cachedMethods = await _localDataSource.getCachedAccountPaymentMethods(accountId);
-          final entities = cachedMethods.map((model) => model.toEntity()).toList();
+          final cachedMethods = await _localDataSource
+              .getCachedAccountPaymentMethods(accountId);
+          final entities = cachedMethods
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentMethodsController.add(entities);
-          
-          _logger.d('Deactivated payment method $paymentMethodId for account: $accountId');
+
+          _logger.d(
+            'Deactivated payment method $paymentMethodId for account: $accountId',
+          );
           return remoteMethod.toEntity();
         } catch (e) {
           _logger.w('Remote deactivation failed: $e');
@@ -443,22 +565,33 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
   }
 
   @override
-  Future<AccountPaymentMethod> reactivatePaymentMethod(String accountId, String paymentMethodId) async {
+  Future<AccountPaymentMethod> reactivatePaymentMethod(
+    String accountId,
+    String paymentMethodId,
+  ) async {
     try {
       // If online, reactivate on remote first
       if (await _networkInfo.isConnected) {
         try {
-          final remoteMethod = await _remoteDataSource.reactivatePaymentMethod(accountId, paymentMethodId);
-          
+          final remoteMethod = await _remoteDataSource.reactivatePaymentMethod(
+            accountId,
+            paymentMethodId,
+          );
+
           // Update local cache
           await _localDataSource.updateCachedPaymentMethod(remoteMethod);
-          
+
           // Emit updated data
-          final cachedMethods = await _localDataSource.getCachedAccountPaymentMethods(accountId);
-          final entities = cachedMethods.map((model) => model.toEntity()).toList();
+          final cachedMethods = await _localDataSource
+              .getCachedAccountPaymentMethods(accountId);
+          final entities = cachedMethods
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentMethodsController.add(entities);
-          
-          _logger.d('Reactivated payment method $paymentMethodId for account: $accountId');
+
+          _logger.d(
+            'Reactivated payment method $paymentMethodId for account: $accountId',
+          );
           return remoteMethod.toEntity();
         } catch (e) {
           _logger.w('Remote reactivation failed: $e');
@@ -474,7 +607,9 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
   }
 
   @override
-  Future<List<AccountPaymentMethod>> refreshPaymentMethods(String accountId) async {
+  Future<List<AccountPaymentMethod>> refreshPaymentMethods(
+    String accountId,
+  ) async {
     try {
       // This method is specifically for refreshing from remote, so require online connection
       if (!await _networkInfo.isConnected) {
@@ -482,15 +617,22 @@ class AccountPaymentMethodsRepositoryImpl implements AccountPaymentMethodsReposi
       }
 
       try {
-        final remoteMethods = await _remoteDataSource.refreshPaymentMethods(accountId);
-        
+        final remoteMethods = await _remoteDataSource.refreshPaymentMethods(
+          accountId,
+        );
+
         // Cache the fresh data locally
-        await _localDataSource.cacheAccountPaymentMethods(accountId, remoteMethods);
-        
+        await _localDataSource.cacheAccountPaymentMethods(
+          accountId,
+          remoteMethods,
+        );
+
         // Emit updated data
-        final entities = remoteMethods.map((model) => model.toEntity()).toList();
+        final entities = remoteMethods
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentMethodsController.add(entities);
-        
+
         _logger.d('Refreshed payment methods for account: $accountId');
         return entities;
       } catch (e) {
