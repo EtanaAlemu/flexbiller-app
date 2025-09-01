@@ -37,6 +37,7 @@ import '../../domain/repositories/account_custom_fields_repository.dart';
 import '../../domain/repositories/account_emails_repository.dart';
 import 'accounts_event.dart';
 import 'accounts_state.dart';
+import 'package:logger/logger.dart';
 
 @injectable
 class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
@@ -80,6 +81,42 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   // Stream subscriptions for reactive updates from repository
   StreamSubscription<List<Account>>? _accountsStreamSubscription;
   StreamSubscription<Account>? _accountStreamSubscription;
+
+  // Separate stream for background updates (doesn't interfere with BLoC events)
+  final StreamController<List<Account>> _backgroundUpdatesController = 
+      StreamController<List<Account>>.broadcast();
+
+  final Logger _logger = Logger();
+
+  // Getter for background updates stream (UI can listen to this independently)
+  Stream<List<Account>> get backgroundUpdatesStream => _backgroundUpdatesController.stream;
+
+  // Method to manually apply background updates to current state
+  void applyBackgroundUpdates(List<Account> freshAccounts) {
+    _logger.d('Applying background updates: ${freshAccounts.length} fresh accounts');
+    
+    // Get current state
+    final currentState = state;
+    
+    if (currentState is AccountsLoaded) {
+      // Preserve user context (search, filters, pagination) but update data
+      emit(AccountsLoaded(
+        accounts: freshAccounts,
+        currentOffset: currentState.currentOffset,
+        totalCount: freshAccounts.length,
+        hasReachedMax: freshAccounts.length < currentState.accounts.length,
+      ));
+      _logger.d('Applied background updates while preserving user context');
+    } else if (currentState is AllAccountsLoaded) {
+      // Update all accounts view
+      emit(AllAccountsLoaded(
+        accounts: freshAccounts,
+        totalCount: freshAccounts.length,
+      ));
+      _logger.d('Applied background updates to all accounts view');
+    }
+    // Other states remain unchanged
+  }
 
   AccountsBloc({
     required GetAccountsUseCase getAccountsUseCase,
@@ -1159,31 +1196,28 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     // Listen to accounts list updates from repository background sync
     _accountsStreamSubscription = _accountsRepository.accountsStream.listen(
       (freshAccounts) {
-        // Emit new state with fresh data from background sync
-        emit(AccountsLoaded(
-          accounts: freshAccounts,
-          currentOffset: 0,
-          totalCount: freshAccounts.length,
-          hasReachedMax: true,
-        ));
-        // Note: Using print for now since _logger is not accessible in this context
-        print('UI updated with fresh accounts from background sync: ${freshAccounts.length} accounts');
+        // 🔥 KEY: Send background updates via separate stream (don't emit states)
+        _backgroundUpdatesController.add(freshAccounts);
+        _logger.d(
+          'Background sync completed: ${freshAccounts.length} fresh accounts available',
+        );
       },
       onError: (error) {
-        print('Error in accounts stream: $error');
+        _logger.e('Error in accounts stream: $error');
       },
     );
 
     // Listen to individual account updates from repository background sync
     _accountStreamSubscription = _accountsRepository.accountStream.listen(
       (freshAccount) {
-        // Emit new state with fresh account data from background sync
-        emit(AccountDetailsLoaded(freshAccount));
-        // Note: Using print for now since _logger is not accessible in this context
-        print('UI updated with fresh account from background sync: ${freshAccount.accountId}');
+        // 🔥 KEY: Send background updates via separate stream (don't emit states)
+        // For individual accounts, we could create a separate stream if needed
+        _logger.d(
+          'Background sync completed: fresh account ${freshAccount.accountId} available',
+        );
       },
       onError: (error) {
-        print('Error in account stream: $error');
+        _logger.e('Error in account stream: $error');
       },
     );
   }
@@ -1193,6 +1227,10 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     // Cancel stream subscriptions to prevent memory leaks
     _accountsStreamSubscription?.cancel();
     _accountStreamSubscription?.cancel();
+    
+    // Close background updates controller
+    _backgroundUpdatesController.close();
+    
     return super.close();
   }
 }
