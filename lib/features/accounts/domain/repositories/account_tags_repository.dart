@@ -1,6 +1,9 @@
 import '../entities/account_tag.dart';
 
 abstract class AccountTagsRepository {
+  /// Stream of account tags for reactive UI updates
+  Stream<List<AccountTagAssignment>> get accountTagsStream;
+
   /// Get all tags for a specific account
   Future<List<AccountTagAssignment>> getAccountTags(String accountId);
   

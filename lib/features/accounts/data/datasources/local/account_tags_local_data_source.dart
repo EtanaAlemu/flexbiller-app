@@ -5,6 +5,7 @@ import '../../../../../core/services/database_service.dart';
 import '../../models/account_tag_model.dart';
 
 abstract class AccountTagsLocalDataSource {
+  // Tag management
   Future<void> cacheTags(List<AccountTagModel> tags);
   Future<void> cacheTag(AccountTagModel tag);
   Future<List<AccountTagModel>> getCachedTags();
@@ -13,6 +14,11 @@ abstract class AccountTagsLocalDataSource {
   Future<void> updateCachedTag(AccountTagModel tag);
   Future<void> deleteCachedTag(String tagId);
   Future<void> clearAllCachedTags();
+
+  // Utility methods
+  Future<bool> hasCachedTags(String accountId);
+  Future<int> getCachedTagsCount(String accountId);
+  Future<int> getTotalCachedTagsCount();
 }
 
 @Injectable(as: AccountTagsLocalDataSource)
@@ -22,6 +28,7 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
 
   AccountTagsLocalDataSourceImpl(this._databaseService);
 
+  // Tag management methods
   @override
   Future<void> cacheTags(List<AccountTagModel> tags) async {
     try {
@@ -165,6 +172,51 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
     } catch (e) {
       _logger.e('Error clearing cached tags: $e');
       rethrow;
+    }
+  }
+
+  // Utility methods
+  @override
+  Future<bool> hasCachedTags(String accountId) async {
+    try {
+      final count = await getCachedTagsCount(accountId);
+      final hasTags = count > 0;
+      _logger.d('Account $accountId has cached tags: $hasTags');
+      return hasTags;
+    } catch (e) {
+      _logger.e('Error checking if account $accountId has cached tags: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<int> getCachedTagsCount(String accountId) async {
+    try {
+      final db = await _databaseService.database;
+      // For now, return total count since we don't have account-specific tag counting
+      final allTags = await AccountTagDao.getAllTags(db);
+      final count = allTags.length;
+      _logger.d('Retrieved cached tags count for account $accountId: $count');
+      return count;
+    } catch (e) {
+      _logger.e(
+        'Error retrieving cached tags count for account $accountId: $e',
+      );
+      return 0;
+    }
+  }
+
+  @override
+  Future<int> getTotalCachedTagsCount() async {
+    try {
+      final db = await _databaseService.database;
+      final allTags = await AccountTagDao.getAllTags(db);
+      final count = allTags.length;
+      _logger.d('Retrieved total cached tags count: $count');
+      return count;
+    } catch (e) {
+      _logger.e('Error retrieving total cached tags count: $e');
+      return 0;
     }
   }
 }

@@ -529,6 +529,14 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
+  gh.factory<_i363.AccountTagsRepository>(
+    () => _i813.AccountTagsRepositoryImpl(
+      gh<_i1042.AccountTagsRemoteDataSource>(),
+      gh<_i201.AccountTagsLocalDataSource>(),
+      gh<_i75.NetworkInfo>(),
+      gh<_i974.Logger>(),
+    ),
+  );
   gh.factory<_i887.GetPaginatedInvoicesUseCase>(
     () => _i887.GetPaginatedInvoicesUseCase(
       gh<_i521.AccountInvoicesRepository>(),
@@ -650,11 +658,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i657.GetAccountAuditLogsUseCase>(
     () => _i657.GetAccountAuditLogsUseCase(
       gh<_i271.AccountAuditLogsRepository>(),
-    ),
-  );
-  gh.factory<_i363.AccountTagsRepository>(
-    () => _i813.AccountTagsRepositoryImpl(
-      gh<_i1042.AccountTagsRemoteDataSource>(),
     ),
   );
   gh.factory<_i580.SetDefaultPaymentMethodUseCase>(

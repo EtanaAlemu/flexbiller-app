@@ -32,11 +32,15 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   Future<List<AccountPayment>> getAccountPayments(String accountId) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedPayments = await _localDataSource.getCachedAccountPayments(accountId);
-      
+      final cachedPayments = await _localDataSource.getCachedAccountPayments(
+        accountId,
+      );
+
       // Emit cached data immediately for UI responsiveness
       if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments.map((model) => model.toEntity()).toList();
+        final entities = cachedPayments
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentsController.add(entities);
       }
 
@@ -44,15 +48,22 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.getAccountPayments(accountId);
-          
+          final remotePayments = await _remoteDataSource.getAccountPayments(
+            accountId,
+          );
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(accountId, remotePayments);
-          
+          await _localDataSource.cacheAccountPayments(
+            accountId,
+            remotePayments,
+          );
+
           // Emit updated data
-          final entities = remotePayments.map((model) => model.toEntity()).toList();
+          final entities = remotePayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
+
           _logger.d('Synchronized payments for account: $accountId');
           return entities;
         } catch (e) {
@@ -64,7 +75,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached payments for account: $accountId');
+        _logger.d(
+          'Device offline, using cached payments for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedPayments.isNotEmpty) {
           return cachedPayments.map((model) => model.toEntity()).toList();
@@ -78,11 +91,16 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   }
 
   @override
-  Future<AccountPayment> getAccountPayment(String accountId, String paymentId) async {
+  Future<AccountPayment> getAccountPayment(
+    String accountId,
+    String paymentId,
+  ) async {
     try {
       // First, try to get from local cache
-      final cachedPayment = await _localDataSource.getCachedAccountPayment(paymentId);
-      
+      final cachedPayment = await _localDataSource.getCachedAccountPayment(
+        paymentId,
+      );
+
       if (cachedPayment != null) {
         return cachedPayment.toEntity();
       }
@@ -90,11 +108,14 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       // If not in cache and online, fetch from remote
       if (await _networkInfo.isConnected) {
         try {
-          final remotePayment = await _remoteDataSource.getAccountPayment(accountId, paymentId);
-          
+          final remotePayment = await _remoteDataSource.getAccountPayment(
+            accountId,
+            paymentId,
+          );
+
           // Cache the fetched data
           await _localDataSource.cacheAccountPayment(remotePayment);
-          
+
           return remotePayment.toEntity();
         } catch (e) {
           _logger.w('Remote fetch failed for payment $paymentId: $e');
@@ -110,14 +131,22 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   }
 
   @override
-  Future<List<AccountPayment>> getAccountPaymentsByStatus(String accountId, String status) async {
+  Future<List<AccountPayment>> getAccountPaymentsByStatus(
+    String accountId,
+    String status,
+  ) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedPayments = await _localDataSource.getCachedPaymentsByStatus(accountId, status);
-      
+      final cachedPayments = await _localDataSource.getCachedPaymentsByStatus(
+        accountId,
+        status,
+      );
+
       // Emit cached data immediately for UI responsiveness
       if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments.map((model) => model.toEntity()).toList();
+        final entities = cachedPayments
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentsController.add(entities);
       }
 
@@ -125,16 +154,24 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.getAccountPaymentsByStatus(accountId, status);
-          
+          final remotePayments = await _remoteDataSource
+              .getAccountPaymentsByStatus(accountId, status);
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(accountId, remotePayments);
-          
+          await _localDataSource.cacheAccountPayments(
+            accountId,
+            remotePayments,
+          );
+
           // Emit updated data
-          final entities = remotePayments.map((model) => model.toEntity()).toList();
+          final entities = remotePayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
-          _logger.d('Synchronized payments by status $status for account: $accountId');
+
+          _logger.d(
+            'Synchronized payments by status $status for account: $accountId',
+          );
           return entities;
         } catch (e) {
           _logger.w('Remote sync failed for payments by status $status: $e');
@@ -145,7 +182,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached payments by status $status for account: $accountId');
+        _logger.d(
+          'Device offline, using cached payments by status $status for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedPayments.isNotEmpty) {
           return cachedPayments.map((model) => model.toEntity()).toList();
@@ -153,20 +192,30 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
         throw Exception('No cached data available and device is offline');
       }
     } catch (e) {
-      _logger.e('Error getting payments by status $status for account $accountId: $e');
+      _logger.e(
+        'Error getting payments by status $status for account $accountId: $e',
+      );
       rethrow;
     }
   }
 
   @override
-  Future<List<AccountPayment>> getAccountPaymentsByType(String accountId, String type) async {
+  Future<List<AccountPayment>> getAccountPaymentsByType(
+    String accountId,
+    String type,
+  ) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedPayments = await _localDataSource.getCachedPaymentsByType(accountId, type);
-      
+      final cachedPayments = await _localDataSource.getCachedPaymentsByType(
+        accountId,
+        type,
+      );
+
       // Emit cached data immediately for UI responsiveness
       if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments.map((model) => model.toEntity()).toList();
+        final entities = cachedPayments
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentsController.add(entities);
       }
 
@@ -174,16 +223,24 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.getAccountPaymentsByType(accountId, type);
-          
+          final remotePayments = await _remoteDataSource
+              .getAccountPaymentsByType(accountId, type);
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(accountId, remotePayments);
-          
+          await _localDataSource.cacheAccountPayments(
+            accountId,
+            remotePayments,
+          );
+
           // Emit updated data
-          final entities = remotePayments.map((model) => model.toEntity()).toList();
+          final entities = remotePayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
-          _logger.d('Synchronized payments by type $type for account: $accountId');
+
+          _logger.d(
+            'Synchronized payments by type $type for account: $accountId',
+          );
           return entities;
         } catch (e) {
           _logger.w('Remote sync failed for payments by type $type: $e');
@@ -194,7 +251,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached payments by type $type for account: $accountId');
+        _logger.d(
+          'Device offline, using cached payments by type $type for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedPayments.isNotEmpty) {
           return cachedPayments.map((model) => model.toEntity()).toList();
@@ -202,7 +261,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
         throw Exception('No cached data available and device is offline');
       }
     } catch (e) {
-      _logger.e('Error getting payments by type $type for account $accountId: $e');
+      _logger.e(
+        'Error getting payments by type $type for account $accountId: $e',
+      );
       rethrow;
     }
   }
@@ -215,11 +276,14 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   ) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedPayments = await _localDataSource.getCachedPaymentsByDateRange(accountId, startDate, endDate);
-      
+      final cachedPayments = await _localDataSource
+          .getCachedPaymentsByDateRange(accountId, startDate, endDate);
+
       // Emit cached data immediately for UI responsiveness
       if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments.map((model) => model.toEntity()).toList();
+        final entities = cachedPayments
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentsController.add(entities);
       }
 
@@ -227,20 +291,24 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.getAccountPaymentsByDateRange(
-            accountId,
-            startDate,
-            endDate,
-          );
-          
+          final remotePayments = await _remoteDataSource
+              .getAccountPaymentsByDateRange(accountId, startDate, endDate);
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(accountId, remotePayments);
-          
+          await _localDataSource.cacheAccountPayments(
+            accountId,
+            remotePayments,
+          );
+
           // Emit updated data
-          final entities = remotePayments.map((model) => model.toEntity()).toList();
+          final entities = remotePayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
-          _logger.d('Synchronized payments by date range for account: $accountId');
+
+          _logger.d(
+            'Synchronized payments by date range for account: $accountId',
+          );
           return entities;
         } catch (e) {
           _logger.w('Remote sync failed for payments by date range: $e');
@@ -251,7 +319,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached payments by date range for account: $accountId');
+        _logger.d(
+          'Device offline, using cached payments by date range for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedPayments.isNotEmpty) {
           return cachedPayments.map((model) => model.toEntity()).toList();
@@ -259,7 +329,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
         throw Exception('No cached data available and device is offline');
       }
     } catch (e) {
-      _logger.e('Error getting payments by date range for account $accountId: $e');
+      _logger.e(
+        'Error getting payments by date range for account $accountId: $e',
+      );
       rethrow;
     }
   }
@@ -272,11 +344,14 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   ) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedPayments = await _localDataSource.getCachedPaymentsWithPagination(accountId, page, pageSize);
-      
+      final cachedPayments = await _localDataSource
+          .getCachedPaymentsWithPagination(accountId, page, pageSize);
+
       // Emit cached data immediately for UI responsiveness
       if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments.map((model) => model.toEntity()).toList();
+        final entities = cachedPayments
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentsController.add(entities);
       }
 
@@ -284,19 +359,21 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.getAccountPaymentsWithPagination(
-            accountId,
-            page,
-            pageSize,
-          );
-          
+          final remotePayments = await _remoteDataSource
+              .getAccountPaymentsWithPagination(accountId, page, pageSize);
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(accountId, remotePayments);
-          
+          await _localDataSource.cacheAccountPayments(
+            accountId,
+            remotePayments,
+          );
+
           // Emit updated data
-          final entities = remotePayments.map((model) => model.toEntity()).toList();
+          final entities = remotePayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
+
           _logger.d('Synchronized paginated payments for account: $accountId');
           return entities;
         } catch (e) {
@@ -308,7 +385,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached paginated payments for account: $accountId');
+        _logger.d(
+          'Device offline, using cached paginated payments for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedPayments.isNotEmpty) {
           return cachedPayments.map((model) => model.toEntity()).toList();
@@ -322,7 +401,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   }
 
   @override
-  Future<Map<String, dynamic>> getAccountPaymentStatistics(String accountId) async {
+  Future<Map<String, dynamic>> getAccountPaymentStatistics(
+    String accountId,
+  ) async {
     try {
       // This method requires fresh data from remote, so check online status first
       if (!await _networkInfo.isConnected) {
@@ -330,7 +411,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       }
 
       try {
-        final statistics = await _remoteDataSource.getAccountPaymentStatistics(accountId);
+        final statistics = await _remoteDataSource.getAccountPaymentStatistics(
+          accountId,
+        );
         _logger.d('Retrieved payment statistics for account: $accountId');
         return statistics;
       } catch (e) {
@@ -344,14 +427,22 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   }
 
   @override
-  Future<List<AccountPayment>> searchAccountPayments(String accountId, String searchTerm) async {
+  Future<List<AccountPayment>> searchAccountPayments(
+    String accountId,
+    String searchTerm,
+  ) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedPayments = await _localDataSource.searchCachedPaymentsByText(accountId, searchTerm);
-      
+      final cachedPayments = await _localDataSource.searchCachedPaymentsByText(
+        accountId,
+        searchTerm,
+      );
+
       // Emit cached data immediately for UI responsiveness
       if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments.map((model) => model.toEntity()).toList();
+        final entities = cachedPayments
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentsController.add(entities);
       }
 
@@ -359,16 +450,26 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.searchAccountPayments(accountId, searchTerm);
-          
+          final remotePayments = await _remoteDataSource.searchAccountPayments(
+            accountId,
+            searchTerm,
+          );
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(accountId, remotePayments);
-          
+          await _localDataSource.cacheAccountPayments(
+            accountId,
+            remotePayments,
+          );
+
           // Emit updated data
-          final entities = remotePayments.map((model) => model.toEntity()).toList();
+          final entities = remotePayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
-          _logger.d('Synchronized search results for term "$searchTerm" for account: $accountId');
+
+          _logger.d(
+            'Synchronized search results for term "$searchTerm" for account: $accountId',
+          );
           return entities;
         } catch (e) {
           _logger.w('Remote sync failed for search term "$searchTerm": $e');
@@ -379,7 +480,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached search results for term "$searchTerm" for account: $accountId');
+        _logger.d(
+          'Device offline, using cached search results for term "$searchTerm" for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedPayments.isNotEmpty) {
           return cachedPayments.map((model) => model.toEntity()).toList();
@@ -387,7 +490,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
         throw Exception('No cached data available and device is offline');
       }
     } catch (e) {
-      _logger.e('Error searching payments for term "$searchTerm" for account $accountId: $e');
+      _logger.e(
+        'Error searching payments for term "$searchTerm" for account $accountId: $e',
+      );
       rethrow;
     }
   }
@@ -396,11 +501,15 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   Future<List<AccountPayment>> getRefundedPayments(String accountId) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedPayments = await _localDataSource.getCachedRefundedPayments(accountId);
-      
+      final cachedPayments = await _localDataSource.getCachedRefundedPayments(
+        accountId,
+      );
+
       // Emit cached data immediately for UI responsiveness
       if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments.map((model) => model.toEntity()).toList();
+        final entities = cachedPayments
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentsController.add(entities);
       }
 
@@ -408,15 +517,22 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.getRefundedPayments(accountId);
-          
+          final remotePayments = await _remoteDataSource.getRefundedPayments(
+            accountId,
+          );
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(accountId, remotePayments);
-          
+          await _localDataSource.cacheAccountPayments(
+            accountId,
+            remotePayments,
+          );
+
           // Emit updated data
-          final entities = remotePayments.map((model) => model.toEntity()).toList();
+          final entities = remotePayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
+
           _logger.d('Synchronized refunded payments for account: $accountId');
           return entities;
         } catch (e) {
@@ -428,7 +544,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached refunded payments for account: $accountId');
+        _logger.d(
+          'Device offline, using cached refunded payments for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedPayments.isNotEmpty) {
           return cachedPayments.map((model) => model.toEntity()).toList();
@@ -445,11 +563,15 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   Future<List<AccountPayment>> getFailedPayments(String accountId) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedPayments = await _localDataSource.getCachedFailedPayments(accountId);
-      
+      final cachedPayments = await _localDataSource.getCachedFailedPayments(
+        accountId,
+      );
+
       // Emit cached data immediately for UI responsiveness
       if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments.map((model) => model.toEntity()).toList();
+        final entities = cachedPayments
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentsController.add(entities);
       }
 
@@ -457,15 +579,22 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.getFailedPayments(accountId);
-          
+          final remotePayments = await _remoteDataSource.getFailedPayments(
+            accountId,
+          );
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(accountId, remotePayments);
-          
+          await _localDataSource.cacheAccountPayments(
+            accountId,
+            remotePayments,
+          );
+
           // Emit updated data
-          final entities = remotePayments.map((model) => model.toEntity()).toList();
+          final entities = remotePayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
+
           _logger.d('Synchronized failed payments for account: $accountId');
           return entities;
         } catch (e) {
@@ -477,7 +606,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached failed payments for account: $accountId');
+        _logger.d(
+          'Device offline, using cached failed payments for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedPayments.isNotEmpty) {
           return cachedPayments.map((model) => model.toEntity()).toList();
@@ -494,11 +625,15 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   Future<List<AccountPayment>> getSuccessfulPayments(String accountId) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedPayments = await _localDataSource.getCachedSuccessfulPayments(accountId);
-      
+      final cachedPayments = await _localDataSource.getCachedSuccessfulPayments(
+        accountId,
+      );
+
       // Emit cached data immediately for UI responsiveness
       if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments.map((model) => model.toEntity()).toList();
+        final entities = cachedPayments
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentsController.add(entities);
       }
 
@@ -506,15 +641,22 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.getSuccessfulPayments(accountId);
-          
+          final remotePayments = await _remoteDataSource.getSuccessfulPayments(
+            accountId,
+          );
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(accountId, remotePayments);
-          
+          await _localDataSource.cacheAccountPayments(
+            accountId,
+            remotePayments,
+          );
+
           // Emit updated data
-          final entities = remotePayments.map((model) => model.toEntity()).toList();
+          final entities = remotePayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
+
           _logger.d('Synchronized successful payments for account: $accountId');
           return entities;
         } catch (e) {
@@ -526,7 +668,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached successful payments for account: $accountId');
+        _logger.d(
+          'Device offline, using cached successful payments for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedPayments.isNotEmpty) {
           return cachedPayments.map((model) => model.toEntity()).toList();
@@ -543,11 +687,15 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   Future<List<AccountPayment>> getPendingPayments(String accountId) async {
     try {
       // First, get data from local cache for immediate response
-      final cachedPayments = await _localDataSource.getCachedPendingPayments(accountId);
-      
+      final cachedPayments = await _localDataSource.getCachedPendingPayments(
+        accountId,
+      );
+
       // Emit cached data immediately for UI responsiveness
       if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments.map((model) => model.toEntity()).toList();
+        final entities = cachedPayments
+            .map((model) => model.toEntity())
+            .toList();
         _accountPaymentsController.add(entities);
       }
 
@@ -555,15 +703,22 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
       if (await _networkInfo.isConnected) {
         try {
           // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.getPendingPayments(accountId);
-          
+          final remotePayments = await _remoteDataSource.getPendingPayments(
+            accountId,
+          );
+
           // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(accountId, remotePayments);
-          
+          await _localDataSource.cacheAccountPayments(
+            accountId,
+            remotePayments,
+          );
+
           // Emit updated data
-          final entities = remotePayments.map((model) => model.toEntity()).toList();
+          final entities = remotePayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
+
           _logger.d('Synchronized pending payments for account: $accountId');
           return entities;
         } catch (e) {
@@ -575,7 +730,9 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
           rethrow;
         }
       } else {
-        _logger.d('Device offline, using cached pending payments for account: $accountId');
+        _logger.d(
+          'Device offline, using cached pending payments for account: $accountId',
+        );
         // Return cached data if offline
         if (cachedPayments.isNotEmpty) {
           return cachedPayments.map((model) => model.toEntity()).toList();
@@ -613,16 +770,21 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
             description: description,
             properties: properties,
           );
-          
+
           // Cache the created payment locally
           await _localDataSource.cacheAccountPayment(remotePayment);
-          
+
           // Emit updated data
-          final cachedPayments = await _localDataSource.getCachedAccountPayments(accountId);
-          final entities = cachedPayments.map((model) => model.toEntity()).toList();
+          final cachedPayments = await _localDataSource
+              .getCachedAccountPayments(accountId);
+          final entities = cachedPayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
-          _logger.d('Created payment ${remotePayment.id} for account: $accountId');
+
+          _logger.d(
+            'Created payment ${remotePayment.id} for account: $accountId',
+          );
           return remotePayment.toEntity();
         } catch (e) {
           _logger.w('Remote creation failed: $e');
@@ -664,15 +826,18 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
             effectiveDate: effectiveDate,
             properties: properties,
           );
-          
+
           // Cache the created payment locally
           await _localDataSource.cacheAccountPayment(remotePayment);
-          
+
           // Emit updated data for the account
-          final cachedPayments = await _localDataSource.getCachedAccountPayments(remotePayment.accountId);
-          final entities = cachedPayments.map((model) => model.toEntity()).toList();
+          final cachedPayments = await _localDataSource
+              .getCachedAccountPayments(remotePayment.accountId);
+          final entities = cachedPayments
+              .map((model) => model.toEntity())
+              .toList();
           _accountPaymentsController.add(entities);
-          
+
           _logger.d('Created global payment ${remotePayment.id}');
           return remotePayment.toEntity();
         } catch (e) {
