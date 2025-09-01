@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../entities/account_timeline.dart';
 
 abstract class AccountTimelineRepository {
@@ -23,4 +24,10 @@ abstract class AccountTimelineRepository {
     DateTime startDate,
     DateTime endDate,
   );
+
+  /// Stream for reactive updates when account timeline data changes
+  Stream<AccountTimeline> get accountTimelineStream;
+
+  /// Stream for reactive updates when account timeline paginated data changes
+  Stream<AccountTimeline> get accountTimelinePaginatedStream;
 }

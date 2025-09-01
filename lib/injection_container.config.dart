@@ -516,11 +516,6 @@ _i174.GetIt $initGetIt(
     () =>
         _i84.RebalanceCbaUseCase(gh<_i1067.AccountCbaRebalancingRepository>()),
   );
-  gh.factory<_i446.AccountTimelineRepository>(
-    () => _i735.AccountTimelineRepositoryImpl(
-      gh<_i5.AccountTimelineRemoteDataSource>(),
-    ),
-  );
   gh.factory<_i596.ChildAccountRepository>(
     () => _i311.ChildAccountRepositoryImpl(
       remoteDataSource: gh<_i1058.ChildAccountRemoteDataSource>(),
@@ -674,6 +669,13 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i206.LoginUseCase>(
     () => _i206.LoginUseCase(gh<_i1015.AuthRepository>()),
+  );
+  gh.lazySingleton<_i446.AccountTimelineRepository>(
+    () => _i735.AccountTimelineRepositoryImpl(
+      remoteDataSource: gh<_i5.AccountTimelineRemoteDataSource>(),
+      localDataSource: gh<_i474.AccountTimelineLocalDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
+    ),
   );
   gh.factory<_i982.GetTagDefinitionAuditLogsWithHistoryUseCase>(
     () => _i982.GetTagDefinitionAuditLogsWithHistoryUseCase(
