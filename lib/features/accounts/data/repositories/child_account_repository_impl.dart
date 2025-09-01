@@ -14,11 +14,11 @@ class ChildAccountRepositoryImpl implements ChildAccountRepository {
   final ChildAccountLocalDataSource _localDataSource;
   final NetworkInfo _networkInfo;
   final Logger _logger = Logger();
-  
+
   // Stream controllers for reactive UI updates
-  final StreamController<List<ChildAccount>> _childAccountsStreamController = 
+  final StreamController<List<ChildAccount>> _childAccountsStreamController =
       StreamController<List<ChildAccount>>.broadcast();
-  final StreamController<ChildAccount> _childAccountStreamController = 
+  final StreamController<ChildAccount> _childAccountStreamController =
       StreamController<ChildAccount>.broadcast();
 
   ChildAccountRepositoryImpl({
@@ -30,8 +30,10 @@ class ChildAccountRepositoryImpl implements ChildAccountRepository {
        _networkInfo = networkInfo;
 
   // Stream getters for reactive UI updates
-  Stream<List<ChildAccount>> get childAccountsStream => _childAccountsStreamController.stream;
-  Stream<ChildAccount> get childAccountStream => _childAccountStreamController.stream;
+  Stream<List<ChildAccount>> get childAccountsStream =>
+      _childAccountsStreamController.stream;
+  Stream<ChildAccount> get childAccountStream =>
+      _childAccountStreamController.stream;
 
   @override
   Future<ChildAccount> createChildAccount(ChildAccount childAccount) async {
@@ -69,12 +71,14 @@ class ChildAccountRepositoryImpl implements ChildAccountRepository {
 
       // Update local cache with server response (in case server added fields)
       await _localDataSource.cacheChildAccount(createdModel);
-      
+
       // 🔥 KEY: Update UI with fresh data via stream
       final freshChildAccount = createdModel.toEntity();
       _childAccountStreamController.add(freshChildAccount);
-      
-      _logger.d('Child account synced successfully: ${createdModel.email} - UI updated with fresh data');
+
+      _logger.d(
+        'Child account synced successfully: ${createdModel.email} - UI updated with fresh data',
+      );
     } catch (e) {
       _logger.w(
         'Background sync failed for child account ${childAccount.email}: $e',
@@ -95,11 +99,13 @@ class ChildAccountRepositoryImpl implements ChildAccountRepository {
 
       // Update local cache with fresh data from server
       await _localDataSource.cacheChildAccounts(remoteChildAccounts);
-      
+
       // 🔥 KEY: Update UI with fresh data via stream
-      final freshChildAccounts = remoteChildAccounts.map((model) => model.toEntity()).toList();
+      final freshChildAccounts = remoteChildAccounts
+          .map((model) => model.toEntity())
+          .toList();
       _childAccountsStreamController.add(freshChildAccounts);
-      
+
       _logger.d(
         'Synced ${remoteChildAccounts.length} child accounts for parent: $parentAccountId - UI updated with fresh data',
       );

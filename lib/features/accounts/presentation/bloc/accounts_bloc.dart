@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/account.dart';
@@ -75,6 +76,10 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final AccountTagsRepository _accountTagsRepository;
   final AccountCustomFieldsRepository _accountCustomFieldsRepository;
   final AccountEmailsRepository _accountEmailsRepository;
+
+  // Stream subscriptions for reactive updates from repository
+  StreamSubscription<List<Account>>? _accountsStreamSubscription;
+  StreamSubscription<Account>? _accountStreamSubscription;
 
   AccountsBloc({
     required GetAccountsUseCase getAccountsUseCase,
@@ -202,6 +207,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<LoadAccountPayments>(_onLoadAccountPayments);
     on<RefreshAccountPayments>(_onRefreshAccountPayments);
     on<CreateAccountPayment>(_onCreateAccountPayment);
+
+    // Initialize stream subscriptions for reactive updates from repository
+    _initializeStreamSubscriptions();
   }
 
   Future<void> _onLoadAccounts(
@@ -1144,5 +1152,47 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         ),
       );
     }
+  }
+
+  // Initialize stream subscriptions for reactive updates from repository
+  void _initializeStreamSubscriptions() {
+    // Listen to accounts list updates from repository background sync
+    _accountsStreamSubscription = _accountsRepository.accountsStream.listen(
+      (freshAccounts) {
+        // Emit new state with fresh data from background sync
+        emit(AccountsLoaded(
+          accounts: freshAccounts,
+          currentOffset: 0,
+          totalCount: freshAccounts.length,
+          hasReachedMax: true,
+        ));
+        // Note: Using print for now since _logger is not accessible in this context
+        print('UI updated with fresh accounts from background sync: ${freshAccounts.length} accounts');
+      },
+      onError: (error) {
+        print('Error in accounts stream: $error');
+      },
+    );
+
+    // Listen to individual account updates from repository background sync
+    _accountStreamSubscription = _accountsRepository.accountStream.listen(
+      (freshAccount) {
+        // Emit new state with fresh account data from background sync
+        emit(AccountDetailsLoaded(freshAccount));
+        // Note: Using print for now since _logger is not accessible in this context
+        print('UI updated with fresh account from background sync: ${freshAccount.accountId}');
+      },
+      onError: (error) {
+        print('Error in account stream: $error');
+      },
+    );
+  }
+
+  @override
+  Future<void> close() {
+    // Cancel stream subscriptions to prevent memory leaks
+    _accountsStreamSubscription?.cancel();
+    _accountStreamSubscription?.cancel();
+    return super.close();
   }
 }

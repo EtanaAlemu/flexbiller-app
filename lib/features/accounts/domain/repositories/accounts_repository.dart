@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../entities/account.dart';
 import '../entities/accounts_query_params.dart';
 
@@ -25,4 +26,10 @@ abstract class AccountsRepository {
 
   /// Get accounts by company
   Future<List<Account>> getAccountsByCompany(String company);
+
+  /// Stream for reactive updates when accounts data changes
+  Stream<List<Account>> get accountsStream;
+
+  /// Stream for reactive updates when individual account data changes
+  Stream<Account> get accountStream;
 }
