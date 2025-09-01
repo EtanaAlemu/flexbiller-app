@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/account_overdue_state.dart';
 import '../../domain/repositories/account_overdue_state_repository.dart';
-import '../datasources/account_overdue_state_remote_data_source.dart';
+import '../datasources/remote/account_overdue_state_remote_data_source.dart';
 
 @Injectable(as: AccountOverdueStateRepository)
 class AccountOverdueStateRepositoryImpl implements AccountOverdueStateRepository {

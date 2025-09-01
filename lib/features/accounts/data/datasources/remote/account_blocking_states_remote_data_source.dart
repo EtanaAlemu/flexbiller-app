@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/account_blocking_state_model.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/account_blocking_state_model.dart';
 
 abstract class AccountBlockingStatesRemoteDataSource {
   Future<List<AccountBlockingStateModel>> getAccountBlockingStates(String accountId);

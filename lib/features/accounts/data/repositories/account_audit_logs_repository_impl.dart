@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/account_audit_log.dart';
 import '../../domain/repositories/account_audit_logs_repository.dart';
-import '../datasources/account_audit_logs_remote_data_source.dart';
+import '../datasources/remote/account_audit_logs_remote_data_source.dart';
 
 @Injectable(as: AccountAuditLogsRepository)
 class AccountAuditLogsRepositoryImpl implements AccountAuditLogsRepository {

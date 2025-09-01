@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/account_cba_rebalancing.dart';
 import '../../domain/repositories/account_cba_rebalancing_repository.dart';
-import '../datasources/account_cba_rebalancing_remote_data_source.dart';
+import '../datasources/remote/account_cba_rebalancing_remote_data_source.dart';
 
 @Injectable(as: AccountCbaRebalancingRepository)
 class AccountCbaRebalancingRepositoryImpl implements AccountCbaRebalancingRepository {

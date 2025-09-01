@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
+import '../datasources/user_local_data_source.dart';
 import '../models/auth_response.dart';
 import 'package:flexbiller_app/core/services/secure_storage_service.dart';
 import 'package:flexbiller_app/core/services/jwt_service.dart';
@@ -13,12 +14,14 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final SecureStorageService _secureStorage;
   final JwtService _jwtService;
+  final UserLocalDataSource _userLocalDataSource;
   final Logger _logger = Logger();
 
   AuthRepositoryImpl(
     this._remoteDataSource,
     this._secureStorage,
     this._jwtService,
+    this._userLocalDataSource,
   );
 
   @override
@@ -163,6 +166,29 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       _logger.i('User entity created successfully: ${user.displayName}');
+
+      // Persist user to local database
+      try {
+        _logger.i('Persisting user to local database...');
+        await _userLocalDataSource.saveUser(user);
+
+        // Also save auth token to local database
+        await _userLocalDataSource.saveAuthToken(
+          user.id,
+          authResponse.accessToken,
+          authResponse.refreshToken,
+          actualExpirationTime,
+        );
+
+        _logger.i(
+          'User and auth token successfully persisted to local database',
+        );
+      } catch (dbError) {
+        _logger.w('Failed to persist user to local database: $dbError');
+        // Don't fail the login if database persistence fails
+        // The user can still use the app with secure storage
+      }
+
       return user;
     } catch (e) {
       _logger.e('Login failed: $e');
@@ -234,6 +260,33 @@ class AuthRepositoryImpl implements AuthRepository {
         isAnonymous: jwtToken.isAnonymous ?? false,
       );
 
+      // Persist user to local database
+      try {
+        _logger.i('Persisting user to local database after registration...');
+        await _userLocalDataSource.saveUser(user);
+
+        // Also save auth token to local database
+        final expirationTime = DateTime.now().add(
+          Duration(seconds: authResponse.expiresIn),
+        );
+        await _userLocalDataSource.saveAuthToken(
+          user.id,
+          authResponse.accessToken,
+          authResponse.refreshToken,
+          expirationTime,
+        );
+
+        _logger.i(
+          'User and auth token successfully persisted to local database after registration',
+        );
+      } catch (dbError) {
+        _logger.w(
+          'Failed to persist user to local database after registration: $dbError',
+        );
+        // Don't fail the registration if database persistence fails
+        // The user can still use the app with secure storage
+      }
+
       return user;
     } catch (e) {
       rethrow;
@@ -252,10 +305,29 @@ class AuthRepositoryImpl implements AuthRepository {
       // Clear tokens from secure storage
       await _secureStorage.clearAuthTokens();
       await _secureStorage.clear(); // Clear all stored data
+
+      // Clear user data from local database
+      try {
+        await _userLocalDataSource.clearAllData();
+        _logger.i('User data cleared from local database');
+      } catch (dbError) {
+        _logger.w('Failed to clear user data from local database: $dbError');
+        // Don't fail logout if database clearing fails
+      }
     } catch (e) {
       // Even if logout fails, clear local tokens for security
       await _secureStorage.clearAuthTokens();
       await _secureStorage.clear();
+
+      // Try to clear database data as well
+      try {
+        await _userLocalDataSource.clearAllData();
+      } catch (dbError) {
+        _logger.w(
+          'Failed to clear user data from local database during error handling: $dbError',
+        );
+      }
+
       rethrow;
     }
   }
@@ -274,10 +346,33 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Decode JWT token to get user information
       final jwtToken = _jwtService.decodeToken(token);
+      final userId = jwtToken.sub ?? '';
 
-      // Create user entity with JWT data using safe access
+      // Try to get user from local database first
+      try {
+        final localUser = await _userLocalDataSource.getUserById(userId);
+        if (localUser != null) {
+          _logger.d('User retrieved from local database: ${localUser.email}');
+
+          // Update user data if needed (e.g., if JWT has newer information)
+          final updatedUser = localUser.copyWith(
+            sessionId: jwtToken.sessionId ?? localUser.sessionId,
+            updatedAt: DateTime.now(),
+          );
+
+          // Save updated user to database
+          await _userLocalDataSource.updateUser(updatedUser);
+
+          return updatedUser;
+        }
+      } catch (dbError) {
+        _logger.w('Failed to retrieve user from local database: $dbError');
+        // Continue with JWT-based user creation
+      }
+
+      // If not in database, create user entity with JWT data using safe access
       final user = User.fromJwtData(
-        id: jwtToken.sub ?? '',
+        id: userId,
         email: jwtToken.email ?? '',
         role: jwtToken.appMetadata?.role ?? '',
         phone: jwtToken.phone ?? '',
@@ -295,6 +390,15 @@ class AuthRepositoryImpl implements AuthRepository {
         sessionId: jwtToken.sessionId ?? '',
         isAnonymous: jwtToken.isAnonymous ?? false,
       );
+
+      // Try to save user to local database for future use
+      try {
+        await _userLocalDataSource.saveUser(user);
+        _logger.d('User saved to local database for future use');
+      } catch (dbError) {
+        _logger.w('Failed to save user to local database: $dbError');
+        // Don't fail if database save fails
+      }
 
       return user;
     } catch (e) {
@@ -325,6 +429,28 @@ class AuthRepositoryImpl implements AuthRepository {
       await _secureStorage.saveAuthToken(authResponse.accessToken);
       await _secureStorage.saveRefreshToken(authResponse.refreshToken);
       await _secureStorage.saveTokenExpiration(authResponse.expiresIn);
+
+      // Update auth token in local database if user exists
+      try {
+        final jwtToken = _jwtService.decodeToken(authResponse.accessToken);
+        final userId = jwtToken.sub ?? '';
+
+        if (userId.isNotEmpty) {
+          final expirationTime = DateTime.now().add(
+            Duration(seconds: authResponse.expiresIn),
+          );
+          await _userLocalDataSource.updateAuthToken(
+            userId,
+            authResponse.accessToken,
+            authResponse.refreshToken,
+            expirationTime,
+          );
+          _logger.d('Auth token updated in local database for user: $userId');
+        }
+      } catch (dbError) {
+        _logger.w('Failed to update auth token in local database: $dbError');
+        // Don't fail token refresh if database update fails
+      }
 
       return authResponse;
     } catch (e) {

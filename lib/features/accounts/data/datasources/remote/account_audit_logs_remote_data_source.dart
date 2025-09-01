@@ -1,7 +1,7 @@
-import 'package:dio/dio.dart';
+                                                    import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/account_audit_log_model.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/account_audit_log_model.dart';
 
 abstract class AccountAuditLogsRemoteDataSource {
   Future<List<AccountAuditLogModel>> getAccountAuditLogs(String accountId);

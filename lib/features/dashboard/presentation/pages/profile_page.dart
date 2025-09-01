@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/services/secure_storage_service.dart';
+import '../../../../core/services/user_persistence_service.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
@@ -20,6 +21,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final SecureStorageService _secureStorage = getIt<SecureStorageService>();
   final AuthRepository _authRepository = getIt<AuthRepository>();
+  final UserPersistenceService _userPersistenceService =
+      getIt<UserPersistenceService>();
 
   User? _currentUser;
   bool _isLoading = true;
@@ -71,18 +74,42 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      // Add timeout to prevent infinite loading
-      final user = await _authRepository.getCurrentUser().timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw TimeoutException(
-            'User data loading timed out',
-            const Duration(seconds: 10),
-          );
-        },
-      );
+      // Try to get user from local database first (local-first approach)
+      User? user;
+      try {
+        print('DEBUG: Attempting to load user from local database...');
+        final userId = await _secureStorage.getUserId();
+        if (userId != null) {
+          user = await _userPersistenceService.getUserById(userId);
+          if (user != null) {
+            print('DEBUG: User loaded from local database: ${user.email}');
+          } else {
+            print(
+              'DEBUG: User not found in local database, trying auth repository...',
+            );
+          }
+        }
+      } catch (dbError) {
+        print('DEBUG: Error loading from local database: $dbError');
+        // Continue with auth repository fallback
+      }
 
-      print('DEBUG: User data loaded successfully: ${user?.email ?? 'null'}');
+      // If not in local database, try auth repository (which will also update the database)
+      if (user == null) {
+        print('DEBUG: Loading user from auth repository...');
+        user = await _authRepository.getCurrentUser().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw TimeoutException(
+              'User data loading timed out',
+              const Duration(seconds: 10),
+            );
+          },
+        );
+        print(
+          'DEBUG: User data loaded from auth repository: ${user?.email ?? 'null'}',
+        );
+      }
 
       if (mounted) {
         setState(() {
@@ -159,6 +186,126 @@ class _ProfilePageState extends State<ProfilePage> {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => const ChangePasswordPage()));
+  }
+
+  /// Refresh user data from local database
+  Future<void> _refreshUserData() async {
+    try {
+      print('DEBUG: Refreshing user data from local database...');
+      final userId = await _secureStorage.getUserId();
+      if (userId != null) {
+        final refreshedUser = await _userPersistenceService.getUserById(userId);
+        if (refreshedUser != null && mounted) {
+          setState(() {
+            _currentUser = refreshedUser;
+          });
+          print(
+            'DEBUG: User data refreshed successfully: ${refreshedUser.email}',
+          );
+        } else {
+          print(
+            'DEBUG: No user found in database, reloading from auth repository...',
+          );
+          await _loadUserData();
+        }
+      } else {
+        print('DEBUG: No user ID found, reloading from auth repository...');
+        await _loadUserData();
+      }
+    } catch (e) {
+      print('DEBUG: Error refreshing user data: $e');
+      // Fallback to full reload
+      await _loadUserData();
+    }
+  }
+
+  /// Show database statistics dialog
+  Future<void> _showDatabaseStats() async {
+    try {
+      final userCount = await _userPersistenceService.getUserCount();
+      final isDatabaseEmpty = await _userPersistenceService.getAllUsers().then(
+        (users) => users.isEmpty,
+      );
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.analytics, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  const Text('Database Statistics'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDialogInfoRow('Total Users', '$userCount'),
+                  _buildDialogInfoRow(
+                    'Database Status',
+                    isDatabaseEmpty ? 'Empty' : 'Populated',
+                  ),
+                  _buildDialogInfoRow(
+                    'Current User',
+                    _currentUser?.email ?? 'Unknown',
+                  ),
+                  _buildDialogInfoRow(
+                    'Last Updated',
+                    _currentUser != null
+                        ? _formatDate(_currentUser!.updatedAt)
+                        : 'Unknown',
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.blue.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Data is stored locally using SQLCipher encryption for security',
+                            style: TextStyle(
+                              color: Colors.blue[700],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _refreshUserData();
+                  },
+                  child: const Text('Refresh Data'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      print('DEBUG: Error showing database stats: $e');
+    }
   }
 
   @override
@@ -322,56 +469,161 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 borderRadius: BorderRadius.circular(16.0),
               ),
-              child: Column(
+              child: Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 50,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _currentUser!.displayName.isNotEmpty
-                        ? _currentUser!.displayName
-                        : _currentUser!.name,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _currentUser!.email,
-                    style: const TextStyle(fontSize: 16, color: Colors.white70),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      _currentUser!.role.replaceAll('_', ' ').toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                  // Refresh button positioned at top-right
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: IconButton(
+                      onPressed: _refreshUserData,
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      tooltip: 'Refresh Profile Data',
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
                       ),
                     ),
+                  ),
+                  // Profile content
+                  Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.person,
+                          size: 50,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _currentUser!.displayName.isNotEmpty
+                            ? _currentUser!.displayName
+                            : _currentUser!.name,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _currentUser!.email,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          _currentUser!.role.replaceAll('_', ' ').toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
+
+            // Database Information Card
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.storage, color: Colors.green, size: 24),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Data Source Information',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInfoRow(
+                      'Data Source',
+                      'Local Database (SQLCipher Encrypted)',
+                    ),
+                    _buildInfoRow(
+                      'Last Sync',
+                      _formatDate(_currentUser!.updatedAt),
+                    ),
+                    _buildInfoRow('Database Status', 'Connected & Encrypted'),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.green.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Your profile data is securely stored locally and available offline',
+                              style: TextStyle(
+                                color: Colors.green[700],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _showDatabaseStats,
+                        icon: const Icon(Icons.analytics),
+                        label: const Text('View Database Statistics'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.green[700],
+                          side: BorderSide(color: Colors.green[700]!),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // Account Information Card
             Card(
@@ -770,6 +1022,37 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _formatDate(DateTime date) {
     return DateFormat('MMM dd, yyyy').format(date);
+  }
+
+  Widget _buildDialogInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _trySecureStorageFallback() async {

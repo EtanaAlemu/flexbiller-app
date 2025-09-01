@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/account_custom_field.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
-import '../datasources/account_custom_fields_remote_data_source.dart';
+import '../datasources/remote/account_custom_fields_remote_data_source.dart';
 
 @Injectable(as: AccountCustomFieldsRepository)
 class AccountCustomFieldsRepositoryImpl

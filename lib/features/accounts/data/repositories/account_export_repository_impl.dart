@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/account_export.dart';
 import '../../domain/repositories/account_export_repository.dart';
-import '../datasources/account_export_remote_data_source.dart';
+import '../datasources/remote/account_export_remote_data_source.dart';
 
 @Injectable(as: AccountExportRepository)
 class AccountExportRepositoryImpl implements AccountExportRepository {

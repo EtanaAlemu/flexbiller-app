@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/account_tag_model.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/account_tag_model.dart';
 
 abstract class AccountTagsRemoteDataSource {
   Future<List<AccountTagAssignmentModel>> getAccountTags(String accountId);

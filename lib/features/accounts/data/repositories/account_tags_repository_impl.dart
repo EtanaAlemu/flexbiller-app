@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/account_tag.dart';
 import '../../domain/repositories/account_tags_repository.dart';
-import '../datasources/account_tags_remote_data_source.dart';
+import '../datasources/remote/account_tags_remote_data_source.dart';
 import '../models/account_tag_model.dart';
 
 @Injectable(as: AccountTagsRepository)

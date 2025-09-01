@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/network/dio_client.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../../../../core/models/api_response.dart';
-import '../models/account_model.dart';
-import '../../domain/entities/accounts_query_params.dart';
+import '../../../../../core/network/dio_client.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/models/api_response.dart';
+import '../../models/account_model.dart';
+import '../../../domain/entities/accounts_query_params.dart';
 
 abstract class AccountsRemoteDataSource {
   Future<List<AccountModel>> getAccounts(AccountsQueryParams params);
@@ -204,7 +204,10 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
   @override
   Future<AccountModel> createAccount(AccountModel account) async {
     try {
-      final response = await _dioClient.dio.post('/accounts', data: account.toJson());
+      final response = await _dioClient.dio.post(
+        '/accounts',
+        data: account.toJson(),
+      );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final responseData = response.data;
@@ -348,11 +351,13 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-        
+
         // For successful deletion, the API returns the deleted account data
         // We can optionally log or process this data, but deletion is successful
-        if (responseData['message'] != null && 
-            responseData['message'].toString().toLowerCase().contains('deleted successfully')) {
+        if (responseData['message'] != null &&
+            responseData['message'].toString().toLowerCase().contains(
+              'deleted successfully',
+            )) {
           // Account was deleted successfully
           return;
         } else {
@@ -378,14 +383,17 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 500) {
         // Handle 500 error which might indicate tenant issues or server problems
         final responseData = e.response?.data;
-        if (responseData != null && responseData['error'] == 'CONNECTION_ERROR') {
+        if (responseData != null &&
+            responseData['error'] == 'CONNECTION_ERROR') {
           final details = responseData['details'];
           if (details != null && details['originalError'] != null) {
             final originalError = details['originalError'] as String;
             if (originalError.contains("doesn't exist")) {
               throw ValidationException('Account not found');
             } else if (originalError.contains("doesn't belong to tenant")) {
-              throw ValidationException('Account does not belong to your tenant');
+              throw ValidationException(
+                'Account does not belong to your tenant',
+              );
             }
           }
         }

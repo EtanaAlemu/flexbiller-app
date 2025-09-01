@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/child_account.dart';
 import '../../domain/repositories/child_account_repository.dart';
-import '../datasources/child_account_remote_data_source.dart';
+import '../datasources/remote/child_account_remote_data_source.dart';
 import '../models/child_account_model.dart';
 
 @Injectable(as: ChildAccountRepository)

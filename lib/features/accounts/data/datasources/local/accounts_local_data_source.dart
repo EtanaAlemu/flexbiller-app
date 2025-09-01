@@ -1,9 +1,9 @@
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
-import '../../../../core/dao/account_dao.dart';
-import '../../../../core/services/database_service.dart';
-import '../models/account_model.dart';
-import '../../domain/entities/accounts_query_params.dart';
+import '../../../../../core/dao/account_dao.dart';
+import '../../../../../core/services/database_service.dart';
+import '../../models/account_model.dart';
+import '../../../domain/entities/accounts_query_params.dart';
 
 abstract class AccountsLocalDataSource {
   Future<void> cacheAccounts(List<AccountModel> accounts);
@@ -49,13 +49,13 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
       return await AccountDao.getAll(db, orderBy: 'name ASC');
     } catch (e) {
       _logger.e('Error getting cached accounts: $e');
-      
+
       // If table doesn't exist, return empty list instead of throwing
       if (e.toString().contains('no such table: accounts')) {
         _logger.w('Accounts table does not exist yet, returning empty list');
         return [];
       }
-      
+
       rethrow;
     }
   }
@@ -166,13 +166,13 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
       );
     } catch (e) {
       _logger.e('Error getting cached accounts by query: $e');
-      
+
       // If table doesn't exist, return empty list instead of throwing
       if (e.toString().contains('no such table: accounts')) {
         _logger.w('Accounts table does not exist yet, returning empty list');
         return [];
       }
-      
+
       rethrow;
     }
   }

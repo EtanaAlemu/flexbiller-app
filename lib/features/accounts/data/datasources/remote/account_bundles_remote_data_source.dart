@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/account_bundle_model.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/account_bundle_model.dart';
 
 abstract class AccountBundlesRemoteDataSource {
   Future<List<AccountBundleModel>> getAccountBundles(String accountId);

@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:injectable/injectable.dart';
 import '../constants/app_constants.dart';
 import '../dao/account_dao.dart';
+import '../dao/child_account_dao.dart';
 import 'package:logger/logger.dart';
 
 @injectable
@@ -14,10 +15,13 @@ class DatabaseService {
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDatabase();
-    
+
     // Ensure accounts table exists after database initialization
     await _ensureAccountsTableExists();
     
+    // Ensure child_accounts table exists after database initialization
+    await _ensureChildAccountsTableExists();
+
     return _database!;
   }
 
@@ -117,6 +121,9 @@ class DatabaseService {
       // Create accounts table
       await db.execute(AccountDao.createTableSQL);
 
+      // Create child_accounts table
+      await db.execute(ChildAccountDao.createTableSQL);
+
       _logger.d('Database tables created successfully');
     } catch (e) {
       _logger.e('Error creating database tables: $e');
@@ -135,6 +142,13 @@ class DatabaseService {
         _logger.d('Accounts table created successfully');
       }
 
+      if (oldVersion < 3) {
+        // Create child_accounts table for version 3
+        _logger.d('Creating child_accounts table for version 3');
+        await db.execute(ChildAccountDao.createTableSQL);
+        _logger.d('Child accounts table created successfully');
+      }
+
       _logger.d('Database upgrade completed');
     } catch (e) {
       _logger.e('Error upgrading database: $e');
@@ -146,8 +160,12 @@ class DatabaseService {
   Future<void> _ensureAccountsTableExists() async {
     try {
       final db = await database;
-      final tables = await db.query('sqlite_master', where: 'type = ? AND name = ?', whereArgs: ['table', 'accounts']);
-      
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'accounts'],
+      );
+
       if (tables.isEmpty) {
         _logger.d('Accounts table does not exist, creating it...');
         await db.execute(AccountDao.createTableSQL);
@@ -155,6 +173,27 @@ class DatabaseService {
       }
     } catch (e) {
       _logger.e('Error ensuring accounts table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Check and create child_accounts table if it doesn't exist
+  Future<void> _ensureChildAccountsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'child_accounts'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Child accounts table does not exist, creating it...');
+        await db.execute(ChildAccountDao.createTableSQL);
+        _logger.d('Child accounts table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring child accounts table exists: $e');
       rethrow;
     }
   }

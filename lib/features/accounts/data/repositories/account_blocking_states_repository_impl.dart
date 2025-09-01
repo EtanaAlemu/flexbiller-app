@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/account_blocking_state.dart';
 import '../../domain/repositories/account_blocking_states_repository.dart';
-import '../datasources/account_blocking_states_remote_data_source.dart';
+import '../datasources/remote/account_blocking_states_remote_data_source.dart';
 
 @Injectable(as: AccountBlockingStatesRepository)
 class AccountBlockingStatesRepositoryImpl implements AccountBlockingStatesRepository {

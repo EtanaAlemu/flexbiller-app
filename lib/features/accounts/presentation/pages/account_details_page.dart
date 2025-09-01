@@ -101,9 +101,7 @@ class AccountDetailsView extends StatelessWidget {
           if (account == null) {
             return Scaffold(
               appBar: AppBar(title: const Text('Account Details')),
-              body: const Center(
-                child: Text('Account not found'),
-              ),
+              body: const Center(child: Text('Account not found')),
             );
           }
           return BlocListener<AccountsBloc, AccountsState>(
@@ -271,13 +269,11 @@ class AccountDetailsView extends StatelessWidget {
         elevation: 4,
         child: Padding(
           padding: EdgeInsets.all(20.0),
-          child: Center(
-            child: Text('Invalid account data'),
-          ),
+          child: Center(child: Text('Invalid account data')),
         ),
       );
     }
-    
+
     return Card(
       elevation: 4,
       child: Padding(

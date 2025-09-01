@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/account_payment.dart';
 import '../../domain/repositories/account_payments_repository.dart';
-import '../datasources/account_payments_remote_data_source.dart';
+import '../datasources/remote/account_payments_remote_data_source.dart';
 
 @Injectable(as: AccountPaymentsRepository)
 class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {

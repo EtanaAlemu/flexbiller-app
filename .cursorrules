@@ -1,0 +1,555 @@
+# FlexBiller App - Cursor Rules
+
+## Project Overview
+
+FlexBiller is a Flutter app for billing and subscription management with secure user authentication and local data persistence.
+
+## Architecture Patterns
+
+### Clean Architecture Layers
+
+The app MUST be implemented using Clean Architecture with the following strict layer separation:
+
+#### Domain Layer (`lib/features/{feature}/domain/`)
+
+- **Entities**: Pure business objects with no dependencies
+- **Repository Interfaces**: Abstract contracts for data operations
+- **Use Cases**: Business logic and application rules
+- **Value Objects**: Immutable objects representing domain concepts
+
+#### Data Layer (`lib/features/{feature}/data/`)
+
+- **Data Sources**: Remote and local data access implementations
+- **Repository Implementations**: Concrete implementations of domain repositories
+- **Models**: Data transfer objects (DTOs) for external communication
+- **Mappers**: Convert between domain entities and data models
+
+#### Presentation Layer (`lib/features/{feature}/presentation/`)
+
+- **BLoC**: Business Logic Components for state management
+- **Pages**: Screen implementations
+- **Widgets**: Reusable UI components
+- **Forms**: Input handling and validation
+
+#### Core Layer (`lib/core/`)
+
+- **Services**: Cross-cutting concerns (database, network, auth)
+- **Constants**: Application-wide constants and configurations
+- **Utils**: Helper functions and utilities
+- **Injection**: Dependency injection configuration
+
+### Local-First Architecture
+
+- **Primary Data Source**: Local database/cache is the source of truth
+- **Offline Support**: App must function without internet connection
+- **Sync Strategy**: Background synchronization when online
+- **Conflict Resolution**: Local changes take precedence, with conflict detection
+
+### Core Principle: The Local Data Source is King
+
+The app always reads from and writes to the local database first. Network operations are asynchronous, behind the scenes, and used to synchronize the local state with the remote server.
+
+#### **Domain Layer (The Innermost Core)**
+
+- **Entities**: Plain Dart objects that represent the core business data (e.g., `User`, `Bill`, `Invoice`). These are shared across all layers.
+- **Repositories (Abstract Classes)**: Define the _interface_ for data operations. The application layer depends on these abstractions. **Key Change:** The repository contract is designed for local-first operations.
+
+  ```dart
+  // features/auth/domain/repositories/auth_repository.dart
+  abstract class AuthRepository {
+    // Local-First method: Log in, store user/token locally, then sync.
+    Future<Either<Failure, User>> logIn(String email, String password);
+
+    // Check local storage first for authentication status
+    Future<Either<Failure, bool>> isLoggedIn();
+
+    // Get the cached user from local DB
+    Future<Either<Failure, User>> getCachedUser();
+
+    // Log out (clear local data first, then tell the server if possible)
+    Future<Either<Failure, void>> logOut();
+  }
+  ```
+
+- **Use Cases (Interactors)**: Contain application-specific business rules. They orchestrate the flow of data to and from the repositories.
+
+#### **Data Layer (Implements the Domain)**
+
+- **Models**: More complex classes that extend Entities. They include serialization/deserialization logic (e.g., `fromJson`, `toJson`). A `UserModel` extends the `User` entity.
+- **Data Sources**:
+  - **Local Data Source**: The most important source. Handles all CRUD operations using `sqflite_sqlcipher` and `flutter_secure_storage`.
+    ```dart
+    // features/auth/data/datasources/auth_local_data_source.dart
+    abstract class AuthLocalDataSource {
+      Future<void> cacheUser(UserModel user);
+      Future<UserModel> getCachedUser();
+      Future<void> cacheAuthToken(String token);
+      Future<String> getAuthToken();
+      Future<void> deleteAllCachedData();
+    }
+    ```
+  - **Remote Data Source**: Handles all API calls via Dio. Its methods are now primarily used by the repository for synchronization, not for direct data fetching for the UI.
+    ```dart
+    // features/auth/data/datasources/auth_remote_data_source.dart
+    abstract class AuthRemoteDataSource {
+      Future<HttpResponse<UserModel>> logIn(String email, String password);
+      Future<HttpResponse<void>> logOut(String token);
+    }
+    ```
+- **Repository Implementations**: **This is where the Local-First magic happens.** The concrete repository implementation decides how to combine local and remote data. It implements the abstract class from the Domain layer.
+
+  ```dart
+  // features/auth/data/repositories/auth_repository_impl.dart
+  @LazySingleton(as: AuthRepository)
+  class AuthRepositoryImpl implements AuthRepository {
+    final AuthRemoteDataSource remoteDataSource;
+    final AuthLocalDataSource localDataSource;
+    final NetworkInfo networkInfo; // To check if online
+
+    AuthRepositoryImpl({
+      required this.remoteDataSource,
+      required this.localDataSource,
+      required this.networkInfo,
+    });
+
+    @override
+    Future<Either<Failure, User>> logIn(String email, String password) async {
+      // Check if device is online
+      if (await networkInfo.isConnected) {
+        try {
+          // 1. Call Remote API
+          final httpResponse = await remoteDataSource.logIn(email, password);
+          final userModel = httpResponse.data;
+
+          // 2. IMMEDIATELY Cache the received data Locally (Single Source of Truth)
+          await localDataSource.cacheUser(userModel);
+          await localDataSource.cacheAuthToken(userModel.token);
+
+          // 3. Return the data from the local cache to ensure consistency
+          final cachedUser = await localDataSource.getCachedUser();
+          return Right(cachedUser); // Return the locally cached entity
+
+        } on ServerException catch (e) {
+          return Left(ServerFailure(e.message));
+        }
+      } else {
+        // Handle offline case: Maybe we can't log in without network?
+        return Left(NetworkFailure());
+      }
+    }
+
+    @override
+    Future<Either<Failure, bool>> isLoggedIn() async {
+      try {
+        // The single source of truth is the local storage.
+        // If a token exists locally, the user is "logged in" to the app.
+        final token = await localDataSource.getAuthToken();
+        return Right(token != null);
+      } on CacheException {
+        return Left(CacheFailure());
+      }
+    }
+
+    @override
+    Future<Either<Failure, User>> getCachedUser() async {
+      try {
+        final user = await localDataSource.getCachedUser();
+        return Right(user);
+      } on CacheException {
+        return Left(CacheFailure());
+      }
+      }
+    }
+  }
+  ```
+
+#### **Presentation Layer (BLoC + UI)**
+
+- **BLoC**: Listens to events from the UI and uses Use Cases to execute business logic. It emits states that the UI reacts to.
+- **UI (Pages/Widgets)**: Consume BLoC states and rebuild accordingly. They are blissfully unaware of where the data comes from.
+
+### The Local-First Data Flow (Step-by-Step)
+
+#### **Scenario: User Opens the App to View Their Dashboard**
+
+1. **UI (`dashboard_page.dart`)**: Builds and immediately dispatches a `DashboardDataRequested` event to the `DashboardBloc`.
+2. **BLoC (`dashboard_bloc.dart`)**: Receives the event. Adds a `DashboardLoadInProgress` state. Then calls the `GetDashboardData` use case.
+3. **Use Case (`get_dashboard_data.dart`)**: This is a simple orchestrator. It calls the `getDashboardData()` method on the repository interface it depends on.
+4. **Repository Impl (`dashboard_repository_impl.dart`)**: This is the decision-maker.
+   - **First, it reads from the Local Data Source.** It asks the local database for cached dashboard data (e.g., bills, invoices).
+   - It immediately returns this local data to the Use Case -> BLoC -> UI. **The UI updates very quickly with cached data.**
+   - **Then, in the background**, it checks if the device is online.
+   - **If online**: It calls the Remote Data Source (API) to fetch the _latest_ data.
+   - When the API responds, it **writes the new data to the local database**, replacing the old cache.
+   - This write operation triggers a change in the local database stream.
+5. **Reactive UI Update**: Your BLoC can listen to a stream from the local data source (e.g., using `rxdart` or a database stream from `sqflite`). When the new data is written in step 4, the stream emits the updated data. The BLoC listens to this stream and emits a new `DashboardDataSuccess(newData)` state, **causing the UI to update a second time with the fresh, synchronized data**.
+
+#### **Scenario: User Creates a New Bill (Offline)**
+
+1. **UI**: User fills out a form and hits "Save". A `BillCreated` event is dispatched.
+2. **BLoC**: Calls the `CreateBill` use case.
+3. **Repository**:
+   - The repository **first saves the bill to the local database** and marks its `syncStatus` as `pending`.
+   - It returns success to the BLoC. The user sees a confirmation message instantly.
+   - The repository checks for network connectivity. If the device is **offline, it stops here**. The bill is stored locally, pending sync.
+   - When the device comes back **online**, a background synchronization process (e.g., using `workmanager` or a periodic check) wakes up.
+   - It fetches all locally stored objects with `syncStatus = pending` and sends them to the remote server.
+   - Upon successful API response, it updates the local record's `syncStatus` to `synced`.
+
+### Implementation Recommendations for Your Stack
+
+1. **Database Streams**: Use `sqflite`'s API or a wrapper like `moor` to get streams of query results. This allows your UI to reactively update when the local DB changes.
+
+   ```dart
+   // In your local data source
+   Stream<List<BillModel>> watchBills() {
+     return database.watchBills(); // Imagine this returns a stream
+   }
+   ```
+
+2. **Sync Service**: Create a central `SyncService` registered with get_it that runs in the background, checking for pending operations and network status to synchronize data.
+
+3. **Network Info**: Implement a `NetworkInfo` class using `connectivity_plus` to check internet connectivity.
+
+   ```dart
+   // core/network/network_info.dart
+   abstract class NetworkInfo {
+     Future<bool> get isConnected;
+   }
+
+   @LazySingleton(as: NetworkInfo)
+   class NetworkInfoImpl implements NetworkInfo {
+     final Connectivity connectivity;
+     NetworkInfoImpl(this.connectivity);
+
+     @override
+     Future<bool> get isConnected async {
+       final result = await connectivity.checkConnectivity();
+       return result != ConnectivityResult.none;
+     }
+   }
+   ```
+
+This Local-First Clean Architecture ensures your app is **fast, reliable, and works offline**, while maintaining the separation of concerns and testability of Clean Architecture. The BLoC layer becomes a consumer of a continuous stream of data from the local source, which is updated silently in the background via the repository.
+
+### Feature-Based Folder Structure
+
+```
+lib/
+├── core/                           # Shared infrastructure
+│   ├── config/                     # App configuration
+│   ├── constants/                  # App-wide constants
+│   ├── errors/                     # Error handling
+│   ├── injection/                  # Dependency injection
+│   ├── network/                    # Network layer
+│   ├── services/                   # Core services
+│   ├── theme/                      # App theming
+│   └── utils/                      # Utilities
+├── features/                       # Feature modules
+│   ├── auth/                       # Authentication feature
+│   │   ├── data/                   # Data layer
+│   │   │   ├── datasources/        # Remote & local data sources
+│   │   │   ├── models/             # DTOs
+│   │   │   └── repositories/       # Repository implementations
+│   │   ├── domain/                 # Domain layer
+│   │   │   ├── entities/           # Business entities
+│   │   │   ├── repositories/       # Repository interfaces
+│   │   │   └── usecases/           # Business logic
+│   │   └── presentation/           # Presentation layer
+│   │       ├── bloc/               # State management
+│   │       ├── pages/              # Screens
+│   │       └── widgets/            # UI components
+│   ├── accounts/                   # Accounts feature
+│   ├── subscriptions/              # Subscriptions feature
+│   └── dashboard/                  # Dashboard feature
+└── injection_container.dart        # DI configuration
+```
+
+### Layer Dependencies
+
+- **Domain**: No dependencies on other layers
+- **Data**: Depends only on Domain layer
+- **Presentation**: Depends only on Domain layer
+- **Core**: No dependencies on Feature layers
+- **Features**: Can depend on Core layer only
+
+### Dependency Injection
+
+- Use `injectable` package with `@injectable` annotations
+- Register services in `injection_container.dart`
+- Use `getIt` for service locator pattern
+
+## User Persistence System
+
+### Core Components
+
+1. **DatabaseService** (`lib/core/services/database_service.dart`)
+
+   - SQLCipher encrypted SQLite database
+   - Comprehensive user table schema with JWT metadata
+   - Auth token storage table
+   - Full CRUD operations for users and tokens
+
+2. **UserLocalDataSource** (`lib/features/auth/data/datasources/user_local_data_source.dart`)
+
+   - Data access layer for user persistence
+   - Methods for saving, updating, retrieving, and deleting users
+   - Auth token management
+   - Data mapping between database rows and User entities
+
+3. **UserPersistenceService** (`lib/core/services/user_persistence_service.dart`)
+   - High-level service interface for user persistence
+   - Advanced operations like user search, role filtering, and statistics
+   - Comprehensive error handling and logging
+
+### Database Schema
+
+#### Users Table
+
+- `id` (TEXT, PRIMARY KEY): User ID from JWT
+- `email` (TEXT, UNIQUE): User email address
+- `name` (TEXT): Display name
+- `role` (TEXT): User role (TENANT_ADMIN, USER, etc.)
+- `phone` (TEXT): Phone number
+- `tenant_id` (TEXT): Tenant identifier
+- `role_id` (TEXT): Role identifier
+- `api_key` (TEXT): API key for external services
+- `api_secret` (TEXT): API secret for external services
+- `email_verified` (INTEGER): Email verification status
+- `first_name` (TEXT): First name
+- `last_name` (TEXT): Last name
+- `company` (TEXT): Company name
+- `department` (TEXT): Department
+- `location` (TEXT): Location
+- `position` (TEXT): Job position
+- `session_id` (TEXT): Session identifier
+- `is_anonymous` (INTEGER): Anonymous user flag
+- `created_at` (TEXT): Creation timestamp
+- `updated_at` (TEXT): Last update timestamp
+
+#### Auth Tokens Table
+
+- `id` (INTEGER, PRIMARY KEY): Auto-increment ID
+- `user_id` (TEXT): Reference to users table
+- `access_token` (TEXT): JWT access token
+- `refresh_token` (TEXT): JWT refresh token
+- `expires_at` (TEXT): Token expiration timestamp
+- `created_at` (TEXT): Creation timestamp
+
+### Usage Examples
+
+#### Basic User Operations
+
+```dart
+// Get the service instance
+final userPersistenceService = getIt<UserPersistenceService>();
+
+// Save a user
+await userPersistenceService.saveUser(user);
+
+// Get user by ID
+final user = await userPersistenceService.getUserById('user123');
+
+// Get user by email
+final user = await userPersistenceService.getUserByEmail('user@example.com');
+
+// Update user
+await userPersistenceService.updateUser(updatedUser);
+
+// Delete user
+await userPersistenceService.deleteUser('user123');
+
+// Get all users
+final allUsers = await userPersistenceService.getAllUsers();
+```
+
+#### Authentication Token Management
+
+```dart
+// Save auth tokens
+await userPersistenceService.saveAuthToken(
+  userId,
+  accessToken,
+  refreshToken,
+  expirationTime,
+);
+
+// Update auth tokens
+await userPersistenceService.updateAuthToken(
+  userId,
+  newAccessToken,
+  newRefreshToken,
+  newExpirationTime,
+);
+
+// Get auth tokens
+final tokenData = await userPersistenceService.getAuthTokenByUserId(userId);
+
+// Delete auth tokens
+await userPersistenceService.deleteAuthToken(userId);
+```
+
+#### Advanced Operations
+
+```dart
+// Check if user exists
+final exists = await userPersistenceService.userExists('user123');
+
+// Get user count
+final count = await userPersistenceService.getUserCount();
+
+// Update last activity
+await userPersistenceService.updateUserLastActivity('user123');
+
+// Get users by role
+final admins = await userPersistenceService.getUsersByRole('TENANT_ADMIN');
+
+// Search users
+final results = await userPersistenceService.searchUsers('john');
+
+// Clear all data (useful for logout)
+await userPersistenceService.clearAllUserData();
+```
+
+### Integration with Authentication
+
+The user persistence service is automatically integrated with the authentication system:
+
+1. **Login**: User data is automatically saved to the database
+2. **Registration**: New user data is persisted
+3. **Token Refresh**: Auth tokens are updated in the database
+4. **Logout**: All user data is cleared from the database
+
+## Coding Standards
+
+### File Naming
+
+- Use snake_case for file names: `user_local_data_source.dart`
+- Use PascalCase for class names: `UserLocalDataSource`
+- Use camelCase for variables and methods: `getUserById`
+
+### Error Handling
+
+- Wrap database operations in try-catch blocks
+- Log errors with appropriate log levels (debug, info, warning, error)
+- Don't fail main operations if database persistence fails
+- Provide graceful fallbacks to secure storage
+
+### Logging
+
+- Use structured logging with context information
+- Include operation details in log messages
+- Use appropriate log levels:
+  - `_logger.d()` for debug information
+  - `_logger.i()` for general information
+  - `_logger.w()` for warnings
+  - `_logger.e()` for errors
+
+### Security
+
+- Use SQLCipher for encrypted database storage
+- Never log sensitive information (passwords, tokens)
+- Implement proper data isolation by user ID
+- Clear sensitive data on logout
+
+### Performance
+
+- Use lazy loading for database initialization
+- Implement connection pooling
+- Use efficient SQL queries with proper indexing
+- Perform database operations in background when possible
+
+## Dependencies
+
+### Required Packages
+
+- `sqflite_sqlcipher`: Encrypted SQLite database
+- `injectable`: Dependency injection
+- `logger`: Logging and debugging
+- `path`: File path operations
+- `flutter_secure_storage`: Secure storage fallback
+
+### Version Constraints
+
+- Flutter: ^3.0.0
+- Dart: ^3.0.0
+- sqflite_sqlcipher: ^2.1.0
+- injectable: ^2.3.2
+
+## Common Patterns
+
+### Service Registration
+
+```dart
+@injectable
+class UserPersistenceService {
+  final UserLocalDataSource _userLocalDataSource;
+  final Logger _logger;
+
+  UserPersistenceService(this._userLocalDataSource, this._logger);
+  // ... implementation
+}
+```
+
+### Error Handling Pattern
+
+```dart
+try {
+  await _databaseService.insertUser(userData);
+  _logger.d('User inserted successfully: ${userData['email']}');
+} catch (e) {
+  _logger.e('Error inserting user: $e');
+  rethrow;
+}
+```
+
+### Database Operation Pattern
+
+```dart
+Future<void> insertUser(Map<String, dynamic> userData) async {
+  try {
+    final db = await database;
+    await db.insert('users', userData);
+    _logger.d('User inserted successfully: ${userData['email']}');
+  } catch (e) {
+    _logger.e('Error inserting user: $e');
+    rethrow;
+  }
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database not initialized**: Ensure `DatabaseService` is properly injected
+2. **Permission errors**: Check app permissions for database access
+3. **Encryption errors**: Verify SQLCipher is properly configured
+4. **Data not persisting**: Check if user is properly authenticated
+
+### Debug Information
+
+```dart
+// Check database statistics
+final stats = await databaseService.getDatabaseStats();
+_logger.d('Database stats: $stats');
+
+// Check if database is empty
+final isEmpty = await databaseService.isDatabaseEmpty();
+_logger.d('Database empty: $isEmpty');
+```
+
+## Future Considerations
+
+- **Data Migration**: Support for schema updates
+- **Backup/Restore**: User data backup functionality
+- **Sync**: Offline/online data synchronization
+- **Analytics**: Usage analytics and metrics
+- **Multi-tenant**: Enhanced multi-tenant support
+
+## Notes
+
+- User persistence is automatically handled during authentication
+- Database operations are non-blocking and include error handling
+- Security is maintained through encryption and proper data isolation
+- Performance is optimized through lazy loading and connection pooling

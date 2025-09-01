@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/account_timeline_model.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/account_timeline_model.dart';
 
 abstract class AccountTimelineRemoteDataSource {
   Future<AccountTimelineModel> getAccountTimeline(String accountId);

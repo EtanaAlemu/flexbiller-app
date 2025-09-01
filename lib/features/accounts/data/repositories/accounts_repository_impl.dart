@@ -5,8 +5,8 @@ import '../../../../core/network/network_info.dart';
 import '../../domain/entities/account.dart';
 import '../../domain/entities/accounts_query_params.dart';
 import '../../domain/repositories/accounts_repository.dart';
-import '../datasources/accounts_local_data_source.dart';
-import '../datasources/accounts_remote_data_source.dart';
+import '../datasources/local/accounts_local_data_source.dart';
+import '../datasources/remote/accounts_remote_data_source.dart';
 import '../models/account_model.dart';
 
 @LazySingleton(as: AccountsRepository)

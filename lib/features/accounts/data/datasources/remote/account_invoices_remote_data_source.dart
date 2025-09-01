@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/account_invoice_model.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/account_invoice_model.dart';
 
 abstract class AccountInvoicesRemoteDataSource {
   Future<List<AccountInvoiceModel>> getInvoices(String accountId);

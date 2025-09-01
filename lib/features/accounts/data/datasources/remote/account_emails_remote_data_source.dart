@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/account_email_model.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/account_email_model.dart';
 
 abstract class AccountEmailsRemoteDataSource {
   Future<List<AccountEmailModel>> getAccountEmails(String accountId);

@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/account_payment_method_model.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/account_payment_method_model.dart';
 
 abstract class AccountPaymentMethodsRemoteDataSource {
   Future<List<AccountPaymentMethodModel>> getAccountPaymentMethods(

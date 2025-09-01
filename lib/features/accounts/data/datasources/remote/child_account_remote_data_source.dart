@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/child_account_model.dart';
+import '../../../../../core/network/dio_client.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/child_account_model.dart';
 
 abstract class ChildAccountRemoteDataSource {
   Future<ChildAccountModel> createChildAccount(ChildAccountModel childAccount);
@@ -10,16 +11,16 @@ abstract class ChildAccountRemoteDataSource {
 
 @Injectable(as: ChildAccountRemoteDataSource)
 class ChildAccountRemoteDataSourceImpl implements ChildAccountRemoteDataSource {
-  final Dio _dio;
+  final DioClient _dioClient;
 
-  ChildAccountRemoteDataSourceImpl(this._dio);
+  ChildAccountRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<ChildAccountModel> createChildAccount(
     ChildAccountModel childAccount,
   ) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.dio.post(
         '/accounts',
         data: childAccount.toJson(),
       );
@@ -81,7 +82,7 @@ class ChildAccountRemoteDataSourceImpl implements ChildAccountRemoteDataSource {
     String parentAccountId,
   ) async {
     try {
-      final response = await _dio.get('/accounts/$parentAccountId/children');
+      final response = await _dioClient.dio.get('/accounts/$parentAccountId/children');
 
       if (response.statusCode == 200) {
         final responseData = response.data;

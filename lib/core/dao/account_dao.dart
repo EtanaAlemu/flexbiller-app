@@ -14,7 +14,8 @@ class AccountDao {
   static const String columnBillCycleDayLocal = 'billCycleDayLocal';
   static const String columnCurrency = 'currency';
   static const String columnParentAccountId = 'parentAccountId';
-  static const String columnIsPaymentDelegatedToParent = 'isPaymentDelegatedToParent';
+  static const String columnIsPaymentDelegatedToParent =
+      'isPaymentDelegatedToParent';
   static const String columnPaymentMethodId = 'paymentMethodId';
   static const String columnReferenceTime = 'referenceTime';
   static const String columnTimeZone = 'timeZone';
@@ -36,7 +37,8 @@ class AccountDao {
   static const String columnSyncStatus = 'syncStatus';
 
   // Create table SQL
-  static String get createTableSQL => '''
+  static String get createTableSQL =>
+      '''
     CREATE TABLE $tableName (
       $columnAccountId TEXT PRIMARY KEY,
       $columnName TEXT NOT NULL,
@@ -80,7 +82,9 @@ class AccountDao {
       columnBillCycleDayLocal: account.billCycleDayLocal,
       columnCurrency: account.currency,
       columnParentAccountId: account.parentAccountId,
-      columnIsPaymentDelegatedToParent: account.isPaymentDelegatedToParent ? 1 : 0,
+      columnIsPaymentDelegatedToParent: account.isPaymentDelegatedToParent
+          ? 1
+          : 0,
       columnPaymentMethodId: account.paymentMethodId,
       columnReferenceTime: account.referenceTime.toIso8601String(),
       columnTimeZone: account.timeZone,
@@ -114,7 +118,9 @@ class AccountDao {
       billCycleDayLocal: map[columnBillCycleDayLocal] as int,
       currency: map[columnCurrency] as String,
       parentAccountId: map[columnParentAccountId] as String?,
-      isPaymentDelegatedToParent: map[columnIsPaymentDelegatedToParent] != null && (map[columnIsPaymentDelegatedToParent] as int) == 1,
+      isPaymentDelegatedToParent:
+          map[columnIsPaymentDelegatedToParent] != null &&
+          (map[columnIsPaymentDelegatedToParent] as int) == 1,
       paymentMethodId: map[columnPaymentMethodId] as String?,
       referenceTime: DateTime.parse(map[columnReferenceTime] as String),
       timeZone: map[columnTimeZone] as String,
@@ -128,7 +134,8 @@ class AccountDao {
       locale: map[columnLocale] as String?,
       phone: map[columnPhone] as String?,
       notes: map[columnNotes] as String?,
-      isMigrated: map[columnIsMigrated] != null && (map[columnIsMigrated] as int) == 1,
+      isMigrated:
+          map[columnIsMigrated] != null && (map[columnIsMigrated] as int) == 1,
       accountBalance: (map[columnAccountBalance] as num?)?.toDouble(),
       accountCBA: (map[columnAccountCBA] as num?)?.toDouble(),
       auditLogs: const [], // Audit logs are stored separately
@@ -138,9 +145,13 @@ class AccountDao {
   // Insert or update account with conflict resolution
   static Future<void> insertOrUpdate(Database db, AccountModel account) async {
     final accountData = toMap(account);
-    
+
     try {
-      await db.insert(tableName, accountData, conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        tableName,
+        accountData,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
     } catch (e) {
       // If insert fails due to constraint, update instead
       await db.update(
@@ -169,7 +180,7 @@ class AccountDao {
       whereArgs: [accountId],
       limit: 1,
     );
-    
+
     if (maps.isNotEmpty) {
       return fromMap(maps.first);
     }
@@ -177,38 +188,49 @@ class AccountDao {
   }
 
   // Get all accounts with optional ordering
-  static Future<List<AccountModel>> getAll(Database db, {String? orderBy}) async {
+  static Future<List<AccountModel>> getAll(
+    Database db, {
+    String? orderBy,
+  }) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
       orderBy: orderBy ?? '$columnName ASC',
     );
-    
+
     return maps.map((map) => fromMap(map)).toList();
   }
 
   // Search accounts by multiple fields
-  static Future<List<AccountModel>> search(Database db, String searchKey) async {
+  static Future<List<AccountModel>> search(
+    Database db,
+    String searchKey,
+  ) async {
     final searchPattern = '%$searchKey%';
-    
+
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
-      where: '$columnName LIKE ? OR $columnEmail LIKE ? OR $columnCompany LIKE ? OR $columnExternalKey LIKE ?',
+      where:
+          '$columnName LIKE ? OR $columnEmail LIKE ? OR $columnCompany LIKE ? OR $columnExternalKey LIKE ?',
       whereArgs: [searchPattern, searchPattern, searchPattern, searchPattern],
       orderBy: '$columnName ASC',
     );
-    
+
     return maps.map((map) => fromMap(map)).toList();
   }
 
   // Get accounts count
   static Future<int> getCount(Database db) async {
-    final result = await db.rawQuery('SELECT COUNT(*) as count FROM $tableName');
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM $tableName',
+    );
     return result.first['count'] as int;
   }
 
   // Check if accounts exist
   static Future<bool> hasAccounts(Database db) async {
-    final result = await db.rawQuery('SELECT COUNT(*) as count FROM $tableName');
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM $tableName',
+    );
     final count = result.first['count'] as int;
     return count > 0;
   }
@@ -231,7 +253,7 @@ class AccountDao {
       limit: limit,
       offset: offset,
     );
-    
+
     return maps.map((map) => fromMap(map)).toList();
   }
 }

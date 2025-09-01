@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/account_overdue_state_model.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/account_overdue_state_model.dart';
 
 abstract class AccountOverdueStateRemoteDataSource {
   Future<AccountOverdueStateModel> getOverdueState(String accountId);

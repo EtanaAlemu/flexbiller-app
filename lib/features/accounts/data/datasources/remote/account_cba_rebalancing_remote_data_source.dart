@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../models/account_cba_rebalancing_model.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../models/account_cba_rebalancing_model.dart';
 
 abstract class AccountCbaRebalancingRemoteDataSource {
   Future<AccountCbaRebalancingModel> rebalanceCba(String accountId);

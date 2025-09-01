@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/account_timeline.dart';
 import '../../domain/repositories/account_timeline_repository.dart';
-import '../datasources/account_timeline_remote_data_source.dart';
+import '../datasources/remote/account_timeline_remote_data_source.dart';
 
 @Injectable(as: AccountTimelineRepository)
 class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
