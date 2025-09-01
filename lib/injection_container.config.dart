@@ -516,11 +516,24 @@ _i174.GetIt $initGetIt(
       gh<_i5.AccountTimelineRemoteDataSource>(),
     ),
   );
+  gh.factory<_i596.ChildAccountRepository>(
+    () => _i311.ChildAccountRepositoryImpl(
+      remoteDataSource: gh<_i1058.ChildAccountRemoteDataSource>(),
+      localDataSource: gh<_i895.ChildAccountLocalDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
+    ),
+  );
   gh.factory<_i844.TagsBloc>(
     () => _i844.TagsBloc(
       gh<_i348.GetAllTagsUseCase>(),
       gh<_i335.SearchTagsUseCase>(),
     ),
+  );
+  gh.factory<_i88.GetChildAccountsUseCase>(
+    () => _i88.GetChildAccountsUseCase(gh<_i596.ChildAccountRepository>()),
+  );
+  gh.factory<_i743.CreateChildAccountUseCase>(
+    () => _i743.CreateChildAccountUseCase(gh<_i596.ChildAccountRepository>()),
   );
   gh.factory<_i1047.CreateGlobalPaymentUseCase>(
     () => _i1047.CreateGlobalPaymentUseCase(
@@ -657,11 +670,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i206.LoginUseCase>(
     () => _i206.LoginUseCase(gh<_i1015.AuthRepository>()),
   );
-  gh.factory<_i596.ChildAccountRepository>(
-    () => _i311.ChildAccountRepositoryImpl(
-      gh<_i1058.ChildAccountRemoteDataSource>(),
-    ),
-  );
   gh.factory<_i982.GetTagDefinitionAuditLogsWithHistoryUseCase>(
     () => _i982.GetTagDefinitionAuditLogsWithHistoryUseCase(
       gh<_i866.TagDefinitionsRepository>(),
@@ -789,12 +797,6 @@ _i174.GetIt $initGetIt(
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
       accountEmailsRepository: gh<_i330.AccountEmailsRepository>(),
     ),
-  );
-  gh.factory<_i88.GetChildAccountsUseCase>(
-    () => _i88.GetChildAccountsUseCase(gh<_i596.ChildAccountRepository>()),
-  );
-  gh.factory<_i743.CreateChildAccountUseCase>(
-    () => _i743.CreateChildAccountUseCase(gh<_i596.ChildAccountRepository>()),
   );
   gh.factory<_i65.TagDefinitionsBloc>(
     () => _i65.TagDefinitionsBloc(

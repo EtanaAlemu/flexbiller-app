@@ -18,7 +18,7 @@ class DatabaseService {
 
     // Ensure accounts table exists after database initialization
     await _ensureAccountsTableExists();
-    
+
     // Ensure child_accounts table exists after database initialization
     await _ensureChildAccountsTableExists();
 

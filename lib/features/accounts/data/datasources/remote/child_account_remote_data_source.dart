@@ -82,7 +82,9 @@ class ChildAccountRemoteDataSourceImpl implements ChildAccountRemoteDataSource {
     String parentAccountId,
   ) async {
     try {
-      final response = await _dioClient.dio.get('/accounts/$parentAccountId/children');
+      final response = await _dioClient.dio.get(
+        '/accounts/$parentAccountId/children',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
