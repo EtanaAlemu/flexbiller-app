@@ -25,6 +25,7 @@ import 'core/services/biometric_auth_service.dart' as _i626;
 import 'core/services/database_service.dart' as _i916;
 import 'core/services/jwt_service.dart' as _i842;
 import 'core/services/secure_storage_service.dart' as _i493;
+import 'core/services/user_persistence_service.dart' as _i915;
 import 'features/accounts/data/datasources/account_audit_logs_remote_data_source.dart'
     as _i276;
 import 'features/accounts/data/datasources/account_blocking_states_remote_data_source.dart'
@@ -53,6 +54,8 @@ import 'features/accounts/data/datasources/account_tags_remote_data_source.dart'
     as _i569;
 import 'features/accounts/data/datasources/account_timeline_remote_data_source.dart'
     as _i817;
+import 'features/accounts/data/datasources/accounts_local_data_source.dart'
+    as _i1023;
 import 'features/accounts/data/datasources/accounts_remote_data_source.dart'
     as _i852;
 import 'features/accounts/data/datasources/child_account_remote_data_source.dart'
@@ -184,6 +187,7 @@ import 'features/accounts/domain/usecases/update_multiple_account_custom_fields_
     as _i435;
 import 'features/accounts/presentation/bloc/accounts_bloc.dart' as _i795;
 import 'features/auth/data/datasources/auth_remote_data_source.dart' as _i767;
+import 'features/auth/data/datasources/user_local_data_source.dart' as _i254;
 import 'features/auth/data/repositories/auth_repository_impl.dart' as _i111;
 import 'features/auth/domain/repositories/auth_repository.dart' as _i1015;
 import 'features/auth/domain/usecases/change_password_usecase.dart' as _i890;
@@ -262,7 +266,6 @@ _i174.GetIt $initGetIt(
   final injectionModule = _$InjectionModule();
   gh.factory<_i842.JwtService>(() => _i842.JwtService());
   gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
-  gh.factory<_i75.NetworkInfoImpl>(() => _i75.NetworkInfoImpl());
   gh.singleton<_i974.Logger>(() => injectionModule.logger);
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
@@ -293,6 +296,7 @@ _i174.GetIt $initGetIt(
   gh.factory<_i626.BiometricAuthService>(
     () => _i626.BiometricAuthService(gh<_i152.LocalAuthentication>()),
   );
+  gh.lazySingleton<_i75.NetworkInfo>(() => _i75.NetworkInfoImpl());
   gh.factory<_i1047.CreateGlobalPaymentUseCase>(
     () => _i1047.CreateGlobalPaymentUseCase(
       gh<_i1054.AccountPaymentsRepository>(),
@@ -389,9 +393,6 @@ _i174.GetIt $initGetIt(
       gh<_i608.AccountCustomFieldsRemoteDataSource>(),
     ),
   );
-  gh.factory<_i42.AccountsRepository>(
-    () => _i395.AccountsRepositoryImpl(gh<_i852.AccountsRemoteDataSource>()),
-  );
   gh.factory<_i1067.AccountCbaRebalancingRepository>(
     () => _i761.AccountCbaRebalancingRepositoryImpl(
       gh<_i951.AccountCbaRebalancingRemoteDataSource>(),
@@ -406,6 +407,9 @@ _i174.GetIt $initGetIt(
     () => _i552.AccountBlockingStatesRepositoryImpl(
       gh<_i819.AccountBlockingStatesRemoteDataSource>(),
     ),
+  );
+  gh.factory<_i1023.AccountsLocalDataSource>(
+    () => _i1023.AccountsLocalDataSourceImpl(gh<_i916.DatabaseService>()),
   );
   gh.factory<_i335.SearchTagsUseCase>(
     () => _i335.SearchTagsUseCase(gh<_i734.TagsRepository>()),
@@ -437,8 +441,18 @@ _i174.GetIt $initGetIt(
   gh.factory<_i553.ExportAccountDataUseCase>(
     () => _i553.ExportAccountDataUseCase(gh<_i930.AccountExportRepository>()),
   );
+  gh.lazySingleton<_i42.AccountsRepository>(
+    () => _i395.AccountsRepositoryImpl(
+      remoteDataSource: gh<_i852.AccountsRemoteDataSource>(),
+      localDataSource: gh<_i1023.AccountsLocalDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
+    ),
+  );
   gh.factory<_i767.AuthRemoteDataSource>(
     () => _i767.AuthRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
+  gh.factory<_i254.UserLocalDataSource>(
+    () => _i254.UserLocalDataSourceImpl(gh<_i916.DatabaseService>()),
   );
   gh.factory<_i400.GetAccountByIdUseCase>(
     () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
@@ -463,6 +477,7 @@ _i174.GetIt $initGetIt(
       gh<_i767.AuthRemoteDataSource>(),
       gh<_i493.SecureStorageService>(),
       gh<_i842.JwtService>(),
+      gh<_i254.UserLocalDataSource>(),
     ),
   );
   gh.factory<_i512.GetOverdueStateUseCase>(
@@ -672,6 +687,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i732.CreateTagDefinitionUseCase>(
     () =>
         _i732.CreateTagDefinitionUseCase(gh<_i866.TagDefinitionsRepository>()),
+  );
+  gh.factory<_i915.UserPersistenceService>(
+    () => _i915.UserPersistenceService(gh<_i254.UserLocalDataSource>()),
   );
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
