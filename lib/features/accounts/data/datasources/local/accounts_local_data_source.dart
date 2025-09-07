@@ -158,11 +158,12 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   ) async {
     try {
       final db = await _databaseService.database;
+      final orderBy = '${params.sortBy} ${params.sortOrder}';
       return await AccountDao.getByQuery(
         db,
         limit: params.limit,
         offset: params.offset,
-        orderBy: 'name ASC',
+        orderBy: orderBy,
       );
     } catch (e) {
       _logger.e('Error getting cached accounts by query: $e');

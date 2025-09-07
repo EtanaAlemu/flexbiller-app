@@ -592,14 +592,18 @@ class AccountsRepositoryImpl implements AccountsRepository {
         final remoteAccounts = await _remoteDataSource.getAccounts(params);
         await _localDataSource.cacheAccounts(remoteAccounts);
 
-        // 🔥 KEY: Update UI with fresh data via stream
-        final freshAccounts = remoteAccounts
+        // 🔥 KEY: Get fresh data from local cache with consistent sorting
+        // This ensures the UI gets data in the same order as initially loaded
+        final freshAccounts = await _localDataSource.getCachedAccountsByQuery(
+          params,
+        );
+        final sortedAccounts = freshAccounts
             .map((model) => model.toEntity())
             .toList();
-        _accountsStreamController.add(freshAccounts);
+        _accountsStreamController.add(sortedAccounts);
 
         _logger.d(
-          'Background sync completed for accounts - UI updated with fresh data',
+          'Background sync completed for accounts - UI updated with fresh data (sorted consistently)',
         );
       }
     } catch (e) {

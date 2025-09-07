@@ -6,6 +6,8 @@ class AccountsQueryParams extends Equatable {
   final bool accountWithBalance;
   final bool accountWithBalanceAndCBA;
   final String audit;
+  final String sortBy;
+  final String sortOrder;
 
   const AccountsQueryParams({
     this.offset = 0,
@@ -13,6 +15,8 @@ class AccountsQueryParams extends Equatable {
     this.accountWithBalance = true,
     this.accountWithBalanceAndCBA = true,
     this.audit = 'FULL',
+    this.sortBy = 'name',
+    this.sortOrder = 'ASC',
   });
 
   AccountsQueryParams copyWith({
@@ -21,6 +25,8 @@ class AccountsQueryParams extends Equatable {
     bool? accountWithBalance,
     bool? accountWithBalanceAndCBA,
     String? audit,
+    String? sortBy,
+    String? sortOrder,
   }) {
     return AccountsQueryParams(
       offset: offset ?? this.offset,
@@ -29,6 +35,8 @@ class AccountsQueryParams extends Equatable {
       accountWithBalanceAndCBA:
           accountWithBalanceAndCBA ?? this.accountWithBalanceAndCBA,
       audit: audit ?? this.audit,
+      sortBy: sortBy ?? this.sortBy,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
@@ -39,6 +47,8 @@ class AccountsQueryParams extends Equatable {
       'accountWithBalance': accountWithBalance.toString(),
       'accountWithBalanceAndCBA': accountWithBalanceAndCBA.toString(),
       'audit': audit,
+      'sortBy': sortBy,
+      'sortOrder': sortOrder,
     };
   }
 
@@ -49,10 +59,12 @@ class AccountsQueryParams extends Equatable {
     accountWithBalance,
     accountWithBalanceAndCBA,
     audit,
+    sortBy,
+    sortOrder,
   ];
 
   @override
   String toString() {
-    return 'AccountsQueryParams(offset: $offset, limit: $limit, accountWithBalance: $accountWithBalance, accountWithBalanceAndCBA: $accountWithBalanceAndCBA, audit: $audit)';
+    return 'AccountsQueryParams(offset: $offset, limit: $limit, accountWithBalance: $accountWithBalance, accountWithBalanceAndCBA: $accountWithBalanceAndCBA, audit: $audit, sortBy: $sortBy, sortOrder: $sortOrder)';
   }
 }

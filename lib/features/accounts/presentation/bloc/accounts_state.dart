@@ -1152,3 +1152,37 @@ class CreateAccountPaymentFailure extends AccountsState {
     currency,
   ];
 }
+
+class AccountsExporting extends AccountsState {
+  final int totalAccounts;
+  final String format;
+
+  const AccountsExporting({required this.totalAccounts, required this.format});
+
+  @override
+  List<Object?> get props => [totalAccounts, format];
+}
+
+class AccountsExportSuccess extends AccountsState {
+  final String filePath;
+  final String fileName;
+  final int exportedCount;
+
+  const AccountsExportSuccess({
+    required this.filePath,
+    required this.fileName,
+    required this.exportedCount,
+  });
+
+  @override
+  List<Object?> get props => [filePath, fileName, exportedCount];
+}
+
+class AccountsExportFailure extends AccountsState {
+  final String message;
+
+  const AccountsExportFailure(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

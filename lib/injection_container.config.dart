@@ -23,6 +23,7 @@ import 'core/services/auth_guard_service.dart' as _i280;
 import 'core/services/authentication_state_service.dart' as _i751;
 import 'core/services/biometric_auth_service.dart' as _i626;
 import 'core/services/database_service.dart' as _i916;
+import 'core/services/export_service.dart' as _i580;
 import 'core/services/jwt_service.dart' as _i842;
 import 'core/services/secure_storage_service.dart' as _i493;
 import 'core/services/user_persistence_service.dart' as _i915;
@@ -287,6 +288,8 @@ _i174.GetIt $initGetIt(
   final gh = _i526.GetItHelper(getIt, environment, environmentFilter);
   final injectionModule = _$InjectionModule();
   gh.factory<_i842.JwtService>(() => _i842.JwtService());
+  gh.factory<_i580.ExportServiceImpl>(() => _i580.ExportServiceImpl());
+  gh.lazySingleton<_i580.ExportService>(() => _i580.ExportServiceImpl());
   gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
   gh.singleton<_i974.Logger>(() => injectionModule.logger);
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
@@ -903,6 +906,7 @@ _i174.GetIt $initGetIt(
       accountTagsRepository: gh<_i363.AccountTagsRepository>(),
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
       accountEmailsRepository: gh<_i330.AccountEmailsRepository>(),
+      exportService: gh<_i580.ExportService>(),
     ),
   );
   return getIt;

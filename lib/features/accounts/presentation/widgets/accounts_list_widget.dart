@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
@@ -331,15 +330,7 @@ class AccountsListWidget extends StatelessWidget {
                     final account = state.accounts[index];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
-                      child: AccountCardWidget(
-                        account: account,
-                        onAccountDeleted: () {
-                          // Refresh the accounts list after deletion
-                          context.read<AccountsBloc>().add(
-                            const LoadAccounts(AccountsQueryParams()),
-                          );
-                        },
-                      ),
+                      child: AccountCardWidget(account: account),
                     );
                   },
                 ),
@@ -360,13 +351,7 @@ class AccountsListWidget extends StatelessWidget {
                 final account = state.accounts[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: AccountCardWidget(
-                    account: account,
-                    onAccountDeleted: () {
-                      // Refresh the accounts list after deletion
-                      context.read<AccountsBloc>().add(const RefreshAccounts());
-                    },
-                  ),
+                  child: AccountCardWidget(account: account),
                 );
               },
             ),
@@ -392,13 +377,7 @@ class AccountsListWidget extends StatelessWidget {
                 final account = state.accounts[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: AccountCardWidget(
-                    account: account,
-                    onAccountDeleted: () {
-                      // Refresh the accounts list after deletion
-                      context.read<AccountsBloc>().add(const RefreshAccounts());
-                    },
-                  ),
+                  child: AccountCardWidget(account: account),
                 );
               },
             ),
@@ -458,13 +437,7 @@ class AccountsListWidget extends StatelessWidget {
                 final account = accounts[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: AccountCardWidget(
-                    account: account,
-                    onAccountDeleted: () {
-                      // Refresh the accounts list after deletion
-                      context.read<AccountsBloc>().add(const RefreshAccounts());
-                    },
-                  ),
+                  child: AccountCardWidget(account: account),
                 );
               },
             ),

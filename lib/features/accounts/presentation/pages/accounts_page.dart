@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/localization/app_strings.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
+import '../../domain/entities/account.dart';
 import '../widgets/accounts_list_widget.dart';
 import '../widgets/accounts_search_widget.dart';
 import '../widgets/accounts_filter_widget.dart';
 import '../widgets/create_account_form.dart';
+import '../widgets/export_accounts_dialog.dart';
+import '../widgets/account_sort_selector_widget.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/accounts_query_params.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:open_file/open_file.dart';
 
 class AccountsPage extends StatelessWidget {
   const AccountsPage({Key? key}) : super(key: key);
@@ -40,11 +44,67 @@ class AccountsPage extends StatelessWidget {
                 duration: Duration(seconds: 1),
               ),
             );
+          } else if (state is AccountsExportSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Successfully exported ${state.exportedCount} accounts to ${state.fileName}',
+                ),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 3),
+                action: SnackBarAction(
+                  label: 'Open',
+                  onPressed: () {
+                    _openOrShareFile(state.filePath, state.fileName, context);
+                  },
+                ),
+              ),
+            );
+          } else if (state is AccountsExportFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
           }
         },
         child: const AccountsView(),
       ),
     );
+  }
+
+  void _openOrShareFile(
+    String filePath,
+    String fileName,
+    BuildContext context,
+  ) async {
+    try {
+      // Try to open the file first
+      final result = await OpenFile.open(filePath);
+
+      if (result.type != ResultType.done) {
+        // If opening fails, show share dialog
+        await Share.shareXFiles([
+          XFile(filePath),
+        ], text: 'Exported accounts: $fileName');
+      }
+    } catch (e) {
+      // If both fail, show share dialog as fallback
+      try {
+        await Share.shareXFiles([
+          XFile(filePath),
+        ], text: 'Exported accounts: $fileName');
+      } catch (shareError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open or share file: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
   }
 }
 
@@ -95,6 +155,42 @@ class AccountsView extends StatelessWidget {
               _showFilterDialog(context);
             },
             tooltip: 'Filter Accounts',
+          ),
+          BlocBuilder<AccountsBloc, AccountsState>(
+            builder: (context, state) {
+              String currentSortBy = 'name';
+              String currentSortOrder = 'ASC';
+
+              // Get current sort parameters from state if available
+              if (state is AccountsLoaded || state is AllAccountsLoaded) {
+                // For now, we'll use default values since we don't store sort params in state
+                // In a real implementation, you'd store these in the state
+                currentSortBy = 'name';
+                currentSortOrder = 'ASC';
+              }
+
+              return AccountSortSelectorWidget(
+                currentSortBy: currentSortBy,
+                currentSortOrder: currentSortOrder,
+                onSortChanged: (sortBy, sortOrder) {
+                  // Trigger a refresh with new sort parameters
+                  final params = AccountsQueryParams(
+                    sortBy: sortBy,
+                    sortOrder: sortOrder,
+                  );
+                  context.read<AccountsBloc>().add(
+                    RefreshAccounts(params: params),
+                  );
+                },
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.download),
+            onPressed: () {
+              _showExportDialog(context);
+            },
+            tooltip: 'Export Accounts',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -171,13 +267,19 @@ class AccountsView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          // Capture the AccountsBloc instance before navigation
+          final accountsBloc = context.read<AccountsBloc>();
+
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => CreateAccountForm(
-                onAccountCreated: () {
-                  // Refresh the accounts list after creation
-                  context.read<AccountsBloc>().add(const RefreshAccounts());
-                },
+              builder: (context) => BlocProvider.value(
+                value: accountsBloc,
+                child: CreateAccountForm(
+                  onAccountCreated: () {
+                    // Refresh the accounts list after creation using the captured instance
+                    accountsBloc.add(const RefreshAccounts());
+                  },
+                ),
               ),
             ),
           );
@@ -193,5 +295,40 @@ class AccountsView extends StatelessWidget {
       context: context,
       builder: (context) => const AccountsFilterWidget(),
     );
+  }
+
+  void _showExportDialog(BuildContext context) {
+    // Get current accounts from the BLoC state
+    final currentState = context.read<AccountsBloc>().state;
+    List<Account> accountsToExport = [];
+
+    if (currentState is AllAccountsLoaded) {
+      accountsToExport = currentState.accounts;
+    } else if (currentState is AccountsLoaded) {
+      accountsToExport = currentState.accounts;
+    } else {
+      // If no accounts are loaded, show a message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please load accounts first before exporting'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => ExportAccountsDialog(accounts: accountsToExport),
+    ).then((result) {
+      if (result != null) {
+        final format = result['format'] as String;
+
+        // Trigger export
+        context.read<AccountsBloc>().add(
+          ExportAccounts(accounts: accountsToExport, format: format),
+        );
+      }
+    });
   }
 }

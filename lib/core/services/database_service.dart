@@ -504,8 +504,12 @@ class DatabaseService {
   Future<void> insertUser(Map<String, dynamic> userData) async {
     try {
       final db = await database;
-      await db.insert('users', userData);
-      _logger.d('User inserted successfully: ${userData['email']}');
+      await db.insert(
+        'users',
+        userData,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      _logger.d('User inserted/updated successfully: ${userData['email']}');
     } catch (e) {
       _logger.e('Error inserting user: $e');
       rethrow;
@@ -606,9 +610,13 @@ class DatabaseService {
   Future<void> insertAuthToken(Map<String, dynamic> tokenData) async {
     try {
       final db = await database;
-      await db.insert('auth_tokens', tokenData);
+      await db.insert(
+        'auth_tokens',
+        tokenData,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
       _logger.d(
-        'Auth token inserted successfully for user: ${tokenData['user_id']}',
+        'Auth token inserted/updated successfully for user: ${tokenData['user_id']}',
       );
     } catch (e) {
       _logger.e('Error inserting auth token: $e');

@@ -7,13 +7,9 @@ import '../bloc/accounts_state.dart';
 
 class DeleteAccountDialog extends StatelessWidget {
   final Account account;
-  final VoidCallback? onAccountDeleted;
 
-  const DeleteAccountDialog({
-    Key? key,
-    required this.account,
-    this.onAccountDeleted,
-  }) : super(key: key);
+  const DeleteAccountDialog({Key? key, required this.account})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +22,6 @@ class DeleteAccountDialog extends StatelessWidget {
               backgroundColor: Colors.green,
             ),
           );
-          onAccountDeleted?.call();
           Navigator.of(context).pop();
         } else if (state is AccountDeletionFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -40,11 +35,7 @@ class DeleteAccountDialog extends StatelessWidget {
       child: AlertDialog(
         title: Row(
           children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              color: Colors.orange,
-              size: 28,
-            ),
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
             const SizedBox(width: 8),
             const Text('Delete Account'),
           ],
@@ -87,7 +78,8 @@ class DeleteAccountDialog extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
-                  if (account.company != null && account.company!.isNotEmpty) ...[
+                  if (account.company != null &&
+                      account.company!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       'Company: ${account.company!}',
@@ -118,7 +110,9 @@ class DeleteAccountDialog extends StatelessWidget {
                 onPressed: state is AccountDeleting
                     ? null
                     : () {
-                        context.read<AccountsBloc>().add(DeleteAccount(account.accountId));
+                        context.read<AccountsBloc>().add(
+                          DeleteAccount(account.accountId),
+                        );
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
@@ -130,7 +124,9 @@ class DeleteAccountDialog extends StatelessWidget {
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Text('Delete Account'),

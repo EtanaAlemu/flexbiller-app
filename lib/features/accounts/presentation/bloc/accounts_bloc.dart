@@ -35,6 +35,7 @@ import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
 import '../../domain/repositories/account_emails_repository.dart';
+import '../../../../core/services/export_service.dart';
 import 'accounts_event.dart';
 import 'accounts_state.dart';
 import 'package:logger/logger.dart';
@@ -77,6 +78,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final AccountTagsRepository _accountTagsRepository;
   final AccountCustomFieldsRepository _accountCustomFieldsRepository;
   final AccountEmailsRepository _accountEmailsRepository;
+  final ExportService _exportService;
 
   // Stream subscriptions for reactive updates from repository
   StreamSubscription<List<Account>>? _accountsStreamSubscription;
@@ -122,6 +124,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required AccountTagsRepository accountTagsRepository,
     required AccountCustomFieldsRepository accountCustomFieldsRepository,
     required AccountEmailsRepository accountEmailsRepository,
+    required ExportService exportService,
   }) : _getAccountsUseCase = getAccountsUseCase,
        _searchAccountsUseCase = searchAccountsUseCase,
        _getAccountByIdUseCase = getAccountByIdUseCase,
@@ -158,6 +161,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
        _accountTagsRepository = accountTagsRepository,
        _accountCustomFieldsRepository = accountCustomFieldsRepository,
        _accountEmailsRepository = accountEmailsRepository,
+       _exportService = exportService,
        super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
     on<GetAllAccounts>(_onGetAllAccounts);
@@ -210,6 +214,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<LoadAccountPayments>(_onLoadAccountPayments);
     on<RefreshAccountPayments>(_onRefreshAccountPayments);
     on<CreateAccountPayment>(_onCreateAccountPayment);
+    on<ExportAccounts>(_onExportAccounts);
 
     // Initialize stream subscriptions for reactive updates from repository
     _initializeStreamSubscriptions();
@@ -1162,18 +1167,41 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     // Listen to accounts list updates from repository background sync
     _accountsStreamSubscription = _accountsRepository.accountsStream.listen(
       (freshAccounts) {
+        // Get current state to maintain pagination and sorting context
+        final currentState = state;
+
         // Emit new state with fresh data from background sync
-        emit(
-          AccountsLoaded(
-            accounts: freshAccounts,
-            currentOffset: 0,
-            totalCount: freshAccounts.length,
-            hasReachedMax: true,
-          ),
-        );
-        // Note: Using print for now since _logger is not accessible in this context
+        // Maintain the same state type as current state for consistency
+        if (currentState is AllAccountsLoaded) {
+          emit(
+            AllAccountsLoaded(
+              accounts: freshAccounts,
+              totalCount: freshAccounts.length,
+            ),
+          );
+        } else if (currentState is AccountsLoaded) {
+          emit(
+            AccountsLoaded(
+              accounts: freshAccounts,
+              currentOffset: currentState.currentOffset,
+              totalCount: freshAccounts.length,
+              hasReachedMax: freshAccounts.length < currentState.totalCount,
+            ),
+          );
+        } else {
+          // Fallback to AccountsLoaded if state is unknown
+          emit(
+            AccountsLoaded(
+              accounts: freshAccounts,
+              currentOffset: 0,
+              totalCount: freshAccounts.length,
+              hasReachedMax: true,
+            ),
+          );
+        }
+
         _logger.d(
-          'UI updated with fresh accounts from background sync: ${freshAccounts.length} accounts',
+          'UI updated with fresh accounts from background sync: ${freshAccounts.length} accounts (maintaining sort order)',
         );
       },
       onError: (error) {
@@ -1195,6 +1223,57 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         _logger.e('Error in account stream: $error');
       },
     );
+  }
+
+  Future<void> _onExportAccounts(
+    ExportAccounts event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      // Store the current state before starting export
+      final currentState = state;
+
+      emit(
+        AccountsExporting(
+          totalAccounts: event.accounts.length,
+          format: event.format,
+        ),
+      );
+
+      String filePath;
+      if (event.format == 'excel') {
+        filePath = await _exportService.exportAccountsToExcel(event.accounts);
+      } else {
+        filePath = await _exportService.exportAccountsToCSV(event.accounts);
+      }
+
+      final fileName = filePath.split('/').last;
+
+      emit(
+        AccountsExportSuccess(
+          filePath: filePath,
+          fileName: fileName,
+          exportedCount: event.accounts.length,
+        ),
+      );
+
+      _logger.i(
+        'Successfully exported ${event.accounts.length} accounts to $filePath',
+      );
+
+      // After a short delay, restore the previous state to show accounts list
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Restore the previous state to keep the accounts list visible
+      if (currentState is AccountsLoaded) {
+        emit(currentState);
+      } else if (currentState is AllAccountsLoaded) {
+        emit(currentState);
+      }
+    } catch (e) {
+      _logger.e('Failed to export accounts: $e');
+      emit(AccountsExportFailure('Failed to export accounts: $e'));
+    }
   }
 
   @override

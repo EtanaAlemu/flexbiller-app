@@ -526,3 +526,13 @@ class CreateAccountPayment extends AccountsEvent {
     properties,
   ];
 }
+
+class ExportAccounts extends AccountsEvent {
+  final List<Account> accounts;
+  final String format; // 'csv' or 'excel'
+
+  const ExportAccounts({required this.accounts, this.format = 'csv'});
+
+  @override
+  List<Object?> get props => [accounts, format];
+}

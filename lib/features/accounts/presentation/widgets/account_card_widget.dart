@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account.dart';
 import '../pages/account_details_page.dart';
 import '../widgets/delete_account_dialog.dart';
+import '../bloc/accounts_bloc.dart';
 
 class AccountCardWidget extends StatelessWidget {
   final Account account;
-  final VoidCallback? onAccountDeleted;
 
-  const AccountCardWidget({
-    Key? key,
-    required this.account,
-    this.onAccountDeleted,
-  }) : super(key: key);
+  const AccountCardWidget({Key? key, required this.account}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +35,7 @@ class AccountCardWidget extends StatelessWidget {
                   CircleAvatar(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     child: Text(
-                      account.displayName.isNotEmpty
-                          ? account.displayName[0].toUpperCase()
-                          : account.email[0].toUpperCase(),
+                      _getInitials(account),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -54,13 +48,16 @@ class AccountCardWidget extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          account.displayName,
+                          account.displayName.isNotEmpty
+                              ? account.displayName
+                              : account.name,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (account.company != null && account.company!.isNotEmpty)
+                        if (account.company != null &&
+                            account.company!.isNotEmpty)
                           Text(
                             account.company!,
                             style: Theme.of(context).textTheme.bodyMedium
@@ -150,11 +147,14 @@ class AccountCardWidget extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () {
+                      // Get the AccountsBloc instance from the current context
+                      final accountsBloc = context.read<AccountsBloc>();
+
                       showDialog(
                         context: context,
-                        builder: (BuildContext context) => DeleteAccountDialog(
-                          account: account,
-                          onAccountDeleted: onAccountDeleted,
+                        builder: (BuildContext context) => BlocProvider.value(
+                          value: accountsBloc,
+                          child: DeleteAccountDialog(account: account),
                         ),
                       );
                     },
@@ -213,5 +213,25 @@ class AccountCardWidget extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _getInitials(Account account) {
+    // Try to get initials from display name first
+    if (account.displayName.isNotEmpty) {
+      return account.displayName[0].toUpperCase();
+    }
+
+    // Fallback to email if display name is empty
+    if (account.email.isNotEmpty) {
+      return account.email[0].toUpperCase();
+    }
+
+    // Fallback to name if both display name and email are empty
+    if (account.name.isNotEmpty) {
+      return account.name[0].toUpperCase();
+    }
+
+    // Final fallback to '?' if all fields are empty
+    return '?';
   }
 }
