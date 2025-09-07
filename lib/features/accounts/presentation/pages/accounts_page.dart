@@ -206,6 +206,13 @@ class AccountsView extends StatelessWidget {
             },
             tooltip: 'Get All Accounts',
           ),
+          IconButton(
+            icon: const Icon(Icons.checklist),
+            onPressed: () {
+              context.read<AccountsBloc>().add(const EnableMultiSelectMode());
+            },
+            tooltip: 'Multi-Select Mode',
+          ),
         ],
       ),
       body: Column(

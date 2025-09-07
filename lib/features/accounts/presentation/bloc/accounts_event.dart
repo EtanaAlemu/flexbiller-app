@@ -536,3 +536,60 @@ class ExportAccounts extends AccountsEvent {
   @override
   List<Object?> get props => [accounts, format];
 }
+
+// Multi-select events
+class EnableMultiSelectMode extends AccountsEvent {
+  const EnableMultiSelectMode();
+}
+
+class DisableMultiSelectMode extends AccountsEvent {
+  const DisableMultiSelectMode();
+}
+
+class SelectAccount extends AccountsEvent {
+  final Account account;
+
+  const SelectAccount(this.account);
+
+  @override
+  List<Object?> get props => [account];
+}
+
+class DeselectAccount extends AccountsEvent {
+  final Account account;
+
+  const DeselectAccount(this.account);
+
+  @override
+  List<Object?> get props => [account];
+}
+
+class SelectAllAccounts extends AccountsEvent {
+  final List<Account> accounts;
+  const SelectAllAccounts({required this.accounts});
+  @override
+  List<Object?> get props => [accounts];
+}
+
+class DeselectAllAccounts extends AccountsEvent {
+  const DeselectAllAccounts();
+}
+
+class BulkDeleteAccounts extends AccountsEvent {
+  final List<Account> accounts;
+
+  const BulkDeleteAccounts({required this.accounts});
+
+  @override
+  List<Object?> get props => [accounts];
+}
+
+class BulkExportAccounts extends AccountsEvent {
+  final List<Account> accounts;
+  final String format; // 'csv' or 'excel'
+
+  const BulkExportAccounts({required this.accounts, this.format = 'csv'});
+
+  @override
+  List<Object?> get props => [accounts, format];
+}

@@ -6,14 +6,86 @@ import '../bloc/accounts_state.dart';
 import '../../domain/entities/account.dart';
 import '../../domain/entities/accounts_query_params.dart';
 import 'account_card_widget.dart';
+import 'selectable_account_card_widget.dart';
+import 'multi_select_action_bar.dart';
 
-class AccountsListWidget extends StatelessWidget {
+class AccountsListWidget extends StatefulWidget {
   const AccountsListWidget({Key? key}) : super(key: key);
+
+  @override
+  State<AccountsListWidget> createState() => _AccountsListWidgetState();
+}
+
+class _AccountsListWidgetState extends State<AccountsListWidget> {
+  List<Account> _cachedAccounts = [];
+  bool _isMultiSelectMode = false;
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AccountsBloc, AccountsState>(
       builder: (context, state) {
+        // Cache accounts when they are loaded
+        if (state is AccountsLoaded) {
+          _cachedAccounts = state.accounts;
+          _isMultiSelectMode = false;
+        } else if (state is AllAccountsLoaded) {
+          _cachedAccounts = state.accounts;
+          _isMultiSelectMode = false;
+        } else if (state is AccountsSearchResults) {
+          _cachedAccounts = state.accounts;
+          _isMultiSelectMode = false;
+        }
+
+        // Handle multi-select states
+        if (state is MultiSelectModeEnabled) {
+          _isMultiSelectMode = true;
+          return _buildMultiSelectMode(context, state.selectedAccounts);
+        }
+
+        if (state is AccountSelected) {
+          _isMultiSelectMode = true;
+          return _buildMultiSelectMode(context, state.selectedAccounts);
+        }
+
+        if (state is AccountDeselected) {
+          _isMultiSelectMode = true;
+          return _buildMultiSelectMode(context, state.selectedAccounts);
+        }
+
+        if (state is AllAccountsSelected) {
+          _isMultiSelectMode = true;
+          return _buildMultiSelectMode(context, state.selectedAccounts);
+        }
+
+        if (state is AllAccountsDeselected) {
+          _isMultiSelectMode = true;
+          return _buildMultiSelectMode(context, []);
+        }
+
+        if (state is BulkAccountsDeleting) {
+          _isMultiSelectMode = true;
+          return _buildMultiSelectMode(context, state.accountsToDelete);
+        }
+
+        if (state is BulkAccountsExporting) {
+          _isMultiSelectMode = true;
+          return _buildMultiSelectMode(context, state.accountsToExport);
+        }
+
+        if (state is BulkAccountsExportSuccess) {
+          _isMultiSelectMode = true;
+          return _buildMultiSelectMode(context, _cachedAccounts);
+        }
+
+        if (state is BulkAccountsExportFailure) {
+          _isMultiSelectMode = true;
+          return _buildMultiSelectMode(context, _cachedAccounts);
+        }
+
+        if (state is MultiSelectModeDisabled) {
+          _isMultiSelectMode = false;
+        }
+
         if (state is AccountsLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -441,6 +513,49 @@ class AccountsListWidget extends StatelessWidget {
                 );
               },
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMultiSelectMode(
+    BuildContext context,
+    List<Account> selectedAccounts,
+  ) {
+    // Use cached accounts instead of trying to get them from current state
+    List<Account> allAccounts = _cachedAccounts;
+    bool isAllSelected =
+        selectedAccounts.length == allAccounts.length && allAccounts.isNotEmpty;
+
+    return Column(
+      children: [
+        // Multi-select action bar
+        MultiSelectActionBar(
+          selectedAccounts: selectedAccounts,
+          isAllSelected: isAllSelected,
+          allAccounts: allAccounts,
+        ),
+        // Accounts list
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            itemCount: allAccounts.length,
+            itemBuilder: (context, index) {
+              final account = allAccounts[index];
+              final isSelected = selectedAccounts.any(
+                (a) => a.id == account.id,
+              );
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: SelectableAccountCardWidget(
+                  account: account,
+                  isSelected: isSelected,
+                  isMultiSelectMode: true,
+                ),
+              );
+            },
           ),
         ),
       ],

@@ -1186,3 +1186,124 @@ class AccountsExportFailure extends AccountsState {
   @override
   List<Object?> get props => [message];
 }
+
+// Multi-select states
+class MultiSelectModeEnabled extends AccountsState {
+  final List<Account> selectedAccounts;
+
+  const MultiSelectModeEnabled({required this.selectedAccounts});
+
+  @override
+  List<Object?> get props => [selectedAccounts];
+}
+
+class MultiSelectModeDisabled extends AccountsState {}
+
+class AccountSelected extends AccountsState {
+  final Account account;
+  final List<Account> selectedAccounts;
+
+  const AccountSelected({
+    required this.account,
+    required this.selectedAccounts,
+  });
+
+  @override
+  List<Object?> get props => [account, selectedAccounts];
+}
+
+class AccountDeselected extends AccountsState {
+  final Account account;
+  final List<Account> selectedAccounts;
+
+  const AccountDeselected({
+    required this.account,
+    required this.selectedAccounts,
+  });
+
+  @override
+  List<Object?> get props => [account, selectedAccounts];
+}
+
+class AllAccountsSelected extends AccountsState {
+  final List<Account> selectedAccounts;
+
+  const AllAccountsSelected({required this.selectedAccounts});
+
+  @override
+  List<Object?> get props => [selectedAccounts];
+}
+
+class AllAccountsDeselected extends AccountsState {}
+
+class BulkAccountsDeleting extends AccountsState {
+  final List<Account> accountsToDelete;
+
+  const BulkAccountsDeleting({required this.accountsToDelete});
+
+  @override
+  List<Object?> get props => [accountsToDelete];
+}
+
+class BulkAccountsDeleted extends AccountsState {
+  final List<String> deletedAccountIds;
+
+  const BulkAccountsDeleted({required this.deletedAccountIds});
+
+  @override
+  List<Object?> get props => [deletedAccountIds];
+}
+
+class BulkAccountsDeletionFailure extends AccountsState {
+  final String message;
+  final List<Account> accountsToDelete;
+
+  const BulkAccountsDeletionFailure({
+    required this.message,
+    required this.accountsToDelete,
+  });
+
+  @override
+  List<Object?> get props => [message, accountsToDelete];
+}
+
+class BulkAccountsExporting extends AccountsState {
+  final List<Account> accountsToExport;
+  final String format;
+
+  const BulkAccountsExporting({
+    required this.accountsToExport,
+    required this.format,
+  });
+
+  @override
+  List<Object?> get props => [accountsToExport, format];
+}
+
+class BulkAccountsExportSuccess extends AccountsState {
+  final String filePath;
+  final String fileName;
+  final int exportedCount;
+
+  const BulkAccountsExportSuccess({
+    required this.filePath,
+    required this.fileName,
+    required this.exportedCount,
+  });
+
+  @override
+  List<Object?> get props => [filePath, fileName, exportedCount];
+}
+
+class BulkAccountsExportFailure extends AccountsState {
+  final String message;
+  final List<Account> accountsToExport;
+
+  const BulkAccountsExportFailure({
+    required this.message,
+    required this.accountsToExport,
+  });
+
+  @override
+  List<Object?> get props => [message, accountsToExport];
+}

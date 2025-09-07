@@ -84,6 +84,10 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   StreamSubscription<List<Account>>? _accountsStreamSubscription;
   StreamSubscription<Account>? _accountStreamSubscription;
 
+  // Multi-select state
+  bool _isMultiSelectMode = false;
+  List<Account> _selectedAccounts = [];
+
   final Logger _logger = Logger();
 
   AccountsBloc({
@@ -215,6 +219,16 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<RefreshAccountPayments>(_onRefreshAccountPayments);
     on<CreateAccountPayment>(_onCreateAccountPayment);
     on<ExportAccounts>(_onExportAccounts);
+
+    // Multi-select event handlers
+    on<EnableMultiSelectMode>(_onEnableMultiSelectMode);
+    on<DisableMultiSelectMode>(_onDisableMultiSelectMode);
+    on<SelectAccount>(_onSelectAccount);
+    on<DeselectAccount>(_onDeselectAccount);
+    on<SelectAllAccounts>(_onSelectAllAccounts);
+    on<DeselectAllAccounts>(_onDeselectAllAccounts);
+    on<BulkDeleteAccounts>(_onBulkDeleteAccounts);
+    on<BulkExportAccounts>(_onBulkExportAccounts);
 
     // Initialize stream subscriptions for reactive updates from repository
     _initializeStreamSubscriptions();
@@ -1170,6 +1184,14 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         // Get current state to maintain pagination and sorting context
         final currentState = state;
 
+        // Don't update if we're in multi-select mode to preserve selection
+        if (_isMultiSelectMode) {
+          _logger.d(
+            'Skipping UI update from background sync - multi-select mode active with ${_selectedAccounts.length} selected accounts',
+          );
+          return;
+        }
+
         // Emit new state with fresh data from background sync
         // Maintain the same state type as current state for consistency
         if (currentState is AllAccountsLoaded) {
@@ -1212,9 +1234,16 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     // Listen to individual account updates from repository background sync
     _accountStreamSubscription = _accountsRepository.accountStream.listen(
       (freshAccount) {
+        // Don't update if we're in multi-select mode to preserve selection
+        if (_isMultiSelectMode) {
+          _logger.d(
+            'Skipping individual account update from background sync - multi-select mode active',
+          );
+          return;
+        }
+
         // Emit new state with fresh account data from background sync
         emit(AccountDetailsLoaded(freshAccount));
-        // Note: Using print for now since _logger is not accessible in this context
         _logger.d(
           'UI updated with fresh account from background sync: ${freshAccount.accountId}',
         );
@@ -1273,6 +1302,170 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     } catch (e) {
       _logger.e('Failed to export accounts: $e');
       emit(AccountsExportFailure('Failed to export accounts: $e'));
+    }
+  }
+
+  // Multi-select event handlers
+  void _onEnableMultiSelectMode(
+    EnableMultiSelectMode event,
+    Emitter<AccountsState> emit,
+  ) {
+    _isMultiSelectMode = true;
+    _selectedAccounts = [];
+    emit(MultiSelectModeEnabled(selectedAccounts: _selectedAccounts));
+  }
+
+  void _onDisableMultiSelectMode(
+    DisableMultiSelectMode event,
+    Emitter<AccountsState> emit,
+  ) {
+    _isMultiSelectMode = false;
+    _selectedAccounts = [];
+    emit(MultiSelectModeDisabled());
+
+    // Refresh accounts list to get latest data after exiting multi-select mode
+    add(LoadAccounts(const AccountsQueryParams()));
+  }
+
+  void _onSelectAccount(SelectAccount event, Emitter<AccountsState> emit) {
+    if (!_selectedAccounts.contains(event.account)) {
+      _selectedAccounts.add(event.account);
+      emit(
+        AccountSelected(
+          account: event.account,
+          selectedAccounts: List.from(_selectedAccounts),
+        ),
+      );
+    }
+  }
+
+  void _onDeselectAccount(DeselectAccount event, Emitter<AccountsState> emit) {
+    _selectedAccounts.remove(event.account);
+    emit(
+      AccountDeselected(
+        account: event.account,
+        selectedAccounts: List.from(_selectedAccounts),
+      ),
+    );
+  }
+
+  void _onSelectAllAccounts(
+    SelectAllAccounts event,
+    Emitter<AccountsState> emit,
+  ) {
+    // Get current accounts from the current state
+    final currentState = state;
+    List<Account> allAccounts = [];
+
+    if (currentState is AccountsLoaded) {
+      allAccounts = currentState.accounts;
+    } else if (currentState is AllAccountsLoaded) {
+      allAccounts = currentState.accounts;
+    } else if (currentState is AccountsSearchResults) {
+      allAccounts = currentState.accounts;
+    } else if (currentState is MultiSelectModeEnabled) {
+      // When in multi-select mode, we need to get accounts from the cached list
+      // The AccountsListWidget should provide the accounts via the event
+      allAccounts = event.accounts;
+    } else if (currentState is AccountSelected) {
+      allAccounts = event.accounts;
+    } else if (currentState is AccountDeselected) {
+      allAccounts = event.accounts;
+    }
+
+    _selectedAccounts = List.from(allAccounts);
+    emit(AllAccountsSelected(selectedAccounts: _selectedAccounts));
+  }
+
+  void _onDeselectAllAccounts(
+    DeselectAllAccounts event,
+    Emitter<AccountsState> emit,
+  ) {
+    _selectedAccounts.clear();
+    emit(AllAccountsDeselected());
+  }
+
+  Future<void> _onBulkDeleteAccounts(
+    BulkDeleteAccounts event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(BulkAccountsDeleting(accountsToDelete: event.accounts));
+
+      final List<String> deletedIds = [];
+      for (final account in event.accounts) {
+        try {
+          await _deleteAccountUseCase(account.id);
+          deletedIds.add(account.id);
+          _selectedAccounts.remove(account);
+        } catch (e) {
+          _logger.e('Failed to delete account ${account.id}: $e');
+        }
+      }
+
+      emit(BulkAccountsDeleted(deletedAccountIds: deletedIds));
+
+      // Refresh the accounts list
+      add(const RefreshAccounts());
+    } catch (e) {
+      _logger.e('Failed to bulk delete accounts: $e');
+      emit(
+        BulkAccountsDeletionFailure(
+          message: 'Failed to delete selected accounts: $e',
+          accountsToDelete: event.accounts,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onBulkExportAccounts(
+    BulkExportAccounts event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(
+        BulkAccountsExporting(
+          accountsToExport: event.accounts,
+          format: event.format,
+        ),
+      );
+
+      String filePath;
+      String fileName;
+
+      if (event.format == 'excel') {
+        filePath = await _exportService.exportAccountsToExcel(event.accounts);
+        fileName =
+            'accounts_export_${DateTime.now().millisecondsSinceEpoch}.xlsx';
+      } else {
+        filePath = await _exportService.exportAccountsToCSV(event.accounts);
+        fileName =
+            'accounts_export_${DateTime.now().millisecondsSinceEpoch}.csv';
+      }
+
+      emit(
+        BulkAccountsExportSuccess(
+          filePath: filePath,
+          fileName: fileName,
+          exportedCount: event.accounts.length,
+        ),
+      );
+
+      // After a short delay, return to multi-select mode
+      await Future.delayed(const Duration(milliseconds: 1500));
+      emit(MultiSelectModeEnabled(selectedAccounts: _selectedAccounts));
+    } catch (e) {
+      _logger.e('Failed to bulk export accounts: $e');
+      emit(
+        BulkAccountsExportFailure(
+          message: 'Failed to export selected accounts: $e',
+          accountsToExport: event.accounts,
+        ),
+      );
+
+      // After a short delay, return to multi-select mode
+      await Future.delayed(const Duration(milliseconds: 1500));
+      emit(MultiSelectModeEnabled(selectedAccounts: _selectedAccounts));
     }
   }
 
