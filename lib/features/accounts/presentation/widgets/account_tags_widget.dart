@@ -74,6 +74,15 @@ class AccountTagsWidget extends StatelessWidget {
                   ),
                   Row(
                     children: [
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () {
+                          context.read<AccountsBloc>().add(
+                            RefreshAccountTags(accountId),
+                          );
+                        },
+                        tooltip: 'Refresh Tags',
+                      ),
                       if (state.tags.isNotEmpty)
                         IconButton(
                           icon: const Icon(Icons.remove_circle_outline),
@@ -123,12 +132,24 @@ class AccountTagsWidget extends StatelessWidget {
                   ),
                 )
               else
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: state.tags.map((tag) {
-                    return _buildTagChip(context, tag);
-                  }).toList(),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<AccountsBloc>().add(
+                        RefreshAccountTags(accountId),
+                      );
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: state.tags.map((tag) {
+                          return _buildTagChip(context, tag);
+                        }).toList(),
+                      ),
+                    ),
+                  ),
                 ),
             ],
           );
@@ -164,6 +185,9 @@ class AccountTagsWidget extends StatelessWidget {
   }
 
   void _showAddTagDialog(BuildContext context) {
+    // Load all available tags first
+    context.read<AccountsBloc>().add(LoadAllTagsForAccount(accountId));
+
     showDialog(
       context: context,
       builder: (context) => AddTagDialog(accountId: accountId),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -10,6 +11,8 @@ import '../../../auth/domain/entities/user.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../auth/presentation/pages/change_password_page.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../widgets/edit_profile_dialog.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -308,6 +311,20 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void _showEditProfileDialog() {
+    if (_currentUser != null) {
+      showDialog(
+        context: context,
+        builder: (context) => EditProfileDialog(user: _currentUser!),
+      ).then((result) {
+        if (result == true) {
+          // Profile was updated successfully, refresh the data
+          _refreshUserData();
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -448,321 +465,353 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24.0),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary,
-                    theme.colorScheme.primary.withValues(alpha: 0.8),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16.0),
-              ),
-              child: Stack(
-                children: [
-                  // Refresh button positioned at top-right
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: IconButton(
-                      onPressed: _refreshUserData,
-                      icon: const Icon(Icons.refresh, color: Colors.white),
-                      tooltip: 'Refresh Profile Data',
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      ),
-                    ),
-                  ),
-                  // Profile content
-                  Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person,
-                          size: 50,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _currentUser!.displayName.isNotEmpty
-                            ? _currentUser!.displayName
-                            : _currentUser!.name,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _currentUser!.email,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          _currentUser!.role.replaceAll('_', ' ').toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is UpdateUserSuccess) {
+          // Update the local user data
+          setState(() {
+            _currentUser = state.user;
+          });
+        }
+      },
+      child: Scaffold(
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Profile Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.primary.withValues(alpha: 0.8),
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Database Information Card
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  borderRadius: BorderRadius.circular(16.0),
+                ),
+                child: Stack(
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.storage, color: Colors.green, size: 24),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Data Source Information',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildInfoRow(
-                      'Data Source',
-                      'Local Database (SQLCipher Encrypted)',
-                    ),
-                    _buildInfoRow(
-                      'Last Sync',
-                      _formatDate(_currentUser!.updatedAt),
-                    ),
-                    _buildInfoRow('Database Status', 'Connected & Encrypted'),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.green.withValues(alpha: 0.3),
-                        ),
-                      ),
+                    // Action buttons positioned at top-right
+                    Positioned(
+                      top: 0,
+                      right: 0,
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
-                            size: 20,
+                          IconButton(
+                            onPressed: _showEditProfileDialog,
+                            icon: const Icon(Icons.edit, color: Colors.white),
+                            tooltip: 'Edit Profile',
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.2,
+                              ),
+                            ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Your profile data is securely stored locally and available offline',
-                              style: TextStyle(
-                                color: Colors.green[700],
-                                fontSize: 14,
+                          IconButton(
+                            onPressed: _refreshUserData,
+                            icon: const Icon(
+                              Icons.refresh,
+                              color: Colors.white,
+                            ),
+                            tooltip: 'Refresh Profile Data',
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.2,
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _showDatabaseStats,
-                        icon: const Icon(Icons.analytics),
-                        label: const Text('View Database Statistics'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.green[700],
-                          side: BorderSide(color: Colors.green[700]!),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Account Information Card
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                    // Profile content
+                    Column(
                       children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: theme.colorScheme.primary,
-                          size: 24,
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.white,
+                          child: Icon(
+                            Icons.person,
+                            size: 50,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Account Information',
-                          style: TextStyle(
-                            fontSize: 18,
+                        const SizedBox(height: 16),
+                        Text(
+                          _currentUser!.displayName.isNotEmpty
+                              ? _currentUser!.displayName
+                              : _currentUser!.name,
+                          style: const TextStyle(
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _currentUser!.email,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _currentUser!.role
+                                .replaceAll('_', ' ')
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    _buildInfoRow('User ID', _currentUser!.id),
-                    _buildInfoRow(
-                      'Account Status',
-                      _currentUser!.emailVerified == true
-                          ? 'Verified'
-                          : 'Pending Verification',
-                    ),
-                    _buildInfoRow(
-                      'Role',
-                      _currentUser!.role.replaceAll('_', ' ').toUpperCase(),
-                    ),
-                    if (_currentUser!.company?.isNotEmpty == true)
-                      _buildInfoRow('Company', _currentUser!.company!),
-                    if (_currentUser!.department?.isNotEmpty == true)
-                      _buildInfoRow('Department', _currentUser!.department!),
-                    if (_currentUser!.position?.isNotEmpty == true)
-                      _buildInfoRow('Position', _currentUser!.position!),
-                    if (_currentUser!.location?.isNotEmpty == true)
-                      _buildInfoRow('Location', _currentUser!.location!),
-                    if (_currentUser!.phone?.isNotEmpty == true)
-                      _buildInfoRow('Phone', _currentUser!.phone!),
-                    _buildInfoRow(
-                      'Member Since',
-                      _formatDate(_currentUser!.createdAt),
-                    ),
-                    _buildInfoRow(
-                      'Last Updated',
-                      _formatDate(_currentUser!.updatedAt),
-                    ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
-            // Account Actions Card
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.settings,
-                          color: theme.colorScheme.primary,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Account Actions',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+              // Database Information Card
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.storage, color: Colors.green, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Data Source Information',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInfoRow(
+                        'Data Source',
+                        'Local Database (SQLCipher Encrypted)',
+                      ),
+                      _buildInfoRow(
+                        'Last Sync',
+                        _formatDate(_currentUser!.updatedAt),
+                      ),
+                      _buildInfoRow('Database Status', 'Connected & Encrypted'),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.green.withValues(alpha: 0.3),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildActionButton(
-                      icon: Icons.lock_outline,
-                      title: 'Change Password',
-                      subtitle: 'Update your account password',
-                      onTap: _navigateToChangePassword,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildActionButton(
-                      icon: Icons.notifications_outlined,
-                      title: 'Notification Settings',
-                      subtitle: 'Manage your notification preferences',
-                      onTap: () {
-                        // TODO: Implement notification settings
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _buildActionButton(
-                      icon: Icons.security,
-                      title: 'Privacy Settings',
-                      subtitle: 'Control your privacy and data',
-                      onTap: () {
-                        // TODO: Implement privacy settings
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _buildThemeMenuButton(),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _logout,
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Logout'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Your profile data is securely stored locally and available offline',
+                                style: TextStyle(
+                                  color: Colors.green[700],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _showDatabaseStats,
+                          icon: const Icon(Icons.analytics),
+                          label: const Text('View Database Statistics'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.green[700],
+                            side: BorderSide(color: Colors.green[700]!),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+
+              // Account Information Card
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: theme.colorScheme.primary,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Account Information',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInfoRow('User ID', _currentUser!.id),
+                      _buildInfoRow(
+                        'Account Status',
+                        _currentUser!.emailVerified == true
+                            ? 'Verified'
+                            : 'Pending Verification',
+                      ),
+                      _buildInfoRow(
+                        'Role',
+                        _currentUser!.role.replaceAll('_', ' ').toUpperCase(),
+                      ),
+                      if (_currentUser!.company?.isNotEmpty == true)
+                        _buildInfoRow('Company', _currentUser!.company!),
+                      if (_currentUser!.department?.isNotEmpty == true)
+                        _buildInfoRow('Department', _currentUser!.department!),
+                      if (_currentUser!.position?.isNotEmpty == true)
+                        _buildInfoRow('Position', _currentUser!.position!),
+                      if (_currentUser!.location?.isNotEmpty == true)
+                        _buildInfoRow('Location', _currentUser!.location!),
+                      if (_currentUser!.phone?.isNotEmpty == true)
+                        _buildInfoRow('Phone', _currentUser!.phone!),
+                      _buildInfoRow(
+                        'Member Since',
+                        _formatDate(_currentUser!.createdAt),
+                      ),
+                      _buildInfoRow(
+                        'Last Updated',
+                        _formatDate(_currentUser!.updatedAt),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Account Actions Card
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.settings,
+                            color: theme.colorScheme.primary,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Account Actions',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildActionButton(
+                        icon: Icons.lock_outline,
+                        title: 'Change Password',
+                        subtitle: 'Update your account password',
+                        onTap: _navigateToChangePassword,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildActionButton(
+                        icon: Icons.notifications_outlined,
+                        title: 'Notification Settings',
+                        subtitle: 'Manage your notification preferences',
+                        onTap: () {
+                          // TODO: Implement notification settings
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildActionButton(
+                        icon: Icons.security,
+                        title: 'Privacy Settings',
+                        subtitle: 'Control your privacy and data',
+                        onTap: () {
+                          // TODO: Implement privacy settings
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildThemeMenuButton(),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _logout,
+                          icon: const Icon(Icons.logout),
+                          label: const Text('Logout'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            side: const BorderSide(color: Colors.red),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

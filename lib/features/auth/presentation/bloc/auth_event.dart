@@ -63,3 +63,9 @@ class ResetPasswordRequested extends AuthEvent {
 
   ResetPasswordRequested({required this.token, required this.newPassword});
 }
+
+class UpdateUserRequested extends AuthEvent {
+  final User user;
+
+  UpdateUserRequested({required this.user});
+}

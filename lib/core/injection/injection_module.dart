@@ -3,7 +3,11 @@ import 'package:injectable/injectable.dart';
 import 'package:dio/dio.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:logger/logger.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../constants/app_constants.dart';
+import '../services/sync_service.dart';
+import '../services/export_service.dart';
+import '../network/network_info.dart';
 
 @module
 abstract class InjectionModule {
@@ -34,4 +38,10 @@ abstract class InjectionModule {
 
   @singleton
   LocalAuthentication get localAuth => LocalAuthentication();
+
+  @singleton
+  Connectivity get connectivity => Connectivity();
+
+  @singleton
+  SyncService syncService(NetworkInfo networkInfo) => SyncService(networkInfo);
 }

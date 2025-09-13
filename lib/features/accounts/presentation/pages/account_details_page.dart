@@ -14,6 +14,11 @@ import '../widgets/account_payments_widget.dart';
 import '../widgets/account_details_card_widget.dart';
 import '../widgets/placeholder_tab_widget.dart';
 import '../widgets/account_loading_section_widget.dart';
+import '../widgets/account_subscriptions_widget.dart';
+import '../widgets/account_invoices_widget.dart';
+import '../widgets/add_payment_method_dialog.dart';
+import '../widgets/add_tags_to_account_dialog.dart';
+import '../widgets/create_account_custom_field_dialog.dart';
 import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
@@ -32,11 +37,37 @@ class AccountDetailsPage extends StatelessWidget {
   }
 }
 
-class AccountDetailsView extends StatelessWidget {
+class AccountDetailsView extends StatefulWidget {
   final String accountId;
 
   const AccountDetailsView({Key? key, required this.accountId})
     : super(key: key);
+
+  @override
+  State<AccountDetailsView> createState() => _AccountDetailsViewState();
+}
+
+class _AccountDetailsViewState extends State<AccountDetailsView>
+    with TickerProviderStateMixin {
+  late TabController _tabController;
+  int _currentTabIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 9, vsync: this);
+    _tabController.addListener(() {
+      setState(() {
+        _currentTabIndex = _tabController.index;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +104,7 @@ class AccountDetailsView extends StatelessWidget {
                   ElevatedButton.icon(
                     onPressed: () {
                       context.read<AccountsBloc>().add(
-                        LoadAccountDetails(accountId),
+                        LoadAccountDetails(widget.accountId),
                       );
                     },
                     icon: const Icon(Icons.refresh),
@@ -101,7 +132,9 @@ class AccountDetailsView extends StatelessWidget {
                   state is TagRemoved ||
                   state is AccountUpdated) {
                 // Refresh account details after changes
-                context.read<AccountsBloc>().add(LoadAccountDetails(accountId));
+                context.read<AccountsBloc>().add(
+                  LoadAccountDetails(widget.accountId),
+                );
               } else if (state is AccountTimelineLoaded ||
                   state is AccountTagsLoaded ||
                   state is AccountCustomFieldsLoaded ||
@@ -143,34 +176,34 @@ class AccountDetailsView extends StatelessWidget {
                       onPressed: () {
                         // Retry loading additional details
                         context.read<AccountsBloc>().add(
-                          LoadAccountTimeline(accountId),
+                          LoadAccountTimeline(widget.accountId),
                         );
                         context.read<AccountsBloc>().add(
-                          LoadAccountTags(accountId),
+                          LoadAccountTags(widget.accountId),
                         );
                         context.read<AccountsBloc>().add(
-                          LoadAllTagsForAccount(accountId),
+                          LoadAllTagsForAccount(widget.accountId),
                         );
                         context.read<AccountsBloc>().add(
-                          LoadAccountCustomFields(accountId),
+                          LoadAccountCustomFields(widget.accountId),
                         );
                         context.read<AccountsBloc>().add(
-                          LoadAccountEmails(accountId),
+                          LoadAccountEmails(widget.accountId),
                         );
                         context.read<AccountsBloc>().add(
-                          LoadAccountBlockingStates(accountId),
+                          LoadAccountBlockingStates(widget.accountId),
                         );
                         context.read<AccountsBloc>().add(
-                          LoadAccountInvoicePayments(accountId),
+                          LoadAccountInvoicePayments(widget.accountId),
                         );
                         context.read<AccountsBloc>().add(
-                          LoadAccountAuditLogs(accountId),
+                          LoadAccountAuditLogs(widget.accountId),
                         );
                         context.read<AccountsBloc>().add(
-                          LoadAccountPaymentMethods(accountId),
+                          LoadAccountPaymentMethods(widget.accountId),
                         );
                         context.read<AccountsBloc>().add(
-                          LoadAccountPayments(accountId),
+                          LoadAccountPayments(widget.accountId),
                         );
                       },
                     ),
@@ -191,7 +224,7 @@ class AccountDetailsView extends StatelessWidget {
                             account: account,
                             onAccountUpdated: () {
                               context.read<AccountsBloc>().add(
-                                LoadAccountDetails(accountId),
+                                LoadAccountDetails(widget.accountId),
                               );
                             },
                           ),
@@ -213,6 +246,7 @@ class AccountDetailsView extends StatelessWidget {
                   ),
                 ],
               ),
+              floatingActionButton: _getFloatingActionButton(context),
               body: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -220,9 +254,9 @@ class AccountDetailsView extends StatelessWidget {
                   children: [
                     _buildAccountHeader(context, account),
                     const SizedBox(height: 24),
-                    AccountLoadingSectionWidget(accountId: accountId),
+                    AccountLoadingSectionWidget(accountId: widget.accountId),
                     const SizedBox(height: 16),
-                    _buildTabsSection(context, accountId, account),
+                    _buildTabsSection(context, widget.accountId, account),
                   ],
                 ),
               ),
@@ -371,48 +405,94 @@ class AccountDetailsView extends StatelessWidget {
     String accountId,
     Account account,
   ) {
-    return DefaultTabController(
-      length: 9,
-      child: Column(
-        children: [
-          TabBar(
-            isScrollable: true,
-            tabs: const [
-              Tab(text: 'Details'),
-              Tab(text: 'Subscriptions'),
-              Tab(text: 'Invoices'),
-              Tab(text: 'Payments'),
-              Tab(text: 'Payment Methods'),
-              Tab(text: 'Tags'),
-              Tab(text: 'Custom Fields'),
-              Tab(text: 'Overdue'),
-              Tab(text: 'Timeline'),
+    return Column(
+      children: [
+        TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: const [
+            Tab(text: 'Details'),
+            Tab(text: 'Subscriptions'),
+            Tab(text: 'Invoices'),
+            Tab(text: 'Payments'),
+            Tab(text: 'Payment Methods'),
+            Tab(text: 'Tags'),
+            Tab(text: 'Custom Fields'),
+            Tab(text: 'Overdue'),
+            Tab(text: 'Timeline'),
+          ],
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(
+            context,
+          ).colorScheme.onSurface.withOpacity(0.6),
+          indicatorColor: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 600,
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              AccountDetailsCardWidget(account: account),
+              AccountSubscriptionsWidget(accountId: accountId),
+              AccountInvoicesWidget(accountId: accountId),
+              AccountPaymentsWidget(accountId: accountId),
+              AccountPaymentMethodsWidget(accountId: accountId),
+              AccountTagsWidget(accountId: accountId),
+              AccountCustomFieldsWidget(accountId: accountId),
+              PlaceholderTabWidget(tabName: 'Overdue'),
+              AccountTimelineWidget(accountId: accountId),
             ],
-            labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor: Theme.of(
-              context,
-            ).colorScheme.onSurface.withOpacity(0.6),
-            indicatorColor: Theme.of(context).colorScheme.primary,
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 600,
-            child: TabBarView(
-              children: [
-                AccountDetailsCardWidget(account: account),
-                PlaceholderTabWidget(tabName: 'Subscriptions'),
-                PlaceholderTabWidget(tabName: 'Invoices'),
-                AccountPaymentsWidget(accountId: accountId),
-                AccountPaymentMethodsWidget(accountId: accountId),
-                AccountTagsWidget(accountId: accountId),
-                AccountCustomFieldsWidget(accountId: accountId),
-                PlaceholderTabWidget(tabName: 'Overdue'),
-                AccountTimelineWidget(accountId: accountId),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+
+  Widget? _getFloatingActionButton(BuildContext context) {
+    switch (_currentTabIndex) {
+      case 4: // Payment Methods tab
+        return FloatingActionButton(
+          onPressed: () => _showAddPaymentMethodDialog(context),
+          tooltip: 'Add Payment Method',
+          child: const Icon(Icons.add),
+        );
+      case 5: // Tags tab
+        return FloatingActionButton(
+          onPressed: () => _showAddTagsDialog(context),
+          tooltip: 'Add Tags',
+          child: const Icon(Icons.add),
+        );
+      case 6: // Custom Fields tab
+        return FloatingActionButton(
+          onPressed: () => _showCreateCustomFieldDialog(context),
+          tooltip: 'Add Custom Field',
+          child: const Icon(Icons.add),
+        );
+      default:
+        return null;
+    }
+  }
+
+  void _showAddPaymentMethodDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AddPaymentMethodDialog(accountId: widget.accountId),
+    );
+  }
+
+  void _showAddTagsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AddTagsToAccountDialog(accountId: widget.accountId),
+    );
+  }
+
+  void _showCreateCustomFieldDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) =>
+          CreateAccountCustomFieldDialog(accountId: widget.accountId),
     );
   }
 }

@@ -1307,3 +1307,142 @@ class BulkAccountsExportFailure extends AccountsState {
   @override
   List<Object?> get props => [message, accountsToExport];
 }
+
+// Subscription states
+class AccountSubscriptionsLoading extends AccountsState {
+  final String accountId;
+
+  const AccountSubscriptionsLoading({required this.accountId});
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AccountSubscriptionsLoaded extends AccountsState {
+  final String accountId;
+  final List<dynamic>
+  subscriptions; // Using dynamic for now, will be Subscription entity
+
+  const AccountSubscriptionsLoaded({
+    required this.accountId,
+    required this.subscriptions,
+  });
+
+  @override
+  List<Object?> get props => [accountId, subscriptions];
+}
+
+class AccountSubscriptionsFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AccountSubscriptionsFailure({
+    required this.message,
+    required this.accountId,
+  });
+
+  @override
+  List<Object?> get props => [message, accountId];
+}
+
+// Invoice states
+class AccountInvoicesLoading extends AccountsState {
+  final String accountId;
+
+  const AccountInvoicesLoading({required this.accountId});
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AccountInvoicesLoaded extends AccountsState {
+  final String accountId;
+  final List<dynamic>
+  invoices; // Using dynamic for now, will be AccountInvoice entity
+
+  const AccountInvoicesLoaded({
+    required this.accountId,
+    required this.invoices,
+  });
+
+  @override
+  List<Object?> get props => [accountId, invoices];
+}
+
+class AccountInvoicesFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AccountInvoicesFailure({
+    required this.message,
+    required this.accountId,
+  });
+
+  @override
+  List<Object?> get props => [message, accountId];
+}
+
+class AccountPaymentCreating extends AccountsState {
+  final String accountId;
+
+  const AccountPaymentCreating({required this.accountId});
+
+  @override
+  List<Object?> get props => [accountId];
+}
+
+class AccountPaymentCreationFailure extends AccountsState {
+  final String message;
+  final String accountId;
+
+  const AccountPaymentCreationFailure({
+    required this.message,
+    required this.accountId,
+  });
+
+  @override
+  List<Object?> get props => [message, accountId];
+}
+
+class AccountPaymentRefunding extends AccountsState {
+  final String accountId;
+  final String paymentId;
+
+  const AccountPaymentRefunding({
+    required this.accountId,
+    required this.paymentId,
+  });
+
+  @override
+  List<Object?> get props => [accountId, paymentId];
+}
+
+class AccountPaymentRefunded extends AccountsState {
+  final String accountId;
+  final String paymentId;
+  final dynamic refund;
+
+  const AccountPaymentRefunded({
+    required this.accountId,
+    required this.paymentId,
+    required this.refund,
+  });
+
+  @override
+  List<Object?> get props => [accountId, paymentId, refund];
+}
+
+class AccountPaymentRefundFailure extends AccountsState {
+  final String message;
+  final String accountId;
+  final String paymentId;
+
+  const AccountPaymentRefundFailure({
+    required this.message,
+    required this.accountId,
+    required this.paymentId,
+  });
+
+  @override
+  List<Object?> get props => [message, accountId, paymentId];
+}

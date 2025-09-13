@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../../core/dao/account_dao.dart';
@@ -19,12 +20,31 @@ abstract class AccountsLocalDataSource {
   Future<List<AccountModel>> getCachedAccountsByQuery(
     AccountsQueryParams params,
   );
+
+  // Reactive stream methods for real-time updates
+  Stream<List<AccountModel>> watchAccounts();
+  Stream<AccountModel?> watchAccountById(String accountId);
+  Stream<List<AccountModel>> watchAccountsByQuery(AccountsQueryParams params);
+  Stream<List<AccountModel>> watchSearchResults(String searchKey);
 }
 
 @Injectable(as: AccountsLocalDataSource)
 class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   final DatabaseService _databaseService;
   final Logger _logger = Logger();
+
+  // Stream controllers for reactive updates
+  final StreamController<List<AccountModel>> _accountsStreamController =
+      StreamController<List<AccountModel>>.broadcast();
+  final StreamController<Map<String, AccountModel>>
+  _accountByIdStreamController =
+      StreamController<Map<String, AccountModel>>.broadcast();
+  final StreamController<Map<String, List<AccountModel>>>
+  _queryStreamController =
+      StreamController<Map<String, List<AccountModel>>>.broadcast();
+  final StreamController<Map<String, List<AccountModel>>>
+  _searchStreamController =
+      StreamController<Map<String, List<AccountModel>>>.broadcast();
 
   AccountsLocalDataSourceImpl(this._databaseService);
 
@@ -36,6 +56,9 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
         await AccountDao.insertOrUpdate(db, account);
       }
       _logger.d('Cached ${accounts.length} accounts successfully');
+
+      // Emit to streams for reactive updates
+      _emitAccountsUpdate();
     } catch (e) {
       _logger.e('Error caching accounts: $e');
       rethrow;
@@ -88,6 +111,9 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
       final db = await _databaseService.database;
       await AccountDao.insertOrUpdate(db, account);
       _logger.d('Cached account successfully: ${account.accountId}');
+
+      // Emit only individual account update, not accounts list update
+      _emitAccountUpdate(account);
     } catch (e) {
       _logger.e('Error caching account: $e');
       rethrow;
@@ -100,6 +126,9 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
       final db = await _databaseService.database;
       await AccountDao.insertOrUpdate(db, account);
       _logger.d('Updated cached account: ${account.accountId}');
+
+      // Emit only individual account update, not accounts list update
+      _emitAccountUpdate(account);
     } catch (e) {
       _logger.e('Error updating cached account: $e');
       rethrow;
@@ -112,6 +141,9 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
       final db = await _databaseService.database;
       await AccountDao.deleteById(db, accountId);
       _logger.d('Deleted cached account: $accountId');
+
+      // Emit only individual account deletion, not accounts list update
+      _emitAccountDeletion(accountId);
     } catch (e) {
       _logger.e('Error deleting cached account: $e');
       rethrow;
@@ -124,6 +156,9 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
       final db = await _databaseService.database;
       await AccountDao.clearAll(db);
       _logger.d('Cleared all cached accounts');
+
+      // Emit to streams for reactive updates
+      _emitAccountsUpdate();
     } catch (e) {
       _logger.e('Error clearing cached accounts: $e');
       rethrow;
@@ -176,5 +211,76 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
 
       rethrow;
     }
+  }
+
+  // Stream implementations for reactive updates
+  @override
+  Stream<List<AccountModel>> watchAccounts() {
+    return _accountsStreamController.stream;
+  }
+
+  @override
+  Stream<AccountModel?> watchAccountById(String accountId) {
+    return _accountByIdStreamController.stream
+        .map((accountMap) => accountMap[accountId])
+        .distinct();
+  }
+
+  @override
+  Stream<List<AccountModel>> watchAccountsByQuery(AccountsQueryParams params) {
+    final queryKey = _getQueryKey(params);
+    return _queryStreamController.stream
+        .map((queryMap) => queryMap[queryKey] ?? [])
+        .distinct();
+  }
+
+  @override
+  Stream<List<AccountModel>> watchSearchResults(String searchKey) {
+    return _searchStreamController.stream
+        .map((searchMap) => searchMap[searchKey] ?? [])
+        .distinct();
+  }
+
+  // Helper methods for emitting updates
+  Future<void> _emitAccountsUpdate() async {
+    try {
+      final accounts = await getCachedAccounts();
+      _accountsStreamController.add(accounts);
+      _logger.d('Emitted accounts update: ${accounts.length} accounts');
+    } catch (e) {
+      _logger.e('Error emitting accounts update: $e');
+    }
+  }
+
+  Future<void> _emitAccountUpdate(AccountModel account) async {
+    try {
+      final accountMap = {account.accountId: account};
+      _accountByIdStreamController.add(accountMap);
+      _logger.d('Emitted account update: ${account.accountId}');
+    } catch (e) {
+      _logger.e('Error emitting account update: $e');
+    }
+  }
+
+  Future<void> _emitAccountDeletion(String accountId) async {
+    try {
+      final accountMap = <String, AccountModel>{};
+      _accountByIdStreamController.add(accountMap);
+      _logger.d('Emitted account deletion: $accountId');
+    } catch (e) {
+      _logger.e('Error emitting account deletion: $e');
+    }
+  }
+
+  String _getQueryKey(AccountsQueryParams params) {
+    return '${params.offset}_${params.limit}_${params.sortBy}_${params.sortOrder}';
+  }
+
+  // Clean up stream controllers
+  void dispose() {
+    _accountsStreamController.close();
+    _accountByIdStreamController.close();
+    _queryStreamController.close();
+    _searchStreamController.close();
   }
 }

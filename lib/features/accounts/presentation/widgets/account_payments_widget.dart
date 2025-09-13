@@ -1,529 +1,575 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/account_payment.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
-import 'create_account_payment_form.dart';
+import '../pages/payment_detail_page.dart';
 
-class AccountPaymentsWidget extends StatelessWidget {
+class AccountPaymentsWidget extends StatefulWidget {
   final String accountId;
 
   const AccountPaymentsWidget({Key? key, required this.accountId})
     : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
-      builder: (context, state) {                                                                                                                       
-        if (state is AccountPaymentsLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  State<AccountPaymentsWidget> createState() => _AccountPaymentsWidgetState();
+}
 
-        if (state is AccountPaymentsFailure) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load payments',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  state.message,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<AccountsBloc>().add(
-                      LoadAccountPayments(accountId),
-                    );
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
+class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
+  final _amountController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _notesController = TextEditingController();
+  String _selectedPaymentType = 'credit';
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _descriptionController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AccountsBloc, AccountsState>(
+      listener: (context, state) {
+        if (state is AccountPaymentCreated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment created successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          _clearForm();
+        } else if (state is AccountPaymentCreationFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Payment creation failed: ${state.message}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is AccountPaymentRefunded) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment refunded successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        } else if (state is AccountPaymentRefundFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Refund failed: ${state.message}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
             ),
           );
         }
+      },
+      child: BlocBuilder<AccountsBloc, AccountsState>(
+        builder: (context, state) {
+          if (state is AccountPaymentsLoading) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
 
-        if (state is AccountPaymentsLoaded) {
-          return Scaffold(
-            body: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          if (state is AccountPaymentsFailure) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
                     Text(
-                      'Payments (${state.payments.length})',
+                      'Failed to load payments',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
+                    const SizedBox(height: 8),
+                    Text(
+                      state.message,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
                       onPressed: () {
                         context.read<AccountsBloc>().add(
-                          RefreshAccountPayments(accountId),
+                          LoadAccountPayments(widget.accountId),
                         );
                       },
-                      tooltip: 'Refresh Payments',
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                if (state.payments.isEmpty)
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.payment_outlined,
-                          size: 64,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No payments found',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'This account has no payment history',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => _showCreatePaymentForm(context),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Create First Payment'),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: state.payments.length,
-                      itemBuilder: (context, index) {
-                        final payment = state.payments[index];
-                        return _buildPaymentCard(context, payment);
-                      },
-                    ),
-                  ),
-              ],
-            ),
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: () => _showCreatePaymentForm(context),
-              icon: const Icon(Icons.add),
-              label: const Text('New Payment'),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            ),
-          );
-        }
+              ),
+            );
+          }
 
-        return const Center(child: Text('No payment data available'));
-      },
-    );
-  }
-
-  void _showCreatePaymentForm(BuildContext context) {
-    // For now, we'll show a placeholder. In a real app, you'd get the available payment methods
-    // from the account payment methods state or pass them as a parameter
-    final availablePaymentMethods = ['placeholder-payment-method-id'];
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CreateAccountPaymentForm(
-          accountId: accountId,
-          availablePaymentMethods: availablePaymentMethods,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPaymentCard(BuildContext context, AccountPayment payment) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+          if (state is AccountPaymentsLoaded) {
+            return Column(
               children: [
-                Icon(
-                  _getPaymentStatusIcon(payment.paymentStatus),
-                  color: _getPaymentStatusColor(payment.paymentStatus),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                // Header with create payment button
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
                     children: [
-                      Text(
-                        '${payment.currency} ${payment.amount.toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        payment.paymentType,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.6),
+                      Expanded(
+                        child: Text(
+                          'Payments (${state.payments.length})',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _showCreatePaymentDialog(context),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Create Payment'),
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getPaymentStatusColor(
-                      payment.paymentStatus,
-                    ).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    payment.paymentStatus,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: _getPaymentStatusColor(payment.paymentStatus),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  Icons.schedule,
-                  size: 16,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Date: ${_formatDateTime(payment.paymentDate)}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(width: 16),
-                if (payment.processedDate != null) ...[
-                  Icon(
-                    Icons.check_circle,
-                    size: 16,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Processed: ${_formatDateTime(payment.processedDate!)}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            if (payment.paymentMethodName != null ||
-                payment.paymentMethodType != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.payment,
-                    size: 16,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                  const SizedBox(width: 4),
-                  if (payment.paymentMethodName != null) ...[
-                    Text(
-                      payment.paymentMethodName!,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  if (payment.paymentMethodType != null) ...[
-                    Text(
-                      '(${payment.paymentMethodType})',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ],
-            if (payment.transactionId != null ||
-                payment.referenceNumber != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  if (payment.transactionId != null) ...[
-                    Icon(
-                      Icons.receipt,
-                      size: 16,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'TXN: ${payment.transactionId}',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
-                    ),
-                    const SizedBox(width: 16),
-                  ],
-                  if (payment.referenceNumber != null) ...[
-                    Icon(
-                      Icons.tag,
-                      size: 16,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Ref: ${payment.referenceNumber}',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
-                    ),
-                  ],
-                ],
-              ),
-            ],
-            if (payment.description != null || payment.notes != null) ...[
-              const SizedBox(height: 8),
-              if (payment.description != null) ...[
-                Row(
-                  children: [
-                    Icon(
-                      Icons.description,
-                      size: 16,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        payment.description!,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-              ],
-              if (payment.notes != null) ...[
-                Row(
-                  children: [
-                    Icon(
-                      Icons.note,
-                      size: 16,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        payment.notes!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.6),
-                          fontStyle: FontStyle.italic,
+                // Payments list
+                Expanded(
+                  child: state.payments.isEmpty
+                      ? _buildEmptyState(context)
+                      : RefreshIndicator(
+                          onRefresh: () async {
+                            context.read<AccountsBloc>().add(
+                              RefreshAccountPayments(widget.accountId),
+                            );
+                          },
+                          child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            itemCount: state.payments.length,
+                            itemBuilder: (context, index) {
+                              final payment = state.payments[index];
+                              return _buildPaymentCard(context, payment);
+                            },
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
-            ],
-            if (payment.isRefunded) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.undo, size: 16, color: Colors.orange),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Refunded',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          if (payment.refundedAmount != null) ...[
-                            Text(
-                              'Amount: ${payment.currency} ${payment.refundedAmount!.toStringAsFixed(2)}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: Colors.orange),
-                            ),
-                          ],
-                          if (payment.refundReason != null) ...[
-                            Text(
-                              'Reason: ${payment.refundReason}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: Colors.orange),
-                            ),
-                          ],
-                          if (payment.refundedDate != null) ...[
-                            Text(
-                              'Date: ${_formatDateTime(payment.refundedDate!)}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: Colors.orange),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (payment.failureReason != null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.error.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.error.withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Payment Failed',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context).colorScheme.error,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          Text(
-                            payment.failureReason!,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                          ),
-                          if (payment.gatewayResponse != null) ...[
-                            Text(
-                              'Gateway: ${payment.gatewayResponse}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context).colorScheme.error,
-                                    fontFamily: 'monospace',
-                                  ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            );
+          }
+
+          // Initial state - load payments
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<AccountsBloc>().add(
+              LoadAccountPayments(widget.accountId),
+            );
+          });
+
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.payment_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No payments found',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This account doesn\'t have any payments yet.',
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _showCreatePaymentDialog(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Create First Payment'),
+            ),
           ],
         ),
       ),
     );
   }
 
-  IconData _getPaymentStatusIcon(String status) {
-    switch (status.toUpperCase()) {
-      case 'SUCCESSFUL':
-      case 'COMPLETED':
-        return Icons.check_circle;
-      case 'PENDING':
-        return Icons.schedule;
-      case 'FAILED':
-      case 'DECLINED':
-        return Icons.error;
-      case 'CANCELLED':
-        return Icons.cancel;
-      case 'REFUNDED':
-        return Icons.undo;
-      case 'PROCESSING':
-        return Icons.sync;
-      default:
-        return Icons.payment;
-    }
+  Widget _buildPaymentCard(BuildContext context, dynamic payment) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12.0),
+      child: InkWell(
+        onTap: () => _showPaymentDetails(context, payment),
+        borderRadius: BorderRadius.circular(8.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      payment.paymentType ?? 'Unknown Type',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(payment.paymentStatus),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      payment.paymentStatus ?? 'Unknown',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Amount: ${_formatCurrency(payment.amount, payment.currency)}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  if (payment.isRefunded == true)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Refunded',
+                        style: TextStyle(
+                          color: Colors.orange[800],
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              if (payment.paymentMethodName != null) ...[
+                Text(
+                  'Method: ${payment.paymentMethodName}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ],
+              if (payment.paymentDate != null) ...[
+                Text(
+                  'Date: ${_formatDate(payment.paymentDate)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ],
+              if (payment.description != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  payment.description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                    fontStyle: FontStyle.italic,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  if (payment.paymentStatus == 'completed' &&
+                      payment.isRefunded != true)
+                    TextButton.icon(
+                      onPressed: () => _showRefundDialog(context, payment),
+                      icon: const Icon(Icons.undo, size: 16),
+                      label: const Text('Refund'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.orange,
+                      ),
+                    ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: () => _showPaymentDetails(context, payment),
+                    icon: const Icon(Icons.info_outline, size: 16),
+                    label: const Text('Details'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  Color _getPaymentStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'SUCCESSFUL':
-      case 'COMPLETED':
+  void _showCreatePaymentDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Create Payment'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: _selectedPaymentType,
+                decoration: const InputDecoration(
+                  labelText: 'Payment Type',
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'credit', child: Text('Credit')),
+                  DropdownMenuItem(value: 'debit', child: Text('Debit')),
+                  DropdownMenuItem(value: 'refund', child: Text('Refund')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedPaymentType = value ?? 'credit';
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _amountController,
+                decoration: const InputDecoration(
+                  labelText: 'Amount',
+                  border: OutlineInputBorder(),
+                  prefixText: '\$',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _notesController,
+                decoration: const InputDecoration(
+                  labelText: 'Notes (Optional)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => _createPayment(context),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRefundDialog(BuildContext context, dynamic payment) {
+    final refundController = TextEditingController();
+    final reasonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Refund Payment'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Payment: ${_formatCurrency(payment.amount, payment.currency)}',
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: refundController,
+              decoration: const InputDecoration(
+                labelText: 'Refund Amount',
+                border: OutlineInputBorder(),
+                prefixText: '\$',
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: reasonController,
+              decoration: const InputDecoration(
+                labelText: 'Refund Reason',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final refundAmount =
+                  double.tryParse(refundController.text) ?? 0.0;
+              if (refundAmount > 0) {
+                // TODO: Implement refund functionality when RefundAccountPayment event is available
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Refund functionality coming soon'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Refund'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentDetails(BuildContext context, dynamic payment) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            PaymentDetailPage(payment: payment, accountId: widget.accountId),
+      ),
+    );
+  }
+
+  void _createPayment(BuildContext context) {
+    final amount = double.tryParse(_amountController.text);
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid amount'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    context.read<AccountsBloc>().add(
+      CreateAccountPayment(
+        accountId: widget.accountId,
+        paymentMethodId: 'default', // In a real app, this would be selected
+        transactionType: _selectedPaymentType,
+        amount: amount,
+        currency: 'USD',
+        effectiveDate: DateTime.now(),
+        description: _descriptionController.text,
+        properties: {'notes': _notesController.text},
+      ),
+    );
+    Navigator.pop(context);
+  }
+
+  void _clearForm() {
+    _amountController.clear();
+    _descriptionController.clear();
+    _notesController.clear();
+    _selectedPaymentType = 'credit';
+  }
+
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+      case 'success':
         return Colors.green;
-      case 'PENDING':
-      case 'PROCESSING':
+      case 'pending':
         return Colors.orange;
-      case 'FAILED':
-      case 'DECLINED':
+      case 'failed':
+      case 'error':
         return Colors.red;
-      case 'CANCELLED':
+      case 'cancelled':
         return Colors.grey;
-      case 'REFUNDED':
-        return Colors.orange;
+      case 'processing':
+        return Colors.blue;
       default:
         return Colors.grey;
     }
   }
 
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+  String _formatCurrency(dynamic amount, String? currency) {
+    if (amount == null) return 'N/A';
+    final currencySymbol = currency == 'USD' ? '\$' : currency ?? '';
+    return '$currencySymbol${amount.toStringAsFixed(2)}';
+  }
+
+  String _formatDate(dynamic date) {
+    if (date == null) return 'Unknown';
+    try {
+      if (date is String) {
+        final parsedDate = DateTime.parse(date);
+        return '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}';
+      } else if (date is DateTime) {
+        return '${date.day}/${date.month}/${date.year}';
+      }
+    } catch (e) {
+      return 'Invalid date';
+    }
+    return 'Unknown';
   }
 }

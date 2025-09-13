@@ -103,3 +103,18 @@ class ResetPasswordFailure extends AuthState {
 
   ResetPasswordFailure(this.message);
 }
+
+class UpdateUserLoading extends AuthState {}
+
+class UpdateUserSuccess extends AuthState {
+  final User user;
+  final String message;
+
+  UpdateUserSuccess({required this.user, required this.message});
+}
+
+class UpdateUserFailure extends AuthState {
+  final String message;
+
+  UpdateUserFailure(this.message);
+}

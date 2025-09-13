@@ -4,11 +4,13 @@ import '../../domain/entities/account_payment_method.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
+import '../pages/payment_method_detail_page.dart';
 
 class AccountPaymentMethodsWidget extends StatelessWidget {
   final String accountId;
 
-  const AccountPaymentMethodsWidget({Key? key, required this.accountId}) : super(key: key);
+  const AccountPaymentMethodsWidget({Key? key, required this.accountId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +44,9 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    context.read<AccountsBloc>().add(LoadAccountPaymentMethods(accountId));
+                    context.read<AccountsBloc>().add(
+                      LoadAccountPaymentMethods(accountId),
+                    );
                   },
                   child: const Text('Retry'),
                 ),
@@ -65,14 +69,18 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     onPressed: () {
-                      context.read<AccountsBloc>().add(RefreshAccountPaymentMethods(accountId));
+                      context.read<AccountsBloc>().add(
+                        RefreshAccountPaymentMethods(accountId),
+                      );
                     },
                     tooltip: 'Refresh Payment Methods',
                   ),
                   IconButton(
                     icon: const Icon(Icons.sync),
                     onPressed: () {
-                      context.read<AccountsBloc>().add(RefreshPaymentMethods(accountId));
+                      context.read<AccountsBloc>().add(
+                        RefreshPaymentMethods(accountId),
+                      );
                     },
                     tooltip: 'Sync with External Processors',
                   ),
@@ -87,7 +95,9 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                       Icon(
                         Icons.payment_outlined,
                         size: 64,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.5),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -103,13 +113,19 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
                         onPressed: () {
-                          context.read<AccountsBloc>().add(RefreshPaymentMethods(accountId));
+                          context.read<AccountsBloc>().add(
+                            RefreshPaymentMethods(accountId),
+                          );
                         },
                         icon: const Icon(Icons.sync),
                         label: const Text('Sync Payment Methods'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
                         ),
                       ),
                     ],
@@ -174,7 +190,10 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
@@ -182,18 +201,15 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.check_circle,
-                          size: 16,
-                          color: Colors.green,
-                        ),
+                        Icon(Icons.check_circle, size: 16, color: Colors.green),
                         const SizedBox(width: 4),
                         Text(
                           'Synced',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ],
                     ),
@@ -202,14 +218,18 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     onPressed: () {
-                      context.read<AccountsBloc>().add(RefreshAccountPaymentMethods(accountId));
+                      context.read<AccountsBloc>().add(
+                        RefreshAccountPaymentMethods(accountId),
+                      );
                     },
                     tooltip: 'Refresh Payment Methods',
                   ),
                   IconButton(
                     icon: const Icon(Icons.sync),
                     onPressed: () {
-                      context.read<AccountsBloc>().add(RefreshPaymentMethods(accountId));
+                      context.read<AccountsBloc>().add(
+                        RefreshPaymentMethods(accountId),
+                      );
                     },
                     tooltip: 'Sync with External Processors',
                   ),
@@ -224,7 +244,9 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                       Icon(
                         Icons.payment_outlined,
                         size: 64,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.5),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -268,14 +290,18 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     onPressed: () {
-                      context.read<AccountsBloc>().add(RefreshAccountPaymentMethods(accountId));
+                      context.read<AccountsBloc>().add(
+                        RefreshAccountPaymentMethods(accountId),
+                      );
                     },
                     tooltip: 'Refresh Payment Methods',
                   ),
                   IconButton(
                     icon: const Icon(Icons.sync),
                     onPressed: () {
-                      context.read<AccountsBloc>().add(RefreshPaymentMethods(accountId));
+                      context.read<AccountsBloc>().add(
+                        RefreshPaymentMethods(accountId),
+                      );
                     },
                     tooltip: 'Sync with External Processors',
                   ),
@@ -305,13 +331,17 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () {
-                        context.read<AccountsBloc>().add(RefreshPaymentMethods(accountId));
+                        context.read<AccountsBloc>().add(
+                          RefreshPaymentMethods(accountId),
+                        );
                       },
                       icon: const Icon(Icons.sync),
                       label: const Text('Retry Sync'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary,
                       ),
                     ),
                   ],
@@ -326,215 +356,273 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentMethodCard(BuildContext context, AccountPaymentMethod method) {
+  Widget _buildPaymentMethodCard(
+    BuildContext context,
+    AccountPaymentMethod method,
+  ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  _getPaymentMethodIcon(method.paymentMethodType),
-                  color: _getPaymentMethodColor(method.paymentMethodType),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    method.paymentMethodName,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                if (method.isDefault)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Default',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                if (!method.isActive)
-                  Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.error.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Inactive',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  Icons.category,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Type: ${method.paymentMethodType}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(width: 16),
-                Icon(
-                  Icons.schedule,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Added: ${_formatDateTime(method.createdAt)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-            if (method.cardLastFourDigits != null || method.cardBrand != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  if (method.cardBrand != null) ...[
-                    Icon(
-                      Icons.credit_card,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${method.cardBrand}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  if (method.cardLastFourDigits != null) ...[
-                    Text(
-                      '•••• ${method.cardLastFourDigits}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    if (method.cardExpiryMonth != null && method.cardExpiryYear != null) ...[
-                      const SizedBox(width: 8),
-                      Text(
-                        'Expires: ${method.cardExpiryMonth}/${method.cardExpiryYear}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                        ),
-                      ),
-                    ],
-                  ],
-                ],
-              ),
-            ],
-            if (method.bankName != null || method.bankAccountLastFourDigits != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  if (method.bankName != null) ...[
-                    Icon(
-                      Icons.account_balance,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${method.bankName}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  if (method.bankAccountLastFourDigits != null) ...[
-                    Text(
-                      '•••• ${method.bankAccountLastFourDigits}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    if (method.bankAccountType != null) ...[
-                      const SizedBox(width: 8),
-                      Text(
-                        '(${method.bankAccountType})',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                        ),
-                      ),
-                    ],
-                  ],
-                ],
-              ),
-            ],
-            if (method.paypalEmail != null) ...[
-              const SizedBox(height: 8),
+      child: InkWell(
+        onTap: () => _showPaymentMethodDetails(context, method),
+        borderRadius: BorderRadius.circular(8.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Row(
                 children: [
                   Icon(
-                    Icons.email,
+                    _getPaymentMethodIcon(method.paymentMethodType),
+                    color: _getPaymentMethodColor(method.paymentMethodType),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      method.paymentMethodName,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  if (method.isDefault)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Default',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  if (!method.isActive)
+                    Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.error.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Inactive',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.category,
                     size: 16,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'PayPal: ${method.paypalEmail}',
+                    'Type: ${method.paymentMethodType}',
                     style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(width: 16),
+                  Icon(
+                    Icons.schedule,
+                    size: 16,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Added: ${_formatDateTime(method.createdAt)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
                   ),
                 ],
               ),
-            ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                if (!method.isDefault && method.isActive)
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _showSetDefaultDialog(context, method),
-                      icon: const Icon(Icons.star),
-                      label: const Text('Set as Default'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              if (method.cardLastFourDigits != null ||
+                  method.cardBrand != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    if (method.cardBrand != null) ...[
+                      Icon(
+                        Icons.credit_card,
+                        size: 16,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
-                    ),
-                  ),
-                if (method.isActive)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showDeactivateDialog(context, method),
-                      icon: const Icon(Icons.pause),
-                      label: const Text('Deactivate'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.error,
+                      const SizedBox(width: 4),
+                      Text(
+                        '${method.cardBrand}',
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showReactivateDialog(context, method),
-                      icon: const Icon(Icons.play_arrow),
-                      label: const Text('Reactivate'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.primary,
+                      const SizedBox(width: 8),
+                    ],
+                    if (method.cardLastFourDigits != null) ...[
+                      Text(
+                        '•••• ${method.cardLastFourDigits}',
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                    ),
-                  ),
+                      if (method.cardExpiryMonth != null &&
+                          method.cardExpiryYear != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          'Expires: ${method.cardExpiryMonth}/${method.cardExpiryYear}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                              ),
+                        ),
+                      ],
+                    ],
+                  ],
+                ),
               ],
-            ),
-          ],
+              if (method.bankName != null ||
+                  method.bankAccountLastFourDigits != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    if (method.bankName != null) ...[
+                      Icon(
+                        Icons.account_balance,
+                        size: 16,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${method.bankName}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    if (method.bankAccountLastFourDigits != null) ...[
+                      Text(
+                        '•••• ${method.bankAccountLastFourDigits}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      if (method.bankAccountType != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          '(${method.bankAccountType})',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                              ),
+                        ),
+                      ],
+                    ],
+                  ],
+                ),
+              ],
+              if (method.paypalEmail != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.email,
+                      size: 16,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'PayPal: ${method.paypalEmail}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  if (!method.isDefault && method.isActive)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showSetDefaultDialog(context, method),
+                        icon: const Icon(Icons.star),
+                        label: const Text('Set as Default'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
+                  if (method.isActive)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showDeactivateDialog(context, method),
+                        icon: const Icon(Icons.pause),
+                        label: const Text('Deactivate'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showReactivateDialog(context, method),
+                        icon: const Icon(Icons.play_arrow),
+                        label: const Text('Reactivate'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPaymentMethodDetails(
+    BuildContext context,
+    AccountPaymentMethod method,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PaymentMethodDetailPage(
+          paymentMethod: method,
+          accountId: accountId,
         ),
       ),
     );
@@ -582,7 +670,10 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
   }
 
-  void _showSetDefaultDialog(BuildContext context, AccountPaymentMethod method) {
+  void _showSetDefaultDialog(
+    BuildContext context,
+    AccountPaymentMethod method,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -591,7 +682,9 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Do you want to set "${method.paymentMethodName}" as your default payment method?'),
+            Text(
+              'Do you want to set "${method.paymentMethodName}" as your default payment method?',
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -602,7 +695,9 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                   },
                 ),
                 const Expanded(
-                  child: Text('Pay all unpaid invoices with this payment method'),
+                  child: Text(
+                    'Pay all unpaid invoices with this payment method',
+                  ),
                 ),
               ],
             ),
@@ -617,12 +712,12 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
             onPressed: () {
               Navigator.of(context).pop();
               context.read<AccountsBloc>().add(
-                    SetDefaultPaymentMethod(
-                      accountId: accountId,
-                      paymentMethodId: method.id,
-                      payAllUnpaidInvoices: false, // TODO: Get from checkbox
-                    ),
-                  );
+                SetDefaultPaymentMethod(
+                  accountId: accountId,
+                  paymentMethodId: method.id,
+                  payAllUnpaidInvoices: false, // TODO: Get from checkbox
+                ),
+              );
             },
             child: const Text('Set as Default'),
           ),
@@ -631,7 +726,10 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
     );
   }
 
-  void _showDeactivateDialog(BuildContext context, AccountPaymentMethod method) {
+  void _showDeactivateDialog(
+    BuildContext context,
+    AccountPaymentMethod method,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -660,7 +758,10 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
     );
   }
 
-  void _showReactivateDialog(BuildContext context, AccountPaymentMethod method) {
+  void _showReactivateDialog(
+    BuildContext context,
+    AccountPaymentMethod method,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

@@ -4,11 +4,13 @@ import '../../domain/entities/account_custom_field.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
+import 'create_account_custom_field_dialog.dart';
 
 class AccountCustomFieldsWidget extends StatelessWidget {
   final String accountId;
 
-  const AccountCustomFieldsWidget({Key? key, required this.accountId}) : super(key: key);
+  const AccountCustomFieldsWidget({Key? key, required this.accountId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +50,8 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     context.read<AccountsBloc>().add(
-                          RefreshAccountCustomFields(accountId),
-                        );
+                      RefreshAccountCustomFields(accountId),
+                    );
                   },
                   child: const Text('Retry'),
                 ),
@@ -75,19 +77,26 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.delete_sweep),
-                        onPressed: () => _showDeleteMultipleCustomFieldsDialog(context, state.customFields),
+                        onPressed: () => _showDeleteMultipleCustomFieldsDialog(
+                          context,
+                          state.customFields,
+                        ),
                         tooltip: 'Delete Multiple Fields',
                         color: Colors.red[400],
                       ),
                       IconButton(
                         icon: const Icon(Icons.edit_note),
-                        onPressed: () => _showEditMultipleCustomFieldsDialog(context, state.customFields),
+                        onPressed: () => _showEditMultipleCustomFieldsDialog(
+                          context,
+                          state.customFields,
+                        ),
                         tooltip: 'Edit Multiple Fields',
                         color: Theme.of(context).colorScheme.secondary,
                       ),
                       IconButton(
                         icon: const Icon(Icons.add_circle_outline),
-                        onPressed: () => _showAddMultipleCustomFieldsDialog(context),
+                        onPressed: () =>
+                            _showAddMultipleCustomFieldsDialog(context),
                         tooltip: 'Add Multiple Fields',
                         color: Theme.of(context).colorScheme.primary,
                       ),
@@ -108,7 +117,9 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                       Icon(
                         Icons.category_outlined,
                         size: 48,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.5),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -149,7 +160,10 @@ class AccountCustomFieldsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCustomFieldCard(BuildContext context, AccountCustomField customField) {
+  Widget _buildCustomFieldCard(
+    BuildContext context,
+    AccountCustomField customField,
+  ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -161,69 +175,63 @@ class AccountCustomFieldsWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    customField.displayName,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customField.displayName,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        customField.displayValue,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'edit':
-                        _showEditCustomFieldDialog(context, customField);
-                        break;
-                      case 'delete':
-                        _showDeleteCustomFieldDialog(context, customField);
-                        break;
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit, size: 20),
-                          SizedBox(width: 8),
-                          Text('Edit'),
-                        ],
-                      ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () =>
+                          _showEditCustomFieldDialog(context, customField),
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      tooltip: 'Edit',
                     ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, size: 20, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Delete', style: TextStyle(color: Colors.red)),
-                        ],
-                      ),
+                    IconButton(
+                      onPressed: () =>
+                          _showDeleteCustomFieldDialog(context, customField),
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      tooltip: 'Delete',
                     ),
                   ],
-                  child: const Icon(Icons.more_vert),
                 ),
               ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              customField.displayValue,
-              style: Theme.of(context).textTheme.bodyMedium,
             ),
             if (customField.hasAuditLogs) ...[
               const SizedBox(height: 16),
               Text(
                 'History',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
-              ...customField.auditLogs.take(3).map((log) => _buildAuditLogItem(context, log)),
+              ...customField.auditLogs
+                  .take(3)
+                  .map((log) => _buildAuditLogItem(context, log)),
               if (customField.auditLogs.length > 3)
                 TextButton(
                   onPressed: () => _showFullHistoryDialog(context, customField),
-                  child: Text('View all ${customField.auditLogs.length} changes'),
+                  child: Text(
+                    'View all ${customField.auditLogs.length} changes',
+                  ),
                 ),
             ],
           ],
@@ -270,55 +278,10 @@ class AccountCustomFieldsWidget extends StatelessWidget {
   }
 
   void _showAddCustomFieldDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final valueController = TextEditingController();
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Custom Field'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Field Name',
-                hintText: 'Enter field name',
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: valueController,
-              decoration: const InputDecoration(
-                labelText: 'Field Value',
-                hintText: 'Enter field value',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty && valueController.text.isNotEmpty) {
-                Navigator.of(context).pop();
-                context.read<AccountsBloc>().add(
-                      CreateAccountCustomField(
-                        accountId,
-                        nameController.text.trim(),
-                        valueController.text.trim(),
-                      ),
-                    );
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
+      builder: (context) =>
+          CreateAccountCustomFieldDialog(accountId: accountId),
     );
   }
 
@@ -337,32 +300,34 @@ class AccountCustomFieldsWidget extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ...fieldControllers.map((controllers) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: controllers['name']!,
-                          decoration: const InputDecoration(
-                            labelText: 'Field Name',
-                            hintText: 'Enter field name',
+                ...fieldControllers.map(
+                  (controllers) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: controllers['name']!,
+                            decoration: const InputDecoration(
+                              labelText: 'Field Name',
+                              hintText: 'Enter field name',
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: controllers['value']!,
-                          decoration: const InputDecoration(
-                            labelText: 'Field Value',
-                            hintText: 'Enter field value',
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: controllers['value']!,
+                            decoration: const InputDecoration(
+                              labelText: 'Field Value',
+                              hintText: 'Enter field value',
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                )),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () {
@@ -404,17 +369,20 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                     // Single field - use single creation
                     final field = customFields.first;
                     context.read<AccountsBloc>().add(
-                          CreateAccountCustomField(
-                            accountId,
-                            field['name']!,
-                            field['value']!,
-                          ),
-                        );
+                      CreateAccountCustomField(
+                        accountId,
+                        field['name']!,
+                        field['value']!,
+                      ),
+                    );
                   } else {
                     // Multiple fields - use bulk creation
                     context.read<AccountsBloc>().add(
-                          CreateMultipleAccountCustomFields(accountId, customFields),
-                        );
+                      CreateMultipleAccountCustomFields(
+                        accountId,
+                        customFields,
+                      ),
+                    );
                   }
                 }
               },
@@ -426,66 +394,38 @@ class AccountCustomFieldsWidget extends StatelessWidget {
     );
   }
 
-  void _showEditCustomFieldDialog(BuildContext context, AccountCustomField customField) {
-    final nameController = TextEditingController(text: customField.name);
-    final valueController = TextEditingController(text: customField.value);
-
+  void _showEditCustomFieldDialog(
+    BuildContext context,
+    AccountCustomField customField,
+  ) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Custom Field'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Field Name',
-                hintText: 'Enter field name',
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: valueController,
-              decoration: const InputDecoration(
-                labelText: 'Field Value',
-                hintText: 'Enter field value',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty && valueController.text.isNotEmpty) {
-                Navigator.of(context).pop();
-                context.read<AccountsBloc>().add(
-                      UpdateAccountCustomField(
-                        accountId,
-                        customField.customFieldId,
-                        nameController.text.trim(),
-                        valueController.text.trim(),
-                      ),
-                    );
-              }
-            },
-            child: const Text('Update'),
-          ),
-        ],
+      builder: (context) => CreateAccountCustomFieldDialog(
+        accountId: accountId,
+        existingField: {
+          'id': customField.customFieldId,
+          'name': customField.name,
+          'value': customField.value,
+          'type':
+              'Text', // Default type, could be enhanced to store type in entity
+        },
       ),
     );
   }
 
-  void _showEditMultipleCustomFieldsDialog(BuildContext context, List<AccountCustomField> customFields) {
-    final List<Map<String, dynamic>> fieldControllers = customFields.map((field) => {
-      'customFieldId': field.customFieldId,
-      'name': TextEditingController(text: field.name),
-      'value': TextEditingController(text: field.value),
-    }).toList();
+  void _showEditMultipleCustomFieldsDialog(
+    BuildContext context,
+    List<AccountCustomField> customFields,
+  ) {
+    final List<Map<String, dynamic>> fieldControllers = customFields
+        .map(
+          (field) => {
+            'customFieldId': field.customFieldId,
+            'name': TextEditingController(text: field.name),
+            'value': TextEditingController(text: field.value),
+          },
+        )
+        .toList();
 
     showDialog(
       context: context,
@@ -497,44 +437,53 @@ class AccountCustomFieldsWidget extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ...fieldControllers.map((controllers) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Field ID: ${controllers['customFieldId']}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                ...fieldControllers.map(
+                  (controllers) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Field ID: ${controllers['customFieldId']}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                              ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: controllers['name'] as TextEditingController,
-                              decoration: const InputDecoration(
-                                labelText: 'Field Name',
-                                hintText: 'Enter field name',
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller:
+                                    controllers['name']
+                                        as TextEditingController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Field Name',
+                                  hintText: 'Enter field name',
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: controllers['value'] as TextEditingController,
-                              decoration: const InputDecoration(
-                                labelText: 'Field Value',
-                                hintText: 'Enter field value',
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller:
+                                    controllers['value']
+                                        as TextEditingController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Field Value',
+                                  hintText: 'Enter field value',
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                )),
+                ),
               ],
             ),
           ),
@@ -550,9 +499,13 @@ class AccountCustomFieldsWidget extends StatelessWidget {
 
                 for (final controllers in fieldControllers) {
                   final customFieldId = controllers['customFieldId'] as String;
-                  final name = (controllers['name'] as TextEditingController).text.trim();
-                  final value = (controllers['value'] as TextEditingController).text.trim();
-                  
+                  final name = (controllers['name'] as TextEditingController)
+                      .text
+                      .trim();
+                  final value = (controllers['value'] as TextEditingController)
+                      .text
+                      .trim();
+
                   if (name.isNotEmpty && value.isNotEmpty) {
                     updatedFields.add({
                       'customFieldId': customFieldId,
@@ -569,18 +522,21 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                     // Single field - use single update
                     final field = updatedFields.first;
                     context.read<AccountsBloc>().add(
-                          UpdateAccountCustomField(
-                            accountId,
-                            field['customFieldId'] as String,
-                            field['name'] as String,
-                            field['value'] as String,
-                          ),
-                        );
+                      UpdateAccountCustomField(
+                        accountId,
+                        field['customFieldId'] as String,
+                        field['name'] as String,
+                        field['value'] as String,
+                      ),
+                    );
                   } else {
                     // Multiple fields - use bulk update
                     context.read<AccountsBloc>().add(
-                          UpdateMultipleAccountCustomFields(accountId, updatedFields),
-                        );
+                      UpdateMultipleAccountCustomFields(
+                        accountId,
+                        updatedFields,
+                      ),
+                    );
                   }
                 }
               },
@@ -592,7 +548,10 @@ class AccountCustomFieldsWidget extends StatelessWidget {
     );
   }
 
-  void _showDeleteCustomFieldDialog(BuildContext context, AccountCustomField customField) {
+  void _showDeleteCustomFieldDialog(
+    BuildContext context,
+    AccountCustomField customField,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -609,8 +568,8 @@ class AccountCustomFieldsWidget extends StatelessWidget {
             onPressed: () {
               Navigator.of(context).pop();
               context.read<AccountsBloc>().add(
-                    DeleteAccountCustomField(accountId, customField.customFieldId),
-                  );
+                DeleteAccountCustomField(accountId, customField.customFieldId),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -623,7 +582,10 @@ class AccountCustomFieldsWidget extends StatelessWidget {
     );
   }
 
-  void _showDeleteMultipleCustomFieldsDialog(BuildContext context, List<AccountCustomField> customFields) {
+  void _showDeleteMultipleCustomFieldsDialog(
+    BuildContext context,
+    List<AccountCustomField> customFields,
+  ) {
     final List<String> selectedFieldIds = <String>[];
     final List<AccountCustomField> availableFields = List.from(customFields);
 
@@ -642,20 +604,22 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                ...availableFields.map((field) => CheckboxListTile(
-                  title: Text(field.name),
-                  subtitle: Text('Value: ${field.value}'),
-                  value: selectedFieldIds.contains(field.customFieldId),
-                  onChanged: (bool? value) {
-                    setState(() {
-                      if (value == true) {
-                        selectedFieldIds.add(field.customFieldId);
-                      } else {
-                        selectedFieldIds.remove(field.customFieldId);
-                      }
-                    });
-                  },
-                )),
+                ...availableFields.map(
+                  (field) => CheckboxListTile(
+                    title: Text(field.name),
+                    subtitle: Text('Value: ${field.value}'),
+                    value: selectedFieldIds.contains(field.customFieldId),
+                    onChanged: (bool? value) {
+                      setState(() {
+                        if (value == true) {
+                          selectedFieldIds.add(field.customFieldId);
+                        } else {
+                          selectedFieldIds.remove(field.customFieldId);
+                        }
+                      });
+                    },
+                  ),
+                ),
               ],
             ),
           ),
@@ -672,20 +636,28 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                       if (selectedFieldIds.length == 1) {
                         // Single field - use single delete
                         context.read<AccountsBloc>().add(
-                              DeleteAccountCustomField(accountId, selectedFieldIds.first),
-                            );
+                          DeleteAccountCustomField(
+                            accountId,
+                            selectedFieldIds.first,
+                          ),
+                        );
                       } else {
                         // Multiple fields - use bulk delete
                         context.read<AccountsBloc>().add(
-                              DeleteMultipleAccountCustomFields(accountId, selectedFieldIds),
-                            );
+                          DeleteMultipleAccountCustomFields(
+                            accountId,
+                            selectedFieldIds,
+                          ),
+                        );
                       }
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
               ),
-              child: Text('Delete ${selectedFieldIds.length} Field${selectedFieldIds.length == 1 ? '' : 's'}'),
+              child: Text(
+                'Delete ${selectedFieldIds.length} Field${selectedFieldIds.length == 1 ? '' : 's'}',
+              ),
             ),
           ],
         ),
@@ -693,7 +665,10 @@ class AccountCustomFieldsWidget extends StatelessWidget {
     );
   }
 
-  void _showFullHistoryDialog(BuildContext context, AccountCustomField customField) {
+  void _showFullHistoryDialog(
+    BuildContext context,
+    AccountCustomField customField,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -722,7 +697,9 @@ class AccountCustomFieldsWidget extends StatelessWidget {
   Color _parseColor(String colorString) {
     try {
       if (colorString.startsWith('#')) {
-        return Color(int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
+        return Color(
+          int.parse(colorString.substring(1), radix: 16) + 0xFF000000,
+        );
       }
       return Colors.blue;
     } catch (e) {

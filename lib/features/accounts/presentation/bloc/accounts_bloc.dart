@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/models/repository_response.dart';
 import '../../domain/entities/account.dart';
 import '../../domain/entities/accounts_query_params.dart';
 import '../../domain/usecases/get_accounts_usecase.dart';
@@ -27,7 +28,7 @@ import '../../domain/usecases/get_account_invoice_payments_usecase.dart';
 import '../../domain/usecases/create_invoice_payment_usecase.dart';
 import '../../domain/usecases/get_account_audit_logs_usecase.dart';
 import '../../domain/usecases/get_account_payment_methods_usecase.dart';
-import '../../domain/usecases/set_default_payment_method_usecase.dart';
+import '../../domain/usecases/set_default_payment_method_use_case.dart';
 import '../../domain/usecases/refresh_payment_methods_usecase.dart';
 import '../../domain/usecases/get_account_payments_usecase.dart';
 import '../../domain/usecases/create_account_payment_usecase.dart';
@@ -36,6 +37,8 @@ import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
 import '../../domain/repositories/account_emails_repository.dart';
 import '../../../../core/services/export_service.dart';
+import '../../../subscriptions/domain/usecases/get_subscriptions_for_account_usecase.dart';
+import '../../domain/usecases/get_invoices_usecase.dart';
 import 'accounts_event.dart';
 import 'accounts_state.dart';
 import 'package:logger/logger.dart';
@@ -79,10 +82,13 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final AccountCustomFieldsRepository _accountCustomFieldsRepository;
   final AccountEmailsRepository _accountEmailsRepository;
   final ExportService _exportService;
+  final GetSubscriptionsForAccountUseCase _getSubscriptionsForAccountUseCase;
+  final GetInvoicesUseCase _getInvoicesUseCase;
 
   // Stream subscriptions for reactive updates from repository
-  StreamSubscription<List<Account>>? _accountsStreamSubscription;
-  StreamSubscription<Account>? _accountStreamSubscription;
+  StreamSubscription<RepositoryResponse<List<Account>>>?
+  _accountsStreamSubscription;
+  StreamSubscription<RepositoryResponse<Account>>? _accountStreamSubscription;
 
   // Multi-select state
   bool _isMultiSelectMode = false;
@@ -129,6 +135,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required AccountCustomFieldsRepository accountCustomFieldsRepository,
     required AccountEmailsRepository accountEmailsRepository,
     required ExportService exportService,
+    required GetSubscriptionsForAccountUseCase
+    getSubscriptionsForAccountUseCase,
+    required GetInvoicesUseCase getInvoicesUseCase,
   }) : _getAccountsUseCase = getAccountsUseCase,
        _searchAccountsUseCase = searchAccountsUseCase,
        _getAccountByIdUseCase = getAccountByIdUseCase,
@@ -166,6 +175,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
        _accountCustomFieldsRepository = accountCustomFieldsRepository,
        _accountEmailsRepository = accountEmailsRepository,
        _exportService = exportService,
+       _getSubscriptionsForAccountUseCase = getSubscriptionsForAccountUseCase,
+       _getInvoicesUseCase = getInvoicesUseCase,
        super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
     on<GetAllAccounts>(_onGetAllAccounts);
@@ -217,7 +228,6 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<RefreshPaymentMethods>(_onRefreshPaymentMethods);
     on<LoadAccountPayments>(_onLoadAccountPayments);
     on<RefreshAccountPayments>(_onRefreshAccountPayments);
-    on<CreateAccountPayment>(_onCreateAccountPayment);
     on<ExportAccounts>(_onExportAccounts);
 
     // Multi-select event handlers
@@ -229,6 +239,17 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<DeselectAllAccounts>(_onDeselectAllAccounts);
     on<BulkDeleteAccounts>(_onBulkDeleteAccounts);
     on<BulkExportAccounts>(_onBulkExportAccounts);
+
+    // Subscription event handlers
+    on<LoadAccountSubscriptions>(_onLoadAccountSubscriptions);
+    on<RefreshAccountSubscriptions>(_onRefreshAccountSubscriptions);
+
+    // Invoice event handlers
+    on<LoadAccountInvoices>(_onLoadAccountInvoices);
+    on<RefreshAccountInvoices>(_onRefreshAccountInvoices);
+
+    // Payment event handlers
+    on<CreateAccountPayment>(_onCreateAccountPayment);
 
     // Initialize stream subscriptions for reactive updates from repository
     _initializeStreamSubscriptions();
@@ -462,10 +483,30 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
+      // Check if we already have the account details loaded for this account
+      final currentState = state;
+      if (currentState is AccountDetailsLoaded &&
+          currentState.account.accountId == event.accountId) {
+        // We already have the data, don't show loading
+        _logger.d('Account details already loaded for: ${event.accountId}');
+        return;
+      }
+
+      // Check if we're already loading this account to prevent duplicate calls
+      if (currentState is AccountDetailsLoading &&
+          currentState.accountId == event.accountId) {
+        _logger.d('Account details already loading for: ${event.accountId}');
+        return;
+      }
+
+      // Emit loading state first
       emit(AccountDetailsLoading(event.accountId));
 
+      // Get account data first to check if we have cached data
       final account = await _getAccountByIdUseCase(event.accountId);
 
+      // If we got data immediately (from cache), emit loaded state directly
+      // If we had to fetch from remote, the loading state would have been handled by the use case
       emit(AccountDetailsLoaded(account));
     } catch (e) {
       emit(AccountDetailsFailure(e.toString(), event.accountId));
@@ -1139,51 +1180,11 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     }
   }
 
-  Future<void> _onCreateAccountPayment(
-    CreateAccountPayment event,
-    Emitter<AccountsState> emit,
-  ) async {
-    try {
-      emit(
-        CreatingAccountPayment(
-          event.accountId,
-          event.transactionType,
-          event.amount,
-          event.currency,
-        ),
-      );
-      final createdPayment = await _createAccountPaymentUseCase(
-        accountId: event.accountId,
-        paymentMethodId: event.paymentMethodId,
-        transactionType: event.transactionType,
-        amount: event.amount,
-        currency: event.currency,
-        effectiveDate: event.effectiveDate,
-        description: event.description,
-        properties: event.properties,
-      );
-      emit(AccountPaymentCreated(event.accountId, createdPayment));
-    } catch (e) {
-      emit(
-        CreateAccountPaymentFailure(
-          e.toString(),
-          event.accountId,
-          event.transactionType,
-          event.amount,
-          event.currency,
-        ),
-      );
-    }
-  }
-
   // Initialize stream subscriptions for reactive updates from repository
   void _initializeStreamSubscriptions() {
     // Listen to accounts list updates from repository background sync
     _accountsStreamSubscription = _accountsRepository.accountsStream.listen(
-      (freshAccounts) {
-        // Get current state to maintain pagination and sorting context
-        final currentState = state;
-
+      (response) {
         // Don't update if we're in multi-select mode to preserve selection
         if (_isMultiSelectMode) {
           _logger.d(
@@ -1192,48 +1193,65 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
           return;
         }
 
-        // Emit new state with fresh data from background sync
-        // Maintain the same state type as current state for consistency
-        if (currentState is AllAccountsLoaded) {
-          emit(
-            AllAccountsLoaded(
-              accounts: freshAccounts,
-              totalCount: freshAccounts.length,
-            ),
-          );
-        } else if (currentState is AccountsLoaded) {
-          emit(
-            AccountsLoaded(
-              accounts: freshAccounts,
-              currentOffset: currentState.currentOffset,
-              totalCount: freshAccounts.length,
-              hasReachedMax: freshAccounts.length < currentState.totalCount,
-            ),
-          );
-        } else {
-          // Fallback to AccountsLoaded if state is unknown
-          emit(
-            AccountsLoaded(
-              accounts: freshAccounts,
-              currentOffset: 0,
-              totalCount: freshAccounts.length,
-              hasReachedMax: true,
-            ),
-          );
-        }
+        if (response.isLoading) {
+          // Handle loading state - don't emit if we already have data
+          final currentState = state;
+          if (currentState is! AccountsLoaded &&
+              currentState is! AllAccountsLoaded) {
+            emit(AccountsLoading(const AccountsQueryParams()));
+          }
+        } else if (response.isSuccess && response.data != null) {
+          // Handle success state with fresh data
+          final freshAccounts = response.data!;
+          final currentState = state;
 
-        _logger.d(
-          'UI updated with fresh accounts from background sync: ${freshAccounts.length} accounts (maintaining sort order)',
-        );
+          // Emit new state with fresh data from background sync
+          // Maintain the same state type as current state for consistency
+          if (currentState is AllAccountsLoaded) {
+            emit(
+              AllAccountsLoaded(
+                accounts: freshAccounts,
+                totalCount: freshAccounts.length,
+              ),
+            );
+          } else if (currentState is AccountsLoaded) {
+            emit(
+              AccountsLoaded(
+                accounts: freshAccounts,
+                currentOffset: currentState.currentOffset,
+                totalCount: freshAccounts.length,
+                hasReachedMax: freshAccounts.length < currentState.totalCount,
+              ),
+            );
+          } else {
+            // Fallback to AccountsLoaded if state is unknown
+            emit(
+              AccountsLoaded(
+                accounts: freshAccounts,
+                currentOffset: 0,
+                totalCount: freshAccounts.length,
+                hasReachedMax: true,
+              ),
+            );
+          }
+
+          _logger.d(
+            'UI updated with fresh accounts from background sync: ${freshAccounts.length} accounts (maintaining sort order)',
+          );
+        } else if (response.hasError) {
+          // Handle error state
+          _logger.e('Error in accounts stream: ${response.errorMessage}');
+          // Don't emit error state to avoid disrupting current UI
+        }
       },
       onError: (error) {
-        _logger.e('Error in accounts stream: $error');
+        _logger.e('Error in accounts stream subscription: $error');
       },
     );
 
     // Listen to individual account updates from repository background sync
     _accountStreamSubscription = _accountsRepository.accountStream.listen(
-      (freshAccount) {
+      (response) {
         // Don't update if we're in multi-select mode to preserve selection
         if (_isMultiSelectMode) {
           _logger.d(
@@ -1242,14 +1260,36 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
           return;
         }
 
-        // Emit new state with fresh account data from background sync
-        emit(AccountDetailsLoaded(freshAccount));
-        _logger.d(
-          'UI updated with fresh account from background sync: ${freshAccount.accountId}',
-        );
+        // Only handle success states with data - ignore loading states
+        if (response.isSuccess && response.data != null) {
+          // Check if we're already showing this account to prevent duplicate updates
+          final currentState = state;
+          if (currentState is AccountDetailsLoaded &&
+              currentState.account.accountId == response.data!.accountId) {
+            // Only update if the data is actually different
+            if (currentState.account != response.data!) {
+              emit(AccountDetailsLoaded(response.data!));
+              _logger.d(
+                'UI updated with fresh account from background sync: ${response.data!.accountId}',
+              );
+            } else {
+              _logger.d(
+                'Account data unchanged, skipping UI update: ${response.data!.accountId}',
+              );
+            }
+          } else {
+            // Emit new state with fresh account data from background sync
+            emit(AccountDetailsLoaded(response.data!));
+            _logger.d(
+              'UI updated with fresh account from background sync: ${response.data!.accountId}',
+            );
+          }
+        } else if (response.hasError) {
+          _logger.e('Error in account stream: ${response.errorMessage}');
+        }
       },
       onError: (error) {
-        _logger.e('Error in account stream: $error');
+        _logger.e('Error in account stream subscription: $error');
       },
     );
   }
@@ -1466,6 +1506,135 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       // After a short delay, return to multi-select mode
       await Future.delayed(const Duration(milliseconds: 1500));
       emit(MultiSelectModeEnabled(selectedAccounts: _selectedAccounts));
+    }
+  }
+
+  // Subscription event handlers
+  Future<void> _onLoadAccountSubscriptions(
+    LoadAccountSubscriptions event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountSubscriptionsLoading(accountId: event.accountId));
+      final subscriptions = await _getSubscriptionsForAccountUseCase(
+        event.accountId,
+      );
+      emit(
+        AccountSubscriptionsLoaded(
+          accountId: event.accountId,
+          subscriptions: subscriptions,
+        ),
+      );
+    } catch (e) {
+      emit(
+        AccountSubscriptionsFailure(
+          message: e.toString(),
+          accountId: event.accountId,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onRefreshAccountSubscriptions(
+    RefreshAccountSubscriptions event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountSubscriptionsLoading(accountId: event.accountId));
+      final subscriptions = await _getSubscriptionsForAccountUseCase(
+        event.accountId,
+      );
+      emit(
+        AccountSubscriptionsLoaded(
+          accountId: event.accountId,
+          subscriptions: subscriptions,
+        ),
+      );
+    } catch (e) {
+      emit(
+        AccountSubscriptionsFailure(
+          message: e.toString(),
+          accountId: event.accountId,
+        ),
+      );
+    }
+  }
+
+  // Invoice event handlers
+  Future<void> _onLoadAccountInvoices(
+    LoadAccountInvoices event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountInvoicesLoading(accountId: event.accountId));
+      final invoices = await _getInvoicesUseCase(event.accountId);
+      emit(
+        AccountInvoicesLoaded(accountId: event.accountId, invoices: invoices),
+      );
+    } catch (e) {
+      emit(
+        AccountInvoicesFailure(
+          message: e.toString(),
+          accountId: event.accountId,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onRefreshAccountInvoices(
+    RefreshAccountInvoices event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(AccountInvoicesLoading(accountId: event.accountId));
+      final invoices = await _getInvoicesUseCase(event.accountId);
+      emit(
+        AccountInvoicesLoaded(accountId: event.accountId, invoices: invoices),
+      );
+    } catch (e) {
+      emit(
+        AccountInvoicesFailure(
+          message: e.toString(),
+          accountId: event.accountId,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onCreateAccountPayment(
+    CreateAccountPayment event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      emit(
+        CreatingAccountPayment(
+          event.accountId,
+          event.transactionType,
+          event.amount,
+          event.currency,
+        ),
+      );
+      final createdPayment = await _createAccountPaymentUseCase(
+        accountId: event.accountId,
+        paymentMethodId: event.paymentMethodId,
+        transactionType: event.transactionType,
+        amount: event.amount,
+        currency: event.currency,
+        effectiveDate: event.effectiveDate,
+        description: event.description,
+        properties: event.properties,
+      );
+      emit(AccountPaymentCreated(event.accountId, createdPayment));
+    } catch (e) {
+      emit(
+        CreateAccountPaymentFailure(
+          e.toString(),
+          event.accountId,
+          event.transactionType,
+          event.amount,
+          event.currency,
+        ),
+      );
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../models/auth_response.dart';
+import '../../domain/entities/user.dart';
 import '../../../../core/models/api_response.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/constants/api_endpoints.dart';
@@ -17,6 +18,7 @@ abstract class AuthRemoteDataSource {
   Future<void> forgotPassword(String email);
   Future<void> changePassword(String oldPassword, String newPassword);
   Future<void> resetPassword(String token, String newPassword);
+  Future<User> updateUser(User user);
 }
 
 @Injectable(as: AuthRemoteDataSource)
@@ -446,6 +448,94 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
     } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<User> updateUser(User user) async {
+    try {
+      _logger.i('🌐 Updating user: ${user.email}');
+
+      final response = await _dioClient.dio.put(
+        '${ApiEndpoints.updateUser}/${user.id}',
+        data: {
+          'email': user.email,
+          'name': user.name,
+          'firstName': user.firstName,
+          'lastName': user.lastName,
+          'phone': user.phone,
+          'company': user.company,
+          'department': user.department,
+          'location': user.location,
+          'position': user.position,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final apiResponse = ApiResponse<Map<String, dynamic>>.fromJson(
+          response.data,
+          (json) => json,
+        );
+
+        if (apiResponse.success && apiResponse.data != null) {
+          // Create updated user from response
+          final updatedUser = User.fromJwtData(
+            id: user.id,
+            email: apiResponse.data!['email'] ?? user.email,
+            role: user.role,
+            phone: apiResponse.data!['phone'] ?? user.phone,
+            tenantId: user.tenantId,
+            roleId: user.roleId,
+            apiKey: user.apiKey,
+            apiSecret: user.apiSecret,
+            emailVerified:
+                apiResponse.data!['emailVerified'] ?? user.emailVerified,
+            firstName: apiResponse.data!['firstName'] ?? user.firstName,
+            lastName: apiResponse.data!['lastName'] ?? user.lastName,
+            company: apiResponse.data!['company'] ?? user.company,
+            department: apiResponse.data!['department'] ?? user.department,
+            location: apiResponse.data!['location'] ?? user.location,
+            position: apiResponse.data!['position'] ?? user.position,
+            sessionId: user.sessionId,
+            isAnonymous: user.isAnonymous,
+          );
+
+          _logger.i('✅ User updated successfully');
+          return updatedUser;
+        } else {
+          throw ServerException(
+            apiResponse.message ?? 'Failed to update user',
+            response.statusCode,
+          );
+        }
+      } else {
+        throw ServerException(
+          'User update failed with status: ${response.statusCode}',
+          response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      _logger.e('❌ DioException during user update: ${e.type} - ${e.message}');
+
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Invalid or expired token');
+      } else if (e.response?.statusCode == 400) {
+        throw ValidationException('Invalid user data');
+      } else if (e.response?.statusCode == 404) {
+        throw AuthException('User not found');
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Request timeout');
+      } else {
+        throw ServerException(
+          e.message ?? 'Network error occurred',
+          e.response?.statusCode,
+        );
+      }
+    } catch (e) {
+      _logger.e('❌ Unexpected error during user update: $e');
       throw ServerException('Unexpected error: $e');
     }
   }

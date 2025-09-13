@@ -6,6 +6,7 @@ import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/forgot_password_usecase.dart';
 import '../../domain/usecases/change_password_usecase.dart';
 import '../../domain/usecases/reset_password_usecase.dart';
+import '../../domain/usecases/update_user_usecase.dart';
 import '../../../../core/errors/exceptions.dart';
 
 part 'auth_event.dart';
@@ -17,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ForgotPasswordUseCase _forgotPasswordUseCase;
   final ChangePasswordUseCase _changePasswordUseCase;
   final ResetPasswordUseCase _resetPasswordUseCase;
+  final UpdateUserUseCase _updateUserUseCase;
   final Logger _logger = Logger();
 
   AuthBloc({
@@ -24,15 +26,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required ForgotPasswordUseCase forgotPasswordUseCase,
     required ChangePasswordUseCase changePasswordUseCase,
     required ResetPasswordUseCase resetPasswordUseCase,
+    required UpdateUserUseCase updateUserUseCase,
   }) : _loginUseCase = loginUseCase,
        _forgotPasswordUseCase = forgotPasswordUseCase,
        _changePasswordUseCase = changePasswordUseCase,
        _resetPasswordUseCase = resetPasswordUseCase,
+       _updateUserUseCase = updateUserUseCase,
        super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<ChangePasswordRequested>(_onChangePasswordRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
+    on<UpdateUserRequested>(_onUpdateUserRequested);
     on<SetUserAuthenticated>(_onSetUserAuthenticated);
     on<BiometricAuthenticationRequested>(_onBiometricAuthenticationRequested);
     on<BiometricAuthSuccess>(_onBiometricAuthSuccess);
@@ -245,6 +250,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
     } catch (e) {
       emit(ResetPasswordFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateUserRequested(
+    UpdateUserRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(UpdateUserLoading());
+    try {
+      final updatedUser = await _updateUserUseCase(event.user);
+      emit(
+        UpdateUserSuccess(
+          user: updatedUser,
+          message: 'Profile updated successfully',
+        ),
+      );
+    } catch (e) {
+      emit(UpdateUserFailure(e.toString()));
     }
   }
 }

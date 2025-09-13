@@ -9,6 +9,7 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:connectivity_plus/connectivity_plus.dart' as _i895;
 import 'package:dio/dio.dart' as _i361;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
@@ -26,6 +27,7 @@ import 'core/services/database_service.dart' as _i916;
 import 'core/services/export_service.dart' as _i580;
 import 'core/services/jwt_service.dart' as _i842;
 import 'core/services/secure_storage_service.dart' as _i493;
+import 'core/services/sync_service.dart' as _i443;
 import 'core/services/user_persistence_service.dart' as _i915;
 import 'features/accounts/data/datasources/local/account_audit_logs_local_data_source.dart'
     as _i273;
@@ -201,8 +203,8 @@ import 'features/accounts/domain/usecases/remove_multiple_tags_from_account_usec
     as _i582;
 import 'features/accounts/domain/usecases/search_accounts_usecase.dart'
     as _i266;
-import 'features/accounts/domain/usecases/set_default_payment_method_usecase.dart'
-    as _i580;
+import 'features/accounts/domain/usecases/set_default_payment_method_use_case.dart'
+    as _i706;
 import 'features/accounts/domain/usecases/update_account_custom_field_usecase.dart'
     as _i734;
 import 'features/accounts/domain/usecases/update_account_usecase.dart' as _i651;
@@ -217,6 +219,7 @@ import 'features/auth/domain/usecases/change_password_usecase.dart' as _i890;
 import 'features/auth/domain/usecases/forgot_password_usecase.dart' as _i993;
 import 'features/auth/domain/usecases/login_usecase.dart' as _i206;
 import 'features/auth/domain/usecases/reset_password_usecase.dart' as _i1070;
+import 'features/auth/domain/usecases/update_user_usecase.dart' as _i457;
 import 'features/auth/presentation/bloc/auth_bloc.dart' as _i363;
 import 'features/subscriptions/data/datasources/subscriptions_remote_data_source.dart'
     as _i976;
@@ -289,13 +292,13 @@ _i174.GetIt $initGetIt(
   final injectionModule = _$InjectionModule();
   gh.factory<_i842.JwtService>(() => _i842.JwtService());
   gh.factory<_i580.ExportServiceImpl>(() => _i580.ExportServiceImpl());
-  gh.lazySingleton<_i580.ExportService>(() => _i580.ExportServiceImpl());
   gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
   gh.singleton<_i974.Logger>(() => injectionModule.logger);
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
   gh.singleton<_i152.LocalAuthentication>(() => injectionModule.localAuth);
-  gh.factory<_i45.DioClient>(
+  gh.singleton<_i895.Connectivity>(() => injectionModule.connectivity);
+  gh.singleton<_i45.DioClient>(
     () => _i45.DioClient(gh<_i361.Dio>(), gh<_i558.FlutterSecureStorage>()),
   );
   gh.factory<_i626.BiometricAuthService>(
@@ -364,6 +367,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i474.AccountTimelineLocalDataSource>(
     () => _i474.AccountTimelineLocalDataSourceImpl(gh<_i916.DatabaseService>()),
+  );
+  gh.singleton<_i443.SyncService>(
+    () => injectionModule.syncService(gh<_i75.NetworkInfo>()),
   );
   gh.factory<_i225.AccountInvoicesRemoteDataSource>(
     () => _i225.AccountInvoicesRemoteDataSourceImpl(gh<_i45.DioClient>()),
@@ -490,24 +496,11 @@ _i174.GetIt $initGetIt(
       networkInfo: gh<_i75.NetworkInfo>(),
     ),
   );
-  gh.lazySingleton<_i42.AccountsRepository>(
-    () => _i395.AccountsRepositoryImpl(
-      remoteDataSource: gh<_i3.AccountsRemoteDataSource>(),
-      localDataSource: gh<_i339.AccountsLocalDataSource>(),
-      networkInfo: gh<_i75.NetworkInfo>(),
-    ),
-  );
   gh.factory<_i596.ChildAccountRepository>(
     () => _i311.ChildAccountRepositoryImpl(
       remoteDataSource: gh<_i1058.ChildAccountRemoteDataSource>(),
       localDataSource: gh<_i895.ChildAccountLocalDataSource>(),
       networkInfo: gh<_i75.NetworkInfo>(),
-    ),
-  );
-  gh.factory<_i844.TagsBloc>(
-    () => _i844.TagsBloc(
-      gh<_i348.GetAllTagsUseCase>(),
-      gh<_i335.SearchTagsUseCase>(),
     ),
   );
   gh.factory<_i88.GetChildAccountsUseCase>(
@@ -607,6 +600,14 @@ _i174.GetIt $initGetIt(
   gh.factory<_i1005.CancelSubscriptionUseCase>(
     () => _i1005.CancelSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
   );
+  gh.lazySingleton<_i42.AccountsRepository>(
+    () => _i395.AccountsRepositoryImpl(
+      remoteDataSource: gh<_i3.AccountsRemoteDataSource>(),
+      localDataSource: gh<_i339.AccountsLocalDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
+      syncService: gh<_i443.SyncService>(),
+    ),
+  );
   gh.factory<_i378.AccountInvoicePaymentsRepository>(
     () => _i636.AccountInvoicePaymentsRepositoryImpl(
       gh<_i961.AccountInvoicePaymentsRemoteDataSource>(),
@@ -658,14 +659,16 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
+  gh.factory<_i844.TagsBloc>(
+    () => _i844.TagsBloc(
+      gh<_i348.GetAllTagsUseCase>(),
+      gh<_i335.SearchTagsUseCase>(),
+      gh<_i580.ExportService>(),
+    ),
+  );
   gh.factory<_i657.GetAccountAuditLogsUseCase>(
     () => _i657.GetAccountAuditLogsUseCase(
       gh<_i271.AccountAuditLogsRepository>(),
-    ),
-  );
-  gh.factory<_i580.SetDefaultPaymentMethodUseCase>(
-    () => _i580.SetDefaultPaymentMethodUseCase(
-      gh<_i845.AccountPaymentMethodsRepository>(),
     ),
   );
   gh.factory<_i905.RefreshPaymentMethodsUseCase>(
@@ -675,6 +678,11 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i600.GetAccountPaymentMethodsUseCase>(
     () => _i600.GetAccountPaymentMethodsUseCase(
+      gh<_i845.AccountPaymentMethodsRepository>(),
+    ),
+  );
+  gh.factory<_i706.SetDefaultPaymentMethodUseCase>(
+    () => _i706.SetDefaultPaymentMethodUseCase(
       gh<_i845.AccountPaymentMethodsRepository>(),
     ),
   );
@@ -741,6 +749,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i1070.ResetPasswordUseCase>(
     () => _i1070.ResetPasswordUseCase(gh<_i1015.AuthRepository>()),
   );
+  gh.factory<_i457.UpdateUserUseCase>(
+    () => _i457.UpdateUserUseCase(gh<_i1015.AuthRepository>()),
+  );
   gh.factory<_i675.SubscriptionsBloc>(
     () => _i675.SubscriptionsBloc(
       gh<_i825.GetRecentSubscriptionsUseCase>(),
@@ -788,14 +799,6 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i553.ExportAccountDataUseCase>(
     () => _i553.ExportAccountDataUseCase(gh<_i930.AccountExportRepository>()),
-  );
-  gh.factory<_i363.AuthBloc>(
-    () => _i363.AuthBloc(
-      loginUseCase: gh<_i206.LoginUseCase>(),
-      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
-      changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
-      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
-    ),
   );
   gh.factory<_i400.GetAccountByIdUseCase>(
     () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
@@ -860,6 +863,15 @@ _i174.GetIt $initGetIt(
       gh<_i696.AccountBlockingStatesRepository>(),
     ),
   );
+  gh.factory<_i363.AuthBloc>(
+    () => _i363.AuthBloc(
+      loginUseCase: gh<_i206.LoginUseCase>(),
+      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
+      changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
+      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
+      updateUserUseCase: gh<_i457.UpdateUserUseCase>(),
+    ),
+  );
   gh.factory<_i795.AccountsBloc>(
     () => _i795.AccountsBloc(
       getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
@@ -898,7 +910,7 @@ _i174.GetIt $initGetIt(
       getAccountPaymentMethodsUseCase:
           gh<_i600.GetAccountPaymentMethodsUseCase>(),
       setDefaultPaymentMethodUseCase:
-          gh<_i580.SetDefaultPaymentMethodUseCase>(),
+          gh<_i706.SetDefaultPaymentMethodUseCase>(),
       refreshPaymentMethodsUseCase: gh<_i905.RefreshPaymentMethodsUseCase>(),
       getAccountPaymentsUseCase: gh<_i374.GetAccountPaymentsUseCase>(),
       createAccountPaymentUseCase: gh<_i463.CreateAccountPaymentUseCase>(),
@@ -907,6 +919,9 @@ _i174.GetIt $initGetIt(
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
       accountEmailsRepository: gh<_i330.AccountEmailsRepository>(),
       exportService: gh<_i580.ExportService>(),
+      getSubscriptionsForAccountUseCase:
+          gh<_i233.GetSubscriptionsForAccountUseCase>(),
+      getInvoicesUseCase: gh<_i747.GetInvoicesUseCase>(),
     ),
   );
   return getIt;

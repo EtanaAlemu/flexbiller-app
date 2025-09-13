@@ -5,6 +5,7 @@ import '../../../../injection_container.dart';
 import '../../../accounts/presentation/pages/accounts_page.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../subscriptions/presentation/pages/subscriptions_demo_page.dart';
+import '../../../tags/presentation/bloc/tags_bloc.dart';
 import '../../../tags/presentation/pages/tags_page.dart';
 import '../widgets/sidebar_menu.dart';
 
@@ -54,8 +55,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<AuthBloc>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => getIt<AuthBloc>()),
+        BlocProvider(create: (context) => getIt<TagsBloc>()),
+      ],
       child: Scaffold(
         body: SafeArea(
           child: _isMobile

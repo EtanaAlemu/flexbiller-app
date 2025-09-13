@@ -3,6 +3,8 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/network/network_info.dart';
+import '../../../../core/models/repository_response.dart';
+import '../../../../core/services/sync_service.dart';
 import '../../domain/entities/account.dart';
 import '../../domain/entities/accounts_query_params.dart';
 import '../../domain/repositories/accounts_repository.dart';
@@ -15,25 +17,70 @@ class AccountsRepositoryImpl implements AccountsRepository {
   final AccountsRemoteDataSource _remoteDataSource;
   final AccountsLocalDataSource _localDataSource;
   final NetworkInfo _networkInfo;
+  final SyncService _syncService;
   final Logger _logger = Logger();
 
   // Stream controllers for reactive UI updates
-  final StreamController<List<Account>> _accountsStreamController =
-      StreamController<List<Account>>.broadcast();
-  final StreamController<Account> _accountStreamController =
-      StreamController<Account>.broadcast();
+  final StreamController<RepositoryResponse<List<Account>>>
+  _accountsStreamController =
+      StreamController<RepositoryResponse<List<Account>>>.broadcast();
+  final StreamController<RepositoryResponse<Account>> _accountStreamController =
+      StreamController<RepositoryResponse<Account>>.broadcast();
+
+  // Stream subscriptions for local data changes
+  StreamSubscription<List<AccountModel>>? _localAccountsSubscription;
+  StreamSubscription<AccountModel?>? _localAccountSubscription;
+
+  // Track accounts currently being synced to prevent duplicate syncs
+  final Map<String, Completer<void>> _syncingAccounts =
+      <String, Completer<void>>{};
+
+  // Track last sync time to prevent rapid successive syncs
+  final Map<String, DateTime> _lastSyncTime = <String, DateTime>{};
+
+  // Track if we're currently processing an account to prevent loops
+  final Set<String> _processingAccounts = <String>{};
 
   AccountsRepositoryImpl({
     required AccountsRemoteDataSource remoteDataSource,
     required AccountsLocalDataSource localDataSource,
     required NetworkInfo networkInfo,
+    required SyncService syncService,
   }) : _remoteDataSource = remoteDataSource,
        _localDataSource = localDataSource,
-       _networkInfo = networkInfo;
+       _networkInfo = networkInfo,
+       _syncService = syncService {
+    _initializeLocalStreams();
+  }
 
   // Stream getters for reactive UI updates
-  Stream<List<Account>> get accountsStream => _accountsStreamController.stream;
-  Stream<Account> get accountStream => _accountStreamController.stream;
+  Stream<RepositoryResponse<List<Account>>> get accountsStream =>
+      _accountsStreamController.stream;
+  Stream<RepositoryResponse<Account>> get accountStream =>
+      _accountStreamController.stream;
+
+  /// Initialize local data streams for reactive updates
+  void _initializeLocalStreams() {
+    // Listen to local accounts changes - only emit when accounts list is explicitly requested
+    // This prevents individual account updates from triggering accounts list updates
+    _localAccountsSubscription = _localDataSource.watchAccounts().listen(
+      (accountModels) {
+        final accounts = accountModels
+            .map((model) => model.toEntity())
+            .toList();
+        // Only emit accounts list updates when explicitly requested, not for individual account updates
+        _logger.d(
+          'Local accounts data updated: ${accounts.length} accounts (not emitting to stream)',
+        );
+      },
+      onError: (error) {
+        _logger.e('Error in local accounts stream: $error');
+      },
+    );
+
+    // Note: Individual account updates will be handled by specific methods
+    // as we need to know which account ID to watch for
+  }
 
   @override
   Future<List<Account>> getAccounts(AccountsQueryParams params) async {
@@ -45,10 +92,12 @@ class AccountsRepositoryImpl implements AccountsRepository {
 
       if (cachedAccounts.isNotEmpty) {
         _logger.d('Returning ${cachedAccounts.length} cached accounts');
-        // Return cached data immediately for fast UI response
         final accounts = cachedAccounts
             .map((model) => model.toEntity())
             .toList();
+
+        // Emit success state with cached data immediately
+        _accountsStreamController.add(RepositoryResponse.success(accounts));
 
         // Then, in the background, try to sync with remote if online
         _syncAccountsInBackground(params);
@@ -59,41 +108,63 @@ class AccountsRepositoryImpl implements AccountsRepository {
       // If no cached data, check if we're online
       if (await _networkInfo.isConnected) {
         try {
+          // Emit loading state
+          _accountsStreamController.add(RepositoryResponse.loading());
+
           // Fetch from remote API
           final remoteAccounts = await _remoteDataSource.getAccounts(params);
 
           // Cache the remote data locally
           await _localDataSource.cacheAccounts(remoteAccounts);
 
+          final accounts = remoteAccounts
+              .map((model) => model.toEntity())
+              .toList();
           _logger.d(
-            'Fetched and cached ${remoteAccounts.length} accounts from remote',
+            'Fetched and cached ${accounts.length} accounts from remote',
           );
-          return remoteAccounts.map((model) => model.toEntity()).toList();
+
+          // Emit success state
+          _accountsStreamController.add(RepositoryResponse.success(accounts));
+
+          return accounts;
         } on ServerException catch (e) {
           _logger.e('Server error while fetching accounts: ${e.message}');
+          _accountsStreamController.add(RepositoryResponse.error(exception: e));
           rethrow;
         } on NetworkException catch (e) {
           _logger.e('Network error while fetching accounts: ${e.message}');
+          _accountsStreamController.add(RepositoryResponse.error(exception: e));
           rethrow;
         } on AuthException catch (e) {
           _logger.e('Auth error while fetching accounts: ${e.message}');
+          _accountsStreamController.add(RepositoryResponse.error(exception: e));
           rethrow;
         }
       } else {
         // Offline and no cached data
         _logger.w('No cached accounts and device is offline');
-        throw NetworkException(
+        final error = NetworkException(
           'No cached data available and device is offline',
         );
+        _accountsStreamController.add(
+          RepositoryResponse.error(exception: error),
+        );
+        throw error;
       }
     } catch (e) {
       _logger.e('Unexpected error in getAccounts: $e');
+      final exception = e is Exception ? e : Exception(e.toString());
+      _accountsStreamController.add(
+        RepositoryResponse.error(exception: exception),
+      );
       rethrow;
     }
   }
 
   @override
   Future<Account> getAccountById(String accountId) async {
+    _logger.d('🔍 getAccountById called for: $accountId');
     try {
       // First, try to get from local cache
       final cachedAccount = await _localDataSource.getCachedAccountById(
@@ -105,8 +176,36 @@ class AccountsRepositoryImpl implements AccountsRepository {
         // Return cached data immediately
         final account = cachedAccount.toEntity();
 
-        // Then, in the background, try to sync if online
-        _syncAccountInBackground(accountId);
+        // Emit success state with cached data immediately
+        _accountStreamController.add(RepositoryResponse.success(account));
+
+        // Only sync in background if we're online and not already syncing this account
+        if (await _networkInfo.isConnected) {
+          if (!_syncingAccounts.containsKey(accountId) &&
+              !_processingAccounts.contains(accountId)) {
+            // Check if we synced this account recently (within last 60 seconds)
+            final lastSync = _lastSyncTime[accountId];
+            final now = DateTime.now();
+            if (lastSync == null || now.difference(lastSync).inSeconds > 60) {
+              _logger.d(
+                'Account $accountId not in syncing set, starting background sync',
+              );
+              _syncAccountInBackground(accountId);
+            } else {
+              _logger.d(
+                'Account $accountId synced recently (${now.difference(lastSync).inSeconds}s ago), skipping sync',
+              );
+            }
+          } else {
+            _logger.d(
+              'Account $accountId already being synced or processed, skipping duplicate sync',
+            );
+          }
+        } else {
+          _logger.d(
+            'No network connection, skipping background sync for account $accountId',
+          );
+        }
 
         return account;
       }
@@ -237,44 +336,35 @@ class AccountsRepositoryImpl implements AccountsRepository {
       await _localDataSource.cacheAccount(accountModel);
       _logger.d('Account saved to local cache: ${account.accountId}');
 
-      // If online, try to sync with remote
-      if (await _networkInfo.isConnected) {
+      // Emit success state with local data
+      _accountStreamController.add(RepositoryResponse.success(account));
+
+      // Queue sync operation for background processing
+      _syncService.queueOperation(() async {
         try {
           final remoteAccount = await _remoteDataSource.createAccount(
             accountModel,
           );
-
-          // Update local cache with remote data (in case server modified it)
           await _localDataSource.updateCachedAccount(remoteAccount);
 
-          _logger.d(
-            'Account created and synced with remote: ${account.accountId}',
+          // Emit updated data from remote
+          _accountStreamController.add(
+            RepositoryResponse.success(remoteAccount.toEntity()),
           );
-          return remoteAccount.toEntity();
-        } on ServerException catch (e) {
-          _logger.w(
-            'Failed to sync account with remote, but saved locally: ${e.message}',
-          );
-          // Return local data even if remote sync failed
-          return account;
-        } on NetworkException catch (e) {
-          _logger.w(
-            'Network error while syncing account, but saved locally: ${e.message}',
-          );
-          return account;
-        } on AuthException catch (e) {
-          _logger.e('Auth error while creating account: ${e.message}');
-          rethrow;
+          _logger.d('Account synced with remote: ${account.accountId}');
+        } catch (e) {
+          _logger.w('Failed to sync account with remote: $e');
+          // Don't rethrow - this is a background operation
         }
-      } else {
-        // Offline - return local data
-        _logger.d(
-          'Account created offline and saved locally: ${account.accountId}',
-        );
-        return account;
-      }
+      });
+
+      return account;
     } catch (e) {
       _logger.e('Unexpected error in createAccount: $e');
+      final exception = e is Exception ? e : Exception(e.toString());
+      _accountStreamController.add(
+        RepositoryResponse.error(exception: exception),
+      );
       rethrow;
     }
   }
@@ -587,52 +677,102 @@ class AccountsRepositoryImpl implements AccountsRepository {
 
   // Background synchronization methods
   Future<void> _syncAccountsInBackground(AccountsQueryParams params) async {
-    try {
-      if (await _networkInfo.isConnected) {
+    _syncService.queueOperation(() async {
+      try {
         final remoteAccounts = await _remoteDataSource.getAccounts(params);
         await _localDataSource.cacheAccounts(remoteAccounts);
 
-        // 🔥 KEY: Get fresh data from local cache with consistent sorting
-        // This ensures the UI gets data in the same order as initially loaded
+        // Get fresh data from local cache with consistent sorting
         final freshAccounts = await _localDataSource.getCachedAccountsByQuery(
           params,
         );
         final sortedAccounts = freshAccounts
             .map((model) => model.toEntity())
             .toList();
-        _accountsStreamController.add(sortedAccounts);
+
+        // Emit success state with fresh data
+        _accountsStreamController.add(
+          RepositoryResponse.success(sortedAccounts),
+        );
 
         _logger.d(
           'Background sync completed for accounts - UI updated with fresh data (sorted consistently)',
         );
+      } catch (e) {
+        _logger.w('Background sync failed for accounts: $e');
+        _accountsStreamController.add(
+          RepositoryResponse.error(
+            exception: e is Exception ? e : Exception(e.toString()),
+          ),
+        );
       }
-    } catch (e) {
-      _logger.w('Background sync failed for accounts: $e');
-    }
+    });
   }
 
   Future<void> _syncAccountInBackground(String accountId) async {
-    try {
-      if (await _networkInfo.isConnected) {
+    // Check if already syncing or processing this account
+    if (_syncingAccounts.containsKey(accountId) ||
+        _processingAccounts.contains(accountId)) {
+      _logger.d(
+        'Account $accountId is already being synced or processed, skipping duplicate sync',
+      );
+      return;
+    }
+
+    // Add to processing set to prevent loops
+    _processingAccounts.add(accountId);
+
+    // Create a completer to track this sync operation
+    final completer = Completer<void>();
+    _syncingAccounts[accountId] = completer;
+    _logger.d('Starting background sync for account: $accountId');
+
+    _syncService.queueOperation(() async {
+      try {
+        _logger.d(
+          '🔄 About to call remote data source for account: $accountId',
+        );
         final remoteAccount = await _remoteDataSource.getAccountById(accountId);
+        _logger.d('✅ Remote data source returned for account: $accountId');
         await _localDataSource.updateCachedAccount(remoteAccount);
 
-        // 🔥 KEY: Update UI with fresh data via stream
+        // Update UI with fresh data via stream
         final freshAccount = remoteAccount.toEntity();
-        _accountStreamController.add(freshAccount);
+        _accountStreamController.add(RepositoryResponse.success(freshAccount));
+
+        // Record the sync time
+        _lastSyncTime[accountId] = DateTime.now();
 
         _logger.d(
           'Background sync completed for account: $accountId - UI updated with fresh data',
         );
+      } catch (e) {
+        _logger.w('Background sync failed for account $accountId: $e');
+        _accountStreamController.add(
+          RepositoryResponse.error(
+            exception: e is Exception ? e : Exception(e.toString()),
+          ),
+        );
+      } finally {
+        // Complete the completer and remove from both sets
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
+        _syncingAccounts.remove(accountId);
+        _processingAccounts.remove(accountId);
+        _logger.d(
+          'Removed account $accountId from syncing and processing sets',
+        );
       }
-    } catch (e) {
-      _logger.w('Background sync failed for account $accountId: $e');
-    }
+    });
   }
 
-  // Clean up stream controllers
+  // Clean up stream controllers and subscriptions
   void dispose() {
     _accountsStreamController.close();
     _accountStreamController.close();
+    _localAccountsSubscription?.cancel();
+    _localAccountSubscription?.cancel();
+    _syncService.dispose();
   }
 }

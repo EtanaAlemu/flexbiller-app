@@ -8,17 +8,26 @@ import '../constants/api_endpoints.dart';
 import '../errors/exceptions.dart';
 import '../config/build_config.dart';
 
-@injectable
+@singleton
 class DioClient {
   final Dio _dio;
   final FlutterSecureStorage _secureStorage;
   final Logger _logger = Logger();
 
+  // Unique instance identifier for debugging
+  final String _instanceId = DateTime.now().millisecondsSinceEpoch.toString();
+
+  // Track retry attempts to prevent infinite loops
+  final Map<String, int> _retryAttempts = {};
+
+  // Track request counts to debug multiple requests
+  final Map<String, int> _requestCounts = {};
+
   DioClient(this._dio, this._secureStorage) {
     // Debug: Log the base URL being used
     if (BuildConfig.enableLogging) {
       _logger.i(
-        '🌐 Dio Client initialized with base URL: ${_dio.options.baseUrl}',
+        '🌐 Dio Client initialized with base URL: ${_dio.options.baseUrl} (instance: $_instanceId)',
       );
       _logger.i('⏱️ Connection timeout: ${_dio.options.connectTimeout}');
       _logger.i('⏱️ Receive timeout: ${_dio.options.receiveTimeout}');
@@ -32,13 +41,21 @@ class DioClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          // Track request count
+          final requestKey = '${options.method}_${options.uri}';
+          _requestCounts[requestKey] = (_requestCounts[requestKey] ?? 0) + 1;
+
           // Debug logging for development
           if (BuildConfig.enableLogging) {
-            _logger.i('🌐 Dio Request: ${options.method} ${options.uri}');
+            _logger.i(
+              '🌐 Dio Request: ${options.method} ${options.uri} (count: ${_requestCounts[requestKey]}, instance: $_instanceId)',
+            );
             _logger.i('📤 Headers: ${options.headers}');
             if (options.data != null) {
               _logger.i('📦 Data: ${options.data}');
             }
+            // Add stack trace to understand where the request is coming from
+            _logger.d('📍 Request stack trace: ${StackTrace.current}');
           }
 
           // Add auth token if available
@@ -103,6 +120,24 @@ class DioClient {
           }
 
           if (error.response?.statusCode == 401) {
+            final requestKey =
+                '${error.requestOptions.method}_${error.requestOptions.uri}';
+            final retryCount = _retryAttempts[requestKey] ?? 0;
+
+            // Prevent infinite retry loops - max 2 retry attempts
+            if (retryCount >= 2) {
+              _logger.e(
+                '🚫 Max retry attempts reached for $requestKey, giving up',
+              );
+              _retryAttempts.remove(requestKey);
+              return handler.next(error);
+            }
+
+            _retryAttempts[requestKey] = retryCount + 1;
+            _logger.d(
+              '🔄 Attempting token refresh for $requestKey (attempt ${retryCount + 1})',
+            );
+
             // Token expired, try to refresh
             final refreshToken = await _secureStorage.read(
               key: AppConstants.refreshTokenKey,
@@ -156,16 +191,21 @@ class DioClient {
                       // JWT decode failed, continue without API headers
                     }
 
+                    _logger.d('🔄 Retrying request with new token');
                     final retryResponse = await _dio.fetch(
                       error.requestOptions,
                     );
+                    // Clear retry count on successful retry
+                    _retryAttempts.remove(requestKey);
                     return handler.resolve(retryResponse);
                   }
                 }
               } catch (refreshError) {
+                _logger.e('❌ Token refresh failed: $refreshError');
                 // Refresh failed, clear tokens and redirect to login
                 await _secureStorage.delete(key: AppConstants.authTokenKey);
                 await _secureStorage.delete(key: AppConstants.refreshTokenKey);
+                _retryAttempts.remove(requestKey);
                 return handler.reject(
                   DioException(
                     requestOptions: error.requestOptions,
@@ -173,6 +213,9 @@ class DioClient {
                   ),
                 );
               }
+            } else {
+              _logger.w('⚠️ No refresh token available, cannot retry');
+              _retryAttempts.remove(requestKey);
             }
           }
 

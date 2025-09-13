@@ -494,4 +494,28 @@ class AuthRepositoryImpl implements AuthRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<User> updateUser(User user) async {
+    try {
+      _logger.i('Updating user: ${user.email}');
+
+      // Update user in local database first (local-first approach)
+      await _userLocalDataSource.updateUser(user);
+      _logger.i('User updated in local database');
+
+      // Update user on remote server
+      final updatedUser = await _remoteDataSource.updateUser(user);
+      _logger.i('User updated on remote server');
+
+      // Update local database with the response from server
+      await _userLocalDataSource.updateUser(updatedUser);
+      _logger.i('Local database updated with server response');
+
+      return updatedUser;
+    } catch (e) {
+      _logger.e('Error updating user: $e');
+      rethrow;
+    }
+  }
 }
