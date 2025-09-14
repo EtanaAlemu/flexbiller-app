@@ -462,6 +462,41 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
           );
         }
 
+        // Handle case where we have cached accounts but state is not one of the expected states
+        if (_cachedAccounts.isNotEmpty) {
+          _logger.d(
+            'Using cached accounts (${_cachedAccounts.length}) for state: ${state.runtimeType}',
+          );
+          return _buildAccountsList(
+            context,
+            _cachedAccounts,
+            true, // hasReachedMax
+            0, // currentOffset
+          );
+        }
+
+        // Handle AccountsInitial state by triggering a load
+        if (state is AccountsInitial) {
+          _logger.d('State is AccountsInitial, triggering load accounts');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<AccountsBloc>().add(
+              const LoadAccounts(AccountsQueryParams()),
+            );
+          });
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Loading accounts...'),
+              ],
+            ),
+          );
+        }
+
+        // Handle other states that might not have accounts
+        _logger.d('No cached accounts and state is: ${state.runtimeType}');
         return const Center(child: Text('No accounts to display'));
       },
     );
