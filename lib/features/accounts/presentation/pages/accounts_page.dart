@@ -22,8 +22,14 @@ class AccountsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          getIt<AccountsBloc>()..add(const LoadAccounts(AccountsQueryParams())),
+      create: (context) {
+        final bloc = getIt<AccountsBloc>();
+        // Ensure we load accounts when the page is built
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          bloc.add(const LoadAccounts(AccountsQueryParams()));
+        });
+        return bloc;
+      },
       child: BlocListener<AccountsBloc, AccountsState>(
         listener: (context, state) {
           if (state is AllAccountsLoaded) {

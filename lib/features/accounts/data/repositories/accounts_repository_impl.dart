@@ -85,10 +85,16 @@ class AccountsRepositoryImpl implements AccountsRepository {
   @override
   Future<List<Account>> getAccounts(AccountsQueryParams params) async {
     try {
+      _logger.d(
+        '🔍 DEBUG: getAccounts called with params: ${params.toString()}',
+      );
+
       // First, try to get data from local cache
       final cachedAccounts = await _localDataSource.getCachedAccountsByQuery(
         params,
       );
+
+      _logger.d('🔍 DEBUG: Cached accounts count: ${cachedAccounts.length}');
 
       if (cachedAccounts.isNotEmpty) {
         _logger.d('Returning ${cachedAccounts.length} cached accounts');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
@@ -19,11 +20,16 @@ class AccountsListWidget extends StatefulWidget {
 class _AccountsListWidgetState extends State<AccountsListWidget> {
   List<Account> _cachedAccounts = [];
   bool _isMultiSelectMode = false;
+  final Logger _logger = Logger();
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AccountsBloc, AccountsState>(
       builder: (context, state) {
+        _logger.d(
+          '🔍 DEBUG: AccountsListWidget - Current state: ${state.runtimeType}',
+        );
+
         // Cache accounts when they are loaded
         if (state is AccountsLoaded) {
           _cachedAccounts = state.accounts;

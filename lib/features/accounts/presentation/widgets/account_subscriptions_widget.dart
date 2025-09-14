@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
@@ -7,64 +8,46 @@ import '../../../subscriptions/presentation/pages/subscription_details_page.dart
 
 class AccountSubscriptionsWidget extends StatelessWidget {
   final String accountId;
+  final Logger _logger = Logger();
 
-  const AccountSubscriptionsWidget({Key? key, required this.accountId})
+  AccountSubscriptionsWidget({Key? key, required this.accountId})
     : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
-      builder: (context, state) {
-        if (state is AccountSubscriptionsLoading) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
+    _logger.d('AccountSubscriptionsWidget - build() called');
+    return BlocListener<AccountsBloc, AccountsState>(
+      listener: (context, state) {
+        _logger.d(
+          'AccountSubscriptionsWidget - BlocListener called with state: ${state.runtimeType}',
+        );
+
+        if (state is AccountDetailsLoaded) {
+          _logger.d(
+            'AccountSubscriptionsWidget - AccountDetailsLoaded detected, loading subscriptions',
+          );
+          context.read<AccountsBloc>().add(
+            LoadAccountSubscriptions(accountId: accountId),
           );
         }
+      },
+      child: BlocBuilder<AccountsBloc, AccountsState>(
+        builder: (context, state) {
+          _logger.d(
+            'AccountSubscriptionsWidget - BlocBuilder called with state: ${state.runtimeType}',
+          );
 
-        if (state is AccountSubscriptionsFailure) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load subscriptions',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    state.message,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<AccountsBloc>().add(
-                        LoadAccountSubscriptions(accountId: accountId),
-                      );
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
-                  ),
-                ],
+          if (state is AccountSubscriptionsLoading) {
+            _logger.d('AccountSubscriptionsWidget - Showing loading state');
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
               ),
-            ),
-          );
-        }
+            );
+          }
 
-        if (state is AccountSubscriptionsLoaded) {
-          if (state.subscriptions.isEmpty) {
+          if (state is AccountSubscriptionsFailure) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -72,22 +55,30 @@ class AccountSubscriptionsWidget extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.subscriptions_outlined,
+                      Icons.error_outline,
                       size: 64,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.5),
+                      color: Theme.of(context).colorScheme.error,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No subscriptions found',
+                      'Failed to load subscriptions',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'This account doesn\'t have any active subscriptions.',
+                      state.message,
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(
+                          LoadAccountSubscriptions(accountId: accountId),
+                        );
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -95,37 +86,70 @@ class AccountSubscriptionsWidget extends StatelessWidget {
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<AccountsBloc>().add(
-                RefreshAccountSubscriptions(accountId: accountId),
+          if (state is AccountSubscriptionsLoaded) {
+            _logger.d(
+              'AccountSubscriptionsWidget - Showing loaded state with ${state.subscriptions.length} subscriptions',
+            );
+            if (state.subscriptions.isEmpty) {
+              _logger.d(
+                'AccountSubscriptionsWidget - Showing empty subscriptions message',
               );
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: state.subscriptions.length,
-              itemBuilder: (context, index) {
-                final subscription = state.subscriptions[index];
-                return _buildSubscriptionCard(context, subscription);
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.subscriptions_outlined,
+                        size: 64,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No subscriptions found',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'This account doesn\'t have any active subscriptions.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<AccountsBloc>().add(
+                  RefreshAccountSubscriptions(accountId: accountId),
+                );
               },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16.0),
+                itemCount: state.subscriptions.length,
+                itemBuilder: (context, index) {
+                  final subscription = state.subscriptions[index];
+                  return _buildSubscriptionCard(context, subscription);
+                },
+              ),
+            );
+          }
+
+          // Initial state - show loading
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
             ),
           );
-        }
-
-        // Initial state - load subscriptions
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<AccountsBloc>().add(
-            LoadAccountSubscriptions(accountId: accountId),
-          );
-        });
-
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: CircularProgressIndicator(),
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 

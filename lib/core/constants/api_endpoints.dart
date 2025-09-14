@@ -7,32 +7,29 @@ class ApiEndpoints {
   static const String forgotPassword = '/auth/forgot-password';
   static const String changePassword = '/auth/change-password';
   static const String resetPassword = '/auth/reset-password';
-  static const String updateUser = '/api/users';
+  static const String updateUser = '/users';
 
   // Subscriptions endpoints
-  static const String recentSubscriptions =
-      '/api/analytics/recent-subscriptions';
-  static const String getSubscriptionById = '/api/subscriptions';
-  static const String getSubscriptionsForAccount = '/api/subscriptions/account';
-  static const String subscriptionCustomFields = '/api/subscriptions';
-  static const String blockSubscription =
-      '/api/subscriptions'; // Base for blocking
+  static const String recentSubscriptions = '/analytics/recent-subscriptions';
+  static const String getSubscriptionById = '/subscriptions';
+  static const String getSubscriptionsForAccount = '/subscriptions/account';
+  static const String subscriptionCustomFields = '/subscriptions';
+  static const String blockSubscription = '/subscriptions'; // Base for blocking
   static const String createSubscriptionWithAddOns =
-      '/api/subscriptions/createSubscriptionWithAddOns';
+      '/subscriptions/createSubscriptionWithAddOns';
   static const String getSubscriptionAuditLogsWithHistory =
-      '/api/subscriptions'; // Base for audit logs
+      '/subscriptions'; // Base for audit logs
   static const String updateSubscriptionBcd =
-      '/api/subscriptions'; // Base for updating BCD
+      '/subscriptions'; // Base for updating BCD
 
   // Tags endpoints
-  static const String getAllTags = '/api/tags';
-  static const String searchTags = '/api/tags/search';
+  static const String getAllTags = '/tags';
+  static const String searchTags = '/tags/search';
 
   // Tag Definitions endpoints
-  static const String getTagDefinitions = '/api/tagDefinitions';
-  static const String createTagDefinition = '/api/tagDefinitions';
-  static const String getTagDefinitionById = '/api/tagDefinitions';
-  static const String getTagDefinitionAuditLogsWithHistory =
-      '/api/tagDefinitions';
-  static const String deleteTagDefinition = '/api/tagDefinitions';
+  static const String getTagDefinitions = '/tagDefinitions';
+  static const String createTagDefinition = '/tagDefinitions';
+  static const String getTagDefinitionById = '/tagDefinitions';
+  static const String getTagDefinitionAuditLogsWithHistory = '/tagDefinitions';
+  static const String deleteTagDefinition = '/tagDefinitions';
 }

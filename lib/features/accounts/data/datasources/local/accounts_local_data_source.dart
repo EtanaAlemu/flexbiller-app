@@ -192,14 +192,26 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
     AccountsQueryParams params,
   ) async {
     try {
+      _logger.d(
+        '🔍 DEBUG: getCachedAccountsByQuery called with params: ${params.toString()}',
+      );
       final db = await _databaseService.database;
       final orderBy = '${params.sortBy} ${params.sortOrder}';
-      return await AccountDao.getByQuery(
+      _logger.d(
+        '🔍 DEBUG: Query orderBy: $orderBy, limit: ${params.limit}, offset: ${params.offset}',
+      );
+
+      final result = await AccountDao.getByQuery(
         db,
         limit: params.limit,
         offset: params.offset,
         orderBy: orderBy,
       );
+
+      _logger.d(
+        '🔍 DEBUG: AccountDao.getByQuery returned ${result.length} accounts',
+      );
+      return result;
     } catch (e) {
       _logger.e('Error getting cached accounts by query: $e');
 

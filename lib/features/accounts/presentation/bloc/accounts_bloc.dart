@@ -260,8 +260,13 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
+      _logger.d(
+        '🔍 DEBUG: _onLoadAccounts called with params: ${event.params.toString()}',
+      );
       emit(AccountsLoading(event.params));
+      _logger.d('🔍 DEBUG: Emitted AccountsLoading state');
       final accounts = await _getAccountsUseCase(event.params);
+      _logger.d('🔍 DEBUG: Got ${accounts.length} accounts from use case');
       emit(
         AccountsLoaded(
           accounts: accounts,
@@ -270,7 +275,11 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
           hasReachedMax: accounts.length < event.params.limit,
         ),
       );
+      _logger.d(
+        '🔍 DEBUG: Emitted AccountsLoaded state with ${accounts.length} accounts',
+      );
     } catch (e) {
+      _logger.e('🔍 DEBUG: Error in _onLoadAccounts: $e');
       emit(AccountsFailure(e.toString()));
     }
   }
@@ -1262,8 +1271,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
 
         // Only handle success states with data - ignore loading states
         if (response.isSuccess && response.data != null) {
-          // Check if we're already showing this account to prevent duplicate updates
           final currentState = state;
+
+          // Only update if we're currently viewing account details for this specific account
           if (currentState is AccountDetailsLoaded &&
               currentState.account.accountId == response.data!.accountId) {
             // Only update if the data is actually different
@@ -1277,11 +1287,18 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
                 'Account data unchanged, skipping UI update: ${response.data!.accountId}',
               );
             }
-          } else {
-            // Emit new state with fresh account data from background sync
+          } else if (currentState is AccountDetailsLoading &&
+              currentState.accountId == response.data!.accountId) {
+            // If we're loading account details and got the data, emit loaded state
             emit(AccountDetailsLoaded(response.data!));
             _logger.d(
-              'UI updated with fresh account from background sync: ${response.data!.accountId}',
+              'UI updated with fresh account from background sync during loading: ${response.data!.accountId}',
+            );
+          } else {
+            // Don't emit AccountDetailsLoaded if we're not viewing account details
+            // This prevents the accounts list from being replaced with account details
+            _logger.d(
+              'Skipping account stream update - not viewing account details for ${response.data!.accountId}',
             );
           }
         } else if (response.hasError) {
@@ -1515,17 +1532,28 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
+      _logger.d(
+        '_onLoadAccountSubscriptions called for account: ${event.accountId}',
+      );
       emit(AccountSubscriptionsLoading(accountId: event.accountId));
+      _logger.d('Emitted AccountSubscriptionsLoading state');
+
       final subscriptions = await _getSubscriptionsForAccountUseCase(
         event.accountId,
       );
+      _logger.d('Got ${subscriptions.length} subscriptions from use case');
+
       emit(
         AccountSubscriptionsLoaded(
           accountId: event.accountId,
           subscriptions: subscriptions,
         ),
       );
+      _logger.d(
+        'Emitted AccountSubscriptionsLoaded state with ${subscriptions.length} subscriptions',
+      );
     } catch (e) {
+      _logger.e('Error in _onLoadAccountSubscriptions: $e');
       emit(
         AccountSubscriptionsFailure(
           message: e.toString(),
