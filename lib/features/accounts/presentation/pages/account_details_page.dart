@@ -19,6 +19,7 @@ import '../widgets/account_invoices_widget.dart';
 import '../widgets/add_payment_method_dialog.dart';
 import '../widgets/add_tags_to_account_dialog.dart';
 import '../widgets/create_account_custom_field_dialog.dart';
+import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
   final String accountId;
@@ -28,10 +29,20 @@ class AccountDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: context.read<AccountsBloc>()..add(LoadAccountDetails(accountId)),
-      child: AccountDetailsView(accountId: accountId),
-    );
+    // Try to get the existing BLoC from context, if not available create a new one
+    try {
+      final existingBloc = context.read<AccountsBloc>();
+      return BlocProvider.value(
+        value: existingBloc..add(LoadAccountDetails(accountId)),
+        child: AccountDetailsView(accountId: accountId),
+      );
+    } catch (e) {
+      // If no BLoC is available in context, create a new one
+      return BlocProvider(
+        create: (context) => getIt<AccountsBloc>()..add(LoadAccountDetails(accountId)),
+        child: AccountDetailsView(accountId: accountId),
+      );
+    }
   }
 }
 
