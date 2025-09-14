@@ -3,18 +3,24 @@ import 'package:injectable/injectable.dart';
 import 'secure_storage_service.dart';
 import 'biometric_auth_service.dart';
 import 'authentication_state_service.dart';
+import 'user_session_service.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
 
 @injectable
 class AuthGuardService {
   final SecureStorageService _secureStorage;
   final BiometricAuthService _biometricAuth;
   final AuthenticationStateService _authStateService;
+  final UserSessionService _userSessionService;
+  final AuthRepository _authRepository;
   final Logger _logger;
 
   AuthGuardService(
     this._secureStorage,
     this._biometricAuth,
     this._authStateService,
+    this._userSessionService,
+    this._authRepository,
     this._logger,
   );
 
@@ -180,6 +186,10 @@ class AuthGuardService {
         _logger.i(
           'User authenticated via email/password - granting direct access',
         );
+
+        // Ensure user context is restored for already authenticated users
+        await _restoreUserContextForAuthenticatedUser();
+
         return {
           'success': true,
           'method': 'direct_access',
@@ -254,6 +264,35 @@ class AuthGuardService {
     } catch (e) {
       _logger.e('Error checking if should redirect to login: $e');
       return true; // Default to requiring login on error
+    }
+  }
+
+  /// Restore user context for already authenticated users
+  Future<void> _restoreUserContextForAuthenticatedUser() async {
+    try {
+      _logger.d('Restoring user context for authenticated user');
+
+      // Check if user context is already set
+      if (_userSessionService.hasActiveUser) {
+        _logger.d(
+          'User context already active: ${_userSessionService.currentUser?.email}',
+        );
+        return;
+      }
+
+      // Try to restore user context from stored data
+      await _authRepository.restoreUserContext();
+
+      if (_userSessionService.hasActiveUser) {
+        _logger.d(
+          'User context restored successfully: ${_userSessionService.currentUser?.email}',
+        );
+      } else {
+        _logger.w('Failed to restore user context for authenticated user');
+      }
+    } catch (e) {
+      _logger.e('Error restoring user context for authenticated user: $e');
+      // Don't rethrow - this is not critical for authentication
     }
   }
 }

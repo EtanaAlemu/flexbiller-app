@@ -441,7 +441,7 @@ class _SidebarMenuState extends State<SidebarMenu> {
   void _showLogoutDialog(BuildContext context) {
     // Get the AuthBloc from the parent context before showing the dialog
     final authBloc = context.read<AuthBloc>();
-    
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(

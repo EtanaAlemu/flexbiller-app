@@ -25,7 +25,8 @@ class AccountAuditLogDao {
   static const String columnSyncStatus = 'sync_status';
 
   // SQL to create the table
-  static String get createTableSQL => '''
+  static String get createTableSQL =>
+      '''
     CREATE TABLE $tableName (
       $columnId TEXT PRIMARY KEY,
       $columnAccountId TEXT NOT NULL,
@@ -61,7 +62,9 @@ class AccountAuditLogDao {
       columnTimestamp: model.timestamp.toIso8601String(),
       columnIpAddress: model.ipAddress,
       columnUserAgent: model.userAgent,
-      columnMetadata: model.metadata != null ? jsonEncode(model.metadata) : null,
+      columnMetadata: model.metadata != null
+          ? jsonEncode(model.metadata)
+          : null,
       columnSyncStatus: 'synced',
     };
   }
@@ -83,7 +86,7 @@ class AccountAuditLogDao {
         timestamp: DateTime.parse(map[columnTimestamp] as String),
         ipAddress: map[columnIpAddress] as String?,
         userAgent: map[columnUserAgent] as String?,
-        metadata: map[columnMetadata] != null 
+        metadata: map[columnMetadata] != null
             ? jsonDecode(map[columnMetadata] as String) as Map<String, dynamic>
             : null,
       );
@@ -95,11 +98,17 @@ class AccountAuditLogDao {
   }
 
   // Helper methods for common operations
-  static Future<void> insertAuditLog(dynamic db, AccountAuditLogModel auditLog) async {
+  static Future<void> insertAuditLog(
+    dynamic db,
+    AccountAuditLogModel auditLog,
+  ) async {
     await db.insert(tableName, toMap(auditLog));
   }
 
-  static Future<void> insertMultipleAuditLogs(dynamic db, List<AccountAuditLogModel> auditLogs) async {
+  static Future<void> insertMultipleAuditLogs(
+    dynamic db,
+    List<AccountAuditLogModel> auditLogs,
+  ) async {
     await db.transaction((txn) async {
       for (final auditLog in auditLogs) {
         await txn.insert(tableName, toMap(auditLog));
@@ -107,7 +116,10 @@ class AccountAuditLogDao {
     });
   }
 
-  static Future<void> updateAuditLog(dynamic db, AccountAuditLogModel auditLog) async {
+  static Future<void> updateAuditLog(
+    dynamic db,
+    AccountAuditLogModel auditLog,
+  ) async {
     await db.update(
       tableName,
       toMap(auditLog),
@@ -117,14 +129,13 @@ class AccountAuditLogDao {
   }
 
   static Future<void> deleteAuditLog(dynamic db, String auditLogId) async {
-    await db.delete(
-      tableName,
-      where: '$columnId = ?',
-      whereArgs: [auditLogId],
-    );
+    await db.delete(tableName, where: '$columnId = ?', whereArgs: [auditLogId]);
   }
 
-  static Future<AccountAuditLogModel?> getAuditLogById(dynamic db, String auditLogId) async {
+  static Future<AccountAuditLogModel?> getAuditLogById(
+    dynamic db,
+    String auditLogId,
+  ) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
       where: '$columnId = ?',
@@ -137,11 +148,20 @@ class AccountAuditLogDao {
     return null;
   }
 
-  static Future<List<AccountAuditLogModel>> getAuditLogsByAccount(dynamic db, String accountId) async {
+  static Future<List<AccountAuditLogModel>> getAuditLogsByAccount(
+    dynamic db,
+    String accountId, {
+    String? userId,
+  }) async {
+    final whereClause = userId != null
+        ? '$columnAccountId = ? AND $columnUserId = ?'
+        : '$columnAccountId = ?';
+    final whereArgs = userId != null ? [accountId, userId] : [accountId];
+
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
-      where: '$columnAccountId = ?',
-      whereArgs: [accountId],
+      where: whereClause,
+      whereArgs: whereArgs,
       orderBy: '$columnTimestamp DESC',
     );
 
@@ -152,7 +172,11 @@ class AccountAuditLogDao {
         .toList();
   }
 
-  static Future<List<AccountAuditLogModel>> getAuditLogsByAction(dynamic db, String accountId, String action) async {
+  static Future<List<AccountAuditLogModel>> getAuditLogsByAction(
+    dynamic db,
+    String accountId,
+    String action,
+  ) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
       where: '$columnAccountId = ? AND $columnAction = ?',
@@ -167,7 +191,11 @@ class AccountAuditLogDao {
         .toList();
   }
 
-  static Future<List<AccountAuditLogModel>> getAuditLogsByEntityType(dynamic db, String accountId, String entityType) async {
+  static Future<List<AccountAuditLogModel>> getAuditLogsByEntityType(
+    dynamic db,
+    String accountId,
+    String entityType,
+  ) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
       where: '$columnAccountId = ? AND $columnEntityType = ?',
@@ -182,7 +210,11 @@ class AccountAuditLogDao {
         .toList();
   }
 
-  static Future<List<AccountAuditLogModel>> getAuditLogsByUser(dynamic db, String accountId, String userId) async {
+  static Future<List<AccountAuditLogModel>> getAuditLogsByUser(
+    dynamic db,
+    String accountId,
+    String userId,
+  ) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
       where: '$columnAccountId = ? AND $columnUserId = ?',
@@ -250,7 +282,8 @@ class AccountAuditLogDao {
   ) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
-      where: '''
+      where:
+          '''
         $columnAccountId = ? AND (
           $columnAction LIKE ? OR 
           $columnDescription LIKE ? OR 
@@ -283,7 +316,10 @@ class AccountAuditLogDao {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
-  static Future<void> deleteAuditLogsByAccount(dynamic db, String accountId) async {
+  static Future<void> deleteAuditLogsByAccount(
+    dynamic db,
+    String accountId,
+  ) async {
     await db.delete(
       tableName,
       where: '$columnAccountId = ?',

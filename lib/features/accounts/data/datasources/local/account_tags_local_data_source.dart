@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../../core/dao/account_tag_dao.dart';
 import '../../../../../core/services/database_service.dart';
+import '../../../../../core/services/user_session_service.dart';
 import '../../models/account_tag_model.dart';
 
 abstract class AccountTagsLocalDataSource {
@@ -24,14 +25,41 @@ abstract class AccountTagsLocalDataSource {
 @Injectable(as: AccountTagsLocalDataSource)
 class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
   final DatabaseService _databaseService;
+  final UserSessionService _userSessionService;
   final Logger _logger = Logger();
 
-  AccountTagsLocalDataSourceImpl(this._databaseService);
+  AccountTagsLocalDataSourceImpl(
+    this._databaseService,
+    this._userSessionService,
+  );
 
   // Tag management methods
   @override
   Future<void> cacheTags(List<AccountTagModel> tags) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w('Failed to restore user context, skipping tag caching');
+            return;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
 
       // Use a transaction for better performance
@@ -71,6 +99,31 @@ class AccountTagsLocalDataSourceImpl implements AccountTagsLocalDataSource {
   @override
   Future<List<AccountTagModel>> getCachedTags() async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, returning empty tags list',
+            );
+            return [];
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return [];
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
       final tagsData = await AccountTagDao.getAllTags(db);
 

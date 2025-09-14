@@ -10,6 +10,7 @@ class AccountBlockingStateDao {
   // Column names
   static const String columnId = 'id';
   static const String columnAccountId = 'account_id';
+  static const String columnUserId = 'user_id';
   static const String columnStateName = 'state_name';
   static const String columnService = 'service';
   static const String columnIsBlockChange = 'is_block_change';
@@ -25,6 +26,7 @@ class AccountBlockingStateDao {
     CREATE TABLE $tableName (
       $columnId TEXT PRIMARY KEY,
       $columnAccountId TEXT NOT NULL,
+      $columnUserId TEXT NOT NULL,
       $columnStateName TEXT NOT NULL,
       $columnService TEXT NOT NULL,
       $columnIsBlockChange INTEGER NOT NULL,
@@ -32,16 +34,21 @@ class AccountBlockingStateDao {
       $columnIsBlockBilling INTEGER NOT NULL,
       $columnEffectiveDate TEXT NOT NULL,
       $columnType TEXT NOT NULL,
-      $columnSyncStatus TEXT NOT NULL
+      $columnSyncStatus TEXT NOT NULL,
+      FOREIGN KEY ($columnUserId) REFERENCES users (id) ON DELETE CASCADE
     )
   ''';
 
   // Convert AccountBlockingStateModel to database map
-  static Map<String, dynamic> toMap(AccountBlockingStateModel model) {
+  static Map<String, dynamic> toMap(
+    AccountBlockingStateModel model, {
+    String? userId,
+  }) {
     return {
       columnId: '${model.service}_${model.stateName}', // Generate unique ID
       columnAccountId:
           'default', // Since model doesn't have accountId, use default
+      columnUserId: userId,
       columnStateName: model.stateName,
       columnService: model.service,
       columnIsBlockChange: model.isBlockChange ? 1 : 0,
@@ -75,9 +82,10 @@ class AccountBlockingStateDao {
   // Helper methods for common operations
   static Future<void> insertBlockingState(
     dynamic db,
-    AccountBlockingStateModel blockingState,
-  ) async {
-    await db.insert(tableName, toMap(blockingState));
+    AccountBlockingStateModel blockingState, {
+    String? userId,
+  }) async {
+    await db.insert(tableName, toMap(blockingState, userId: userId));
   }
 
   static Future<void> insertMultipleBlockingStates(

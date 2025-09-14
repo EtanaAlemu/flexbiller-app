@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../injection_container.dart';
 import '../../../accounts/presentation/pages/accounts_page.dart';
-import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../subscriptions/presentation/pages/subscriptions_demo_page.dart';
 import '../../../tags/presentation/bloc/tags_bloc.dart';
 import '../../../tags/presentation/pages/tags_page.dart';

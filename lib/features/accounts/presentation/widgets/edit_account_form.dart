@@ -9,7 +9,11 @@ class EditAccountForm extends StatefulWidget {
   final Account account;
   final VoidCallback? onAccountUpdated;
 
-  const EditAccountForm({Key? key, required this.account, this.onAccountUpdated}) : super(key: key);
+  const EditAccountForm({
+    Key? key,
+    required this.account,
+    this.onAccountUpdated,
+  }) : super(key: key);
 
   @override
   State<EditAccountForm> createState() => _EditAccountFormState();
@@ -26,13 +30,23 @@ class _EditAccountFormState extends State<EditAccountForm> {
   late final TextEditingController _cityController;
   late final TextEditingController _stateController;
   late final TextEditingController _notesController;
-  
+
   late String _selectedCurrency;
   late String _selectedTimeZone;
   late String _selectedCountry;
 
   final List<String> _currencies = ['USD', 'EUR', 'GBP', 'ETB', 'KES', 'NGN'];
-  final List<String> _timeZones = ['GMT', 'UTC', 'EST', 'PST', 'CET', 'EAT'];
+  final List<String> _timeZones = [
+    'Etc/GMT',
+    'UTC',
+    'America/New_York',
+    'America/Los_Angeles',
+    'Europe/London',
+    'Europe/Paris',
+    'Africa/Addis_Ababa',
+    'Africa/Nairobi',
+    'Africa/Lagos',
+  ];
   final List<String> _countries = ['US', 'ET', 'KE', 'NG', 'GB', 'DE', 'FR'];
 
   @override
@@ -41,13 +55,19 @@ class _EditAccountFormState extends State<EditAccountForm> {
     _nameController = TextEditingController(text: widget.account.name);
     _emailController = TextEditingController(text: widget.account.email);
     _phoneController = TextEditingController(text: widget.account.phone ?? '');
-    _companyController = TextEditingController(text: widget.account.company ?? '');
-    _address1Controller = TextEditingController(text: widget.account.address1 ?? '');
-    _address2Controller = TextEditingController(text: widget.account.address2 ?? '');
+    _companyController = TextEditingController(
+      text: widget.account.company ?? '',
+    );
+    _address1Controller = TextEditingController(
+      text: widget.account.address1 ?? '',
+    );
+    _address2Controller = TextEditingController(
+      text: widget.account.address2 ?? '',
+    );
     _cityController = TextEditingController(text: widget.account.city ?? '');
     _stateController = TextEditingController(text: widget.account.state ?? '');
     _notesController = TextEditingController(text: widget.account.notes ?? '');
-    
+
     _selectedCurrency = widget.account.currency;
     _selectedTimeZone = widget.account.timeZone;
     _selectedCountry = widget.account.country ?? 'US';
@@ -74,14 +94,28 @@ class _EditAccountFormState extends State<EditAccountForm> {
         email: _emailController.text.trim(),
         currency: _selectedCurrency,
         timeZone: _selectedTimeZone,
-        address1: _address1Controller.text.trim().isEmpty ? null : _address1Controller.text.trim(),
-        address2: _address2Controller.text.trim().isEmpty ? null : _address2Controller.text.trim(),
-        company: _companyController.text.trim().isEmpty ? null : _companyController.text.trim(),
-        city: _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
-        state: _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
+        address1: _address1Controller.text.trim().isEmpty
+            ? null
+            : _address1Controller.text.trim(),
+        address2: _address2Controller.text.trim().isEmpty
+            ? null
+            : _address2Controller.text.trim(),
+        company: _companyController.text.trim().isEmpty
+            ? null
+            : _companyController.text.trim(),
+        city: _cityController.text.trim().isEmpty
+            ? null
+            : _cityController.text.trim(),
+        state: _stateController.text.trim().isEmpty
+            ? null
+            : _stateController.text.trim(),
         country: _selectedCountry,
-        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
       );
 
       context.read<AccountsBloc>().add(UpdateAccount(updatedAccount));
@@ -95,7 +129,9 @@ class _EditAccountFormState extends State<EditAccountForm> {
         if (state is AccountUpdated) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Account "${state.account.name}" updated successfully!'),
+              content: Text(
+                'Account "${state.account.name}" updated successfully!',
+              ),
               backgroundColor: Colors.green,
             ),
           );

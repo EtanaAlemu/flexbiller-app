@@ -30,7 +30,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
           '🔍 DEBUG: AccountsListWidget - Current state: ${state.runtimeType}',
         );
 
-        // Cache accounts when they are loaded
+        // Cache accounts when they are loaded - update for any state that has accounts
         if (state is AccountsLoaded) {
           _cachedAccounts = state.accounts;
           _isMultiSelectMode = false;
@@ -40,6 +40,14 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         } else if (state is AccountsSearchResults) {
           _cachedAccounts = state.accounts;
           _isMultiSelectMode = false;
+        } else if (state is BulkAccountsDeleting) {
+          // Update cached accounts when deleting to reflect current state
+          _cachedAccounts = state.accountsToDelete;
+          _isMultiSelectMode = true;
+        } else if (state is BulkAccountsExporting) {
+          // Update cached accounts when exporting to reflect current state
+          _cachedAccounts = state.accountsToExport;
+          _isMultiSelectMode = true;
         }
 
         // Handle multi-select states
@@ -73,6 +81,89 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
           return _buildMultiSelectMode(context, state.accountsToDelete);
         }
 
+        if (state is AccountDeleted) {
+          // After successful single account deletion, refresh the accounts list
+          _logger.d('Account deleted successfully, refreshing accounts list');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<AccountsBloc>().add(
+              const LoadAccounts(AccountsQueryParams()),
+            );
+          });
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Refreshing accounts...'),
+              ],
+            ),
+          );
+        }
+
+        if (state is BulkAccountsDeleted) {
+          // After successful bulk deletion, refresh the accounts list
+          _logger.d('Accounts deleted successfully, refreshing accounts list');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<AccountsBloc>().add(
+              const LoadAccounts(AccountsQueryParams()),
+            );
+          });
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Refreshing accounts...'),
+              ],
+            ),
+          );
+        }
+
+        if (state is AccountDeletionFailure) {
+          // Handle single account deletion failure
+          _logger.d('Account deletion failed: ${state.message}');
+          // Refresh accounts list to show current state
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<AccountsBloc>().add(
+              const LoadAccounts(AccountsQueryParams()),
+            );
+          });
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Refreshing accounts...'),
+              ],
+            ),
+          );
+        }
+
+        if (state is BulkAccountsDeletionFailure) {
+          // Handle bulk deletion failure
+          _logger.d('Account deletion failed: ${state.message}');
+          _isMultiSelectMode = false;
+          // Refresh accounts list to show current state
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<AccountsBloc>().add(
+              const LoadAccounts(AccountsQueryParams()),
+            );
+          });
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Refreshing accounts...'),
+              ],
+            ),
+          );
+        }
+
         if (state is BulkAccountsExporting) {
           _isMultiSelectMode = true;
           return _buildMultiSelectMode(context, state.accountsToExport);
@@ -93,6 +184,18 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         }
 
         if (state is AccountsLoading) {
+          // If we have cached accounts, show them during loading
+          if (_cachedAccounts.isNotEmpty) {
+            _logger.d(
+              'Showing cached accounts during loading: ${_cachedAccounts.length}',
+            );
+            return _buildAccountsList(
+              context,
+              _cachedAccounts,
+              true, // hasReachedMax
+              0, // currentOffset
+            );
+          }
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -497,6 +600,29 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
 
         // Handle other states that might not have accounts
         _logger.d('No cached accounts and state is: ${state.runtimeType}');
+
+        // If we have any state that might indicate we should show accounts, try to load them
+        if (state is! AccountsFailure && state is! AccountDetailsFailure) {
+          _logger.d(
+            'Triggering load accounts for unexpected state: ${state.runtimeType}',
+          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<AccountsBloc>().add(
+              const LoadAccounts(AccountsQueryParams()),
+            );
+          });
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Loading accounts...'),
+              ],
+            ),
+          );
+        }
+
         return const Center(child: Text('No accounts to display'));
       },
     );

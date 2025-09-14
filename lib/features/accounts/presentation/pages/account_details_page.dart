@@ -70,7 +70,7 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
         _currentTabIndex = _tabController.index;
       });
     });
-    
+
     // Load account details after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AccountsBloc>().add(LoadAccountDetails(widget.accountId));
@@ -232,15 +232,21 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                   IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () {
+                      // Capture the BLoC reference before navigation
+                      final accountsBloc = context.read<AccountsBloc>();
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => EditAccountForm(
-                            account: account,
-                            onAccountUpdated: () {
-                              context.read<AccountsBloc>().add(
-                                LoadAccountDetails(widget.accountId),
-                              );
-                            },
+                          builder: (context) => BlocProvider.value(
+                            value: accountsBloc,
+                            child: EditAccountForm(
+                              account: account,
+                              onAccountUpdated: () {
+                                // Use the captured BLoC reference
+                                accountsBloc.add(
+                                  LoadAccountDetails(widget.accountId),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       );

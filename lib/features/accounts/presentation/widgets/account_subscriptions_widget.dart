@@ -16,6 +16,9 @@ class AccountSubscriptionsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     _logger.d('AccountSubscriptionsWidget - build() called');
+    final bloc = context.read<AccountsBloc>();
+    _logger.d('AccountSubscriptionsWidget - Bloc instance: ${bloc.hashCode}');
+
     return BlocListener<AccountsBloc, AccountsState>(
       listener: (context, state) {
         _logger.d(
@@ -24,7 +27,7 @@ class AccountSubscriptionsWidget extends StatelessWidget {
 
         if (state is AccountDetailsLoaded) {
           _logger.d(
-            'AccountSubscriptionsWidget - AccountDetailsLoaded detected, loading subscriptions',
+            'AccountSubscriptionsWidget - AccountDetailsLoaded detected, loading subscriptions for account: $accountId',
           );
           context.read<AccountsBloc>().add(
             LoadAccountSubscriptions(accountId: accountId),
@@ -36,6 +39,40 @@ class AccountSubscriptionsWidget extends StatelessWidget {
           _logger.d(
             'AccountSubscriptionsWidget - BlocBuilder called with state: ${state.runtimeType}',
           );
+          _logger.d(
+            'AccountSubscriptionsWidget - BlocBuilder state details: ${state.toString()}',
+          );
+          _logger.d(
+            'AccountSubscriptionsWidget - BlocBuilder bloc instance: ${context.read<AccountsBloc>().hashCode}',
+          );
+          _logger.d(
+            'AccountSubscriptionsWidget - BlocBuilder state hashCode: ${state.hashCode}',
+          );
+          _logger.d(
+            'AccountSubscriptionsWidget - BlocBuilder state props: ${state.props}',
+          );
+
+          // Add more detailed logging for subscription states
+          if (state is AccountSubscriptionsLoading) {
+            _logger.d(
+              'AccountSubscriptionsWidget - AccountSubscriptionsLoading state detected',
+            );
+          } else if (state is AccountSubscriptionsLoaded) {
+            _logger.d(
+              'AccountSubscriptionsWidget - AccountSubscriptionsLoaded state detected with ${state.subscriptions.length} subscriptions',
+            );
+            _logger.d(
+              'AccountSubscriptionsWidget - AccountSubscriptionsLoaded state details: accountId=${state.accountId}, subscriptions=${state.subscriptions}',
+            );
+          } else if (state is AccountSubscriptionsFailure) {
+            _logger.d(
+              'AccountSubscriptionsWidget - AccountSubscriptionsFailure state detected: ${state.message}',
+            );
+          } else {
+            _logger.d(
+              'AccountSubscriptionsWidget - Unknown state type: ${state.runtimeType}',
+            );
+          }
 
           if (state is AccountSubscriptionsLoading) {
             _logger.d('AccountSubscriptionsWidget - Showing loading state');
@@ -90,6 +127,12 @@ class AccountSubscriptionsWidget extends StatelessWidget {
             _logger.d(
               'AccountSubscriptionsWidget - Showing loaded state with ${state.subscriptions.length} subscriptions',
             );
+            _logger.d(
+              'AccountSubscriptionsWidget - State type check passed for AccountSubscriptionsLoaded',
+            );
+            _logger.d(
+              'AccountSubscriptionsWidget - State runtime type: ${state.runtimeType}',
+            );
             if (state.subscriptions.isEmpty) {
               _logger.d(
                 'AccountSubscriptionsWidget - Showing empty subscriptions message',
@@ -141,7 +184,10 @@ class AccountSubscriptionsWidget extends StatelessWidget {
             );
           }
 
-          // Initial state - show loading
+          // Default state - show loading
+          _logger.d(
+            'AccountSubscriptionsWidget - Showing default loading state for state: ${state.runtimeType}',
+          );
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),

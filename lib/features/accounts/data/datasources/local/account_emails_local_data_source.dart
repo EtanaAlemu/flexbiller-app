@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../../core/services/database_service.dart';
+import '../../../../../core/services/user_session_service.dart';
 import '../../../../../core/dao/account_email_dao.dart';
 import '../../models/account_email_model.dart';
 
@@ -32,9 +33,14 @@ abstract class AccountEmailsLocalDataSource {
 @Injectable(as: AccountEmailsLocalDataSource)
 class AccountEmailsLocalDataSourceImpl implements AccountEmailsLocalDataSource {
   final DatabaseService _databaseService;
+  final UserSessionService _userSessionService;
   final Logger _logger;
 
-  AccountEmailsLocalDataSourceImpl(this._databaseService, this._logger);
+  AccountEmailsLocalDataSourceImpl(
+    this._databaseService,
+    this._userSessionService,
+    this._logger,
+  );
 
   @override
   Future<void> cacheAccountEmails(
@@ -42,6 +48,31 @@ class AccountEmailsLocalDataSourceImpl implements AccountEmailsLocalDataSource {
     List<AccountEmailModel> accountEmails,
   ) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, skipping account emails caching',
+            );
+            return;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
       await AccountEmailDao.insertMultiple(db, accountEmails);
       _logger.d(
@@ -72,6 +103,31 @@ class AccountEmailsLocalDataSourceImpl implements AccountEmailsLocalDataSource {
     String accountId,
   ) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, returning empty account emails list',
+            );
+            return [];
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return [];
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
       final accountEmails = await AccountEmailDao.getByAccountId(db, accountId);
       _logger.d(

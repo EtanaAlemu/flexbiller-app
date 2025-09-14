@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../../core/services/database_service.dart';
+import '../../../../../core/services/user_session_service.dart';
 import '../../../../../core/dao/account_timeline_dao.dart';
 import '../../models/account_timeline_model.dart';
 
@@ -14,18 +15,50 @@ abstract class AccountTimelineLocalDataSource {
 }
 
 @Injectable(as: AccountTimelineLocalDataSource)
-class AccountTimelineLocalDataSourceImpl implements AccountTimelineLocalDataSource {
+class AccountTimelineLocalDataSourceImpl
+    implements AccountTimelineLocalDataSource {
   final DatabaseService _databaseService;
+  final UserSessionService _userSessionService;
   final Logger _logger = Logger();
 
-  AccountTimelineLocalDataSourceImpl(this._databaseService);
+  AccountTimelineLocalDataSourceImpl(
+    this._databaseService,
+    this._userSessionService,
+  );
 
   @override
   Future<void> cacheAccountTimeline(AccountTimelineModel timeline) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, skipping timeline caching',
+            );
+            return;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
       await AccountTimelineDao.insertOrUpdate(db, timeline);
-      _logger.d('Account timeline cached successfully: ${timeline.account.accountId}');
+      _logger.d(
+        'Account timeline cached successfully: ${timeline.account.accountId}',
+      );
     } catch (e) {
       _logger.e('Error caching account timeline: $e');
       rethrow;
@@ -33,11 +66,41 @@ class AccountTimelineLocalDataSourceImpl implements AccountTimelineLocalDataSour
   }
 
   @override
-  Future<AccountTimelineModel?> getCachedAccountTimeline(String accountId) async {
+  Future<AccountTimelineModel?> getCachedAccountTimeline(
+    String accountId,
+  ) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, returning null timeline',
+            );
+            return null;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return null;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
-      final timelineData = await AccountTimelineDao.getByAccountId(db, accountId);
-      
+      final timelineData = await AccountTimelineDao.getByAccountId(
+        db,
+        accountId,
+      );
+
       if (timelineData != null) {
         // Use the DAO's fromMap method to properly parse the timeline data
         final timeline = AccountTimelineDao.fromMap(timelineData);
@@ -94,7 +157,9 @@ class AccountTimelineLocalDataSourceImpl implements AccountTimelineLocalDataSour
       _logger.e('Error checking if cached account timeline exists: $e');
       // If table doesn't exist, return false instead of throwing
       if (e.toString().contains('no such table: account_timelines')) {
-        _logger.w('Account timelines table does not exist yet, returning false');
+        _logger.w(
+          'Account timelines table does not exist yet, returning false',
+        );
         return false;
       }
       rethrow;

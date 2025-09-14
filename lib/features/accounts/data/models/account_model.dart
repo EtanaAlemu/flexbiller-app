@@ -7,6 +7,8 @@ part 'account_model.g.dart';
 class AccountModel {
   @JsonKey(name: 'accountId')
   final String accountId;
+  @JsonKey(name: 'userId')
+  final String? userId;
   final String name;
   @JsonKey(name: 'firstNameLength')
   final int? firstNameLength;
@@ -48,6 +50,7 @@ class AccountModel {
 
   AccountModel({
     required this.accountId,
+    this.userId,
     required this.name,
     this.firstNameLength,
     required this.externalKey,

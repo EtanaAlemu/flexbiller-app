@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../../core/services/database_service.dart';
+import '../../../../../core/services/user_session_service.dart';
 import '../../models/account_invoice_model.dart';
 import '../../../../../core/dao/account_invoices_dao.dart';
 
@@ -42,9 +43,14 @@ abstract class AccountInvoicesLocalDataSource {
 class AccountInvoicesLocalDataSourceImpl
     implements AccountInvoicesLocalDataSource {
   final DatabaseService _databaseService;
+  final UserSessionService _userSessionService;
   final Logger _logger;
 
-  AccountInvoicesLocalDataSourceImpl(this._databaseService, this._logger);
+  AccountInvoicesLocalDataSourceImpl(
+    this._databaseService,
+    this._userSessionService,
+    this._logger,
+  );
 
   @override
   Future<void> cacheAccountInvoices(
@@ -52,6 +58,31 @@ class AccountInvoicesLocalDataSourceImpl
     List<AccountInvoiceModel> invoices,
   ) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, skipping invoice caching',
+            );
+            return;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       // Use transaction for batch operations
       final db = await _databaseService.database;
       await db.transaction((txn) async {
@@ -90,6 +121,31 @@ class AccountInvoicesLocalDataSourceImpl
     String accountId,
   ) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, returning empty invoices list',
+            );
+            return [];
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return [];
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
       final invoices = await AccountInvoicesDao.getByAccountId(db, accountId);
       _logger.d(

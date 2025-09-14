@@ -7,6 +7,8 @@ import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/authentication_flow_page.dart';
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/auth/data/repositories/auth_repository_impl.dart';
+import 'core/services/authentication_state_service.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/localization/app_localizations.dart';
@@ -21,6 +23,24 @@ void main() async {
 
   // Configure dependency injection
   di.configureDependencies();
+
+  // Restore user context for multi-user support (only if user is authenticated)
+  try {
+    final authRepository = di.getIt<AuthRepositoryImpl>();
+    final authStateService = di.getIt<AuthenticationStateService>();
+
+    // Only restore user context if user is actually authenticated
+    final isAuthenticated = await authStateService.isUserAuthenticated();
+    if (isAuthenticated) {
+      await authRepository.restoreUserContext();
+      print('User context restored for authenticated user');
+    } else {
+      print('No authenticated user found, skipping user context restoration');
+    }
+  } catch (e) {
+    // Log error but don't fail app startup
+    print('Error restoring user context: $e');
+  }
 
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([

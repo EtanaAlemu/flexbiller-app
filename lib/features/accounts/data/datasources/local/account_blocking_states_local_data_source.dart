@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../../core/dao/account_blocking_state_dao.dart';
 import '../../../../../core/services/database_service.dart';
+import '../../../../../core/services/user_session_service.dart';
 import '../../models/account_blocking_state_model.dart';
 
 abstract class AccountBlockingStatesLocalDataSource {
@@ -55,15 +56,44 @@ abstract class AccountBlockingStatesLocalDataSource {
 class AccountBlockingStatesLocalDataSourceImpl
     implements AccountBlockingStatesLocalDataSource {
   final DatabaseService _databaseService;
+  final UserSessionService _userSessionService;
   final Logger _logger = Logger();
 
-  AccountBlockingStatesLocalDataSourceImpl(this._databaseService);
+  AccountBlockingStatesLocalDataSourceImpl(
+    this._databaseService,
+    this._userSessionService,
+  );
 
   @override
   Future<void> cacheBlockingStates(
     List<AccountBlockingStateModel> blockingStates,
   ) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, skipping blocking states caching',
+            );
+            return;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
       await AccountBlockingStateDao.insertMultipleBlockingStates(
         db,
@@ -99,6 +129,31 @@ class AccountBlockingStatesLocalDataSourceImpl
     String accountId,
   ) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, returning empty blocking states list',
+            );
+            return [];
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return [];
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
       final blockingStates =
           await AccountBlockingStateDao.getBlockingStatesByAccount(

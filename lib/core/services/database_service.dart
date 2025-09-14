@@ -263,7 +263,77 @@ class DatabaseService {
       _logger.d('Created account_payments table');
     }
 
+    if (oldVersion < 13) {
+      // Add user_id column to all tables for user-specific data isolation
+      await _addUserIdColumnToAllTables(db);
+      _logger.d('Added user_id column to all tables');
+    }
+
     _logger.d('Database upgrade completed successfully');
+  }
+
+  // Add user_id column to all tables for user-specific data isolation
+  Future<void> _addUserIdColumnToAllTables(Database db) async {
+    try {
+      // List of all tables that need user_id column
+      final tables = [
+        'accounts',
+        'child_accounts',
+        'account_audit_logs',
+        'account_blocking_states',
+        'account_custom_fields',
+        'account_emails',
+        'account_invoice_payments',
+        'account_invoices',
+        'account_payment_methods',
+        'account_payments',
+        'account_tags',
+        'account_timelines',
+      ];
+
+      for (final tableName in tables) {
+        await _addUserIdColumnToTable(db, tableName);
+      }
+    } catch (e) {
+      _logger.e('Error adding user_id column to all tables: $e');
+      rethrow;
+    }
+  }
+
+  // Add user_id column to a specific table
+  Future<void> _addUserIdColumnToTable(Database db, String tableName) async {
+    try {
+      // Check if table exists
+      final tables = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+        [tableName],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Table $tableName does not exist, skipping...');
+        return;
+      }
+
+      // Check if user_id column already exists
+      final columns = await db.rawQuery('PRAGMA table_info($tableName)');
+      final hasUserIdColumn = columns.any(
+        (column) => column['name'] == 'user_id',
+      );
+
+      if (!hasUserIdColumn) {
+        _logger.d('Adding user_id column to $tableName table...');
+
+        // Add user_id column
+        await db.execute('ALTER TABLE $tableName ADD COLUMN user_id TEXT');
+
+        _logger.d('user_id column added to $tableName table successfully');
+      } else {
+        _logger.d('user_id column already exists in $tableName table');
+      }
+    } catch (e) {
+      _logger.e('Error adding user_id column to $tableName table: $e');
+      // Don't rethrow - continue with other tables
+    }
   }
 
   // Check and create accounts table if it doesn't exist
@@ -691,11 +761,11 @@ class DatabaseService {
   Future<void> clearAllData() async {
     try {
       final db = await database;
-      
+
       // Clear all tables
       await db.delete('users');
       await db.delete('auth_tokens');
-      
+
       _logger.d('All data cleared from database');
     } catch (e) {
       _logger.e('Error clearing all data: $e');

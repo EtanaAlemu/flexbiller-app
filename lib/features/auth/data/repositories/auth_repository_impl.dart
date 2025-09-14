@@ -7,6 +7,7 @@ import '../models/auth_response.dart';
 import 'package:flexbiller_app/core/services/secure_storage_service.dart';
 import 'package:flexbiller_app/core/services/jwt_service.dart';
 import 'package:flexbiller_app/core/services/authentication_state_service.dart';
+import 'package:flexbiller_app/core/services/user_session_service.dart';
 import 'package:flexbiller_app/core/errors/exceptions.dart';
 import 'package:flexbiller_app/injection_container.dart';
 import 'package:logger/logger.dart';
@@ -17,6 +18,7 @@ class AuthRepositoryImpl implements AuthRepository {
   final SecureStorageService _secureStorage;
   final JwtService _jwtService;
   final UserLocalDataSource _userLocalDataSource;
+  final UserSessionService _userSessionService;
   final Logger _logger = Logger();
 
   AuthRepositoryImpl(
@@ -24,6 +26,7 @@ class AuthRepositoryImpl implements AuthRepository {
     this._secureStorage,
     this._jwtService,
     this._userLocalDataSource,
+    this._userSessionService,
   );
 
   @override
@@ -191,6 +194,10 @@ class AuthRepositoryImpl implements AuthRepository {
         // The user can still use the app with secure storage
       }
 
+      // Set the current user context for multi-user support
+      await _userSessionService.setCurrentUser(user);
+      _logger.i('User context set successfully: ${user.email}');
+
       return user;
     } catch (e) {
       _logger.e('Login failed: $e');
@@ -316,6 +323,10 @@ class AuthRepositoryImpl implements AuthRepository {
         _logger.w('Failed to clear user data from local database: $dbError');
         // Don't fail logout if database clearing fails
       }
+
+      // Clear current user context
+      await _userSessionService.clearCurrentUser();
+      _logger.i('User context cleared successfully');
     } catch (e) {
       // Even if logout fails, clear local tokens for security
       await _secureStorage.clearAuthTokens();
@@ -329,6 +340,10 @@ class AuthRepositoryImpl implements AuthRepository {
           'Failed to clear user data from local database during error handling: $dbError',
         );
       }
+
+      // Clear current user context even if logout failed
+      await _userSessionService.clearCurrentUser();
+      _logger.i('User context cleared successfully (after error)');
 
       rethrow;
     }
@@ -518,6 +533,39 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (e) {
       _logger.e('Error updating user: $e');
       rethrow;
+    }
+  }
+
+  /// Restore user context from stored user ID
+  /// This is called during app initialization to restore the last active user
+  Future<void> restoreUserContext() async {
+    try {
+      _logger.d('Restoring user context from stored user ID');
+      print('DEBUG: restoreUserContext called');
+
+      // Restore the user session context
+      await _userSessionService.restoreCurrentUserContext();
+
+      // If we have a current user ID, load the full user object
+      if (_userSessionService.hasActiveUser) {
+        final userId = _userSessionService.currentUserId!;
+        final user = await _userLocalDataSource.getUserById(userId);
+
+        if (user != null) {
+          await _userSessionService.setCurrentUser(user);
+          _logger.d('User context restored successfully: ${user.email}');
+        } else {
+          _logger.w(
+            'User with ID $userId not found in local database, clearing context',
+          );
+          await _userSessionService.clearCurrentUser();
+        }
+      } else {
+        _logger.d('No stored user context found');
+      }
+    } catch (e) {
+      _logger.e('Error restoring user context: $e');
+      // Don't rethrow - this is not critical for app startup
     }
   }
 }

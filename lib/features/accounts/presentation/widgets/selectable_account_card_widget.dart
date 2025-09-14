@@ -114,7 +114,7 @@ class SelectableAccountCardWidget extends StatelessWidget {
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            'ID: ${account.id.substring(0, 8)}...',
+                            'ID: ${account.id.length > 8 ? account.id.substring(0, 8) : account.id}...',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: Theme.of(

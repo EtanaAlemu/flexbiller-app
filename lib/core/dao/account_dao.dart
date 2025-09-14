@@ -7,6 +7,7 @@ class AccountDao {
 
   // Column names constants
   static const String columnAccountId = 'accountId';
+  static const String columnUserId = 'user_id';
   static const String columnName = 'name';
   static const String columnFirstNameLength = 'firstNameLength';
   static const String columnExternalKey = 'externalKey';
@@ -41,6 +42,7 @@ class AccountDao {
       '''
     CREATE TABLE $tableName (
       $columnAccountId TEXT PRIMARY KEY,
+      $columnUserId TEXT NOT NULL,
       $columnName TEXT NOT NULL,
       $columnFirstNameLength INTEGER,
       $columnExternalKey TEXT NOT NULL,
@@ -67,14 +69,16 @@ class AccountDao {
       $columnAccountCBA REAL,
       $columnCreatedAt TEXT NOT NULL,
       $columnUpdatedAt TEXT NOT NULL,
-      $columnSyncStatus TEXT NOT NULL
+      $columnSyncStatus TEXT NOT NULL,
+      FOREIGN KEY ($columnUserId) REFERENCES users (id) ON DELETE CASCADE
     )
   ''';
 
   // Convert AccountModel to database map
-  static Map<String, dynamic> toMap(AccountModel account) {
+  static Map<String, dynamic> toMap(AccountModel account, {String? userId}) {
     return {
       columnAccountId: account.accountId,
+      columnUserId: userId ?? account.userId,
       columnName: account.name,
       columnFirstNameLength: account.firstNameLength,
       columnExternalKey: account.externalKey,
@@ -111,6 +115,7 @@ class AccountDao {
   static AccountModel fromMap(Map<String, dynamic> map) {
     return AccountModel(
       accountId: map[columnAccountId] as String,
+      userId: map[columnUserId] as String?,
       name: map[columnName] as String,
       firstNameLength: map[columnFirstNameLength] as int?,
       externalKey: map[columnExternalKey] as String,
@@ -143,8 +148,12 @@ class AccountDao {
   }
 
   // Insert or update account with conflict resolution
-  static Future<void> insertOrUpdate(Database db, AccountModel account) async {
-    final accountData = toMap(account);
+  static Future<void> insertOrUpdate(
+    Database db,
+    AccountModel account, {
+    String? userId,
+  }) async {
+    final accountData = toMap(account, userId: userId);
 
     try {
       await db.insert(
@@ -191,9 +200,12 @@ class AccountDao {
   static Future<List<AccountModel>> getAll(
     Database db, {
     String? orderBy,
+    String? userId,
   }) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
+      where: userId != null ? '$columnUserId = ?' : null,
+      whereArgs: userId != null ? [userId] : null,
       orderBy: orderBy ?? '$columnName ASC',
     );
 
@@ -203,15 +215,21 @@ class AccountDao {
   // Search accounts by multiple fields
   static Future<List<AccountModel>> search(
     Database db,
-    String searchKey,
-  ) async {
+    String searchKey, {
+    String? userId,
+  }) async {
     final searchPattern = '%$searchKey%';
+    final whereClause = userId != null
+        ? '$columnUserId = ? AND ($columnName LIKE ? OR $columnEmail LIKE ? OR $columnCompany LIKE ? OR $columnExternalKey LIKE ?)'
+        : '$columnName LIKE ? OR $columnEmail LIKE ? OR $columnCompany LIKE ? OR $columnExternalKey LIKE ?';
+    final whereArgs = userId != null
+        ? [userId, searchPattern, searchPattern, searchPattern, searchPattern]
+        : [searchPattern, searchPattern, searchPattern, searchPattern];
 
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
-      where:
-          '$columnName LIKE ? OR $columnEmail LIKE ? OR $columnCompany LIKE ? OR $columnExternalKey LIKE ?',
-      whereArgs: [searchPattern, searchPattern, searchPattern, searchPattern],
+      where: whereClause,
+      whereArgs: whereArgs,
       orderBy: '$columnName ASC',
     );
 
@@ -219,20 +237,37 @@ class AccountDao {
   }
 
   // Get accounts count
-  static Future<int> getCount(Database db) async {
-    final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM $tableName',
-    );
-    return result.first['count'] as int;
+  static Future<int> getCount(Database db, {String? userId}) async {
+    if (userId != null) {
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM $tableName WHERE $columnUserId = ?',
+        [userId],
+      );
+      return result.first['count'] as int;
+    } else {
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM $tableName',
+      );
+      return result.first['count'] as int;
+    }
   }
 
   // Check if accounts exist
-  static Future<bool> hasAccounts(Database db) async {
-    final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM $tableName',
-    );
-    final count = result.first['count'] as int;
-    return count > 0;
+  static Future<bool> hasAccounts(Database db, {String? userId}) async {
+    if (userId != null) {
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM $tableName WHERE $columnUserId = ?',
+        [userId],
+      );
+      final count = result.first['count'] as int;
+      return count > 0;
+    } else {
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM $tableName',
+      );
+      final count = result.first['count'] as int;
+      return count > 0;
+    }
   }
 
   // Clear all accounts
@@ -246,9 +281,12 @@ class AccountDao {
     int? limit,
     int? offset,
     String? orderBy,
+    String? userId,
   }) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
+      where: userId != null ? '$columnUserId = ?' : null,
+      whereArgs: userId != null ? [userId] : null,
       orderBy: orderBy ?? '$columnName ASC',
       limit: limit,
       offset: offset,

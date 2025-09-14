@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../core/services/database_service.dart';
+import '../../../../core/services/user_session_service.dart';
 import '../../domain/entities/user.dart';
 
 abstract class UserLocalDataSource {
@@ -31,9 +32,10 @@ abstract class UserLocalDataSource {
 @Injectable(as: UserLocalDataSource)
 class UserLocalDataSourceImpl implements UserLocalDataSource {
   final DatabaseService _databaseService;
+  final UserSessionService _userSessionService;
   final Logger _logger = Logger();
 
-  UserLocalDataSourceImpl(this._databaseService);
+  UserLocalDataSourceImpl(this._databaseService, this._userSessionService);
 
   @override
   Future<void> saveUser(User user) async {
@@ -64,6 +66,10 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
       };
 
       await _databaseService.insertUser(userData);
+
+      // Set the current user context after saving
+      await _userSessionService.setCurrentUser(user);
+
       _logger.d('User saved successfully to local database: ${user.email}');
     } catch (e) {
       _logger.e('Error saving user to local database: $e');
@@ -288,6 +294,10 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
 
       await _databaseService.deleteAllUsers();
       await _databaseService.deleteAllAuthTokens();
+
+      // Clear the current user session
+      await _userSessionService.clearCurrentUser();
+
       _logger.d('All data cleared successfully from local database');
     } catch (e) {
       _logger.e('Error clearing all data from local database: $e');
@@ -321,16 +331,3 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

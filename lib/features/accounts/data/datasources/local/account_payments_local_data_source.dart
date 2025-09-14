@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../../core/services/database_service.dart';
+import '../../../../../core/services/user_session_service.dart';
 import '../../../../../core/dao/account_payment_dao.dart';
 import '../../models/account_payment_model.dart';
 
@@ -94,9 +95,14 @@ abstract class AccountPaymentsLocalDataSource {
 class AccountPaymentsLocalDataSourceImpl
     implements AccountPaymentsLocalDataSource {
   final DatabaseService _databaseService;
+  final UserSessionService _userSessionService;
   final Logger _logger;
 
-  AccountPaymentsLocalDataSourceImpl(this._databaseService, this._logger);
+  AccountPaymentsLocalDataSourceImpl(
+    this._databaseService,
+    this._userSessionService,
+    this._logger,
+  );
 
   @override
   Future<void> cacheAccountPayments(
@@ -104,6 +110,31 @@ class AccountPaymentsLocalDataSourceImpl
     List<AccountPaymentModel> payments,
   ) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, skipping payments caching',
+            );
+            return;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
       await AccountPaymentDao.insertMultiple(db, payments);
       _logger.d('Cached ${payments.length} payments for account: $accountId');
@@ -132,6 +163,31 @@ class AccountPaymentsLocalDataSourceImpl
     String accountId,
   ) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, returning empty payments list',
+            );
+            return [];
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return [];
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
       final payments = await AccountPaymentDao.getByAccountId(db, accountId);
       _logger.d(

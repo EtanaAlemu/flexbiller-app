@@ -1533,27 +1533,36 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       _logger.d(
-        '_onLoadAccountSubscriptions called for account: ${event.accountId}',
+        '🔍 _onLoadAccountSubscriptions called for account: ${event.accountId}',
       );
       emit(AccountSubscriptionsLoading(accountId: event.accountId));
-      _logger.d('Emitted AccountSubscriptionsLoading state');
+      _logger.d('🔍 Emitted AccountSubscriptionsLoading state');
 
+      _logger.d('🔍 About to call _getSubscriptionsForAccountUseCase');
       final subscriptions = await _getSubscriptionsForAccountUseCase(
         event.accountId,
       );
-      _logger.d('Got ${subscriptions.length} subscriptions from use case');
+      _logger.d('🔍 Got ${subscriptions.length} subscriptions from use case');
 
-      emit(
-        AccountSubscriptionsLoaded(
-          accountId: event.accountId,
-          subscriptions: subscriptions,
-        ),
+      final loadedState = AccountSubscriptionsLoaded(
+        accountId: event.accountId,
+        subscriptions: subscriptions,
       );
       _logger.d(
-        'Emitted AccountSubscriptionsLoaded state with ${subscriptions.length} subscriptions',
+        '🔍 About to emit AccountSubscriptionsLoaded state with ${subscriptions.length} subscriptions',
       );
+      _logger.d(
+        '🔍 State details: accountId=${loadedState.accountId}, subscriptions=${loadedState.subscriptions}',
+      );
+      emit(loadedState);
+      _logger.d(
+        '🔍 Successfully emitted AccountSubscriptionsLoaded state with ${subscriptions.length} subscriptions',
+      );
+      _logger.d('🔍 Bloc instance emitting state: ${this.hashCode}');
+      _logger.d('🔍 State hashCode: ${loadedState.hashCode}');
+      _logger.d('🔍 State props: ${loadedState.props}');
     } catch (e) {
-      _logger.e('Error in _onLoadAccountSubscriptions: $e');
+      _logger.e('🔍 Error in _onLoadAccountSubscriptions: $e');
       emit(
         AccountSubscriptionsFailure(
           message: e.toString(),

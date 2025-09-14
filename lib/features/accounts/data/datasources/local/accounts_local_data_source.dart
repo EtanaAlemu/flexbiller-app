@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../../core/dao/account_dao.dart';
 import '../../../../../core/services/database_service.dart';
+import '../../../../../core/services/user_session_service.dart';
 import '../../models/account_model.dart';
 import '../../../domain/entities/accounts_query_params.dart';
 
@@ -31,6 +32,7 @@ abstract class AccountsLocalDataSource {
 @Injectable(as: AccountsLocalDataSource)
 class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   final DatabaseService _databaseService;
+  final UserSessionService _userSessionService;
   final Logger _logger = Logger();
 
   // Stream controllers for reactive updates
@@ -46,16 +48,47 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   _searchStreamController =
       StreamController<Map<String, List<AccountModel>>>.broadcast();
 
-  AccountsLocalDataSourceImpl(this._databaseService);
+  AccountsLocalDataSourceImpl(this._databaseService, this._userSessionService);
 
   @override
   Future<void> cacheAccounts(List<AccountModel> accounts) async {
     try {
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+
+        // Try to restore user context from stored data
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, skipping account caching',
+            );
+            return;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return;
+        }
+      }
+
+      // If we have a user ID, proceed even if hasActiveUser is false
+      // This handles the case where the user ID is restored but the full user object is not loaded
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
       for (final account in accounts) {
-        await AccountDao.insertOrUpdate(db, account);
+        await AccountDao.insertOrUpdate(db, account, userId: currentUserId);
       }
-      _logger.d('Cached ${accounts.length} accounts successfully');
+      _logger.d(
+        'Cached ${accounts.length} accounts successfully for user: $currentUserId',
+      );
 
       // Emit to streams for reactive updates
       _emitAccountsUpdate();
@@ -68,8 +101,18 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   @override
   Future<List<AccountModel>> getCachedAccounts() async {
     try {
+      final currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, returning empty accounts list');
+        return [];
+      }
+
       final db = await _databaseService.database;
-      return await AccountDao.getAll(db, orderBy: 'name ASC');
+      return await AccountDao.getAll(
+        db,
+        orderBy: 'name ASC',
+        userId: currentUserId,
+      );
     } catch (e) {
       _logger.e('Error getting cached accounts: $e');
 
@@ -86,8 +129,43 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   @override
   Future<AccountModel?> getCachedAccountById(String accountId) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, returning null for account: $accountId',
+            );
+            return null;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return null;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
-      return await AccountDao.getById(db, accountId);
+      final account = await AccountDao.getById(db, accountId);
+
+      // Verify the account belongs to the current user
+      if (account != null && account.userId != currentUserId) {
+        _logger.w(
+          'Account $accountId does not belong to current user $currentUserId',
+        );
+        return null;
+      }
+
+      return account;
     } catch (e) {
       _logger.e('Error getting cached account by ID: $e');
       rethrow;
@@ -97,8 +175,33 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   @override
   Future<List<AccountModel>> searchCachedAccounts(String searchKey) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, returning empty search results',
+            );
+            return [];
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return [];
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
-      return await AccountDao.search(db, searchKey);
+      return await AccountDao.search(db, searchKey, userId: currentUserId);
     } catch (e) {
       _logger.e('Error searching cached accounts: $e');
       rethrow;
@@ -108,9 +211,36 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   @override
   Future<void> cacheAccount(AccountModel account) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, skipping account caching: ${account.accountId}',
+            );
+            return;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
-      await AccountDao.insertOrUpdate(db, account);
-      _logger.d('Cached account successfully: ${account.accountId}');
+      await AccountDao.insertOrUpdate(db, account, userId: currentUserId);
+      _logger.d(
+        'Cached account successfully: ${account.accountId} for user: $currentUserId',
+      );
 
       // Emit only individual account update, not accounts list update
       _emitAccountUpdate(account);
@@ -123,9 +253,36 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   @override
   Future<void> updateCachedAccount(AccountModel account) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, skipping account update: ${account.accountId}',
+            );
+            return;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
-      await AccountDao.insertOrUpdate(db, account);
-      _logger.d('Updated cached account: ${account.accountId}');
+      await AccountDao.insertOrUpdate(db, account, userId: currentUserId);
+      _logger.d(
+        'Updated cached account: ${account.accountId} for user: $currentUserId',
+      );
 
       // Emit only individual account update, not accounts list update
       _emitAccountUpdate(account);
@@ -138,9 +295,44 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   @override
   Future<void> deleteCachedAccount(String accountId) async {
     try {
+      // Check for user context and restore if needed
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, skipping account deletion: $accountId',
+            );
+            return;
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return;
+        }
+      }
+      // If we have a user ID, proceed even if hasActiveUser is false
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       final db = await _databaseService.database;
+
+      // Verify the account belongs to the current user before deleting
+      final account = await AccountDao.getById(db, accountId);
+      if (account != null && account.userId != currentUserId) {
+        _logger.w(
+          'Cannot delete account $accountId - does not belong to current user $currentUserId',
+        );
+        return;
+      }
+
       await AccountDao.deleteById(db, accountId);
-      _logger.d('Deleted cached account: $accountId');
+      _logger.d('Deleted cached account: $accountId for user: $currentUserId');
 
       // Emit only individual account deletion, not accounts list update
       _emitAccountDeletion(accountId);
@@ -153,9 +345,20 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   @override
   Future<void> clearAllCachedAccounts() async {
     try {
+      final currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, skipping clearing all accounts');
+        return;
+      }
       final db = await _databaseService.database;
-      await AccountDao.clearAll(db);
-      _logger.d('Cleared all cached accounts');
+
+      // Only clear accounts for the current user
+      await db.delete(
+        'accounts',
+        where: 'user_id = ?',
+        whereArgs: [currentUserId],
+      );
+      _logger.d('Cleared all cached accounts for user: $currentUserId');
 
       // Emit to streams for reactive updates
       _emitAccountsUpdate();
@@ -168,8 +371,15 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   @override
   Future<bool> hasCachedAccounts() async {
     try {
+      final currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w(
+          'No active user context, returning false for hasCachedAccounts',
+        );
+        return false;
+      }
       final db = await _databaseService.database;
-      return await AccountDao.hasAccounts(db);
+      return await AccountDao.hasAccounts(db, userId: currentUserId);
     } catch (e) {
       _logger.e('Error checking if has cached accounts: $e');
       return false;
@@ -179,8 +389,13 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
   @override
   Future<int> getCachedAccountsCount() async {
     try {
+      final currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, returning 0 for accounts count');
+        return 0;
+      }
       final db = await _databaseService.database;
-      return await AccountDao.getCount(db);
+      return await AccountDao.getCount(db, userId: currentUserId);
     } catch (e) {
       _logger.e('Error getting cached accounts count: $e');
       return 0;
@@ -192,8 +407,37 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
     AccountsQueryParams params,
   ) async {
     try {
+      var currentUserId = _userSessionService.getCurrentUserIdOrNull();
+      if (currentUserId == null) {
+        _logger.w('No active user context, attempting to restore user context');
+
+        // Try to restore user context from stored data
+        try {
+          await _userSessionService.restoreCurrentUserContext();
+          currentUserId = _userSessionService.getCurrentUserIdOrNull();
+
+          if (currentUserId == null) {
+            _logger.w(
+              'Failed to restore user context, returning empty accounts list',
+            );
+            return [];
+          } else {
+            _logger.i('User context restored successfully: $currentUserId');
+          }
+        } catch (e) {
+          _logger.e('Error restoring user context: $e');
+          return [];
+        }
+      }
+
+      // If we have a user ID, proceed even if hasActiveUser is false
+      // This handles the case where the user ID is restored but the full user object is not loaded
+      if (currentUserId != null) {
+        _logger.d('Using restored user ID: $currentUserId');
+      }
+
       _logger.d(
-        '🔍 DEBUG: getCachedAccountsByQuery called with params: ${params.toString()}',
+        '🔍 DEBUG: getCachedAccountsByQuery called with params: ${params.toString()} for user: $currentUserId',
       );
       final db = await _databaseService.database;
       final orderBy = '${params.sortBy} ${params.sortOrder}';
@@ -206,10 +450,11 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
         limit: params.limit,
         offset: params.offset,
         orderBy: orderBy,
+        userId: currentUserId,
       );
 
       _logger.d(
-        '🔍 DEBUG: AccountDao.getByQuery returned ${result.length} accounts',
+        '🔍 DEBUG: AccountDao.getByQuery returned ${result.length} accounts for user: $currentUserId',
       );
       return result;
     } catch (e) {
