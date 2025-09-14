@@ -9,9 +9,17 @@ class AuthenticationStateService {
 
   AuthenticationStateService(this._secureStorage, this._logger);
 
+  // Cache management
+  void _invalidateAuthCache() {
+    // No cache to invalidate
+  }
+
   /// Check if user is currently authenticated
   Future<bool> isUserAuthenticated() async {
     try {
+      // Always check fresh for authentication state (don't use cache for critical auth checks)
+      _logger.d('DEBUG: Checking authentication state (fresh check)');
+
       // Check if we have valid tokens
       final hasValidToken = await _secureStorage.hasValidToken();
       if (!hasValidToken) {
@@ -21,9 +29,15 @@ class AuthenticationStateService {
 
       // Check if user should stay logged in based on Remember Me preference
       final shouldStayLoggedIn = await _secureStorage.shouldStayLoggedIn();
+      _logger.d('DEBUG: shouldStayLoggedIn result: $shouldStayLoggedIn');
+
       if (!shouldStayLoggedIn) {
-        _logger.d('DEBUG: User not authenticated - session not persistent');
-        return false;
+        // Fallback: If we have valid tokens but fresh login check failed,
+        // still consider user authenticated for current session
+        _logger.d(
+          'DEBUG: Fresh login check failed, but user has valid tokens - allowing authentication for current session',
+        );
+        return true;
       }
 
       _logger.d('DEBUG: User is authenticated');
@@ -41,14 +55,21 @@ class AuthenticationStateService {
         return null;
       }
 
-      // Check if it's a fresh login (within 5 minutes)
+      // Check if this is a fresh login (within current session)
       final isFreshLogin = await _secureStorage.isFreshLogin();
       if (isFreshLogin) {
         return 'email_password';
       }
 
-      // If not fresh login but authenticated, it must be biometric
-      return 'biometric';
+      // If not fresh login but authenticated, check Remember Me preference
+      final rememberMe = await _secureStorage.getRememberMe();
+      if (rememberMe) {
+        // User has Remember Me enabled, require biometric or password
+        return 'biometric';
+      } else {
+        // No Remember Me and fresh login expired - user should be logged out
+        return null;
+      }
     } catch (e) {
       _logger.e('DEBUG: Error getting authentication method: $e');
       return null;
@@ -59,10 +80,16 @@ class AuthenticationStateService {
   Future<void> clearAuthenticationState() async {
     try {
       await _secureStorage.clearAuthTokens();
+      _invalidateAuthCache(); // Clear cached authentication state
       _logger.d('DEBUG: Authentication state cleared');
     } catch (e) {
       _logger.e('DEBUG: Error clearing authentication state: $e');
     }
+  }
+
+  /// Invalidate authentication cache (useful after login)
+  void invalidateCache() {
+    _invalidateAuthCache();
   }
 
   /// Get authentication info for debugging

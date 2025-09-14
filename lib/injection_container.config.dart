@@ -218,6 +218,7 @@ import 'features/auth/domain/repositories/auth_repository.dart' as _i1015;
 import 'features/auth/domain/usecases/change_password_usecase.dart' as _i890;
 import 'features/auth/domain/usecases/forgot_password_usecase.dart' as _i993;
 import 'features/auth/domain/usecases/login_usecase.dart' as _i206;
+import 'features/auth/domain/usecases/logout_usecase.dart' as _i824;
 import 'features/auth/domain/usecases/reset_password_usecase.dart' as _i1070;
 import 'features/auth/domain/usecases/update_user_usecase.dart' as _i457;
 import 'features/auth/presentation/bloc/auth_bloc.dart' as _i363;
@@ -743,6 +744,13 @@ _i174.GetIt $initGetIt(
   gh.factory<_i915.UserPersistenceService>(
     () => _i915.UserPersistenceService(gh<_i254.UserLocalDataSource>()),
   );
+  gh.factory<_i824.LogoutUseCase>(
+    () => _i824.LogoutUseCase(
+      gh<_i751.AuthenticationStateService>(),
+      gh<_i443.SyncService>(),
+      gh<_i916.DatabaseService>(),
+    ),
+  );
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
   );
@@ -818,6 +826,16 @@ _i174.GetIt $initGetIt(
   gh.factory<_i968.CreateAccountUseCase>(
     () => _i968.CreateAccountUseCase(gh<_i42.AccountsRepository>()),
   );
+  gh.factory<_i363.AuthBloc>(
+    () => _i363.AuthBloc(
+      loginUseCase: gh<_i206.LoginUseCase>(),
+      logoutUseCase: gh<_i824.LogoutUseCase>(),
+      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
+      changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
+      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
+      updateUserUseCase: gh<_i457.UpdateUserUseCase>(),
+    ),
+  );
   gh.factory<_i350.CreateInvoicePaymentUseCase>(
     () => _i350.CreateInvoicePaymentUseCase(
       gh<_i378.AccountInvoicePaymentsRepository>(),
@@ -861,15 +879,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i729.GetAccountBlockingStatesUseCase>(
     () => _i729.GetAccountBlockingStatesUseCase(
       gh<_i696.AccountBlockingStatesRepository>(),
-    ),
-  );
-  gh.factory<_i363.AuthBloc>(
-    () => _i363.AuthBloc(
-      loginUseCase: gh<_i206.LoginUseCase>(),
-      forgotPasswordUseCase: gh<_i993.ForgotPasswordUseCase>(),
-      changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
-      resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
-      updateUserUseCase: gh<_i457.UpdateUserUseCase>(),
     ),
   );
   gh.factory<_i795.AccountsBloc>(

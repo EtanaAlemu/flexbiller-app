@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/usecases/login_usecase.dart';
+import '../../domain/usecases/logout_usecase.dart';
 import '../../domain/usecases/forgot_password_usecase.dart';
 import '../../domain/usecases/change_password_usecase.dart';
 import '../../domain/usecases/reset_password_usecase.dart';
@@ -15,6 +16,7 @@ part 'auth_state.dart';
 @injectable
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase _loginUseCase;
+  final LogoutUseCase _logoutUseCase;
   final ForgotPasswordUseCase _forgotPasswordUseCase;
   final ChangePasswordUseCase _changePasswordUseCase;
   final ResetPasswordUseCase _resetPasswordUseCase;
@@ -23,17 +25,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   AuthBloc({
     required LoginUseCase loginUseCase,
+    required LogoutUseCase logoutUseCase,
     required ForgotPasswordUseCase forgotPasswordUseCase,
     required ChangePasswordUseCase changePasswordUseCase,
     required ResetPasswordUseCase resetPasswordUseCase,
     required UpdateUserUseCase updateUserUseCase,
   }) : _loginUseCase = loginUseCase,
+       _logoutUseCase = logoutUseCase,
        _forgotPasswordUseCase = forgotPasswordUseCase,
        _changePasswordUseCase = changePasswordUseCase,
        _resetPasswordUseCase = resetPasswordUseCase,
        _updateUserUseCase = updateUserUseCase,
        super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
+    on<LogoutRequested>(_onLogoutRequested);
+    on<CheckAuthStatus>(_onCheckAuthStatus);
+    on<RefreshTokenRequested>(_onRefreshTokenRequested);
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<ChangePasswordRequested>(_onChangePasswordRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
@@ -89,11 +96,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      // TODO: Implement logout use case
-      // await _logoutUseCase();
+      _logger.i('🔄 Logout requested - Starting logout process');
+      
+      // Execute logout use case to clear all data and stop background operations
+      await _logoutUseCase();
+      
+      _logger.i('✅ Logout completed successfully');
       emit(AuthUnauthenticated());
     } catch (e) {
-      emit(AuthFailure(e.toString()));
+      _logger.e('❌ Error during logout: $e');
+      // Even if logout fails, we should still emit unauthenticated state
+      emit(AuthUnauthenticated());
     }
   }
 

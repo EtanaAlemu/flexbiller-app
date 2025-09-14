@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import '../../../../core/services/auth_guard_service.dart';
-import '../../../../core/services/secure_storage_service.dart';
-import '../../../../core/services/biometric_auth_service.dart';
 import '../../../../injection_container.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
 import '../pages/login_page.dart';
+import '../bloc/auth_bloc.dart';
 
 class AuthenticationFlowPage extends StatefulWidget {
   const AuthenticationFlowPage({Key? key}) : super(key: key);
@@ -20,6 +20,7 @@ class _AuthenticationFlowPageState extends State<AuthenticationFlowPage> {
 
   bool _isLoading = true;
   bool _shouldShowLogin = false;
+  bool _prePopulateEmail = false;
   String _statusMessage = 'Checking authentication...';
 
   @override
@@ -43,6 +44,7 @@ class _AuthenticationFlowPageState extends State<AuthenticationFlowPage> {
         setState(() {
           _isLoading = false;
           _shouldShowLogin = authResult['requiresLogin'] == true;
+          _prePopulateEmail = authResult['prePopulateEmail'] == true;
           _statusMessage =
               authResult['message'] ?? 'Authentication check completed';
         });
@@ -64,66 +66,35 @@ class _AuthenticationFlowPageState extends State<AuthenticationFlowPage> {
   }
 
   void _onLoginSuccess() async {
+    _logger.i('✅ Login successful - Navigating directly to dashboard');
+
+    // Since login was successful, we can go directly to dashboard
+    // No need to re-validate authentication as we already know it's valid
     setState(() {
-      _isLoading = true;
-      _statusMessage = 'Login successful, verifying tokens...';
+      _isLoading = false;
+      _shouldShowLogin = false;
+      _statusMessage = 'Login successful';
     });
-
-    try {
-      // Wait for a moment to ensure secure storage operations complete
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Verify that tokens are actually accessible from secure storage
-      final secureStorage = getIt<SecureStorageService>();
-
-      // Force refresh to clear any potential caching issues
-      await secureStorage.forceRefresh();
-
-      // First try to refresh token validation
-      final hasToken = await secureStorage.refreshTokenValidation();
-
-      if (hasToken) {
-        _logger.i(
-          'Tokens verified successfully, proceeding to authentication check',
-        );
-        setState(() {
-          _statusMessage = 'Tokens verified, checking authentication...';
-        });
-
-        // Proceed with authentication check
-        await _checkAuthentication();
-      } else {
-        _logger.w('Tokens not accessible after login, retrying...');
-        // Wait a bit more and try again with regular validation
-        await Future.delayed(const Duration(milliseconds: 500));
-        final retryHasToken = await secureStorage.hasValidToken();
-
-        if (retryHasToken) {
-          _logger.i(
-            'Tokens accessible on retry, proceeding to authentication check',
-          );
-          await _checkAuthentication();
-        } else {
-          _logger.e('Failed to access tokens after login');
-          setState(() {
-            _isLoading = false;
-            _shouldShowLogin = true;
-            _statusMessage = 'Failed to verify login. Please try again.';
-          });
-        }
-      }
-    } catch (e) {
-      _logger.e('Error during token verification: $e');
-      setState(() {
-        _isLoading = false;
-        _shouldShowLogin = true;
-        _statusMessage = 'Error verifying login: $e';
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthUnauthenticated) {
+          _logger.i('🔄 Logout detected - Navigating to login page');
+          setState(() {
+            _isLoading = false;
+            _shouldShowLogin = true;
+            _statusMessage = 'Logged out successfully';
+          });
+        }
+      },
+      child: _buildContent(),
+    );
+  }
+
+  Widget _buildContent() {
     if (_isLoading) {
       return Scaffold(
         body: Center(
@@ -144,7 +115,10 @@ class _AuthenticationFlowPageState extends State<AuthenticationFlowPage> {
     }
 
     if (_shouldShowLogin) {
-      return LoginPage(onLoginSuccess: _onLoginSuccess);
+      return LoginPage(
+        onLoginSuccess: _onLoginSuccess,
+        prePopulateEmail: _prePopulateEmail,
+      );
     }
 
     return const DashboardPage();

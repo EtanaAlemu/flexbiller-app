@@ -55,11 +55,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => getIt<AuthBloc>()),
-        BlocProvider(create: (context) => getIt<TagsBloc>()),
-      ],
+    return BlocProvider(
+      create: (context) => getIt<TagsBloc>(),
       child: Scaffold(
         body: SafeArea(
           child: _isMobile

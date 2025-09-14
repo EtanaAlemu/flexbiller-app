@@ -6,7 +6,9 @@ import '../datasources/user_local_data_source.dart';
 import '../models/auth_response.dart';
 import 'package:flexbiller_app/core/services/secure_storage_service.dart';
 import 'package:flexbiller_app/core/services/jwt_service.dart';
+import 'package:flexbiller_app/core/services/authentication_state_service.dart';
 import 'package:flexbiller_app/core/errors/exceptions.dart';
+import 'package:flexbiller_app/injection_container.dart';
 import 'package:logger/logger.dart';
 
 @Injectable(as: AuthRepository)
@@ -38,8 +40,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Debug: Check if we can access the Dio client
       if (_remoteDataSource is AuthRemoteDataSourceImpl) {
-        final dioClient =
-            (_remoteDataSource as AuthRemoteDataSourceImpl).dioClient;
+        final dioClient = _remoteDataSource.dioClient;
         _logger.i('Dio client base URL: ${dioClient.dio.options.baseUrl}');
         _logger.i(
           'Dio client connection timeout: ${dioClient.dio.options.connectTimeout}',
@@ -91,6 +92,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Mark this as a fresh login to skip biometric authentication
       await _secureStorage.markFreshLogin();
+
       _logger.i(
         'Fresh login marked - user will not be prompted for biometric authentication',
       );

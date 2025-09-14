@@ -166,6 +166,16 @@ class AuthGuardService {
       final method = await _authStateService.getAuthenticationMethod();
       _logger.i('Authentication method: $method');
 
+      if (method == null) {
+        _logger.i('No authentication method - user should be logged out');
+        return {
+          'success': false,
+          'method': 'none',
+          'message': 'Session expired. Please login again.',
+          'requiresLogin': true,
+        };
+      }
+
       if (method == 'email_password') {
         _logger.i(
           'User authenticated via email/password - granting direct access',
@@ -187,14 +197,15 @@ class AuthGuardService {
       final isBiometricEnabled = await _biometricAuth.isBiometricEnabled();
       if (!isBiometricEnabled) {
         _logger.i(
-          'Biometric not available, proceeding to email/password login',
+          'Biometric not available, proceeding to email/password login with pre-populated email',
         );
         return {
           'success': false,
-          'method': 'none',
+          'method': 'fallback',
           'message':
               'Biometric authentication not available. Please login with email and password.',
           'requiresLogin': true,
+          'prePopulateEmail': true, // Flag to pre-populate email in login form
         };
       }
 

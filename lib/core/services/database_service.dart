@@ -687,6 +687,22 @@ class DatabaseService {
     }
   }
 
+  /// Clear all data from the database
+  Future<void> clearAllData() async {
+    try {
+      final db = await database;
+      
+      // Clear all tables
+      await db.delete('users');
+      await db.delete('auth_tokens');
+      
+      _logger.d('All data cleared from database');
+    } catch (e) {
+      _logger.e('Error clearing all data: $e');
+      rethrow;
+    }
+  }
+
   // Close database
   Future<void> close() async {
     if (_database != null) {

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../network/network_info.dart';
 import '../models/repository_response.dart';
@@ -137,6 +136,24 @@ class SyncService {
     _failedOperations.clear();
     _retryTimer?.cancel();
     _logger.d('Cleared all pending operations');
+  }
+
+  /// Stop all sync operations and clear pending operations
+  Future<void> stopAllSyncOperations() async {
+    _logger.d('🛑 Stopping all sync operations');
+    
+    // Clear pending operations
+    clearPendingOperations();
+    
+    // Close the sync queue to stop processing new operations
+    if (!_syncQueue.isClosed) {
+      _syncQueue.close();
+    }
+    
+    // Cancel the subscription
+    await _syncSubscription.cancel();
+    
+    _logger.d('✅ All sync operations stopped');
   }
 
   /// Dispose resources

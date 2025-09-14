@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'injection_container.dart' as di;
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/authentication_flow_page.dart';
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/localization/app_localizations.dart';
@@ -38,23 +40,26 @@ class MyApp extends StatelessWidget {
       create: (_) => ThemeProvider(),
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
-          return MaterialApp(
-            title: AppStrings.appTitle,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.themeMode,
+          return BlocProvider(
+            create: (context) => di.getIt<AuthBloc>(),
+            child: MaterialApp(
+              title: AppStrings.appTitle,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeProvider.themeMode,
 
-            // Localization
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocalesList,
-            locale: LocalizationService.currentLocale,
-            localeResolutionCallback: (locale, supportedLocales) {
-              return AppLocalizations.getSupportedLocale(locale);
-            },
+              // Localization
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocalesList,
+              locale: LocalizationService.currentLocale,
+              localeResolutionCallback: (locale, supportedLocales) {
+                return AppLocalizations.getSupportedLocale(locale);
+              },
 
-            home: const AuthenticationFlowPage(),
-            routes: {'/dashboard': (context) => const DashboardPage()},
-            debugShowCheckedModeBanner: false,
+              home: const AuthenticationFlowPage(),
+              routes: {'/dashboard': (context) => const DashboardPage()},
+              debugShowCheckedModeBanner: false,
+            ),
           );
         },
       ),

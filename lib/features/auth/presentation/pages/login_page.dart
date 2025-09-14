@@ -5,8 +5,13 @@ import '../widgets/login_form.dart';
 
 class LoginPage extends StatelessWidget {
   final VoidCallback? onLoginSuccess;
+  final bool prePopulateEmail;
 
-  const LoginPage({Key? key, this.onLoginSuccess}) : super(key: key);
+  const LoginPage({
+    Key? key,
+    this.onLoginSuccess,
+    this.prePopulateEmail = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +28,14 @@ class LoginPage extends StatelessWidget {
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
-          child: Column(children: [LoginForm(onLoginSuccess: onLoginSuccess)]),
+          child: Column(
+            children: [
+              LoginForm(
+                onLoginSuccess: onLoginSuccess,
+                prePopulateEmail: prePopulateEmail,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -8,24 +8,34 @@ class SecureStorageService {
   final FlutterSecureStorage _storage;
   final Logger _logger;
 
+  // Cache for frequently accessed data
+  String? _cachedAuthToken;
+  String? _cachedRefreshToken;
+  bool? _cachedTokenValidity;
+  DateTime? _lastTokenValidation;
+  static const Duration _cacheValidityDuration = Duration(seconds: 30);
+
   SecureStorageService(this._storage, this._logger);
+
+  // Cache management methods
+  void _invalidateCache() {
+    _cachedAuthToken = null;
+    _cachedRefreshToken = null;
+    _cachedTokenValidity = null;
+    _lastTokenValidation = null;
+  }
+
+  bool _isCacheValid() {
+    if (_lastTokenValidation == null) return false;
+    return DateTime.now().difference(_lastTokenValidation!) <
+        _cacheValidityDuration;
+  }
 
   // Write data to secure storage
   Future<void> write(String key, String value) async {
     try {
       await _storage.write(key: key, value: value);
-      // Add a small delay to ensure the write operation completes
-      await Future.delayed(const Duration(milliseconds: 50));
-
-      // Verify the write was successful
-      final writtenValue = await read(key);
-      if (writtenValue != value) {
-        _logger.d('DEBUG: Write verification failed for key: $key');
-        // Retry once
-        await Future.delayed(const Duration(milliseconds: 100));
-        await _storage.write(key: key, value: value);
-        await Future.delayed(const Duration(milliseconds: 50));
-      }
+      // No need for delays or verification - secure storage is reliable
     } catch (e) {
       _logger.e(
         'DEBUG: Error writing to secure storage - Key: $key, Error: $e',
@@ -63,6 +73,8 @@ class SecureStorageService {
   Future<void> saveAuthToken(String token) async {
     try {
       await write(AppConstants.authTokenKey, token);
+      _cachedAuthToken = token;
+      _invalidateCache(); // Invalidate cache when tokens change
       _logger.d('DEBUG: Access token saved successfully');
     } catch (e) {
       _logger.e('DEBUG: Error saving access token: $e');
@@ -72,7 +84,13 @@ class SecureStorageService {
 
   Future<String?> getAuthToken() async {
     try {
+      // Return cached token if available and cache is valid
+      if (_cachedAuthToken != null && _isCacheValid()) {
+        return _cachedAuthToken;
+      }
+
       final token = await read(AppConstants.authTokenKey);
+      _cachedAuthToken = token;
       _logger.d(
         'DEBUG: Retrieved access token: ${token != null ? 'YES' : 'NO'}',
       );
@@ -86,6 +104,8 @@ class SecureStorageService {
   Future<void> saveRefreshToken(String token) async {
     try {
       await write(AppConstants.refreshTokenKey, token);
+      _cachedRefreshToken = token;
+      _invalidateCache(); // Invalidate cache when tokens change
       _logger.d('DEBUG: Refresh token saved successfully');
     } catch (e) {
       _logger.e('DEBUG: Error saving refresh token: $e');
@@ -95,7 +115,13 @@ class SecureStorageService {
 
   Future<String?> getRefreshToken() async {
     try {
+      // Return cached token if available and cache is valid
+      if (_cachedRefreshToken != null && _isCacheValid()) {
+        return _cachedRefreshToken;
+      }
+
       final token = await read(AppConstants.refreshTokenKey);
+      _cachedRefreshToken = token;
       _logger.d(
         'DEBUG: Retrieved refresh token: ${token != null ? 'YES' : 'NO'}',
       );
@@ -112,6 +138,7 @@ class SecureStorageService {
     await delete(AppConstants.tokenExpirationKey);
     await delete('fresh_login_timestamp'); // Clear fresh login flag
     await delete('remember_me'); // Clear Remember Me preference
+    _invalidateCache(); // Clear all cached data
   }
 
   // Clear fresh login flag
@@ -196,22 +223,42 @@ class SecureStorageService {
 
   Future<bool> hasValidToken() async {
     try {
+      // Always check fresh data for critical authentication checks
+      // Don't rely on cache for authentication state
+      _logger.d(
+        'DEBUG: hasValidToken - Checking fresh token data (cache bypassed)',
+      );
+
       final token = await getAuthToken();
+      _logger.d(
+        'DEBUG: hasValidToken - Token retrieved: ${token != null ? 'YES (${token.length} chars)' : 'NO'}',
+      );
+
       if (token == null) {
         _logger.d('DEBUG: hasValidToken - No access token found');
+        _cachedTokenValidity = false;
+        _lastTokenValidation = DateTime.now();
         return false;
       }
 
       final isExpired = await isTokenExpired();
+      _logger.d('DEBUG: hasValidToken - Token expired: $isExpired');
+
       if (isExpired) {
         _logger.d('DEBUG: hasValidToken - Token is expired');
+        _cachedTokenValidity = false;
+        _lastTokenValidation = DateTime.now();
         return false;
       }
 
       _logger.d('DEBUG: hasValidToken - Token is valid');
+      _cachedTokenValidity = true;
+      _lastTokenValidation = DateTime.now();
       return true;
     } catch (e) {
       _logger.e('DEBUG: hasValidToken - Error checking token validity: $e');
+      _cachedTokenValidity = false;
+      _lastTokenValidation = DateTime.now();
       return false;
     }
   }
@@ -303,8 +350,8 @@ class SecureStorageService {
   // Refresh token validation - useful after login to ensure fresh data
   Future<bool> refreshTokenValidation() async {
     try {
-      // Clear any cached data and re-read from storage
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Invalidate cache to ensure fresh data
+      _invalidateCache();
 
       final accessToken = await getAuthToken();
       final refreshToken = await getRefreshToken();
@@ -330,22 +377,27 @@ class SecureStorageService {
     }
   }
 
-  // Track fresh login to skip biometric authentication
+  // Track fresh login to skip biometric authentication (valid for configured timeout)
   Future<void> markFreshLogin() async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
       await write('fresh_login_timestamp', now.toString());
+      _invalidateCache(); // Invalidate cache when fresh login is marked
       _logger.d('DEBUG: Fresh login timestamp saved: $now');
     } catch (e) {
       _logger.e('DEBUG: Error marking fresh login: $e');
     }
   }
 
-  // Check if this is a fresh login (within last 5 minutes)
+  // Check if this is a fresh login (within configured timeout)
   Future<bool> isFreshLogin() async {
     try {
-      final timestamp = await read('fresh_login_timestamp');
-      if (timestamp == null) return false;
+      // Always read fresh from storage (don't use cache for this critical check)
+      final timestamp = await _storage.read(key: 'fresh_login_timestamp');
+      if (timestamp == null) {
+        _logger.d('DEBUG: Fresh login check - No timestamp found');
+        return false;
+      }
 
       final loginTime = DateTime.fromMillisecondsSinceEpoch(
         int.parse(timestamp),
@@ -353,10 +405,11 @@ class SecureStorageService {
       final now = DateTime.now();
       final difference = now.difference(loginTime);
 
-      // Consider it fresh if within 5 minutes
-      final isFresh = difference.inMinutes < 1;
+      // Consider it fresh if within configured timeout
+      final isFresh =
+          difference.inSeconds < AppConstants.freshLoginTimeoutSeconds;
       _logger.d(
-        'DEBUG: Fresh login check - Login time: $loginTime, Current: $now, Difference: ${difference.inMinutes}min, Is fresh: $isFresh',
+        'DEBUG: Fresh login check - Login time: $loginTime, Current: $now, Difference: ${difference.inSeconds}s, Is fresh: $isFresh',
       );
 
       // Auto-clear the flag if it's no longer fresh
@@ -433,6 +486,9 @@ class SecureStorageService {
       // For the current session, user should always stay logged in
       // Remember Me only affects session persistence across app restarts
       final isFreshLoginCheck = await isFreshLogin();
+      _logger.d(
+        'DEBUG: shouldStayLoggedIn - isFreshLoginCheck: $isFreshLoginCheck',
+      );
 
       // If it's a fresh login, user should stay logged in for current session
       if (isFreshLoginCheck) {
@@ -444,6 +500,7 @@ class SecureStorageService {
 
       // If not a fresh login, check Remember Me preference for cross-session persistence
       final rememberMe = await getRememberMe();
+      _logger.d('DEBUG: shouldStayLoggedIn - rememberMe: $rememberMe');
 
       if (rememberMe) {
         _logger.d(

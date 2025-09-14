@@ -19,6 +19,10 @@ class AppConstants {
   static const String databaseName = 'flexbiller.db';
   static const int databaseVersion = 12;
 
+  // Authentication
+  static const int freshLoginTimeoutSeconds =
+      30; // Seconds to consider a login as "fresh" (for testing biometrics)
+
   // App Info
   static const String appName = 'FlexBiller';
   static const String appVersion = '1.0.0';

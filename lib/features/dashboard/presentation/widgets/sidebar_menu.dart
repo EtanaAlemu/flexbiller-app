@@ -439,24 +439,27 @@ class _SidebarMenuState extends State<SidebarMenu> {
   }
 
   void _showLogoutDialog(BuildContext context) {
+    // Get the AuthBloc from the parent context before showing the dialog
+    final authBloc = context.read<AuthBloc>();
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              context.read<AuthBloc>().add(LogoutRequested());
+              Navigator.of(dialogContext).pop();
+              authBloc.add(LogoutRequested());
               widget.onLogout?.call();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
               foregroundColor: Colors.white,
             ),
             child: const Text('Logout'),

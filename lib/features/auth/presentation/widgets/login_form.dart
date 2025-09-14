@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/config/build_config.dart';
+import '../../../../core/services/secure_storage_service.dart';
+import '../../../../core/services/jwt_service.dart';
 import '../bloc/auth_bloc.dart';
 import '../pages/forgot_password_page.dart';
 import '../pages/change_password_page.dart';
@@ -10,8 +12,13 @@ import '../../../../injection_container.dart';
 
 class LoginForm extends StatefulWidget {
   final VoidCallback? onLoginSuccess;
+  final bool prePopulateEmail;
 
-  const LoginForm({Key? key, this.onLoginSuccess}) : super(key: key);
+  const LoginForm({
+    Key? key,
+    this.onLoginSuccess,
+    this.prePopulateEmail = false,
+  }) : super(key: key);
 
   @override
   State<LoginForm> createState() => _LoginFormState();
@@ -32,6 +39,27 @@ class _LoginFormState extends State<LoginForm> {
     if (BuildConfig.isDevelopment) {
       _emailController.text = BuildConfig.email;
       _passwordController.text = BuildConfig.password;
+    } else if (widget.prePopulateEmail) {
+      // Pre-populate email from stored JWT token
+      _prePopulateEmailFromToken();
+    }
+  }
+
+  Future<void> _prePopulateEmailFromToken() async {
+    try {
+      final secureStorage = getIt<SecureStorageService>();
+      final jwtService = getIt<JwtService>();
+
+      final token = await secureStorage.getAuthToken();
+      if (token != null) {
+        final email = jwtService.getUserEmail(token);
+        if (email.isNotEmpty) {
+          _emailController.text = email;
+        }
+      }
+    } catch (e) {
+      // If we can't get the email, just continue without pre-populating
+      print('Error pre-populating email: $e');
     }
   }
 
