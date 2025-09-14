@@ -229,6 +229,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<LoadAccountPayments>(_onLoadAccountPayments);
     on<RefreshAccountPayments>(_onRefreshAccountPayments);
     on<ExportAccounts>(_onExportAccounts);
+    on<ShareFile>(_onShareFile);
 
     // Multi-select event handlers
     on<EnableMultiSelectMode>(_onEnableMultiSelectMode);
@@ -1327,6 +1328,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       );
 
       String filePath;
+
       if (event.format == 'excel') {
         filePath = await _exportService.exportAccountsToExcel(event.accounts);
       } else {
@@ -1334,6 +1336,13 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       }
 
       final fileName = filePath.split('/').last;
+
+      // Determine if file was saved to external or internal storage
+      final isExternalStorage =
+          filePath.contains('/storage/') ||
+          filePath.contains('/Download/') ||
+          filePath.contains('/Documents/') ||
+          !filePath.contains('/data/data/');
 
       emit(
         AccountsExportSuccess(
@@ -1344,7 +1353,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       );
 
       _logger.i(
-        'Successfully exported ${event.accounts.length} accounts to $filePath',
+        'Successfully exported ${event.accounts.length} accounts to $filePath (${isExternalStorage ? 'External' : 'Internal'} storage)',
       );
 
       // After a short delay, restore the previous state to show accounts list
@@ -1500,12 +1509,23 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
             'accounts_export_${DateTime.now().millisecondsSinceEpoch}.csv';
       }
 
+      // Determine if file was saved to external or internal storage
+      final isExternalStorage =
+          filePath.contains('/storage/') ||
+          filePath.contains('/Download/') ||
+          filePath.contains('/Documents/') ||
+          !filePath.contains('/data/data/');
+
       emit(
         BulkAccountsExportSuccess(
           filePath: filePath,
           fileName: fileName,
           exportedCount: event.accounts.length,
         ),
+      );
+
+      _logger.i(
+        'Successfully bulk exported ${event.accounts.length} accounts to $filePath (${isExternalStorage ? 'External' : 'Internal'} storage)',
       );
 
       // After a short delay, return to multi-select mode
@@ -1672,6 +1692,24 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
           event.currency,
         ),
       );
+    }
+  }
+
+  Future<void> _onShareFile(
+    ShareFile event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      await _exportService.shareFile(
+        event.filePath,
+        subject: event.subject,
+        text: event.text,
+      );
+
+      _logger.i('Successfully shared file: ${event.filePath}');
+    } catch (e) {
+      _logger.e('Failed to share file: $e');
+      // You might want to emit an error state here
     }
   }
 

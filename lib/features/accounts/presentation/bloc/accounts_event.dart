@@ -537,6 +537,21 @@ class ExportAccounts extends AccountsEvent {
   List<Object?> get props => [accounts, format];
 }
 
+class ShareFile extends AccountsEvent {
+  final String filePath;
+  final String? subject;
+  final String? text;
+
+  const ShareFile({
+    required this.filePath,
+    this.subject,
+    this.text,
+  });
+
+  @override
+  List<Object?> get props => [filePath, subject, text];
+}
+
 // Multi-select events
 class EnableMultiSelectMode extends AccountsEvent {
   const EnableMultiSelectMode();
