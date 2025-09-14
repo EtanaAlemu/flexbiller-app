@@ -33,13 +33,13 @@ class AccountDetailsPage extends StatelessWidget {
     try {
       final existingBloc = context.read<AccountsBloc>();
       return BlocProvider.value(
-        value: existingBloc..add(LoadAccountDetails(accountId)),
+        value: existingBloc,
         child: AccountDetailsView(accountId: accountId),
       );
     } catch (e) {
       // If no BLoC is available in context, create a new one
       return BlocProvider(
-        create: (context) => getIt<AccountsBloc>()..add(LoadAccountDetails(accountId)),
+        create: (context) => getIt<AccountsBloc>(),
         child: AccountDetailsView(accountId: accountId),
       );
     }
@@ -69,6 +69,11 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
       setState(() {
         _currentTabIndex = _tabController.index;
       });
+    });
+    
+    // Load account details after the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AccountsBloc>().add(LoadAccountDetails(widget.accountId));
     });
   }
 
