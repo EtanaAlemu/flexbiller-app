@@ -186,6 +186,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<LoadMoreAccounts>(_onLoadMoreAccounts);
     on<FilterAccountsByCompany>(_onFilterAccountsByCompany);
     on<FilterAccountsByBalance>(_onFilterAccountsByBalance);
+    on<FilterAccountsByAuditLevel>(_onFilterAccountsByAuditLevel);
     on<ClearFilters>(_onClearFilters);
     on<LoadAccountDetails>(_onLoadAccountDetails);
     on<CreateAccount>(_onCreateAccount);
@@ -444,6 +445,44 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
 
         final filteredAccounts = await _accountsRepository
             .getAccountsWithBalance(event.minBalance);
+        emit(
+          AccountsLoaded(
+            accounts: filteredAccounts,
+            currentOffset: 0,
+            totalCount: filteredAccounts.length,
+            hasReachedMax: true, // Filtered results are not paginated
+          ),
+        );
+      }
+    } catch (e) {
+      final currentState = state;
+      if (currentState is AccountsFiltered) {
+        emit(
+          AccountsFailure(
+            e.toString(),
+            previousAccounts: currentState.accounts,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _onFilterAccountsByAuditLevel(
+    FilterAccountsByAuditLevel event,
+    Emitter<AccountsState> emit,
+  ) async {
+    try {
+      final currentState = state;
+      if (currentState is AccountsLoaded) {
+        emit(
+          AccountsFiltered(currentState.accounts, 'audit', event.auditLevel),
+        );
+
+        final params = AccountsQueryParams(
+          audit: event.auditLevel,
+          limit: 1000, // Get all accounts with this audit level
+        );
+        final filteredAccounts = await _accountsRepository.getAccounts(params);
         emit(
           AccountsLoaded(
             accounts: filteredAccounts,
@@ -1356,13 +1395,29 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         'Successfully exported ${event.accounts.length} accounts to $filePath (${isExternalStorage ? 'External' : 'Internal'} storage)',
       );
 
-      // After a short delay, restore the previous state to show accounts list
-      await Future.delayed(const Duration(milliseconds: 100));
+      // After a delay to allow success message to be displayed, restore the previous state
+      await Future.delayed(const Duration(seconds: 3));
 
       // Restore the previous state to keep the accounts list visible
       if (currentState is AccountsLoaded) {
         emit(currentState);
       } else if (currentState is AllAccountsLoaded) {
+        emit(currentState);
+      } else if (currentState is AccountsSearchResults) {
+        emit(currentState);
+      } else if (currentState is AccountsFiltered) {
+        emit(currentState);
+      } else if (currentState is AccountsRefreshing) {
+        emit(currentState);
+      } else if (currentState is AccountsLoadingMore) {
+        emit(currentState);
+      } else if (currentState is AllAccountsRefreshing) {
+        emit(currentState);
+      } else if (currentState is MultiSelectModeEnabled) {
+        emit(currentState);
+      } else if (currentState is AccountSelected) {
+        emit(currentState);
+      } else if (currentState is AllAccountsSelected) {
         emit(currentState);
       }
     } catch (e) {

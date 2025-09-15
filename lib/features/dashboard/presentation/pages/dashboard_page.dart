@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../injection_container.dart';
 import '../../../accounts/presentation/pages/accounts_page.dart';
+import '../../../accounts/presentation/bloc/accounts_bloc.dart';
 import '../../../subscriptions/presentation/pages/subscriptions_demo_page.dart';
 import '../../../tags/presentation/bloc/tags_bloc.dart';
 import '../../../tags/presentation/pages/tags_page.dart';
-import '../widgets/sidebar_menu.dart';
+import '../widgets/mobile_dashboard_layout.dart';
+import '../widgets/desktop_dashboard_layout.dart';
+import '../widgets/page_title_helper.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -19,10 +22,12 @@ class _DashboardPageState extends State<DashboardPage> {
   int _currentIndex = 0;
   bool _isSidebarVisible = true;
   bool _isMobile = false;
+  final GlobalKey<AccountsViewState> _accountsViewKey =
+      GlobalKey<AccountsViewState>();
 
   List<Widget> get _pages => [
     _DashboardContent(onNavigate: _switchTab),
-    const AccountsPage(),
+    AccountsPage(accountsViewKey: _accountsViewKey),
     const SubscriptionsDemoPage(),
     const _InvoicesPage(),
     const _PaymentsPage(),
@@ -54,307 +59,50 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<TagsBloc>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => getIt<TagsBloc>()),
+        BlocProvider(create: (context) => getIt<AccountsBloc>()),
+      ],
       child: Scaffold(
         body: SafeArea(
           child: _isMobile
-              ? _buildMobileLayout(context)
-              : _buildDesktopLayout(context),
+              ? MobileDashboardLayout(
+                  isSidebarVisible: _isSidebarVisible,
+                  onToggleSidebar: _toggleSidebar,
+                  pageTitle: PageTitleHelper.getPageTitle(_currentIndex),
+                  currentPageIndex: _currentIndex,
+                  content: _pages[_currentIndex],
+                  onNavigate: _navigateToPage,
+                  onLogout: _handleLogout,
+                  accountsViewKey: _accountsViewKey,
+                )
+              : DesktopDashboardLayout(
+                  isSidebarVisible: _isSidebarVisible,
+                  onToggleSidebar: _toggleSidebar,
+                  pageTitle: PageTitleHelper.getPageTitle(_currentIndex),
+                  currentPageIndex: _currentIndex,
+                  content: _pages[_currentIndex],
+                  onNavigate: _navigateToPage,
+                  onLogout: _handleLogout,
+                  accountsViewKey: _accountsViewKey,
+                ),
         ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context) {
-    return Stack(
-      children: [
-        Column(
-          children: [
-            // Mobile App Bar
-            Container(
-              height: 60,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.outline.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: _toggleSidebar,
-                    icon: const Icon(Icons.menu),
-                    tooltip: 'Show sidebar',
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    _getPageTitle(_currentIndex),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  // Mobile bottom navigation
-                  IconButton(
-                    onPressed: () => _showBottomSheet(context),
-                    icon: const Icon(Icons.more_vert),
-                    tooltip: 'More options',
-                  ),
-                ],
-              ),
-            ),
-            // Main Content
-            Expanded(child: SafeArea(child: _pages[_currentIndex])),
-            // Mobile Bottom Navigation
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.outline.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: BottomNavigationBar(
-                type: BottomNavigationBarType.fixed,
-                currentIndex: _currentIndex > 3 ? 0 : _currentIndex,
-                onTap: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                },
-                selectedItemColor: Theme.of(context).colorScheme.primary,
-                unselectedItemColor: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withOpacity(0.6),
-                items: const [
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.dashboard),
-                    label: 'Dashboard',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.account_balance),
-                    label: 'Accounts',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.subscriptions),
-                    label: 'Subscriptions',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.analytics),
-                    label: 'Reports',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        // Mobile Sidebar Backdrop
-        if (_isSidebarVisible)
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            left: 0,
-            top: 0,
-            right: 0,
-            bottom: 0,
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isSidebarVisible = false;
-                });
-              },
-              child: Container(color: Colors.black.withOpacity(0.5)),
-            ),
-          ),
-        // Mobile Sidebar Overlay
-        if (_isSidebarVisible)
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            left: 0,
-            top: 0,
-            bottom: 0,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.8,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(2, 0),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                child: SidebarMenu(
-                  selectedIndex: _currentIndex,
-                  onItemSelected: (index) {
-                    setState(() {
-                      _currentIndex = index;
-                      _isSidebarVisible = false;
-                    });
-                  },
-                  onLogout: () {
-                    // Handle logout - this will be handled by the auth bloc
-                  },
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
+  void _navigateToPage(int index) {
+    setState(() {
+      _currentIndex = index;
+      if (_isMobile) {
+        _isSidebarVisible = false;
+      }
+    });
   }
 
-  Widget _buildDesktopLayout(BuildContext context) {
-    return Row(
-      children: [
-        if (_isSidebarVisible)
-          SafeArea(
-            child: SidebarMenu(
-              selectedIndex: _currentIndex,
-              onItemSelected: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              onLogout: () {
-                // Handle logout - this will be handled by the auth bloc
-              },
-            ),
-          ),
-        Expanded(
-          child: Column(
-            children: [
-              // Top App Bar
-              Container(
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.outline.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    if (!_isSidebarVisible)
-                      IconButton(
-                        onPressed: _toggleSidebar,
-                        icon: const Icon(Icons.menu),
-                        tooltip: 'Show sidebar',
-                      ),
-                    const SizedBox(width: 16),
-                    Text(
-                      _getPageTitle(_currentIndex),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: _toggleSidebar,
-                      icon: Icon(
-                        _isSidebarVisible ? Icons.menu_open : Icons.menu,
-                      ),
-                      tooltip: _isSidebarVisible
-                          ? 'Hide sidebar'
-                          : 'Show sidebar',
-                    ),
-                    const SizedBox(width: 16),
-                  ],
-                ),
-              ),
-              // Main Content
-              Expanded(child: SafeArea(child: _pages[_currentIndex])),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.receipt_long),
-              title: const Text('Invoices'),
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => _currentIndex = 3);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.payment),
-              title: const Text('Payments'),
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => _currentIndex = 4);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.label),
-              title: const Text('Tags'),
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => _currentIndex = 6);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => _currentIndex = 7);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _getPageTitle(int index) {
-    switch (index) {
-      case 0:
-        return 'Dashboard';
-      case 1:
-        return 'Accounts';
-      case 2:
-        return 'Subscriptions';
-      case 3:
-        return 'Invoices';
-      case 4:
-        return 'Payments';
-      case 5:
-        return 'Reports';
-      case 6:
-        return 'Tags';
-      case 7:
-        return 'Settings';
-      default:
-        return 'Dashboard';
-    }
+  void _handleLogout() {
+    // Handle logout - this will be handled by the auth bloc
   }
 }
 

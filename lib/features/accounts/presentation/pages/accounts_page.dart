@@ -1,23 +1,20 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
-import '../../domain/entities/account.dart';
 import '../widgets/accounts_list_widget.dart';
-import '../widgets/accounts_search_widget.dart';
-import '../widgets/accounts_filter_widget.dart';
 import '../widgets/create_account_form.dart';
-import '../widgets/export_accounts_dialog.dart';
-import '../widgets/account_sort_selector_widget.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/accounts_query_params.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:open_file/open_file.dart';
 
 class AccountsPage extends StatelessWidget {
-  const AccountsPage({Key? key}) : super(key: key);
+  final GlobalKey<AccountsViewState>? accountsViewKey;
+
+  const AccountsPage({Key? key, this.accountsViewKey}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +73,7 @@ class AccountsPage extends StatelessWidget {
             );
           }
         },
-        child: const AccountsView(),
+        child: AccountsView(key: accountsViewKey),
       ),
     );
   }
@@ -114,234 +111,182 @@ class AccountsPage extends StatelessWidget {
   }
 }
 
-class AccountsView extends StatelessWidget {
+class AccountsView extends StatefulWidget {
   const AccountsView({Key? key}) : super(key: key);
 
   @override
+  State<AccountsView> createState() => AccountsViewState();
+}
+
+class AccountsViewState extends State<AccountsView> {
+  bool _showSearchBar = false;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounceTimer;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String searchKey) {
+    // Cancel previous timer
+    _debounceTimer?.cancel();
+
+    // Set new timer for debouncing
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (searchKey.isEmpty) {
+        // If search is empty, load all accounts
+        context.read<AccountsBloc>().add(
+          const LoadAccounts(AccountsQueryParams()),
+        );
+      } else {
+        // Search accounts by search key
+        context.read<AccountsBloc>().add(SearchAccounts(searchKey));
+      }
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+  }
+
+  void _toggleSearchBar() {
+    setState(() {
+      _showSearchBar = !_showSearchBar;
+      if (!_showSearchBar) {
+        _clearSearch();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: BlocBuilder<AccountsBloc, AccountsState>(
-          builder: (context, state) {
-            if (state is AllAccountsLoaded) {
-              return Text('Accounts (${state.totalCount})');
-            }
-            return const Text('Accounts');
-          },
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(20),
-          child: BlocBuilder<AccountsBloc, AccountsState>(
-            builder: (context, state) {
-              if (state is AllAccountsLoaded) {
-                return Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 8.0,
-                    left: 16.0,
-                    right: 16.0,
-                  ),
-                  child: Text(
-                    'Viewing all accounts',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              _showFilterDialog(context);
-            },
-            tooltip: 'Filter Accounts',
-          ),
-          BlocBuilder<AccountsBloc, AccountsState>(
-            builder: (context, state) {
-              String currentSortBy = 'name';
-              String currentSortOrder = 'ASC';
-
-              // Get current sort parameters from state if available
-              if (state is AccountsLoaded || state is AllAccountsLoaded) {
-                // For now, we'll use default values since we don't store sort params in state
-                // In a real implementation, you'd store these in the state
-                currentSortBy = 'name';
-                currentSortOrder = 'ASC';
-              }
-
-              return AccountSortSelectorWidget(
-                currentSortBy: currentSortBy,
-                currentSortOrder: currentSortOrder,
-                onSortChanged: (sortBy, sortOrder) {
-                  // Trigger a refresh with new sort parameters
-                  final params = AccountsQueryParams(
-                    sortBy: sortBy,
-                    sortOrder: sortOrder,
-                  );
-                  context.read<AccountsBloc>().add(
-                    RefreshAccounts(params: params),
-                  );
-                },
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.download),
-            onPressed: () {
-              _showExportDialog(context);
-            },
-            tooltip: 'Export Accounts',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<AccountsBloc>().add(const RefreshAccounts());
-            },
-            tooltip: 'Refresh Accounts',
-          ),
-          IconButton(
-            icon: const Icon(Icons.list),
-            onPressed: () {
-              context.read<AccountsBloc>().add(const GetAllAccounts());
-            },
-            tooltip: 'Get All Accounts',
-          ),
-          IconButton(
-            icon: const Icon(Icons.checklist),
-            onPressed: () {
-              context.read<AccountsBloc>().add(const EnableMultiSelectMode());
-            },
-            tooltip: 'Multi-Select Mode',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          const AccountsSearchWidget(),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
-            ),
-            child: BlocBuilder<AccountsBloc, AccountsState>(
-              builder: (context, state) {
-                final isLoading = state is GetAllAccountsLoading;
-                final isViewingAll = state is AllAccountsLoaded;
-                return Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: (isLoading || isViewingAll)
-                            ? null
-                            : () {
-                                context.read<AccountsBloc>().add(
-                                  const GetAllAccounts(),
-                                );
-                              },
-                        icon: isLoading
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.list),
-                        label: Text(
-                          isLoading
-                              ? 'Loading...'
-                              : isViewingAll
-                              ? 'Viewing All Accounts'
-                              : 'Get All Accounts',
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isViewingAll
-                              ? Theme.of(context).colorScheme.surfaceVariant
-                              : Theme.of(context).colorScheme.secondary,
-                          foregroundColor: isViewingAll
-                              ? Theme.of(context).colorScheme.onSurfaceVariant
-                              : Theme.of(context).colorScheme.onSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          const Expanded(child: AccountsListWidget()),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Capture the AccountsBloc instance before navigation
-          final accountsBloc = context.read<AccountsBloc>();
-
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => BlocProvider.value(
-                value: accountsBloc,
-                child: CreateAccountForm(
-                  onAccountCreated: () {
-                    // Refresh the accounts list after creation using the captured instance
-                    accountsBloc.add(const RefreshAccounts());
-                  },
+    return Column(
+      children: [
+        // Search Bar (conditionally shown)
+        if (_showSearchBar)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  width: 1,
                 ),
               ),
             ),
-          );
-        },
-        backgroundColor: AppTheme.getSuccessColor(Theme.of(context).brightness),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-    );
-  }
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Search accounts by name, email, or company...',
+                hintStyle: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                  fontSize: 16,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.clear_rounded,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        onPressed: _clearSearch,
+                        tooltip: 'Clear search',
+                      )
+                    : IconButton(
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        onPressed: _toggleSearchBar,
+                        tooltip: 'Close search',
+                      ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withOpacity(0.3),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                filled: true,
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceVariant.withOpacity(0.3),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+              ),
+              textInputAction: TextInputAction.search,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ),
+        // Main content
+        Expanded(
+          child: Stack(
+            children: [
+              const AccountsListWidget(),
+              // Floating Action Button
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: FloatingActionButton.extended(
+                  onPressed: () {
+                    // Capture the AccountsBloc instance before navigation
+                    final accountsBloc = context.read<AccountsBloc>();
 
-  void _showFilterDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const AccountsFilterWidget(),
-    );
-  }
-
-  void _showExportDialog(BuildContext context) {
-    // Get current accounts from the BLoC state
-    final currentState = context.read<AccountsBloc>().state;
-    List<Account> accountsToExport = [];
-
-    if (currentState is AllAccountsLoaded) {
-      accountsToExport = currentState.accounts;
-    } else if (currentState is AccountsLoaded) {
-      accountsToExport = currentState.accounts;
-    } else {
-      // If no accounts are loaded, show a message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please load accounts first before exporting'),
-          backgroundColor: Colors.orange,
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => BlocProvider.value(
+                          value: accountsBloc,
+                          child: CreateAccountForm(
+                            onAccountCreated: () {
+                              // Refresh the accounts list after creation using the captured instance
+                              accountsBloc.add(const RefreshAccounts());
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  elevation: 4,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Add Account'),
+                ),
+              ),
+            ],
+          ),
         ),
-      );
-      return;
-    }
+      ],
+    );
+  }
 
-    showDialog(
-      context: context,
-      builder: (context) => ExportAccountsDialog(accounts: accountsToExport),
-    ).then((result) {
-      if (result != null) {
-        final format = result['format'] as String;
-
-        // Trigger export
-        context.read<AccountsBloc>().add(
-          ExportAccounts(accounts: accountsToExport, format: format),
-        );
-      }
-    });
+  // Method to toggle search bar from outside (called by dashboard app bar)
+  void toggleSearchBar() {
+    _toggleSearchBar();
   }
 }

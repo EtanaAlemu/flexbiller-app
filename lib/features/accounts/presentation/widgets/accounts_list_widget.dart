@@ -6,9 +6,9 @@ import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
 import '../../domain/entities/account.dart';
 import '../../domain/entities/accounts_query_params.dart';
-import 'account_card_widget.dart';
 import 'selectable_account_card_widget.dart';
 import 'multi_select_action_bar.dart';
+import 'create_account_form.dart';
 
 class AccountsListWidget extends StatefulWidget {
   const AccountsListWidget({Key? key}) : super(key: key);
@@ -19,7 +19,6 @@ class AccountsListWidget extends StatefulWidget {
 
 class _AccountsListWidgetState extends State<AccountsListWidget> {
   List<Account> _cachedAccounts = [];
-  bool _isMultiSelectMode = false;
   final Logger _logger = Logger();
 
   @override
@@ -33,51 +32,42 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         // Cache accounts when they are loaded - update for any state that has accounts
         if (state is AccountsLoaded) {
           _cachedAccounts = state.accounts;
-          _isMultiSelectMode = false;
         } else if (state is AllAccountsLoaded) {
           _cachedAccounts = state.accounts;
-          _isMultiSelectMode = false;
         } else if (state is AccountsSearchResults) {
           _cachedAccounts = state.accounts;
-          _isMultiSelectMode = false;
+        } else if (state is AccountsFiltered) {
+          _cachedAccounts = state.accounts;
         } else if (state is BulkAccountsDeleting) {
           // Update cached accounts when deleting to reflect current state
           _cachedAccounts = state.accountsToDelete;
-          _isMultiSelectMode = true;
         } else if (state is BulkAccountsExporting) {
           // Update cached accounts when exporting to reflect current state
           _cachedAccounts = state.accountsToExport;
-          _isMultiSelectMode = true;
         }
 
         // Handle multi-select states
         if (state is MultiSelectModeEnabled) {
-          _isMultiSelectMode = true;
           return _buildMultiSelectMode(context, state.selectedAccounts);
         }
 
         if (state is AccountSelected) {
-          _isMultiSelectMode = true;
           return _buildMultiSelectMode(context, state.selectedAccounts);
         }
 
         if (state is AccountDeselected) {
-          _isMultiSelectMode = true;
           return _buildMultiSelectMode(context, state.selectedAccounts);
         }
 
         if (state is AllAccountsSelected) {
-          _isMultiSelectMode = true;
           return _buildMultiSelectMode(context, state.selectedAccounts);
         }
 
         if (state is AllAccountsDeselected) {
-          _isMultiSelectMode = true;
           return _buildMultiSelectMode(context, []);
         }
 
         if (state is BulkAccountsDeleting) {
-          _isMultiSelectMode = true;
           return _buildMultiSelectMode(context, state.accountsToDelete);
         }
 
@@ -145,7 +135,6 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         if (state is BulkAccountsDeletionFailure) {
           // Handle bulk deletion failure
           _logger.d('Account deletion failed: ${state.message}');
-          _isMultiSelectMode = false;
           // Refresh accounts list to show current state
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.read<AccountsBloc>().add(
@@ -165,22 +154,15 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         }
 
         if (state is BulkAccountsExporting) {
-          _isMultiSelectMode = true;
           return _buildMultiSelectMode(context, state.accountsToExport);
         }
 
         if (state is BulkAccountsExportSuccess) {
-          _isMultiSelectMode = true;
           return _buildMultiSelectMode(context, _cachedAccounts);
         }
 
         if (state is BulkAccountsExportFailure) {
-          _isMultiSelectMode = true;
           return _buildMultiSelectMode(context, _cachedAccounts);
-        }
-
-        if (state is MultiSelectModeDisabled) {
-          _isMultiSelectMode = false;
         }
 
         if (state is AccountsLoading) {
@@ -200,13 +182,40 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         }
 
         if (state is GetAllAccountsLoading) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Loading all accounts...'),
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Loading all accounts...',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Please wait while we fetch your accounts',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
               ],
             ),
           );
@@ -215,28 +224,86 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         if (state is AllAccountsLoaded) {
           if (state.accounts.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.account_circle_outlined,
-                    size: 64,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.5),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.account_circle_outlined,
+                          size: 64,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'No accounts found',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No accounts available in the system',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // Navigate to create account
+                          final accountsBloc = context.read<AccountsBloc>();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => BlocProvider.value(
+                                value: accountsBloc,
+                                child: CreateAccountForm(
+                                  onAccountCreated: () {
+                                    accountsBloc.add(const RefreshAccounts());
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Create First Account'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No accounts found',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'No accounts available in the system',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                ),
               ),
             );
           }
@@ -357,35 +424,97 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
 
         if (state is AccountsFailure) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.error,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.errorContainer.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.error_outline_rounded,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Failed to load accounts',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      state.message,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            context.read<AccountsBloc>().add(
+                              const LoadAccounts(AccountsQueryParams()),
+                            );
+                          },
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('Retry'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            context.read<AccountsBloc>().add(
+                              const LoadAccounts(AccountsQueryParams()),
+                            );
+                          },
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('Refresh'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.error,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onError,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load accounts',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  state.message,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<AccountsBloc>().add(
-                      const LoadAccounts(AccountsQueryParams()),
-                    );
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
+              ),
             ),
           );
         }
@@ -393,28 +522,111 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         if (state is AccountsLoaded) {
           if (state.accounts.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.account_circle_outlined,
-                    size: 64,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.5),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceVariant.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.search_off_rounded,
+                          size: 64,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'No accounts found',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Try adjusting your search or filters',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              context.read<AccountsBloc>().add(
+                                const LoadAccounts(AccountsQueryParams()),
+                              );
+                            },
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: const Text('Refresh'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              final accountsBloc = context.read<AccountsBloc>();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => BlocProvider.value(
+                                    value: accountsBloc,
+                                    child: CreateAccountForm(
+                                      onAccountCreated: () {
+                                        accountsBloc.add(
+                                          const RefreshAccounts(),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.add_rounded),
+                            label: const Text('Add Account'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onPrimary,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No accounts found',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Try adjusting your search or filters',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                ),
               ),
             );
           }
@@ -424,6 +636,112 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
             state.accounts,
             state.hasReachedMax,
             state.currentOffset,
+          );
+        }
+
+        if (state is AccountsFiltered) {
+          if (state.accounts.isEmpty) {
+            return Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceVariant.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.filter_list_off_rounded,
+                          size: 64,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'No accounts match your filter',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Filter: ${state.filterType} = "${state.filterValue}"',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              context.read<AccountsBloc>().add(ClearFilters());
+                            },
+                            icon: const Icon(Icons.clear_rounded),
+                            label: const Text('Clear Filter'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              context.read<AccountsBloc>().add(
+                                const LoadAccounts(AccountsQueryParams()),
+                              );
+                            },
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: const Text('Refresh'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onPrimary,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return _buildAccountsList(
+            context,
+            state.accounts,
+            true, // Filtered results are not paginated
+            0, // Reset offset for filtered results
           );
         }
 
@@ -446,37 +764,99 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         if (state is AccountsSearchResults) {
           if (state.accounts.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.search_off,
-                    size: 64,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.5),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.tertiaryContainer.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.search_off_rounded,
+                          size: 64,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.tertiary.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'No search results',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No accounts match your search for "${state.searchKey}"',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              context.read<AccountsBloc>().add(
+                                const LoadAccounts(AccountsQueryParams()),
+                              );
+                            },
+                            icon: const Icon(Icons.clear_rounded),
+                            label: const Text('Clear Search'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              context.read<AccountsBloc>().add(
+                                const LoadAccounts(AccountsQueryParams()),
+                              );
+                            },
+                            icon: const Icon(Icons.list_rounded),
+                            label: const Text('View All'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onPrimary,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No accounts found',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'No accounts match your search for "${state.searchKey}"',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<AccountsBloc>().add(
-                        const LoadAccounts(AccountsQueryParams()),
-                      );
-                    },
-                    child: const Text('View All Accounts'),
-                  ),
-                ],
+                ),
               ),
             );
           }
@@ -511,7 +891,11 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                     final account = state.accounts[index];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
-                      child: AccountCardWidget(account: account),
+                      child: SelectableAccountCardWidget(
+                        account: account,
+                        isSelected: false,
+                        isMultiSelectMode: false,
+                      ),
                     );
                   },
                 ),
@@ -532,7 +916,11 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                 final account = state.accounts[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: AccountCardWidget(account: account),
+                  child: SelectableAccountCardWidget(
+                    account: account,
+                    isSelected: false,
+                    isMultiSelectMode: false,
+                  ),
                 );
               },
             ),
@@ -558,7 +946,11 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                 final account = state.accounts[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: AccountCardWidget(account: account),
+                  child: SelectableAccountCardWidget(
+                    account: account,
+                    isSelected: false,
+                    isMultiSelectMode: false,
+                  ),
                 );
               },
             ),
@@ -676,7 +1068,11 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                 final account = accounts[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: AccountCardWidget(account: account),
+                  child: SelectableAccountCardWidget(
+                    account: account,
+                    isSelected: false,
+                    isMultiSelectMode: false,
+                  ),
                 );
               },
             ),

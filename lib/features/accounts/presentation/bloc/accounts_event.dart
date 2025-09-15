@@ -78,6 +78,15 @@ class FilterAccountsByBalance extends AccountsEvent {
   List<Object?> get props => [minBalance];
 }
 
+class FilterAccountsByAuditLevel extends AccountsEvent {
+  final String auditLevel;
+
+  const FilterAccountsByAuditLevel(this.auditLevel);
+
+  @override
+  List<Object?> get props => [auditLevel];
+}
+
 class ClearFilters extends AccountsEvent {}
 
 class LoadAccountDetails extends AccountsEvent {
@@ -542,11 +551,7 @@ class ShareFile extends AccountsEvent {
   final String? subject;
   final String? text;
 
-  const ShareFile({
-    required this.filePath,
-    this.subject,
-    this.text,
-  });
+  const ShareFile({required this.filePath, this.subject, this.text});
 
   @override
   List<Object?> get props => [filePath, subject, text];

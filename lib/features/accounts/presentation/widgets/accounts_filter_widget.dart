@@ -26,11 +26,20 @@ class _AccountsFilterWidgetState extends State<AccountsFilterWidget> {
     final company = _companyController.text.trim();
     final balance = double.tryParse(_balanceController.text.trim()) ?? 0.0;
 
+    // Apply company filter if provided
     if (company.isNotEmpty) {
       context.read<AccountsBloc>().add(FilterAccountsByCompany(company));
-    } else if (balance > 0) {
+    }
+
+    // Apply balance filter if provided
+    if (balance > 0) {
       context.read<AccountsBloc>().add(FilterAccountsByBalance(balance));
     }
+
+    // Apply audit level filter
+    context.read<AccountsBloc>().add(
+      FilterAccountsByAuditLevel(_selectedAuditLevel),
+    );
 
     Navigator.of(context).pop();
   }
