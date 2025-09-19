@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import '../../domain/entities/account.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
@@ -23,8 +24,6 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
   final _companyController = TextEditingController();
   final _address1Controller = TextEditingController();
   final _address2Controller = TextEditingController();
-  final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
   final _countryController = TextEditingController();
   final _notesController = TextEditingController();
 
@@ -39,17 +38,15 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
   final _companyFocusNode = FocusNode();
   final _address1FocusNode = FocusNode();
   final _address2FocusNode = FocusNode();
-  final _cityFocusNode = FocusNode();
-  final _stateFocusNode = FocusNode();
   final _notesFocusNode = FocusNode();
 
   String _selectedCurrency = 'USD';
   String _selectedTimeZone = 'GMT';
   String _selectedCountry = 'US';
+  String _selectedState = '';
+  String _selectedCity = '';
 
-  final List<String> _currencies = ['USD', 'EUR', 'GBP', 'ETB', 'KES', 'NGN'];
   final List<String> _timeZones = ['GMT', 'UTC', 'EST', 'PST', 'CET', 'EAT'];
-  final List<String> _countries = ['US', 'ET', 'KE', 'NG', 'GB', 'DE', 'FR'];
 
   @override
   void dispose() {
@@ -60,8 +57,6 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
     _companyController.dispose();
     _address1Controller.dispose();
     _address2Controller.dispose();
-    _cityController.dispose();
-    _stateController.dispose();
     _countryController.dispose();
     _notesController.dispose();
 
@@ -72,8 +67,6 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
     _companyFocusNode.dispose();
     _address1FocusNode.dispose();
     _address2FocusNode.dispose();
-    _cityFocusNode.dispose();
-    _stateFocusNode.dispose();
     _notesFocusNode.dispose();
 
     super.dispose();
@@ -109,12 +102,8 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
       company: _companyController.text.trim().isEmpty
           ? null
           : _companyController.text.trim(),
-      city: _cityController.text.trim().isEmpty
-          ? null
-          : _cityController.text.trim(),
-      state: _stateController.text.trim().isEmpty
-          ? null
-          : _stateController.text.trim(),
+      city: _selectedCity.isEmpty ? null : _selectedCity,
+      state: _selectedState.isEmpty ? null : _selectedState,
       country: _selectedCountry,
       locale: null,
       phone: _phoneController.text.trim().isEmpty
@@ -365,49 +354,13 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                           icon: Icons.home_work_outlined,
                           focusNode: _address2FocusNode,
                           textInputAction: TextInputAction.next,
-                          onFieldSubmitted: () => _cityFocusNode.requestFocus(),
-                        ),
-                        const SizedBox(height: 20),
-
-                        _buildModernTextField(
-                          theme: theme,
-                          colorScheme: colorScheme,
-                          controller: _cityController,
-                          label: 'City',
-                          hint: 'Enter city',
-                          icon: Icons.location_city_outlined,
-                          focusNode: _cityFocusNode,
-                          textInputAction: TextInputAction.next,
                           onFieldSubmitted: () =>
-                              _stateFocusNode.requestFocus(),
+                              _notesFocusNode.requestFocus(),
                         ),
-
                         const SizedBox(height: 20),
-                        _buildModernTextField(
-                          theme: theme,
-                          colorScheme: colorScheme,
-                          controller: _stateController,
-                          label: 'State',
-                          hint: 'State/Province',
-                          icon: Icons.map_outlined,
-                          focusNode: _stateFocusNode,
-                          textInputAction: TextInputAction.done,
-                        ),
 
-                        const SizedBox(height: 20),
-                        _buildModernDropdown(
-                          theme: theme,
-                          colorScheme: colorScheme,
-                          label: 'Country',
-                          value: _selectedCountry,
-                          items: _countries,
-                          icon: Icons.public_outlined,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedCountry = value!;
-                            });
-                          },
-                        ),
+                        // Country, State, City Picker
+                        _buildCountryStateCityPicker(theme, colorScheme),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -419,41 +372,9 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                       title: 'Account Settings',
                       icon: Icons.settings_outlined,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildModernDropdown(
-                                theme: theme,
-                                colorScheme: colorScheme,
-                                label: 'Currency',
-                                value: _selectedCurrency,
-                                items: _currencies,
-                                icon: Icons.attach_money_outlined,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedCurrency = value!;
-                                  });
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildModernDropdown(
-                                theme: theme,
-                                colorScheme: colorScheme,
-                                label: 'Time Zone',
-                                value: _selectedTimeZone,
-                                items: _timeZones,
-                                icon: Icons.schedule_outlined,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedTimeZone = value!;
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
+                        _buildCurrencyDropdown(theme, colorScheme),
+                        const SizedBox(height: 20),
+                        _buildTimeZoneDropdown(theme, colorScheme),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -489,6 +410,495 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildCountryStateCityPicker(
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Country Dropdown
+        _buildDropdownField(
+          theme: theme,
+          colorScheme: colorScheme,
+          label: 'Country',
+          icon: Icons.public_outlined,
+          value: _selectedCountry,
+          allowCustomInput: true,
+          items: const [
+            'US',
+            'ET',
+            'KE',
+            'NG',
+            'GB',
+            'DE',
+            'FR',
+            'CA',
+            'AU',
+            'IN',
+            'BR',
+            'MX',
+          ],
+          onChanged: (value) {
+            setState(() {
+              _selectedCountry = value ?? 'US';
+              _selectedState = '';
+              _selectedCity = '';
+            });
+          },
+        ),
+        const SizedBox(height: 20),
+
+        // State Dropdown
+        _buildDropdownField(
+          theme: theme,
+          colorScheme: colorScheme,
+          label: 'State/Province',
+          icon: Icons.map_outlined,
+          value: _selectedState,
+          allowCustomInput: true,
+          items: _getStatesForCountry(_selectedCountry),
+          onChanged: (value) {
+            setState(() {
+              _selectedState = value ?? '';
+              _selectedCity = '';
+            });
+          },
+        ),
+        const SizedBox(height: 20),
+
+        // City Dropdown
+        _buildDropdownField(
+          theme: theme,
+          colorScheme: colorScheme,
+          label: 'City',
+          icon: Icons.location_city_outlined,
+          value: _selectedCity,
+          allowCustomInput: true,
+          items: _getCitiesForState(_selectedState),
+          onChanged: (value) {
+            setState(() {
+              _selectedCity = value ?? '';
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  List<String> _getStatesForCountry(String country) {
+    switch (country) {
+      case 'US':
+        return ['CA', 'NY', 'TX', 'FL', 'IL', 'PA', 'OH', 'GA', 'NC', 'MI'];
+      case 'ET':
+        return [
+          'Addis Ababa',
+          'Oromia',
+          'Amhara',
+          'Tigray',
+          'SNNPR',
+          'Afar',
+          'Somali',
+          'Harari',
+        ];
+      case 'KE':
+        return [
+          'Nairobi',
+          'Mombasa',
+          'Kisumu',
+          'Nakuru',
+          'Eldoret',
+          'Thika',
+          'Malindi',
+          'Kitale',
+        ];
+      case 'NG':
+        return [
+          'Lagos',
+          'Kano',
+          'Abuja',
+          'Rivers',
+          'Oyo',
+          'Kaduna',
+          'Enugu',
+          'Delta',
+        ];
+      case 'GB':
+        return ['England', 'Scotland', 'Wales', 'Northern Ireland'];
+      case 'DE':
+        return [
+          'Bavaria',
+          'Baden-Württemberg',
+          'North Rhine-Westphalia',
+          'Hesse',
+          'Saxony',
+        ];
+      case 'FR':
+        return [
+          'Île-de-France',
+          'Auvergne-Rhône-Alpes',
+          'Hauts-de-France',
+          'Occitanie',
+          'Nouvelle-Aquitaine',
+        ];
+      case 'CA':
+        return [
+          'Ontario',
+          'Quebec',
+          'British Columbia',
+          'Alberta',
+          'Manitoba',
+          'Saskatchewan',
+        ];
+      case 'AU':
+        return [
+          'New South Wales',
+          'Victoria',
+          'Queensland',
+          'Western Australia',
+          'South Australia',
+          'Tasmania',
+        ];
+      case 'IN':
+        return [
+          'Maharashtra',
+          'Uttar Pradesh',
+          'Karnataka',
+          'Gujarat',
+          'Tamil Nadu',
+          'Rajasthan',
+        ];
+      case 'BR':
+        return [
+          'São Paulo',
+          'Rio de Janeiro',
+          'Minas Gerais',
+          'Bahia',
+          'Paraná',
+          'Rio Grande do Sul',
+        ];
+      case 'MX':
+        return [
+          'Mexico City',
+          'Jalisco',
+          'Nuevo León',
+          'Puebla',
+          'Guanajuato',
+          'Veracruz',
+        ];
+      default:
+        return [];
+    }
+  }
+
+  List<String> _getCitiesForState(String state) {
+    switch (state) {
+      case 'CA':
+        return [
+          'Los Angeles',
+          'San Francisco',
+          'San Diego',
+          'San Jose',
+          'Fresno',
+          'Sacramento',
+        ];
+      case 'NY':
+        return [
+          'New York City',
+          'Buffalo',
+          'Rochester',
+          'Yonkers',
+          'Syracuse',
+          'Albany',
+        ];
+      case 'TX':
+        return [
+          'Houston',
+          'San Antonio',
+          'Dallas',
+          'Austin',
+          'Fort Worth',
+          'El Paso',
+        ];
+      case 'FL':
+        return [
+          'Miami',
+          'Tampa',
+          'Orlando',
+          'Jacksonville',
+          'St. Petersburg',
+          'Hialeah',
+        ];
+      case 'Nairobi':
+        return [
+          'Nairobi Central',
+          'Westlands',
+          'Eastleigh',
+          'Karen',
+          'Runda',
+          'Kilimani',
+        ];
+      case 'Lagos':
+        return [
+          'Lagos Island',
+          'Victoria Island',
+          'Ikoyi',
+          'Surulere',
+          'Yaba',
+          'Ikeja',
+        ];
+      case 'England':
+        return [
+          'London',
+          'Birmingham',
+          'Manchester',
+          'Liverpool',
+          'Leeds',
+          'Sheffield',
+        ];
+      case 'Bavaria':
+        return [
+          'Munich',
+          'Nuremberg',
+          'Augsburg',
+          'Würzburg',
+          'Regensburg',
+          'Ingolstadt',
+        ];
+      case 'Île-de-France':
+        return [
+          'Paris',
+          'Boulogne-Billancourt',
+          'Saint-Denis',
+          'Argenteuil',
+          'Montreuil',
+          'Créteil',
+        ];
+      case 'Ontario':
+        return [
+          'Toronto',
+          'Ottawa',
+          'Mississauga',
+          'Hamilton',
+          'Brampton',
+          'London',
+        ];
+      case 'New South Wales':
+        return [
+          'Sydney',
+          'Newcastle',
+          'Wollongong',
+          'Wagga Wagga',
+          'Albury',
+          'Tamworth',
+        ];
+      case 'Maharashtra':
+        return ['Mumbai', 'Pune', 'Nagpur', 'Nashik', 'Aurangabad', 'Solapur'];
+      case 'São Paulo':
+        return [
+          'São Paulo',
+          'Guarulhos',
+          'Campinas',
+          'São Bernardo do Campo',
+          'Santo André',
+          'Osasco',
+        ];
+      case 'Mexico City':
+        return [
+          'Mexico City',
+          'Iztapalapa',
+          'Gustavo A. Madero',
+          'Álvaro Obregón',
+          'Coyoacán',
+          'Cuauhtémoc',
+        ];
+      default:
+        return [];
+    }
+  }
+
+  Widget _buildDropdownField({
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required String label,
+    required IconData icon,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    bool allowCustomInput = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: colorScheme.primary.withOpacity(0.7)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        DropdownSearch<String>(
+          popupProps: PopupProps.menu(
+            showSearchBox: true,
+            searchFieldProps: TextFieldProps(
+              decoration: InputDecoration(
+                hintText: allowCustomInput
+                    ? "Search $label or type custom value..."
+                    : "Search $label...",
+                filled: true,
+                fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              ),
+            ),
+            itemBuilder: (context, item, isSelected) => ListTile(
+              title: Text(item),
+              trailing: allowCustomInput && !items.contains(item)
+                  ? Icon(
+                      Icons.add_circle_outline,
+                      size: 16,
+                      color: colorScheme.primary,
+                    )
+                  : null,
+            ),
+          ),
+          items: items,
+          onChanged: onChanged,
+          selectedItem: value.isEmpty ? null : value,
+          dropdownBuilder: (context, selectedItem) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                selectedItem ?? "Select $label",
+                style: theme.textTheme.bodyLarge,
+              ),
+            );
+          },
+          asyncItems: allowCustomInput
+              ? (String filter) async {
+                  // If user types something not in the list, add it as an option
+                  if (filter.isNotEmpty &&
+                      !items.any(
+                        (item) =>
+                            item.toLowerCase().contains(filter.toLowerCase()),
+                      )) {
+                    return [
+                      filter,
+                      ...items
+                          .where(
+                            (item) => item.toLowerCase().contains(
+                              filter.toLowerCase(),
+                            ),
+                          )
+                          .toList(),
+                    ];
+                  }
+                  return items
+                      .where(
+                        (item) =>
+                            item.toLowerCase().contains(filter.toLowerCase()),
+                      )
+                      .toList();
+                }
+              : null,
+          dropdownDecoratorProps: DropDownDecoratorProps(
+            dropdownSearchDecoration: InputDecoration(
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrencyDropdown(ThemeData theme, ColorScheme colorScheme) {
+    final currencies = [
+      'USD - US Dollar',
+      'EUR - Euro',
+      'GBP - British Pound',
+      'ETB - Ethiopian Birr',
+      'KES - Kenyan Shilling',
+      'NGN - Nigerian Naira',
+      'CAD - Canadian Dollar',
+      'AUD - Australian Dollar',
+      'INR - Indian Rupee',
+      'BRL - Brazilian Real',
+      'MXN - Mexican Peso',
+      'JPY - Japanese Yen',
+      'CNY - Chinese Yuan',
+      'ZAR - South African Rand',
+    ];
+
+    return _buildDropdownField(
+      theme: theme,
+      colorScheme: colorScheme,
+      label: 'Currency',
+      icon: Icons.attach_money_outlined,
+      value: _selectedCurrency,
+      allowCustomInput: true,
+      items: currencies,
+      onChanged: (value) {
+        if (value != null) {
+          setState(() {
+            // If it's a custom input (not in predefined list), use as is
+            if (currencies.contains(value)) {
+              _selectedCurrency = value.split(
+                ' - ',
+              )[0]; // Extract currency code
+            } else {
+              _selectedCurrency = value; // Use custom input directly
+            }
+          });
+        }
+      },
+    );
+  }
+
+  Widget _buildTimeZoneDropdown(ThemeData theme, ColorScheme colorScheme) {
+    return _buildDropdownField(
+      theme: theme,
+      colorScheme: colorScheme,
+      label: 'Time Zone',
+      icon: Icons.schedule_outlined,
+      value: _selectedTimeZone,
+      allowCustomInput: true,
+      items: _timeZones,
+      onChanged: (value) {
+        setState(() {
+          _selectedTimeZone = value ?? 'GMT';
+        });
+      },
     );
   }
 
@@ -707,81 +1117,6 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
               ),
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildModernDropdown({
-    required ThemeData theme,
-    required ColorScheme colorScheme,
-    required String label,
-    required String value,
-    required List<String> items,
-    required IconData icon,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 18, color: colorScheme.primary.withOpacity(0.7)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                label,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: value,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: colorScheme.outline.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: colorScheme.outline.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colorScheme.primary, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 16,
-            ),
-          ),
-          dropdownColor: colorScheme.surface,
-          style: theme.textTheme.bodyLarge,
-          items: items.map((item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(
-                item,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: onChanged,
         ),
       ],
     );

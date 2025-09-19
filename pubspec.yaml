@@ -80,6 +80,11 @@ dependencies:
     sdk: flutter
   intl: ^0.20.2
 
+  # Enhanced Dropdowns
+  country_state_city_picker_2: ^1.0.5
+  currency_picker: ^2.0.13
+  dropdown_search: ^5.0.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
