@@ -26,54 +26,63 @@ class AccountInvoicesRepositoryImpl implements AccountInvoicesRepository {
   );
 
   @override
-  Stream<List<AccountInvoice>> get accountInvoicesStream => _accountInvoicesController.stream;
+  Stream<List<AccountInvoice>> get accountInvoicesStream =>
+      _accountInvoicesController.stream;
 
   @override
   Future<List<AccountInvoice>> getInvoices(String accountId) async {
     try {
-      // First, get data from local cache (immediate response)
-      final cachedInvoices = await _localDataSource.getCachedAccountInvoices(accountId);
-      
-      // Emit cached data immediately for UI responsiveness
+      _logger.d(
+        'Getting invoices for account: $accountId - Local-first approach',
+      );
+
+      // First, try to get from local cache
+      final cachedInvoices = await _localDataSource.getCachedAccountInvoices(
+        accountId,
+      );
       if (cachedInvoices.isNotEmpty) {
-        final entities = cachedInvoices.map((model) => model.toEntity()).toList();
+        _logger.d(
+          'Returning ${cachedInvoices.length} cached invoices for account $accountId',
+        );
+
+        // Emit cached data immediately for UI responsiveness
+        final entities = cachedInvoices
+            .map((model) => model.toEntity())
+            .toList();
         _accountInvoicesController.add(entities);
-        _logger.d('Emitted ${entities.length} cached invoices for account: $accountId');
+
+        // If online, sync in background
+        if (await _networkInfo.isConnected) {
+          _syncInvoicesInBackground(accountId);
+        }
+
+        return entities;
       }
 
-      // Check if device is online for background synchronization
+      // If no cached data and online, fetch from remote
       if (await _networkInfo.isConnected) {
-        try {
-          // Fetch fresh data from remote source
-          final remoteInvoices = await _remoteDataSource.getInvoices(accountId);
-          
-          // Cache the fresh data locally
-          await _localDataSource.cacheAccountInvoices(accountId, remoteInvoices);
-          _logger.d('Cached ${remoteInvoices.length} fresh invoices for account: $accountId');
+        _logger.d(
+          'No cached data, fetching invoices from remote for account $accountId',
+        );
+        final remoteInvoices = await _remoteDataSource.getInvoices(accountId);
 
-          // Emit updated data for UI refresh
-          final updatedEntities = remoteInvoices.map((model) => model.toEntity()).toList();
-          _accountInvoicesController.add(updatedEntities);
-          _logger.d('Emitted ${updatedEntities.length} fresh invoices for account: $accountId');
+        // Cache the fresh data locally
+        await _localDataSource.cacheAccountInvoices(accountId, remoteInvoices);
 
-          return updatedEntities;
-        } catch (e) {
-          _logger.w('Remote fetch failed for account $accountId: $e');
-          // Return cached data if remote fetch fails
-          if (cachedInvoices.isNotEmpty) {
-            return cachedInvoices.map((model) => model.toEntity()).toList();
-          }
-          rethrow;
-        }
-      } else {
-        _logger.d('Device offline, returning cached invoices for account: $accountId');
-        // Return cached data if offline
-        if (cachedInvoices.isNotEmpty) {
-          return cachedInvoices.map((model) => model.toEntity()).toList();
-        }
-        // Return empty list if no cached data
-        return [];
+        // Emit updated data for UI refresh
+        final entities = remoteInvoices
+            .map((model) => model.toEntity())
+            .toList();
+        _accountInvoicesController.add(entities);
+
+        return entities;
       }
+
+      // If offline and no cached data, return empty list
+      _logger.w(
+        'No cached data and offline, returning empty list for account $accountId',
+      );
+      return [];
     } catch (e) {
       _logger.e('Error getting invoices for account $accountId: $e');
       rethrow;
@@ -83,35 +92,88 @@ class AccountInvoicesRepositoryImpl implements AccountInvoicesRepository {
   @override
   Future<List<AccountInvoice>> getPaginatedInvoices(String accountId) async {
     try {
-      // First, get from local cache
-      final cachedInvoices = await _localDataSource.getCachedPaginatedInvoices(accountId);
-      
+      _logger.d(
+        'Getting paginated invoices for account: $accountId - Local-first approach',
+      );
+
+      // First, try to get from local cache
+      final cachedInvoices = await _localDataSource.getCachedPaginatedInvoices(
+        accountId,
+      );
       if (cachedInvoices.isNotEmpty) {
-        _logger.d('Found ${cachedInvoices.length} cached paginated invoices for account: $accountId');
+        _logger.d(
+          'Returning ${cachedInvoices.length} cached paginated invoices for account $accountId',
+        );
+
+        // If online, sync in background
+        if (await _networkInfo.isConnected) {
+          _syncPaginatedInvoicesInBackground(accountId);
+        }
+
         return cachedInvoices.map((model) => model.toEntity()).toList();
       }
 
-      // If no cached results and online, fetch from remote
+      // If no cached data and online, fetch from remote
       if (await _networkInfo.isConnected) {
-        try {
-          final remoteInvoices = await _remoteDataSource.getPaginatedInvoices(accountId);
-          
-          // Cache the results locally
-          await _localDataSource.cacheAccountInvoices(accountId, remoteInvoices);
-          _logger.d('Cached ${remoteInvoices.length} paginated invoices for account: $accountId');
+        _logger.d(
+          'No cached data, fetching paginated invoices from remote for account $accountId',
+        );
+        final remoteInvoices = await _remoteDataSource.getPaginatedInvoices(
+          accountId,
+        );
 
-          return remoteInvoices.map((model) => model.toEntity()).toList();
-        } catch (e) {
-          _logger.w('Remote fetch failed for paginated invoices, account $accountId: $e');
-          rethrow;
-        }
-      } else {
-        _logger.d('Device offline, no cached results for paginated invoices, account $accountId');
-        return [];
+        // Cache the results locally
+        await _localDataSource.cacheAccountInvoices(accountId, remoteInvoices);
+
+        return remoteInvoices.map((model) => model.toEntity()).toList();
       }
+
+      // If offline and no cached data, return empty list
+      _logger.w(
+        'No cached data and offline, returning empty list for paginated invoices, account $accountId',
+      );
+      return [];
     } catch (e) {
       _logger.e('Error getting paginated invoices for account $accountId: $e');
       rethrow;
+    }
+  }
+
+  /// Background synchronization for invoices
+  Future<void> _syncInvoicesInBackground(String accountId) async {
+    try {
+      _logger.d('Syncing invoices in background for account: $accountId');
+      final remoteInvoices = await _remoteDataSource.getInvoices(accountId);
+      await _localDataSource.cacheAccountInvoices(accountId, remoteInvoices);
+
+      // Emit updated data for UI refresh
+      final entities = remoteInvoices.map((model) => model.toEntity()).toList();
+      _accountInvoicesController.add(entities);
+
+      _logger.d('Background sync completed for invoices, account: $accountId');
+    } catch (e) {
+      _logger.e('Background sync failed for invoices, account $accountId: $e');
+    }
+  }
+
+  /// Background synchronization for paginated invoices
+  Future<void> _syncPaginatedInvoicesInBackground(String accountId) async {
+    try {
+      _logger.d(
+        'Syncing paginated invoices in background for account: $accountId',
+      );
+      final remoteInvoices = await _remoteDataSource.getPaginatedInvoices(
+        accountId,
+      );
+      await _localDataSource.cacheAccountInvoices(accountId, remoteInvoices);
+
+      _logger.d(
+        'Background sync completed for paginated invoices, account: $accountId',
+      );
+    } catch (e) {
+      _logger.e(
+        'Background sync failed for paginated invoices, account $accountId: $e',
+      );
     }
   }
 

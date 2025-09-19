@@ -90,6 +90,12 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   bool _isMultiSelectMode = false;
   List<Account> _selectedAccounts = [];
 
+  // Current query parameters for maintaining sort state
+  AccountsQueryParams _currentQueryParams = const AccountsQueryParams();
+
+  // Getter for current query parameters
+  AccountsQueryParams get currentQueryParams => _currentQueryParams;
+
   final Logger _logger = Logger();
 
   AccountsBloc({
@@ -248,6 +254,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       _logger.d(
         '🔍 DEBUG: _onLoadAccounts called with params: ${event.params.toString()}',
       );
+      // Store current query parameters
+      _currentQueryParams = event.params;
       emit(AccountsLoading(event.params));
       _logger.d('🔍 DEBUG: Emitted AccountsLoading state');
       final accounts = await _getAccountsUseCase(event.params);
@@ -312,6 +320,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
+      // Store current query parameters
+      _currentQueryParams = event.params;
       final currentState = state;
       if (currentState is AccountsLoaded) {
         emit(AccountsRefreshing(currentState.accounts));

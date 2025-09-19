@@ -440,7 +440,8 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
         '🔍 DEBUG: getCachedAccountsByQuery called with params: ${params.toString()} for user: $currentUserId',
       );
       final db = await _databaseService.database;
-      final orderBy = '${params.sortBy} ${params.sortOrder}';
+      final dbSortBy = _mapSortFieldToDbColumn(params.sortBy);
+      final orderBy = '$dbSortBy ${params.sortOrder}';
       _logger.d(
         '🔍 DEBUG: Query orderBy: $orderBy, limit: ${params.limit}, offset: ${params.offset}',
       );
@@ -531,6 +532,37 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
 
   String _getQueryKey(AccountsQueryParams params) {
     return '${params.offset}_${params.limit}_${params.sortBy}_${params.sortOrder}';
+  }
+
+  // Helper method to map sort field names to database column names
+  String _mapSortFieldToDbColumn(String sortField) {
+    switch (sortField) {
+      case 'name':
+        return AccountDao.columnName;
+      case 'email':
+        return AccountDao.columnEmail;
+      case 'company':
+        return AccountDao.columnCompany;
+      case 'created_at':
+        return AccountDao.columnCreatedAt;
+      case 'balance':
+        return AccountDao.columnAccountBalance;
+      case 'cba':
+        return AccountDao.columnAccountCBA;
+      case 'currency':
+        return AccountDao.columnCurrency;
+      case 'phone':
+        return AccountDao.columnPhone;
+      case 'city':
+        return AccountDao.columnCity;
+      case 'state':
+        return AccountDao.columnState;
+      case 'country':
+        return AccountDao.columnCountry;
+      default:
+        _logger.w('Unknown sort field: $sortField, defaulting to name');
+        return AccountDao.columnName;
+    }
   }
 
   // Clean up stream controllers

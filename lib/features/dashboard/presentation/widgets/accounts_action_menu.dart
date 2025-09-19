@@ -188,38 +188,11 @@ class AccountsActionMenu extends StatelessWidget {
   }
 
   void _showSortDialog(BuildContext context) {
+    final accountsBloc = context.read<AccountsBloc>();
     showDialog(
       context: context,
-      builder: (context) => BlocBuilder<AccountsBloc, AccountsState>(
-        builder: (context, state) {
-          String currentSortBy = 'name';
-          String currentSortOrder = 'ASC';
-
-          return AlertDialog(
-            title: const Text('Sort Accounts'),
-            content: AccountSortSelectorWidget(
-              currentSortBy: currentSortBy,
-              currentSortOrder: currentSortOrder,
-              onSortChanged: (sortBy, sortOrder) {
-                final params = AccountsQueryParams(
-                  sortBy: sortBy,
-                  sortOrder: sortOrder,
-                );
-                context.read<AccountsBloc>().add(
-                  RefreshAccounts(params: params),
-                );
-                Navigator.pop(context);
-              },
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-            ],
-          );
-        },
-      ),
+      builder: (context) =>
+          BlocProvider.value(value: accountsBloc, child: _SortDialog()),
     );
   }
 
@@ -276,5 +249,219 @@ class AccountsActionMenu extends StatelessWidget {
         );
       }
     });
+  }
+}
+
+class _SortDialog extends StatefulWidget {
+  @override
+  _SortDialogState createState() => _SortDialogState();
+}
+
+class _SortDialogState extends State<_SortDialog> {
+  late String _selectedSortBy;
+  late String _selectedSortOrder;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with current sort parameters from the BLoC
+    final currentParams = context.read<AccountsBloc>().currentQueryParams;
+    _selectedSortBy = currentParams.sortBy;
+    _selectedSortOrder = currentParams.sortOrder;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      elevation: 8,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.sort_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Sort Accounts',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                letterSpacing: -0.5,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Organize your accounts by different criteria',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceVariant.withOpacity(0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content
+            Flexible(
+              child: SingleChildScrollView(
+                child: AccountSortSelectorWidget(
+                  currentSortBy: _selectedSortBy,
+                  currentSortOrder: _selectedSortOrder,
+                  onSortChanged: (sortBy, sortOrder) {
+                    setState(() {
+                      _selectedSortBy = sortBy;
+                      _selectedSortOrder = sortOrder;
+                    });
+                  },
+                ),
+              ),
+            ),
+
+            // Footer
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceVariant.withOpacity(0.3),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      // Cancel - just close the dialog without applying changes
+                      Navigator.pop(context);
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.7),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Apply the selected sort options
+                      final params = AccountsQueryParams(
+                        sortBy: _selectedSortBy,
+                        sortOrder: _selectedSortOrder,
+                      );
+                      context.read<AccountsBloc>().add(
+                        RefreshAccounts(params: params),
+                      );
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: const Text(
+                      'Apply Sort',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

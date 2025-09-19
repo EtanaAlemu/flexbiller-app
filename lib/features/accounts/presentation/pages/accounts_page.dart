@@ -6,7 +6,6 @@ import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
 import '../widgets/accounts_list_widget.dart';
 import '../widgets/create_account_form.dart';
-import '../../../../injection_container.dart';
 import '../../domain/entities/accounts_query_params.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:open_file/open_file.dart';
@@ -18,63 +17,58 @@ class AccountsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) {
-        final bloc = getIt<AccountsBloc>();
-        // Ensure we load accounts when the page is built
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          bloc.add(const LoadAccounts(AccountsQueryParams()));
-        });
-        return bloc;
+    // Load accounts when the page is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AccountsBloc>().add(
+        const LoadAccounts(AccountsQueryParams()),
+      );
+    });
+
+    return BlocListener<AccountsBloc, AccountsState>(
+      listener: (context, state) {
+        if (state is AllAccountsLoaded) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Successfully loaded ${state.totalCount} accounts'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else if (state is AllAccountsRefreshing) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Refreshing all accounts...'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        } else if (state is AccountsExportSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Successfully exported ${state.exportedCount} accounts to ${state.fileName}',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+              action: SnackBarAction(
+                label: 'Open',
+                onPressed: () {
+                  _openOrShareFile(state.filePath, state.fileName, context);
+                },
+              ),
+            ),
+          );
+        } else if (state is AccountsExportFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       },
-      child: BlocListener<AccountsBloc, AccountsState>(
-        listener: (context, state) {
-          if (state is AllAccountsLoaded) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Successfully loaded ${state.totalCount} accounts',
-                ),
-                backgroundColor: Colors.green,
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          } else if (state is AllAccountsRefreshing) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Refreshing all accounts...'),
-                backgroundColor: Colors.blue,
-                duration: Duration(seconds: 1),
-              ),
-            );
-          } else if (state is AccountsExportSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Successfully exported ${state.exportedCount} accounts to ${state.fileName}',
-                ),
-                backgroundColor: Colors.green,
-                duration: const Duration(seconds: 3),
-                action: SnackBarAction(
-                  label: 'Open',
-                  onPressed: () {
-                    _openOrShareFile(state.filePath, state.fileName, context);
-                  },
-                ),
-              ),
-            );
-          } else if (state is AccountsExportFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        },
-        child: AccountsView(key: accountsViewKey),
-      ),
+      child: AccountsView(key: accountsViewKey),
     );
   }
 
