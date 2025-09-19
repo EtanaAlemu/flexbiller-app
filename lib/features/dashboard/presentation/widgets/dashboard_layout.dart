@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'sidebar_menu.dart';
 import 'dashboard_app_bar.dart';
@@ -30,6 +31,9 @@ class DashboardLayout extends StatelessWidget {
   }
 
   Widget _buildMobileLayout(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Stack(
       children: [
         Column(
@@ -43,25 +47,58 @@ class DashboardLayout extends StatelessWidget {
             Expanded(child: SafeArea(child: content)),
           ],
         ),
-        if (isSidebarVisible)
-          Positioned(
-            left: 0,
+        if (isSidebarVisible) ...[
+          // Background overlay with blur effect
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: onToggleSidebar,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                color: Colors.black.withOpacity(0.5),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(color: Colors.transparent),
+                ),
+              ),
+            ),
+          ),
+          // Sidebar menu with slide animation
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            left: isSidebarVisible
+                ? 0
+                : -MediaQuery.of(context).size.width * 0.8,
             top: 0,
             bottom: 0,
             child: Container(
               width: MediaQuery.of(context).size.width * 0.8,
-              color: Theme.of(context).colorScheme.surface,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1A1A1A)
+                    : const Color(0xFFFAFAFA),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(4, 0),
+                  ),
+                ],
+              ),
               child: SidebarMenu(
                 selectedIndex: currentPageIndex,
                 onItemSelected: (index) {
-                  // Handle navigation
+                  // Handle navigation - this will be handled by parent
                 },
                 onLogout: () {
-                  // Handle logout
+                  // Handle logout - this will be handled by parent
                 },
+                onClose: onToggleSidebar, // Close sidebar for special actions
               ),
             ),
           ),
+        ],
       ],
     );
   }

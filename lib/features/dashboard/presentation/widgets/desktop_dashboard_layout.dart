@@ -36,6 +36,8 @@ class DesktopDashboardLayout extends StatelessWidget {
               selectedIndex: currentPageIndex,
               onItemSelected: onNavigate,
               onLogout: onLogout,
+              onClose:
+                  onToggleSidebar, // Close sidebar after any menu selection
             ),
           ),
         Expanded(

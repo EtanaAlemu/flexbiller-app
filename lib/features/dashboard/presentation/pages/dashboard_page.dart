@@ -103,6 +103,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _handleLogout() {
     // Handle logout - this will be handled by the auth bloc
+    setState(() {
+      if (_isMobile) {
+        _isSidebarVisible = false;
+      }
+    });
   }
 }
 

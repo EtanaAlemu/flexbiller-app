@@ -6,158 +6,248 @@ class SidebarMenu extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemSelected;
   final VoidCallback? onLogout;
+  final VoidCallback? onClose;
 
   const SidebarMenu({
     Key? key,
     required this.selectedIndex,
     required this.onItemSelected,
     this.onLogout,
+    this.onClose,
   }) : super(key: key);
 
   @override
   State<SidebarMenu> createState() => _SidebarMenuState();
 }
 
-class _SidebarMenuState extends State<SidebarMenu> {
-  bool _isExpanded = true;
+class _SidebarMenuState extends State<SidebarMenu>
+    with TickerProviderStateMixin {
+  bool _isExpanded = true; // Always expanded for mobile
+  late AnimationController _expandController;
+  late AnimationController _fadeController;
 
   final List<SidebarMenuItem> _menuItems = [
     SidebarMenuItem(
-      icon: Icons.dashboard,
+      icon: Icons.dashboard_outlined,
+      activeIcon: Icons.dashboard,
       title: 'Dashboard',
       index: 0,
-      isExpanded: true,
+      isAvailable: true,
+      badge: null,
     ),
     SidebarMenuItem(
-      icon: Icons.account_balance,
+      icon: Icons.account_balance_outlined,
+      activeIcon: Icons.account_balance,
       title: 'Accounts',
       index: 1,
-      isExpanded: true,
+      isAvailable: true,
+      badge: null,
     ),
     SidebarMenuItem(
-      icon: Icons.subscriptions,
+      icon: Icons.subscriptions_outlined,
+      activeIcon: Icons.subscriptions,
       title: 'Subscriptions',
       index: 2,
-      isExpanded: true,
+      isAvailable: true,
+      badge: null,
     ),
     SidebarMenuItem(
-      icon: Icons.receipt_long,
+      icon: Icons.receipt_long_outlined,
+      activeIcon: Icons.receipt_long,
       title: 'Invoices',
       index: 3,
-      isExpanded: false,
+      isAvailable: false,
+      badge: 'Soon',
     ),
     SidebarMenuItem(
-      icon: Icons.payment,
+      icon: Icons.payment_outlined,
+      activeIcon: Icons.payment,
       title: 'Payments',
       index: 4,
-      isExpanded: false,
+      isAvailable: false,
+      badge: 'Soon',
     ),
     SidebarMenuItem(
-      icon: Icons.analytics,
+      icon: Icons.analytics_outlined,
+      activeIcon: Icons.analytics,
       title: 'Reports',
       index: 5,
-      isExpanded: true,
+      isAvailable: true,
+      badge: null,
     ),
     SidebarMenuItem(
-      icon: Icons.label,
+      icon: Icons.label_outlined,
+      activeIcon: Icons.label,
       title: 'Tags',
       index: 6,
-      isExpanded: true,
+      isAvailable: true,
+      badge: null,
     ),
     SidebarMenuItem(
-      icon: Icons.settings,
+      icon: Icons.settings_outlined,
+      activeIcon: Icons.settings,
       title: 'Settings',
       index: 7,
-      isExpanded: false,
+      isAvailable: false,
+      badge: 'Soon',
+    ),
+    // Profile and Logout items
+    SidebarMenuItem(
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      title: 'Profile',
+      index: 8,
+      isAvailable: true,
+      badge: null,
+      isSpecial: true, // Special styling for profile/logout
+    ),
+    SidebarMenuItem(
+      icon: Icons.logout_outlined,
+      activeIcon: Icons.logout_rounded,
+      title: 'Logout',
+      index: 9,
+      isAvailable: true,
+      badge: null,
+      isSpecial: true, // Special styling for profile/logout
     ),
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _expandController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _expandController.forward();
+    _fadeController.forward();
+  }
+
+  @override
+  void dispose() {
+    _expandController.dispose();
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
       width: _isExpanded ? 280 : 80,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFFAFAFA),
         border: Border(
           right: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0),
             width: 1,
           ),
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(2, 0),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(4, 0),
           ),
         ],
       ),
       child: Column(
         children: [
           _buildHeader(context),
-          const Divider(height: 1),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
           Expanded(child: _buildMenuItems(context)),
-          const Divider(height: 1),
-          _buildUserSection(context),
         ],
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.account_balance_wallet,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          if (_isExpanded) ...[
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'FlexBiller',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  Text(
-                    'Billing Management',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.colorScheme.primary,
+                  theme.colorScheme.primary.withOpacity(0.8),
                 ],
               ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _isExpanded = !_isExpanded;
-              });
-            },
-            icon: Icon(
-              _isExpanded ? Icons.chevron_left : Icons.chevron_right,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            child: const Icon(
+              Icons.account_balance_wallet_rounded,
+              color: Colors.white,
+              size: 28,
             ),
-            tooltip: _isExpanded ? 'Collapse sidebar' : 'Expand sidebar',
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'FlexBiller',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Billing Management',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF6B7280),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -166,7 +256,7 @@ class _SidebarMenuState extends State<SidebarMenu> {
 
   Widget _buildMenuItems(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       itemCount: _menuItems.length,
       itemBuilder: (context, index) {
         final item = _menuItems[index];
@@ -176,64 +266,153 @@ class _SidebarMenuState extends State<SidebarMenu> {
   }
 
   Widget _buildMenuItem(BuildContext context, SidebarMenuItem item) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isSelected = widget.selectedIndex == item.index;
-    final isAvailable = item.isExpanded;
+    final isAvailable = item.isAvailable;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      child: Material(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
         color: isSelected
-            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+            ? (isDark
+                  ? const Color(0xFF1E3A8A).withOpacity(0.2)
+                  : const Color(0xFF3B82F6).withOpacity(0.1))
             : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
+        border: isSelected
+            ? Border.all(
+                color: isDark
+                    ? const Color(0xFF1E3A8A).withOpacity(0.3)
+                    : const Color(0xFF3B82F6).withOpacity(0.2),
+                width: 1,
+              )
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: isAvailable
-              ? () => widget.onItemSelected(item.index)
+              ? () {
+                  if (item.isSpecial) {
+                    if (item.title == 'Profile') {
+                      _showProfileDialog(
+                        context,
+                        context.read<AuthBloc>().state,
+                      );
+                    } else if (item.title == 'Logout') {
+                      _showLogoutDialog(context);
+                    }
+                    // Close sidebar after special actions
+                    widget.onClose?.call();
+                  } else {
+                    widget.onItemSelected(item.index);
+                    // Navigation will handle sidebar closing
+                  }
+                }
               : () => _showComingSoonSnackBar(context, item.title),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          splashColor: isDark
+              ? Colors.white.withOpacity(0.1)
+              : theme.colorScheme.primary.withOpacity(0.1),
+          highlightColor: isDark
+              ? Colors.white.withOpacity(0.05)
+              : theme.colorScheme.primary.withOpacity(0.05),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Icon(
-                  item.icon,
-                  size: 20,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : isAvailable
-                      ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
-                      : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.4),
-                ),
-                if (_isExpanded) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      item.title,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : isAvailable
-                            ? Theme.of(context).colorScheme.onSurface
-                            : Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.4),
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    isSelected ? item.activeIcon : item.icon,
+                    key: ValueKey('${item.index}_${isSelected}'),
+                    size: 22,
+                    color: item.isSpecial
+                        ? (isDark
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFFDC2626))
+                        : isSelected
+                        ? (isDark
+                              ? const Color(0xFF60A5FA)
+                              : const Color(0xFF3B82F6))
+                        : isAvailable
+                        ? (isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF6B7280))
+                        : (isDark
+                              ? const Color(0xFF4B5563)
+                              : const Color(0xFF9CA3AF)),
                   ),
-                  if (!isAvailable)
-                    Icon(
-                      Icons.lock_outline,
-                      size: 16,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.4),
-                    ),
-                ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          item.title,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: item.isSpecial
+                                ? (isDark
+                                      ? const Color(0xFFEF4444)
+                                      : const Color(0xFFDC2626))
+                                : isSelected
+                                ? (isDark
+                                      ? const Color(0xFF60A5FA)
+                                      : const Color(0xFF3B82F6))
+                                : isAvailable
+                                ? (isDark
+                                      ? const Color(0xFFE5E7EB)
+                                      : const Color(0xFF1F2937))
+                                : (isDark
+                                      ? const Color(0xFF4B5563)
+                                      : const Color(0xFF9CA3AF)),
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            fontSize: 14,
+                            letterSpacing: 0.1,
+                          ),
+                        ),
+                      ),
+                      if (item.badge != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF374151)
+                                : const Color(0xFFF3F4F6),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF4B5563)
+                                  : const Color(0xFFD1D5DB),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            item.badge!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF6B7280),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -242,176 +421,90 @@ class _SidebarMenuState extends State<SidebarMenu> {
     );
   }
 
-  Widget _buildUserSection(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              if (_isExpanded) ...[
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: Text(
-                        _getUserInitials(state),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _getUserName(state),
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            _getUserEmail(state),
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.7),
-                                ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-              ] else ...[
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  child: Text(
-                    _getUserInitials(state),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              Row(
-                children: [
-                  if (_isExpanded) ...[
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _showProfileDialog(context, state),
-                        icon: const Icon(Icons.person, size: 16),
-                        label: const Text('Profile'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  IconButton(
-                    onPressed: () => _showLogoutDialog(context),
-                    icon: Icon(
-                      _isExpanded ? Icons.logout : Icons.logout,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    tooltip: 'Logout',
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  String _getUserInitials(AuthState state) {
-    if (state is LoginSuccess) {
-      final name = state.user.name ?? '';
-      if (name.isNotEmpty) {
-        final parts = name.split(' ');
-        if (parts.length >= 2) {
-          return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-        }
-        return parts[0][0].toUpperCase();
-      }
-    } else if (state is AuthSuccess) {
-      final name = state.user.name ?? '';
-      if (name.isNotEmpty) {
-        final parts = name.split(' ');
-        if (parts.length >= 2) {
-          return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-        }
-        return parts[0][0].toUpperCase();
-      }
-    }
-    return 'U';
-  }
-
-  String _getUserName(AuthState state) {
-    if (state is LoginSuccess) {
-      return state.user.name ?? 'User';
-    } else if (state is AuthSuccess) {
-      return state.user.name ?? 'User';
-    }
-    return 'User';
-  }
-
-  String _getUserEmail(AuthState state) {
-    if (state is LoginSuccess) {
-      return state.user.email ?? '';
-    } else if (state is AuthSuccess) {
-      return state.user.email ?? '';
-    }
-    return '';
-  }
-
   void _showComingSoonSnackBar(BuildContext context, String feature) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$feature - Coming Soon!'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        content: Row(
+          children: [
+            Icon(Icons.info_outline_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '$feature - Coming Soon!',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isDark
+            ? const Color(0xFF1E3A8A)
+            : const Color(0xFF3B82F6),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'Dismiss',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
       ),
     );
   }
 
   void _showProfileDialog(BuildContext context, AuthState state) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
           children: [
-            if (state is LoginSuccess) ...[
-              _buildProfileField('Name', state.user.name ?? 'N/A'),
-              _buildProfileField('Email', state.user.email ?? 'N/A'),
-              _buildProfileField('Role', state.user.role ?? 'N/A'),
-              _buildProfileField('Phone', state.user.phone ?? 'N/A'),
-            ] else if (state is AuthSuccess) ...[
-              _buildProfileField('Name', state.user.name ?? 'N/A'),
-              _buildProfileField('Email', state.user.email ?? 'N/A'),
-              _buildProfileField('Role', state.user.role ?? 'N/A'),
-              _buildProfileField('Phone', state.user.phone ?? 'N/A'),
-            ],
+            Icon(
+              Icons.person_outline_rounded,
+              color: theme.colorScheme.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            const Text('Profile'),
           ],
+        ),
+        content: Container(
+          width: 300,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (state is LoginSuccess) ...[
+                _buildProfileField('Name', state.user.name),
+                _buildProfileField('Email', state.user.email),
+                _buildProfileField('Role', state.user.role),
+                _buildProfileField('Phone', state.user.phone ?? 'N/A'),
+              ] else if (state is AuthSuccess) ...[
+                _buildProfileField('Name', state.user.name),
+                _buildProfileField('Email', state.user.email),
+                _buildProfileField('Role', state.user.role),
+                _buildProfileField('Phone', state.user.phone ?? 'N/A'),
+              ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: isDark
+                  ? const Color(0xFF9CA3AF)
+                  : const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
             child: const Text('Close'),
           ),
         ],
@@ -420,8 +513,20 @@ class _SidebarMenuState extends State<SidebarMenu> {
   }
 
   Widget _buildProfileField(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark ? const Color(0xFF374151) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -429,10 +534,25 @@ class _SidebarMenuState extends State<SidebarMenu> {
             width: 80,
             child: Text(
               '$label:',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF6B7280),
+                fontSize: 12,
+              ),
             ),
           ),
-          Expanded(child: Text(value)),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF1F2937),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -441,15 +561,37 @@ class _SidebarMenuState extends State<SidebarMenu> {
   void _showLogoutDialog(BuildContext context) {
     // Get the AuthBloc from the parent context before showing the dialog
     final authBloc = context.read<AuthBloc>();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.logout_rounded,
+              color: const Color(0xFFEF4444),
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            const Text('Logout'),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(fontSize: 16),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: isDark
+                  ? const Color(0xFF9CA3AF)
+                  : const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -459,8 +601,12 @@ class _SidebarMenuState extends State<SidebarMenu> {
               widget.onLogout?.call();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+              backgroundColor: const Color(0xFFEF4444),
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             child: const Text('Logout'),
           ),
@@ -472,14 +618,20 @@ class _SidebarMenuState extends State<SidebarMenu> {
 
 class SidebarMenuItem {
   final IconData icon;
+  final IconData activeIcon;
   final String title;
   final int index;
-  final bool isExpanded;
+  final bool isAvailable;
+  final String? badge;
+  final bool isSpecial;
 
   const SidebarMenuItem({
     required this.icon,
+    required this.activeIcon,
     required this.title,
     required this.index,
-    required this.isExpanded,
+    required this.isAvailable,
+    this.badge,
+    this.isSpecial = false,
   });
 }
