@@ -5,7 +5,7 @@ import '../../domain/entities/account.dart';
 import '../pages/account_details_page.dart';
 import '../widgets/delete_account_dialog.dart';
 import '../bloc/accounts_bloc.dart';
-import '../bloc/accounts_event.dart';
+import '../bloc/events/accounts_event.dart';
 
 class SelectableAccountCardWidget extends StatelessWidget {
   final Account account;

@@ -1,15 +1,15 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/account.dart';
-import '../../domain/entities/accounts_query_params.dart';
-import '../../domain/entities/account_timeline.dart';
-import '../../domain/entities/account_tag.dart';
-import '../../domain/entities/account_custom_field.dart';
-import '../../domain/entities/account_email.dart';
-import '../../domain/entities/account_blocking_state.dart';
-import '../../domain/entities/account_invoice_payment.dart';
-import '../../domain/entities/account_audit_log.dart';
-import '../../domain/entities/account_payment_method.dart';
-import '../../domain/entities/account_payment.dart';
+import '../../../domain/entities/account.dart';
+import '../../../domain/entities/accounts_query_params.dart';
+import '../../../domain/entities/account_timeline.dart';
+import '../../../domain/entities/account_tag.dart';
+import '../../../domain/entities/account_custom_field.dart';
+import '../../../domain/entities/account_email.dart';
+import '../../../domain/entities/account_blocking_state.dart';
+import '../../../domain/entities/account_invoice_payment.dart';
+import '../../../domain/entities/account_audit_log.dart';
+import '../../../domain/entities/account_payment_method.dart';
+import '../../../domain/entities/account_payment.dart';
 
 abstract class AccountsState extends Equatable {
   const AccountsState();

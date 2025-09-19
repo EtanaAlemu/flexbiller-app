@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../subscriptions/domain/entities/subscription.dart';
+import '../../../../subscriptions/domain/entities/subscription.dart';
 
 abstract class AccountSubscriptionsState extends Equatable {
   const AccountSubscriptionsState();

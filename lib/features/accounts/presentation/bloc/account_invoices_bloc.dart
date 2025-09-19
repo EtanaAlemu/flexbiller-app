@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/usecases/get_invoices_usecase.dart';
-import 'account_invoices_event.dart';
-import 'account_invoices_state.dart';
+import 'events/account_invoices_event.dart';
+import 'states/account_invoices_state.dart';
 import 'package:logger/logger.dart';
 
 @injectable

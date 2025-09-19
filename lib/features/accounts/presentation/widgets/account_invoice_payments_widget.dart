@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_invoice_payment.dart';
 import '../bloc/accounts_bloc.dart';
-import '../bloc/accounts_event.dart';
-import '../bloc/accounts_state.dart';
+import '../bloc/events/accounts_event.dart';
+import '../bloc/states/accounts_state.dart';
 import 'create_invoice_payment_form.dart';
 
 class AccountInvoicePaymentsWidget extends StatelessWidget {

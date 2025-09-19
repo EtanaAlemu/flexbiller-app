@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../../subscriptions/domain/usecases/get_subscriptions_for_account_usecase.dart';
-import 'account_subscriptions_event.dart';
-import 'account_subscriptions_state.dart';
+import 'events/account_subscriptions_event.dart';
+import 'states/account_subscriptions_state.dart';
 import 'package:logger/logger.dart';
 
 @injectable

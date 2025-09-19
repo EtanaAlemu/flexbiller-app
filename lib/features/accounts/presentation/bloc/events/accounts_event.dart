@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/accounts_query_params.dart';
-import '../../domain/entities/account.dart';
+import '../../../domain/entities/accounts_query_params.dart';
+import '../../../domain/entities/account.dart';
 
 abstract class AccountsEvent extends Equatable {
   const AccountsEvent();
@@ -71,11 +71,29 @@ class FilterAccountsByCompany extends AccountsEvent {
 
 class FilterAccountsByBalance extends AccountsEvent {
   final double minBalance;
+  final double maxBalance;
 
-  const FilterAccountsByBalance(this.minBalance);
+  const FilterAccountsByBalance(this.minBalance, this.maxBalance);
 
   @override
-  List<Object?> get props => [minBalance];
+  List<Object?> get props => [minBalance, maxBalance];
+}
+
+class SortAccounts extends AccountsEvent {
+  final String sortBy;
+  final String sortOrder;
+
+  const SortAccounts(this.sortBy, this.sortOrder);
+
+  @override
+  List<Object?> get props => [sortBy, sortOrder];
+}
+
+class ClearAccountsFilters extends AccountsEvent {
+  const ClearAccountsFilters();
+
+  @override
+  List<Object?> get props => [];
 }
 
 class FilterAccountsByAuditLevel extends AccountsEvent {
@@ -544,6 +562,16 @@ class ExportAccounts extends AccountsEvent {
 
   @override
   List<Object?> get props => [accounts, format];
+}
+
+class ExportSelectedAccounts extends AccountsEvent {
+  final List<String> accountIds;
+  final String format; // 'csv' or 'excel'
+
+  const ExportSelectedAccounts({required this.accountIds, this.format = 'csv'});
+
+  @override
+  List<Object?> get props => [accountIds, format];
 }
 
 class ShareFile extends AccountsEvent {

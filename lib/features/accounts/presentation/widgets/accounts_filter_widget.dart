@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/accounts_bloc.dart';
-import '../bloc/accounts_event.dart';
+import '../bloc/events/accounts_event.dart';
 
 class AccountsFilterWidget extends StatefulWidget {
   const AccountsFilterWidget({Key? key}) : super(key: key);
@@ -33,7 +33,9 @@ class _AccountsFilterWidgetState extends State<AccountsFilterWidget> {
 
     // Apply balance filter if provided
     if (balance > 0) {
-      context.read<AccountsBloc>().add(FilterAccountsByBalance(balance));
+      context.read<AccountsBloc>().add(
+        FilterAccountsByBalance(balance, double.infinity),
+      );
     }
 
     // Apply audit level filter

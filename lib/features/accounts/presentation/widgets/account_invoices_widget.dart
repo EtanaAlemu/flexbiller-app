@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/account_invoices_bloc.dart';
-import '../bloc/account_invoices_event.dart';
-import '../bloc/account_invoices_state.dart';
+import '../bloc/events/account_invoices_event.dart';
+import '../bloc/states/account_invoices_state.dart';
 import '../../domain/entities/account_invoice.dart';
 import '../../../../core/widgets/error_display_widget.dart';
 import 'invoice_detail_card.dart';

@@ -211,11 +211,18 @@ import 'features/accounts/domain/usecases/update_account_custom_field_usecase.da
 import 'features/accounts/domain/usecases/update_account_usecase.dart' as _i651;
 import 'features/accounts/domain/usecases/update_multiple_account_custom_fields_usecase.dart'
     as _i435;
+import 'features/accounts/presentation/bloc/account_detail_bloc.dart' as _i219;
+import 'features/accounts/presentation/bloc/account_export_bloc.dart' as _i203;
 import 'features/accounts/presentation/bloc/account_invoices_bloc.dart'
     as _i116;
+import 'features/accounts/presentation/bloc/account_multiselect_bloc.dart'
+    as _i966;
 import 'features/accounts/presentation/bloc/account_subscriptions_bloc.dart'
     as _i892;
 import 'features/accounts/presentation/bloc/accounts_bloc.dart' as _i795;
+import 'features/accounts/presentation/bloc/accounts_list_bloc.dart' as _i470;
+import 'features/accounts/presentation/bloc/accounts_orchestrator_bloc.dart'
+    as _i421;
 import 'features/auth/data/datasources/auth_remote_data_source.dart' as _i767;
 import 'features/auth/data/datasources/user_local_data_source.dart' as _i254;
 import 'features/auth/data/repositories/auth_repository_impl.dart' as _i111;
@@ -298,6 +305,7 @@ _i174.GetIt $initGetIt(
 }) {
   final gh = _i526.GetItHelper(getIt, environment, environmentFilter);
   final injectionModule = _$InjectionModule();
+  gh.factory<_i203.AccountExportBloc>(() => _i203.AccountExportBloc());
   gh.factory<_i842.JwtService>(() => _i842.JwtService());
   gh.factory<_i580.ExportServiceImpl>(() => _i580.ExportServiceImpl());
   gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
@@ -748,6 +756,13 @@ _i174.GetIt $initGetIt(
   gh.factory<_i334.GetAccountEmailsUseCase>(
     () => _i334.GetAccountEmailsUseCase(gh<_i330.AccountEmailsRepository>()),
   );
+  gh.factory<_i470.AccountsListBloc>(
+    () => _i470.AccountsListBloc(
+      getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
+      searchAccountsUseCase: gh<_i266.SearchAccountsUseCase>(),
+      accountsRepository: gh<_i42.AccountsRepository>(),
+    ),
+  );
   gh.factory<_i280.AuthGuardService>(
     () => _i280.AuthGuardService(
       gh<_i493.SecureStorageService>(),
@@ -895,6 +910,11 @@ _i174.GetIt $initGetIt(
   gh.factory<_i206.LoginUseCase>(
     () => _i206.LoginUseCase(gh<_i1015.AuthRepository>()),
   );
+  gh.factory<_i966.AccountMultiSelectBloc>(
+    () => _i966.AccountMultiSelectBloc(
+      deleteAccountUseCase: gh<_i823.DeleteAccountUseCase>(),
+    ),
+  );
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
   );
@@ -926,6 +946,39 @@ _i174.GetIt $initGetIt(
     () => _i892.AccountSubscriptionsBloc(
       getSubscriptionsForAccountUseCase:
           gh<_i233.GetSubscriptionsForAccountUseCase>(),
+    ),
+  );
+  gh.factory<_i219.AccountDetailBloc>(
+    () => _i219.AccountDetailBloc(
+      getAccountByIdUseCase: gh<_i400.GetAccountByIdUseCase>(),
+      createAccountUseCase: gh<_i968.CreateAccountUseCase>(),
+      updateAccountUseCase: gh<_i651.UpdateAccountUseCase>(),
+      deleteAccountUseCase: gh<_i823.DeleteAccountUseCase>(),
+      getAccountTimelineUseCase: gh<_i711.GetAccountTimelineUseCase>(),
+      getAccountTagsUseCase: gh<_i227.GetAccountTagsUseCase>(),
+      assignMultipleTagsToAccountUseCase:
+          gh<_i377.AssignMultipleTagsToAccountUseCase>(),
+      removeMultipleTagsFromAccountUseCase:
+          gh<_i582.RemoveMultipleTagsFromAccountUseCase>(),
+      getAllTagsForAccountUseCase: gh<_i384.GetAllTagsForAccountUseCase>(),
+      getAccountCustomFieldsUseCase: gh<_i397.GetAccountCustomFieldsUseCase>(),
+      createAccountCustomFieldUseCase:
+          gh<_i629.CreateAccountCustomFieldUseCase>(),
+      updateAccountCustomFieldUseCase:
+          gh<_i734.UpdateAccountCustomFieldUseCase>(),
+      deleteAccountCustomFieldUseCase:
+          gh<_i336.DeleteAccountCustomFieldUseCase>(),
+      getAccountEmailsUseCase: gh<_i334.GetAccountEmailsUseCase>(),
+      getAccountBlockingStatesUseCase:
+          gh<_i729.GetAccountBlockingStatesUseCase>(),
+      getAccountInvoicePaymentsUseCase:
+          gh<_i584.GetAccountInvoicePaymentsUseCase>(),
+      getAccountAuditLogsUseCase: gh<_i657.GetAccountAuditLogsUseCase>(),
+      getAccountPaymentMethodsUseCase:
+          gh<_i600.GetAccountPaymentMethodsUseCase>(),
+      getAccountPaymentsUseCase: gh<_i374.GetAccountPaymentsUseCase>(),
+      createAccountPaymentUseCase: gh<_i463.CreateAccountPaymentUseCase>(),
+      accountsRepository: gh<_i42.AccountsRepository>(),
     ),
   );
   gh.factory<_i363.AuthBloc>(
@@ -985,6 +1038,14 @@ _i174.GetIt $initGetIt(
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
       accountEmailsRepository: gh<_i330.AccountEmailsRepository>(),
       exportService: gh<_i580.ExportService>(),
+    ),
+  );
+  gh.factory<_i421.AccountsOrchestratorBloc>(
+    () => _i421.AccountsOrchestratorBloc(
+      accountsListBloc: gh<_i470.AccountsListBloc>(),
+      accountDetailBloc: gh<_i219.AccountDetailBloc>(),
+      accountMultiSelectBloc: gh<_i966.AccountMultiSelectBloc>(),
+      accountExportBloc: gh<_i203.AccountExportBloc>(),
     ),
   );
   return getIt;

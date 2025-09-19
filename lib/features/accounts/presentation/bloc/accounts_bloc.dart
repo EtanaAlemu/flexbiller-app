@@ -37,8 +37,8 @@ import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
 import '../../domain/repositories/account_emails_repository.dart';
 import '../../../../core/services/export_service.dart';
-import 'accounts_event.dart';
-import 'accounts_state.dart';
+import 'events/accounts_event.dart';
+import 'states/accounts_state.dart';
 import 'package:logger/logger.dart';
 
 @injectable
@@ -1306,27 +1306,34 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         if (response.isSuccess && response.data != null) {
           final currentState = state;
 
-          // Only update if we're currently viewing account details for this specific account
-          if (currentState is AccountDetailsLoaded &&
-              currentState.account.accountId == response.data!.accountId) {
-            // Only update if the data is actually different
-            if (currentState.account != response.data!) {
+          // Check if we're currently viewing account details for this specific account
+          final isViewingAccountDetails =
+              (currentState is AccountDetailsLoaded &&
+                  currentState.account.accountId == response.data!.accountId) ||
+              (currentState is AccountDetailsLoading &&
+                  currentState.accountId == response.data!.accountId);
+
+          if (isViewingAccountDetails) {
+            // If we're loading account details, emit loaded state immediately
+            if (currentState is AccountDetailsLoading) {
               emit(AccountDetailsLoaded(response.data!));
               _logger.d(
-                'UI updated with fresh account from background sync: ${response.data!.accountId}',
-              );
-            } else {
-              _logger.d(
-                'Account data unchanged, skipping UI update: ${response.data!.accountId}',
+                'UI updated with fresh account from background sync during loading: ${response.data!.accountId}',
               );
             }
-          } else if (currentState is AccountDetailsLoading &&
-              currentState.accountId == response.data!.accountId) {
-            // If we're loading account details and got the data, emit loaded state
-            emit(AccountDetailsLoaded(response.data!));
-            _logger.d(
-              'UI updated with fresh account from background sync during loading: ${response.data!.accountId}',
-            );
+            // If we already have account details loaded, only update if data is different
+            else if (currentState is AccountDetailsLoaded) {
+              if (currentState.account != response.data!) {
+                emit(AccountDetailsLoaded(response.data!));
+                _logger.d(
+                  'UI updated with fresh account from background sync: ${response.data!.accountId}',
+                );
+              } else {
+                _logger.d(
+                  'Account data unchanged, skipping UI update: ${response.data!.accountId}',
+                );
+              }
+            }
           } else {
             // Don't emit AccountDetailsLoaded if we're not viewing account details
             // This prevents the accounts list from being replaced with account details

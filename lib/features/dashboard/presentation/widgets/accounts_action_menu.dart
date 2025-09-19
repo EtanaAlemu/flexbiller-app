@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../accounts/presentation/bloc/accounts_bloc.dart';
-import '../../../accounts/presentation/bloc/accounts_event.dart';
-import '../../../accounts/presentation/bloc/accounts_state.dart';
+import '../../../accounts/presentation/bloc/events/accounts_event.dart';
+import '../../../accounts/presentation/bloc/states/accounts_state.dart';
 import '../../../accounts/presentation/widgets/accounts_filter_widget.dart';
 import '../../../accounts/presentation/widgets/account_sort_selector_widget.dart';
 import '../../../accounts/presentation/widgets/export_accounts_dialog.dart';
