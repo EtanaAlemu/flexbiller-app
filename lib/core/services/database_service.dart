@@ -62,6 +62,12 @@ class DatabaseService {
     // Ensure account_invoices table exists after database initialization
     await _ensureAccountInvoicesTableExists();
 
+    // Ensure subscriptions table exists after database initialization
+    await _ensureSubscriptionsTableExists();
+
+    // Ensure sync_metadata table exists after database initialization
+    await _ensureSyncMetadataTableExists();
+
     return _database!;
   }
 
@@ -901,6 +907,84 @@ class DatabaseService {
     } catch (e) {
       _logger.e('Error getting database stats: $e');
       return {'users': 0, 'auth_tokens': 0, 'billing_records': 0};
+    }
+  }
+
+  // Ensure subscriptions table exists
+  Future<void> _ensureSubscriptionsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'subscriptions'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Subscriptions table does not exist, creating it...');
+        await db.execute('''
+          CREATE TABLE subscriptions (
+            subscription_id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            bundle_id TEXT NOT NULL,
+            bundle_external_key TEXT NOT NULL,
+            external_key TEXT NOT NULL,
+            start_date TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            product_category TEXT NOT NULL,
+            billing_period TEXT NOT NULL,
+            phase_type TEXT NOT NULL,
+            price_list TEXT NOT NULL,
+            plan_name TEXT NOT NULL,
+            state TEXT NOT NULL,
+            source_type TEXT NOT NULL,
+            cancelled_date TEXT,
+            charged_through_date TEXT NOT NULL,
+            billing_start_date TEXT NOT NULL,
+            billing_end_date TEXT,
+            bill_cycle_day_local INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            events TEXT NOT NULL,
+            price_overrides TEXT,
+            prices TEXT NOT NULL,
+            audit_logs TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''');
+        _logger.d('Subscriptions table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring subscriptions table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Ensure sync_metadata table exists
+  Future<void> _ensureSyncMetadataTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'sync_metadata'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Sync_metadata table does not exist, creating it...');
+        await db.execute('''
+          CREATE TABLE sync_metadata (
+            table_name TEXT PRIMARY KEY,
+            last_sync TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''');
+        _logger.d('Sync_metadata table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring sync_metadata table exists: $e');
+      rethrow;
     }
   }
 }

@@ -1,137 +1,86 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/accounts_bloc.dart';
-import '../bloc/accounts_event.dart';
-import '../bloc/accounts_state.dart';
+import '../bloc/account_invoices_bloc.dart';
+import '../bloc/account_invoices_event.dart';
+import '../bloc/account_invoices_state.dart';
+import '../../domain/entities/account_invoice.dart';
+import '../../../../core/widgets/error_display_widget.dart';
 
-class AccountInvoicesWidget extends StatelessWidget {
+class AccountInvoicesWidget extends StatefulWidget {
   final String accountId;
 
   const AccountInvoicesWidget({Key? key, required this.accountId})
     : super(key: key);
 
   @override
+  State<AccountInvoicesWidget> createState() => _AccountInvoicesWidgetState();
+}
+
+class _AccountInvoicesWidgetState extends State<AccountInvoicesWidget> {
+  @override
+  void initState() {
+    super.initState();
+    // Load invoices when the widget is first created
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AccountInvoicesBloc>().add(
+        LoadAccountInvoices(accountId: widget.accountId),
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsBloc, AccountsState>(
-      listener: (context, state) {
-        if (state is AccountDetailsLoaded) {
-          context.read<AccountsBloc>().add(
-            LoadAccountInvoices(accountId: accountId),
+    return BlocBuilder<AccountInvoicesBloc, AccountInvoicesState>(
+      builder: (context, state) {
+        if (state is AccountInvoicesLoading) {
+          return const LoadingWidget(message: 'Loading invoices...');
+        }
+
+        if (state is AccountInvoicesFailure) {
+          return ErrorDisplayWidget(
+            error: state.message,
+            context: 'invoices',
+            onRetry: () {
+              context.read<AccountInvoicesBloc>().add(
+                LoadAccountInvoices(accountId: widget.accountId),
+              );
+            },
           );
         }
-      },
-      child: BlocBuilder<AccountsBloc, AccountsState>(
-        builder: (context, state) {
-          if (state is AccountInvoicesLoading) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(),
-              ),
+
+        if (state is AccountInvoicesLoaded) {
+          if (state.invoices.isEmpty) {
+            return EmptyStateWidget(
+              message: 'No invoices found',
+              subtitle: 'This account doesn\'t have any invoices yet.',
+              icon: Icons.receipt_outlined,
             );
           }
 
-          if (state is AccountInvoicesFailure) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Failed to load invoices',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      state.message,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        context.read<AccountsBloc>().add(
-                          LoadAccountInvoices(accountId: accountId),
-                        );
-                      },
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          if (state is AccountInvoicesLoaded) {
-            if (state.invoices.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.receipt_outlined,
-                        size: 64,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No invoices found',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'This account doesn\'t have any invoices yet.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<AccountInvoicesBloc>().add(
+                RefreshAccountInvoices(accountId: widget.accountId),
               );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<AccountsBloc>().add(
-                  RefreshAccountInvoices(accountId: accountId),
-                );
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16.0),
+              itemCount: state.invoices.length,
+              itemBuilder: (context, index) {
+                final invoice = state.invoices[index];
+                return _buildInvoiceCard(context, invoice);
               },
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16.0),
-                itemCount: state.invoices.length,
-                itemBuilder: (context, index) {
-                  final invoice = state.invoices[index];
-                  return _buildInvoiceCard(context, invoice);
-                },
-              ),
-            );
-          }
-
-          // Default state - show loading
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
             ),
           );
-        },
-      ),
+        }
+
+        // Default state - show loading
+        return const LoadingWidget(message: 'Loading invoices...');
+      },
     );
   }
 
-  Widget _buildInvoiceCard(BuildContext context, dynamic invoice) {
+  Widget _buildInvoiceCard(BuildContext context, AccountInvoice invoice) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12.0),
       child: InkWell(
@@ -146,7 +95,7 @@ class AccountInvoicesWidget extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      invoice.invoiceNumber ?? 'Unknown Invoice',
+                      invoice.invoiceNumber,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -162,7 +111,7 @@ class AccountInvoicesWidget extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      invoice.status ?? 'Unknown',
+                      invoice.status,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -186,7 +135,7 @@ class AccountInvoicesWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (invoice.balance != null && invoice.balance > 0)
+                  if (invoice.balance > 0)
                     Text(
                       'Balance: ${_formatCurrency(invoice.balance, invoice.currency)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -197,26 +146,22 @@ class AccountInvoicesWidget extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              if (invoice.invoiceDate != null) ...[
-                Text(
-                  'Date: ${_formatDate(invoice.invoiceDate)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                  ),
+              Text(
+                'Date: ${_formatDate(invoice.invoiceDate)}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                 ),
-              ],
-              if (invoice.targetDate != null) ...[
-                Text(
-                  'Due: ${_formatDate(invoice.targetDate)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                  ),
+              ),
+              Text(
+                'Due: ${_formatDate(invoice.targetDate)}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                 ),
-              ],
+              ),
             ],
           ),
         ),
@@ -224,8 +169,8 @@ class AccountInvoicesWidget extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(String? status) {
-    switch (status?.toLowerCase()) {
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
       case 'paid':
         return Colors.green;
       case 'unpaid':
@@ -262,11 +207,11 @@ class AccountInvoicesWidget extends StatelessWidget {
     return 'Unknown';
   }
 
-  void _navigateToInvoiceDetails(BuildContext context, dynamic invoice) {
+  void _navigateToInvoiceDetails(BuildContext context, AccountInvoice invoice) {
     // For now, just show a snackbar. In the future, this could navigate to an invoice details page
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Invoice ${invoice.invoiceNumber ?? 'Unknown'} details'),
+        content: Text('Invoice ${invoice.invoiceNumber} details'),
         duration: const Duration(seconds: 2),
       ),
     );

@@ -211,6 +211,10 @@ import 'features/accounts/domain/usecases/update_account_custom_field_usecase.da
 import 'features/accounts/domain/usecases/update_account_usecase.dart' as _i651;
 import 'features/accounts/domain/usecases/update_multiple_account_custom_fields_usecase.dart'
     as _i435;
+import 'features/accounts/presentation/bloc/account_invoices_bloc.dart'
+    as _i116;
+import 'features/accounts/presentation/bloc/account_subscriptions_bloc.dart'
+    as _i892;
 import 'features/accounts/presentation/bloc/accounts_bloc.dart' as _i795;
 import 'features/auth/data/datasources/auth_remote_data_source.dart' as _i767;
 import 'features/auth/data/datasources/user_local_data_source.dart' as _i254;
@@ -223,6 +227,8 @@ import 'features/auth/domain/usecases/logout_usecase.dart' as _i824;
 import 'features/auth/domain/usecases/reset_password_usecase.dart' as _i1070;
 import 'features/auth/domain/usecases/update_user_usecase.dart' as _i457;
 import 'features/auth/presentation/bloc/auth_bloc.dart' as _i363;
+import 'features/subscriptions/data/datasources/subscriptions_local_data_source.dart'
+    as _i167;
 import 'features/subscriptions/data/datasources/subscriptions_remote_data_source.dart'
     as _i976;
 import 'features/subscriptions/data/repositories/subscriptions_repository_impl.dart'
@@ -403,6 +409,12 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
+  gh.lazySingleton<_i167.SubscriptionsLocalDataSource>(
+    () => _i167.SubscriptionsLocalDataSourceImpl(
+      gh<_i916.DatabaseService>(),
+      gh<_i974.Logger>(),
+    ),
+  );
   gh.factory<_i275.AccountPaymentMethodsLocalDataSource>(
     () => _i275.AccountPaymentMethodsLocalDataSourceImpl(
       gh<_i916.DatabaseService>(),
@@ -443,11 +455,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i866.TagDefinitionsRepository>(
     () => _i17.TagDefinitionsRepositoryImpl(
       gh<_i692.TagDefinitionsRemoteDataSource>(),
-    ),
-  );
-  gh.factory<_i154.SubscriptionsRepository>(
-    () => _i234.SubscriptionsRepositoryImpl(
-      gh<_i976.SubscriptionsRemoteDataSource>(),
     ),
   );
   gh.factory<_i895.ChildAccountLocalDataSource>(
@@ -529,65 +536,6 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i747.GetInvoicesUseCase>(
     () => _i747.GetInvoicesUseCase(gh<_i521.AccountInvoicesRepository>()),
-  );
-  gh.factory<_i939.GetSubscriptionCustomFieldsUseCase>(
-    () => _i939.GetSubscriptionCustomFieldsUseCase(
-      gh<_i154.SubscriptionsRepository>(),
-    ),
-  );
-  gh.factory<_i676.UpdateSubscriptionUseCase>(
-    () => _i676.UpdateSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
-  );
-  gh.factory<_i862.CreateSubscriptionUseCase>(
-    () => _i862.CreateSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
-  );
-  gh.factory<_i175.RemoveSubscriptionCustomFieldsUseCase>(
-    () => _i175.RemoveSubscriptionCustomFieldsUseCase(
-      gh<_i154.SubscriptionsRepository>(),
-    ),
-  );
-  gh.factory<_i233.GetSubscriptionsForAccountUseCase>(
-    () => _i233.GetSubscriptionsForAccountUseCase(
-      gh<_i154.SubscriptionsRepository>(),
-    ),
-  );
-  gh.factory<_i400.UpdateSubscriptionBcdUseCase>(
-    () =>
-        _i400.UpdateSubscriptionBcdUseCase(gh<_i154.SubscriptionsRepository>()),
-  );
-  gh.factory<_i814.CreateSubscriptionWithAddOnsUseCase>(
-    () => _i814.CreateSubscriptionWithAddOnsUseCase(
-      gh<_i154.SubscriptionsRepository>(),
-    ),
-  );
-  gh.factory<_i815.GetSubscriptionByIdUseCase>(
-    () => _i815.GetSubscriptionByIdUseCase(gh<_i154.SubscriptionsRepository>()),
-  );
-  gh.factory<_i1055.AddSubscriptionCustomFieldsUseCase>(
-    () => _i1055.AddSubscriptionCustomFieldsUseCase(
-      gh<_i154.SubscriptionsRepository>(),
-    ),
-  );
-  gh.factory<_i887.GetSubscriptionAuditLogsWithHistoryUseCase>(
-    () => _i887.GetSubscriptionAuditLogsWithHistoryUseCase(
-      gh<_i154.SubscriptionsRepository>(),
-    ),
-  );
-  gh.factory<_i354.UpdateSubscriptionCustomFieldsUseCase>(
-    () => _i354.UpdateSubscriptionCustomFieldsUseCase(
-      gh<_i154.SubscriptionsRepository>(),
-    ),
-  );
-  gh.factory<_i825.GetRecentSubscriptionsUseCase>(
-    () => _i825.GetRecentSubscriptionsUseCase(
-      gh<_i154.SubscriptionsRepository>(),
-    ),
-  );
-  gh.factory<_i497.BlockSubscriptionUseCase>(
-    () => _i497.BlockSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
-  );
-  gh.factory<_i1005.CancelSubscriptionUseCase>(
-    () => _i1005.CancelSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
   );
   gh.factory<_i273.AccountAuditLogsLocalDataSource>(
     () => _i273.AccountAuditLogsLocalDataSourceImpl(
@@ -696,6 +644,14 @@ _i174.GetIt $initGetIt(
   gh.factory<_i915.UserPersistenceService>(
     () => _i915.UserPersistenceService(gh<_i254.UserLocalDataSource>()),
   );
+  gh.factory<_i154.SubscriptionsRepository>(
+    () => _i234.SubscriptionsRepositoryImpl(
+      gh<_i976.SubscriptionsRemoteDataSource>(),
+      gh<_i167.SubscriptionsLocalDataSource>(),
+      gh<_i75.NetworkInfo>(),
+      gh<_i974.Logger>(),
+    ),
+  );
   gh.factory<_i824.LogoutUseCase>(
     () => _i824.LogoutUseCase(
       gh<_i751.AuthenticationStateService>(),
@@ -703,22 +659,9 @@ _i174.GetIt $initGetIt(
       gh<_i916.DatabaseService>(),
     ),
   );
-  gh.factory<_i675.SubscriptionsBloc>(
-    () => _i675.SubscriptionsBloc(
-      gh<_i825.GetRecentSubscriptionsUseCase>(),
-      gh<_i815.GetSubscriptionByIdUseCase>(),
-      gh<_i233.GetSubscriptionsForAccountUseCase>(),
-      gh<_i862.CreateSubscriptionUseCase>(),
-      gh<_i676.UpdateSubscriptionUseCase>(),
-      gh<_i1005.CancelSubscriptionUseCase>(),
-      gh<_i1055.AddSubscriptionCustomFieldsUseCase>(),
-      gh<_i939.GetSubscriptionCustomFieldsUseCase>(),
-      gh<_i354.UpdateSubscriptionCustomFieldsUseCase>(),
-      gh<_i175.RemoveSubscriptionCustomFieldsUseCase>(),
-      gh<_i497.BlockSubscriptionUseCase>(),
-      gh<_i814.CreateSubscriptionWithAddOnsUseCase>(),
-      gh<_i887.GetSubscriptionAuditLogsWithHistoryUseCase>(),
-      gh<_i400.UpdateSubscriptionBcdUseCase>(),
+  gh.factory<_i116.AccountInvoicesBloc>(
+    () => _i116.AccountInvoicesBloc(
+      getInvoicesUseCase: gh<_i747.GetInvoicesUseCase>(),
     ),
   );
   gh.lazySingleton<_i696.AccountBlockingStatesRepository>(
@@ -833,6 +776,65 @@ _i174.GetIt $initGetIt(
     () =>
         _i374.GetAccountPaymentsUseCase(gh<_i1054.AccountPaymentsRepository>()),
   );
+  gh.factory<_i939.GetSubscriptionCustomFieldsUseCase>(
+    () => _i939.GetSubscriptionCustomFieldsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i676.UpdateSubscriptionUseCase>(
+    () => _i676.UpdateSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
+  gh.factory<_i862.CreateSubscriptionUseCase>(
+    () => _i862.CreateSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
+  gh.factory<_i175.RemoveSubscriptionCustomFieldsUseCase>(
+    () => _i175.RemoveSubscriptionCustomFieldsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i233.GetSubscriptionsForAccountUseCase>(
+    () => _i233.GetSubscriptionsForAccountUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i400.UpdateSubscriptionBcdUseCase>(
+    () =>
+        _i400.UpdateSubscriptionBcdUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
+  gh.factory<_i814.CreateSubscriptionWithAddOnsUseCase>(
+    () => _i814.CreateSubscriptionWithAddOnsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i815.GetSubscriptionByIdUseCase>(
+    () => _i815.GetSubscriptionByIdUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
+  gh.factory<_i1055.AddSubscriptionCustomFieldsUseCase>(
+    () => _i1055.AddSubscriptionCustomFieldsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i887.GetSubscriptionAuditLogsWithHistoryUseCase>(
+    () => _i887.GetSubscriptionAuditLogsWithHistoryUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i354.UpdateSubscriptionCustomFieldsUseCase>(
+    () => _i354.UpdateSubscriptionCustomFieldsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i825.GetRecentSubscriptionsUseCase>(
+    () => _i825.GetRecentSubscriptionsUseCase(
+      gh<_i154.SubscriptionsRepository>(),
+    ),
+  );
+  gh.factory<_i497.BlockSubscriptionUseCase>(
+    () => _i497.BlockSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
+  gh.factory<_i1005.CancelSubscriptionUseCase>(
+    () => _i1005.CancelSubscriptionUseCase(gh<_i154.SubscriptionsRepository>()),
+  );
   gh.factory<_i82.DeleteMultipleAccountCustomFieldsUseCase>(
     () => _i82.DeleteMultipleAccountCustomFieldsUseCase(
       gh<_i221.AccountCustomFieldsRepository>(),
@@ -902,6 +904,30 @@ _i174.GetIt $initGetIt(
   gh.factory<_i457.UpdateUserUseCase>(
     () => _i457.UpdateUserUseCase(gh<_i1015.AuthRepository>()),
   );
+  gh.factory<_i675.SubscriptionsBloc>(
+    () => _i675.SubscriptionsBloc(
+      gh<_i825.GetRecentSubscriptionsUseCase>(),
+      gh<_i815.GetSubscriptionByIdUseCase>(),
+      gh<_i233.GetSubscriptionsForAccountUseCase>(),
+      gh<_i862.CreateSubscriptionUseCase>(),
+      gh<_i676.UpdateSubscriptionUseCase>(),
+      gh<_i1005.CancelSubscriptionUseCase>(),
+      gh<_i1055.AddSubscriptionCustomFieldsUseCase>(),
+      gh<_i939.GetSubscriptionCustomFieldsUseCase>(),
+      gh<_i354.UpdateSubscriptionCustomFieldsUseCase>(),
+      gh<_i175.RemoveSubscriptionCustomFieldsUseCase>(),
+      gh<_i497.BlockSubscriptionUseCase>(),
+      gh<_i814.CreateSubscriptionWithAddOnsUseCase>(),
+      gh<_i887.GetSubscriptionAuditLogsWithHistoryUseCase>(),
+      gh<_i400.UpdateSubscriptionBcdUseCase>(),
+    ),
+  );
+  gh.factory<_i892.AccountSubscriptionsBloc>(
+    () => _i892.AccountSubscriptionsBloc(
+      getSubscriptionsForAccountUseCase:
+          gh<_i233.GetSubscriptionsForAccountUseCase>(),
+    ),
+  );
   gh.factory<_i363.AuthBloc>(
     () => _i363.AuthBloc(
       loginUseCase: gh<_i206.LoginUseCase>(),
@@ -959,9 +985,6 @@ _i174.GetIt $initGetIt(
       accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
       accountEmailsRepository: gh<_i330.AccountEmailsRepository>(),
       exportService: gh<_i580.ExportService>(),
-      getSubscriptionsForAccountUseCase:
-          gh<_i233.GetSubscriptionsForAccountUseCase>(),
-      getInvoicesUseCase: gh<_i747.GetInvoicesUseCase>(),
     ),
   );
   return getIt;

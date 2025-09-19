@@ -13,7 +13,9 @@ import '../widgets/account_payment_methods_widget.dart';
 import '../widgets/account_payments_widget.dart';
 import '../widgets/account_details_card_widget.dart';
 import '../widgets/account_subscriptions_widget.dart';
+import '../bloc/account_subscriptions_bloc.dart';
 import '../widgets/account_invoices_widget.dart';
+import '../bloc/account_invoices_bloc.dart';
 import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
@@ -395,8 +397,14 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
             controller: _tabController,
             children: [
               AccountDetailsCardWidget(account: account),
-              AccountSubscriptionsWidget(accountId: accountId),
-              AccountInvoicesWidget(accountId: accountId),
+              BlocProvider(
+                create: (context) => getIt<AccountSubscriptionsBloc>(),
+                child: AccountSubscriptionsWidget(accountId: accountId),
+              ),
+              BlocProvider(
+                create: (context) => getIt<AccountInvoicesBloc>(),
+                child: AccountInvoicesWidget(accountId: accountId),
+              ),
               AccountPaymentsWidget(accountId: accountId),
               AccountPaymentMethodsWidget(accountId: accountId),
               AccountTagsWidget(accountId: accountId),

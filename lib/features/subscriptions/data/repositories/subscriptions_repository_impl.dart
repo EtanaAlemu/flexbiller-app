@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 import '../../domain/entities/subscription.dart';
 import '../../domain/entities/subscription_custom_field.dart';
 import '../../domain/entities/subscription_blocking_state.dart';
@@ -7,6 +8,8 @@ import '../../domain/entities/subscription_audit_log.dart';
 import '../../domain/entities/subscription_bcd_update.dart';
 import '../../domain/repositories/subscriptions_repository.dart';
 import '../datasources/subscriptions_remote_data_source.dart';
+import '../datasources/subscriptions_local_data_source.dart';
+import '../../../../core/network/network_info.dart';
 import '../models/create_subscription_request_model.dart';
 import '../models/add_subscription_custom_fields_request_model.dart';
 import '../models/update_subscription_custom_fields_request_model.dart';
@@ -20,16 +23,58 @@ import '../models/update_subscription_bcd_response_model.dart';
 @Injectable(as: SubscriptionsRepository)
 class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
   final SubscriptionsRemoteDataSource _remoteDataSource;
+  final SubscriptionsLocalDataSource _localDataSource;
+  final NetworkInfo _networkInfo;
+  final Logger _logger;
 
-  SubscriptionsRepositoryImpl(this._remoteDataSource);
+  SubscriptionsRepositoryImpl(
+    this._remoteDataSource,
+    this._localDataSource,
+    this._networkInfo,
+    this._logger,
+  );
 
   @override
   Future<List<Subscription>> getRecentSubscriptions() async {
     try {
-      final subscriptionModels = await _remoteDataSource
-          .getRecentSubscriptions();
-      return subscriptionModels.map((model) => model.toEntity()).toList();
+      _logger.d('Getting recent subscriptions - Local-first approach');
+
+      // First, try to get from local cache
+      final cachedSubscriptions = await _localDataSource
+          .getCachedSubscriptions();
+      if (cachedSubscriptions.isNotEmpty) {
+        _logger.d(
+          'Returning ${cachedSubscriptions.length} cached recent subscriptions',
+        );
+
+        // If online, sync in background
+        if (await _networkInfo.isConnected) {
+          _syncRecentSubscriptionsInBackground();
+        }
+
+        return cachedSubscriptions;
+      }
+
+      // If no cached data and online, fetch from remote
+      if (await _networkInfo.isConnected) {
+        _logger.d('No cached data, fetching recent subscriptions from remote');
+        final subscriptionModels = await _remoteDataSource
+            .getRecentSubscriptions();
+        final subscriptions = subscriptionModels
+            .map((model) => model.toEntity())
+            .toList();
+
+        // Cache the data
+        await _localDataSource.cacheSubscriptions(subscriptions);
+
+        return subscriptions;
+      }
+
+      // If offline and no cached data, return empty list
+      _logger.w('No cached data and offline, returning empty list');
+      return [];
     } catch (e) {
+      _logger.e('Error getting recent subscriptions: $e');
       rethrow;
     }
   }
@@ -37,9 +82,42 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
   @override
   Future<Subscription> getSubscriptionById(String id) async {
     try {
-      final subscriptionModel = await _remoteDataSource.getSubscriptionById(id);
-      return subscriptionModel.toEntity();
+      _logger.d('Getting subscription by ID: $id - Local-first approach');
+
+      // First, try to get from local cache
+      final cachedSubscription = await _localDataSource
+          .getCachedSubscriptionById(id);
+      if (cachedSubscription != null) {
+        _logger.d(
+          'Returning cached subscription: ${cachedSubscription.productName}',
+        );
+
+        // If online, sync in background
+        if (await _networkInfo.isConnected) {
+          _syncSubscriptionByIdInBackground(id);
+        }
+
+        return cachedSubscription;
+      }
+
+      // If no cached data and online, fetch from remote
+      if (await _networkInfo.isConnected) {
+        _logger.d('No cached data, fetching subscription from remote');
+        final subscriptionModel = await _remoteDataSource.getSubscriptionById(
+          id,
+        );
+        final subscription = subscriptionModel.toEntity();
+
+        // Cache the data
+        await _localDataSource.cacheSubscription(subscription);
+
+        return subscription;
+      }
+
+      // If offline and no cached data, throw error
+      throw Exception('Subscription not found in cache and offline');
     } catch (e) {
+      _logger.e('Error getting subscription by ID $id: $e');
       rethrow;
     }
   }
@@ -49,10 +127,50 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
     String accountId,
   ) async {
     try {
-      final subscriptionModels = await _remoteDataSource
-          .getSubscriptionsForAccount(accountId);
-      return subscriptionModels.map((model) => model.toEntity()).toList();
+      _logger.d(
+        'Getting subscriptions for account: $accountId - Local-first approach',
+      );
+
+      // First, try to get from local cache
+      final cachedSubscriptions = await _localDataSource
+          .getCachedSubscriptionsForAccount(accountId);
+      if (cachedSubscriptions.isNotEmpty) {
+        _logger.d(
+          'Returning ${cachedSubscriptions.length} cached subscriptions for account $accountId',
+        );
+
+        // If online, sync in background
+        if (await _networkInfo.isConnected) {
+          _syncSubscriptionsForAccountInBackground(accountId);
+        }
+
+        return cachedSubscriptions;
+      }
+
+      // If no cached data and online, fetch from remote
+      if (await _networkInfo.isConnected) {
+        _logger.d(
+          'No cached data, fetching subscriptions from remote for account $accountId',
+        );
+        final subscriptionModels = await _remoteDataSource
+            .getSubscriptionsForAccount(accountId);
+        final subscriptions = subscriptionModels
+            .map((model) => model.toEntity())
+            .toList();
+
+        // Cache the data
+        await _localDataSource.cacheSubscriptions(subscriptions);
+
+        return subscriptions;
+      }
+
+      // If offline and no cached data, return empty list
+      _logger.w(
+        'No cached data and offline, returning empty list for account $accountId',
+      );
+      return [];
     } catch (e) {
+      _logger.e('Error getting subscriptions for account $accountId: $e');
       rethrow;
     }
   }
@@ -424,5 +542,54 @@ class SubscriptionsRepositoryImpl implements SubscriptionsRepository {
       tableName: model.tableName,
       historyTableName: model.historyTableName,
     );
+  }
+
+  // Background sync methods for local-first approach
+  Future<void> _syncRecentSubscriptionsInBackground() async {
+    try {
+      _logger.d('Syncing recent subscriptions in background');
+      final subscriptionModels = await _remoteDataSource
+          .getRecentSubscriptions();
+      final subscriptions = subscriptionModels
+          .map((model) => model.toEntity())
+          .toList();
+      await _localDataSource.cacheSubscriptions(subscriptions);
+      _logger.d('Background sync completed for recent subscriptions');
+    } catch (e) {
+      _logger.e('Background sync failed for recent subscriptions: $e');
+    }
+  }
+
+  Future<void> _syncSubscriptionByIdInBackground(String id) async {
+    try {
+      _logger.d('Syncing subscription by ID in background: $id');
+      final subscriptionModel = await _remoteDataSource.getSubscriptionById(id);
+      final subscription = subscriptionModel.toEntity();
+      await _localDataSource.cacheSubscription(subscription);
+      _logger.d('Background sync completed for subscription: $id');
+    } catch (e) {
+      _logger.e('Background sync failed for subscription $id: $e');
+    }
+  }
+
+  Future<void> _syncSubscriptionsForAccountInBackground(
+    String accountId,
+  ) async {
+    try {
+      _logger.d('Syncing subscriptions for account in background: $accountId');
+      final subscriptionModels = await _remoteDataSource
+          .getSubscriptionsForAccount(accountId);
+      final subscriptions = subscriptionModels
+          .map((model) => model.toEntity())
+          .toList();
+      await _localDataSource.cacheSubscriptions(subscriptions);
+      _logger.d(
+        'Background sync completed for account subscriptions: $accountId',
+      );
+    } catch (e) {
+      _logger.e(
+        'Background sync failed for account subscriptions $accountId: $e',
+      );
+    }
   }
 }

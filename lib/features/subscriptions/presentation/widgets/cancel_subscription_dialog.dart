@@ -38,7 +38,12 @@ class CancelSubscriptionDialog extends StatelessWidget {
               size: 28,
             ),
             const SizedBox(width: 12),
-            const Text('Cancel Subscription'),
+            Expanded(
+              child: Text(
+                'Cancel Subscription',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         content: Column(
@@ -53,14 +58,14 @@ class CancelSubscriptionDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer.withValues(
-                  alpha: 0.1,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.errorContainer.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.error.withValues(
-                    alpha: 0.3,
-                  ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.error.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -74,11 +79,15 @@ class CancelSubscriptionDialog extends StatelessWidget {
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'This action cannot be undone',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.error,
+                      Expanded(
+                        child: Text(
+                          'This action cannot be undone',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -86,9 +95,9 @@ class CancelSubscriptionDialog extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     'Subscription ID: $subscriptionId',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontFamily: 'monospace',
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
                   ),
                   if (subscriptionName.isNotEmpty) ...[
                     const SizedBox(height: 4),
@@ -104,9 +113,9 @@ class CancelSubscriptionDialog extends StatelessWidget {
             Text(
               'The subscription will be marked as cancelled and billing will stop at the end of the current billing period.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(
-                  alpha: 0.7,
-                ),
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -119,9 +128,11 @@ class CancelSubscriptionDialog extends StatelessWidget {
           BlocBuilder<SubscriptionsBloc, SubscriptionsState>(
             builder: (context, state) {
               final isLoading = state is CancelSubscriptionLoading;
-              
+
               return ElevatedButton(
-                onPressed: isLoading ? null : () => _cancelSubscription(context),
+                onPressed: isLoading
+                    ? null
+                    : () => _cancelSubscription(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.error,
                   foregroundColor: Colors.white,
@@ -132,7 +143,9 @@ class CancelSubscriptionDialog extends StatelessWidget {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Text('Cancel Subscription'),
@@ -145,9 +158,7 @@ class CancelSubscriptionDialog extends StatelessWidget {
   }
 
   void _cancelSubscription(BuildContext context) {
-    context.read<SubscriptionsBloc>().add(
-      CancelSubscription(subscriptionId),
-    );
+    context.read<SubscriptionsBloc>().add(CancelSubscription(subscriptionId));
   }
 
   void _showSuccessSnackBar(BuildContext context, String message) {

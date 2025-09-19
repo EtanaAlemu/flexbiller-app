@@ -37,8 +37,6 @@ import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
 import '../../domain/repositories/account_emails_repository.dart';
 import '../../../../core/services/export_service.dart';
-import '../../../subscriptions/domain/usecases/get_subscriptions_for_account_usecase.dart';
-import '../../domain/usecases/get_invoices_usecase.dart';
 import 'accounts_event.dart';
 import 'accounts_state.dart';
 import 'package:logger/logger.dart';
@@ -82,8 +80,6 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   final AccountCustomFieldsRepository _accountCustomFieldsRepository;
   final AccountEmailsRepository _accountEmailsRepository;
   final ExportService _exportService;
-  final GetSubscriptionsForAccountUseCase _getSubscriptionsForAccountUseCase;
-  final GetInvoicesUseCase _getInvoicesUseCase;
 
   // Stream subscriptions for reactive updates from repository
   StreamSubscription<RepositoryResponse<List<Account>>>?
@@ -135,9 +131,6 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     required AccountCustomFieldsRepository accountCustomFieldsRepository,
     required AccountEmailsRepository accountEmailsRepository,
     required ExportService exportService,
-    required GetSubscriptionsForAccountUseCase
-    getSubscriptionsForAccountUseCase,
-    required GetInvoicesUseCase getInvoicesUseCase,
   }) : _getAccountsUseCase = getAccountsUseCase,
        _searchAccountsUseCase = searchAccountsUseCase,
        _getAccountByIdUseCase = getAccountByIdUseCase,
@@ -175,8 +168,6 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
        _accountCustomFieldsRepository = accountCustomFieldsRepository,
        _accountEmailsRepository = accountEmailsRepository,
        _exportService = exportService,
-       _getSubscriptionsForAccountUseCase = getSubscriptionsForAccountUseCase,
-       _getInvoicesUseCase = getInvoicesUseCase,
        super(AccountsInitial()) {
     on<LoadAccounts>(_onLoadAccounts);
     on<GetAllAccounts>(_onGetAllAccounts);
@@ -241,14 +232,6 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<DeselectAllAccounts>(_onDeselectAllAccounts);
     on<BulkDeleteAccounts>(_onBulkDeleteAccounts);
     on<BulkExportAccounts>(_onBulkExportAccounts);
-
-    // Subscription event handlers
-    on<LoadAccountSubscriptions>(_onLoadAccountSubscriptions);
-    on<RefreshAccountSubscriptions>(_onRefreshAccountSubscriptions);
-
-    // Invoice event handlers
-    on<LoadAccountInvoices>(_onLoadAccountInvoices);
-    on<RefreshAccountInvoices>(_onRefreshAccountInvoices);
 
     // Payment event handlers
     on<CreateAccountPayment>(_onCreateAccountPayment);
@@ -1598,118 +1581,6 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       // After a short delay, return to multi-select mode
       await Future.delayed(const Duration(milliseconds: 1500));
       emit(MultiSelectModeEnabled(selectedAccounts: _selectedAccounts));
-    }
-  }
-
-  // Subscription event handlers
-  Future<void> _onLoadAccountSubscriptions(
-    LoadAccountSubscriptions event,
-    Emitter<AccountsState> emit,
-  ) async {
-    try {
-      _logger.d(
-        '🔍 _onLoadAccountSubscriptions called for account: ${event.accountId}',
-      );
-      emit(AccountSubscriptionsLoading(accountId: event.accountId));
-      _logger.d('🔍 Emitted AccountSubscriptionsLoading state');
-
-      _logger.d('🔍 About to call _getSubscriptionsForAccountUseCase');
-      final subscriptions = await _getSubscriptionsForAccountUseCase(
-        event.accountId,
-      );
-      _logger.d('🔍 Got ${subscriptions.length} subscriptions from use case');
-
-      final loadedState = AccountSubscriptionsLoaded(
-        accountId: event.accountId,
-        subscriptions: subscriptions,
-      );
-      _logger.d(
-        '🔍 About to emit AccountSubscriptionsLoaded state with ${subscriptions.length} subscriptions',
-      );
-      _logger.d(
-        '🔍 State details: accountId=${loadedState.accountId}, subscriptions=${loadedState.subscriptions}',
-      );
-      emit(loadedState);
-      _logger.d(
-        '🔍 Successfully emitted AccountSubscriptionsLoaded state with ${subscriptions.length} subscriptions',
-      );
-      _logger.d('🔍 Bloc instance emitting state: ${this.hashCode}');
-      _logger.d('🔍 State hashCode: ${loadedState.hashCode}');
-      _logger.d('🔍 State props: ${loadedState.props}');
-    } catch (e) {
-      _logger.e('🔍 Error in _onLoadAccountSubscriptions: $e');
-      emit(
-        AccountSubscriptionsFailure(
-          message: e.toString(),
-          accountId: event.accountId,
-        ),
-      );
-    }
-  }
-
-  Future<void> _onRefreshAccountSubscriptions(
-    RefreshAccountSubscriptions event,
-    Emitter<AccountsState> emit,
-  ) async {
-    try {
-      emit(AccountSubscriptionsLoading(accountId: event.accountId));
-      final subscriptions = await _getSubscriptionsForAccountUseCase(
-        event.accountId,
-      );
-      emit(
-        AccountSubscriptionsLoaded(
-          accountId: event.accountId,
-          subscriptions: subscriptions,
-        ),
-      );
-    } catch (e) {
-      emit(
-        AccountSubscriptionsFailure(
-          message: e.toString(),
-          accountId: event.accountId,
-        ),
-      );
-    }
-  }
-
-  // Invoice event handlers
-  Future<void> _onLoadAccountInvoices(
-    LoadAccountInvoices event,
-    Emitter<AccountsState> emit,
-  ) async {
-    try {
-      emit(AccountInvoicesLoading(accountId: event.accountId));
-      final invoices = await _getInvoicesUseCase(event.accountId);
-      emit(
-        AccountInvoicesLoaded(accountId: event.accountId, invoices: invoices),
-      );
-    } catch (e) {
-      emit(
-        AccountInvoicesFailure(
-          message: e.toString(),
-          accountId: event.accountId,
-        ),
-      );
-    }
-  }
-
-  Future<void> _onRefreshAccountInvoices(
-    RefreshAccountInvoices event,
-    Emitter<AccountsState> emit,
-  ) async {
-    try {
-      emit(AccountInvoicesLoading(accountId: event.accountId));
-      final invoices = await _getInvoicesUseCase(event.accountId);
-      emit(
-        AccountInvoicesLoaded(accountId: event.accountId, invoices: invoices),
-      );
-    } catch (e) {
-      emit(
-        AccountInvoicesFailure(
-          message: e.toString(),
-          accountId: event.accountId,
-        ),
-      );
     }
   }
 
