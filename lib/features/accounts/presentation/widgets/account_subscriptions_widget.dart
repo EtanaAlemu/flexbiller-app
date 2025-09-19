@@ -6,7 +6,7 @@ import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
 import '../../../subscriptions/presentation/pages/subscription_details_page.dart';
 
-class AccountSubscriptionsWidget extends StatelessWidget {
+class AccountSubscriptionsWidget extends StatefulWidget {
   final String accountId;
   final Logger _logger = Logger();
 
@@ -14,68 +14,81 @@ class AccountSubscriptionsWidget extends StatelessWidget {
     : super(key: key);
 
   @override
+  State<AccountSubscriptionsWidget> createState() =>
+      _AccountSubscriptionsWidgetState();
+}
+
+class _AccountSubscriptionsWidgetState
+    extends State<AccountSubscriptionsWidget> {
+  bool _hasLoadedSubscriptions = false;
+
+  @override
   Widget build(BuildContext context) {
-    _logger.d('AccountSubscriptionsWidget - build() called');
+    widget._logger.d('AccountSubscriptionsWidget - build() called');
     final bloc = context.read<AccountsBloc>();
-    _logger.d('AccountSubscriptionsWidget - Bloc instance: ${bloc.hashCode}');
+    widget._logger.d(
+      'AccountSubscriptionsWidget - Bloc instance: ${bloc.hashCode}',
+    );
 
     return BlocListener<AccountsBloc, AccountsState>(
       listener: (context, state) {
-        _logger.d(
+        widget._logger.d(
           'AccountSubscriptionsWidget - BlocListener called with state: ${state.runtimeType}',
         );
+        widget._logger.d(
+          'AccountSubscriptionsWidget - BlocListener _hasLoadedSubscriptions: $_hasLoadedSubscriptions',
+        );
 
-        if (state is AccountDetailsLoaded) {
-          _logger.d(
-            'AccountSubscriptionsWidget - AccountDetailsLoaded detected, loading subscriptions for account: $accountId',
+        if (state is AccountDetailsLoaded && !_hasLoadedSubscriptions) {
+          widget._logger.d(
+            'AccountSubscriptionsWidget - AccountDetailsLoaded detected in BlocListener, loading subscriptions for account: ${widget.accountId}',
           );
+          widget._logger.d(
+            'AccountSubscriptionsWidget - Dispatching LoadAccountSubscriptions event from BlocListener',
+          );
+          setState(() {
+            _hasLoadedSubscriptions = true;
+          });
           context.read<AccountsBloc>().add(
-            LoadAccountSubscriptions(accountId: accountId),
+            LoadAccountSubscriptions(accountId: widget.accountId),
+          );
+          widget._logger.d(
+            'AccountSubscriptionsWidget - LoadAccountSubscriptions event dispatched successfully from BlocListener',
+          );
+        } else if (state is AccountDetailsLoaded && _hasLoadedSubscriptions) {
+          widget._logger.d(
+            'AccountSubscriptionsWidget - AccountDetailsLoaded detected but subscriptions already loaded, skipping',
           );
         }
       },
       child: BlocBuilder<AccountsBloc, AccountsState>(
         builder: (context, state) {
-          _logger.d(
+          widget._logger.d(
             'AccountSubscriptionsWidget - BlocBuilder called with state: ${state.runtimeType}',
           );
-          _logger.d(
-            'AccountSubscriptionsWidget - BlocBuilder state details: ${state.toString()}',
-          );
-          _logger.d(
-            'AccountSubscriptionsWidget - BlocBuilder bloc instance: ${context.read<AccountsBloc>().hashCode}',
-          );
-          _logger.d(
-            'AccountSubscriptionsWidget - BlocBuilder state hashCode: ${state.hashCode}',
-          );
-          _logger.d(
-            'AccountSubscriptionsWidget - BlocBuilder state props: ${state.props}',
+          widget._logger.d(
+            'AccountSubscriptionsWidget - State details: ${state.toString()}',
           );
 
           // Add more detailed logging for subscription states
           if (state is AccountSubscriptionsLoading) {
-            _logger.d(
+            widget._logger.d(
               'AccountSubscriptionsWidget - AccountSubscriptionsLoading state detected',
             );
           } else if (state is AccountSubscriptionsLoaded) {
-            _logger.d(
+            widget._logger.d(
               'AccountSubscriptionsWidget - AccountSubscriptionsLoaded state detected with ${state.subscriptions.length} subscriptions',
             );
-            _logger.d(
-              'AccountSubscriptionsWidget - AccountSubscriptionsLoaded state details: accountId=${state.accountId}, subscriptions=${state.subscriptions}',
-            );
           } else if (state is AccountSubscriptionsFailure) {
-            _logger.d(
+            widget._logger.d(
               'AccountSubscriptionsWidget - AccountSubscriptionsFailure state detected: ${state.message}',
-            );
-          } else {
-            _logger.d(
-              'AccountSubscriptionsWidget - Unknown state type: ${state.runtimeType}',
             );
           }
 
           if (state is AccountSubscriptionsLoading) {
-            _logger.d('AccountSubscriptionsWidget - Showing loading state');
+            widget._logger.d(
+              'AccountSubscriptionsWidget - Showing loading state',
+            );
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(16.0),
@@ -111,7 +124,7 @@ class AccountSubscriptionsWidget extends StatelessWidget {
                     ElevatedButton.icon(
                       onPressed: () {
                         context.read<AccountsBloc>().add(
-                          LoadAccountSubscriptions(accountId: accountId),
+                          LoadAccountSubscriptions(accountId: widget.accountId),
                         );
                       },
                       icon: const Icon(Icons.refresh),
@@ -124,17 +137,12 @@ class AccountSubscriptionsWidget extends StatelessWidget {
           }
 
           if (state is AccountSubscriptionsLoaded) {
-            _logger.d(
+            widget._logger.d(
               'AccountSubscriptionsWidget - Showing loaded state with ${state.subscriptions.length} subscriptions',
             );
-            _logger.d(
-              'AccountSubscriptionsWidget - State type check passed for AccountSubscriptionsLoaded',
-            );
-            _logger.d(
-              'AccountSubscriptionsWidget - State runtime type: ${state.runtimeType}',
-            );
+
             if (state.subscriptions.isEmpty) {
-              _logger.d(
+              widget._logger.d(
                 'AccountSubscriptionsWidget - Showing empty subscriptions message',
               );
               return Center(
@@ -170,7 +178,7 @@ class AccountSubscriptionsWidget extends StatelessWidget {
             return RefreshIndicator(
               onRefresh: () async {
                 context.read<AccountsBloc>().add(
-                  RefreshAccountSubscriptions(accountId: accountId),
+                  RefreshAccountSubscriptions(accountId: widget.accountId),
                 );
               },
               child: ListView.builder(
@@ -184,14 +192,41 @@ class AccountSubscriptionsWidget extends StatelessWidget {
             );
           }
 
+          // Handle AccountDetailsLoaded state - just show loading, let BlocListener handle the trigger
+          if (state is AccountDetailsLoaded) {
+            widget._logger.d(
+              'AccountSubscriptionsWidget - AccountDetailsLoaded detected in BlocBuilder, showing loading state',
+            );
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Loading subscriptions...'),
+                  ],
+                ),
+              ),
+            );
+          }
+
           // Default state - show loading
-          _logger.d(
+          widget._logger.d(
             'AccountSubscriptionsWidget - Showing default loading state for state: ${state.runtimeType}',
           );
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Loading account details...'),
+                ],
+              ),
             ),
           );
         },

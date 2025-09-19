@@ -13,150 +13,157 @@ class AccountTagsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
-      builder: (context, state) {
-        if (state is AccountTagsLoading) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
-          );
+    return BlocListener<AccountsBloc, AccountsState>(
+      listener: (context, state) {
+        if (state is AccountDetailsLoaded) {
+          context.read<AccountsBloc>().add(LoadAccountTags(accountId));
         }
-
-        if (state is AccountTagsFailure) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load tags',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  state.message,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<AccountsBloc>().add(
-                      RefreshAccountTags(accountId),
-                    );
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (state is AccountTagsLoaded) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Tags (${state.tags.length})',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: () {
-                          context.read<AccountsBloc>().add(
-                            RefreshAccountTags(accountId),
-                          );
-                        },
-                        tooltip: 'Refresh Tags',
-                      ),
-                      if (state.tags.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: () => _showRemoveAllTagsDialog(context),
-                          tooltip: 'Remove All Tags',
-                          color: Colors.red[400],
-                        ),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () => _showAddTagDialog(context),
-                        tooltip: 'Add Tag',
-                      ),
-                    ],
-                  ),
-                ],
+      },
+      child: BlocBuilder<AccountsBloc, AccountsState>(
+        builder: (context, state) {
+          if (state is AccountTagsLoading) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
               ),
-              const SizedBox(height: 16),
-              if (state.tags.isEmpty)
-                Center(
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.label_outline,
-                        size: 48,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No tags assigned',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Add tags to categorize this account',
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () => _showAddTagDialog(context),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add First Tag'),
-                      ),
-                    ],
+            );
+          }
+
+          if (state is AccountTagsFailure) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.error,
                   ),
-                )
-              else
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
+                  const SizedBox(height: 16),
+                  Text(
+                    'Failed to load tags',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    state.message,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
                       context.read<AccountsBloc>().add(
                         RefreshAccountTags(accountId),
                       );
                     },
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: state.tags.map((tag) {
-                          return _buildTagChip(context, tag);
-                        }).toList(),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (state is AccountTagsLoaded) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Tags (${state.tags.length})',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.refresh),
+                          onPressed: () {
+                            context.read<AccountsBloc>().add(
+                              RefreshAccountTags(accountId),
+                            );
+                          },
+                          tooltip: 'Refresh Tags',
+                        ),
+                        if (state.tags.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            onPressed: () => _showRemoveAllTagsDialog(context),
+                            tooltip: 'Remove All Tags',
+                            color: Colors.red[400],
+                          ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () => _showAddTagDialog(context),
+                          tooltip: 'Add Tag',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (state.tags.isEmpty)
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.label_outline,
+                          size: 48,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No tags assigned',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Add tags to categorize this account',
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _showAddTagDialog(context),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add First Tag'),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        context.read<AccountsBloc>().add(
+                          RefreshAccountTags(accountId),
+                        );
+                      },
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: state.tags.map((tag) {
+                            return _buildTagChip(context, tag);
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          );
-        }
+              ],
+            );
+          }
 
-        return const Center(child: Text('No tags data available'));
-      },
+          return const Center(child: Text('No tags data available'));
+        },
+      ),
     );
   }
 

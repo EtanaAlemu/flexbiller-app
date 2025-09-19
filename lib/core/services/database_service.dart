@@ -13,6 +13,7 @@ import '../dao/account_email_dao.dart';
 import '../dao/account_invoice_payment_dao.dart';
 import '../dao/account_payment_method_dao.dart';
 import '../dao/account_payment_dao.dart';
+import '../dao/account_invoices_dao.dart';
 import 'package:logger/logger.dart';
 
 @injectable
@@ -57,6 +58,9 @@ class DatabaseService {
 
     // Ensure account_payments table exists after database initialization
     await _ensureAccountPaymentsTableExists();
+
+    // Ensure account_invoices table exists after database initialization
+    await _ensureAccountInvoicesTableExists();
 
     return _database!;
   }
@@ -187,6 +191,9 @@ class DatabaseService {
       // Create account_payments table
       await db.execute(AccountPaymentDao.createTableSQL);
 
+      // Create account_invoices table
+      await db.execute(AccountInvoicesDao.createTableSQL);
+
       _logger.d('Database tables created successfully');
     } catch (e) {
       _logger.e('Error creating database tables: $e');
@@ -264,6 +271,16 @@ class DatabaseService {
     }
 
     if (oldVersion < 13) {
+      // Create account_invoices table
+      await db.execute(AccountInvoicesDao.createTableSQL);
+      _logger.d('Created account_invoices table');
+    }
+
+    if (oldVersion < 14) {
+      // Create account_invoices table (if not already created)
+      await _ensureAccountInvoicesTableExists();
+      _logger.d('Ensured account_invoices table exists');
+
       // Add user_id column to all tables for user-specific data isolation
       await _addUserIdColumnToAllTables(db);
       _logger.d('Added user_id column to all tables');
@@ -353,6 +370,27 @@ class DatabaseService {
       }
     } catch (e) {
       _logger.e('Error ensuring accounts table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Check and create account_invoices table if it doesn't exist
+  Future<void> _ensureAccountInvoicesTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'account_invoices'],
+      );
+
+      if (tables.isEmpty) {
+        _logger.d('Account_invoices table does not exist, creating it...');
+        await db.execute(AccountInvoicesDao.createTableSQL);
+        _logger.d('Account_invoices table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring account_invoices table exists: $e');
       rethrow;
     }
   }

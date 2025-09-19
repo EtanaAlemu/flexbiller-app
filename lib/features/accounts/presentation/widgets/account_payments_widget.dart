@@ -33,7 +33,11 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
   Widget build(BuildContext context) {
     return BlocListener<AccountsBloc, AccountsState>(
       listener: (context, state) {
-        if (state is AccountPaymentCreated) {
+        if (state is AccountDetailsLoaded) {
+          context.read<AccountsBloc>().add(
+            LoadAccountPayments(widget.accountId),
+          );
+        } else if (state is AccountPaymentCreated) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Payment created successfully'),
@@ -167,13 +171,7 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
             );
           }
 
-          // Initial state - load payments
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<AccountsBloc>().add(
-              LoadAccountPayments(widget.accountId),
-            );
-          });
-
+          // Default state - show loading
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),

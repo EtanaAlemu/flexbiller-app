@@ -12,13 +12,8 @@ import '../widgets/account_custom_fields_widget.dart';
 import '../widgets/account_payment_methods_widget.dart';
 import '../widgets/account_payments_widget.dart';
 import '../widgets/account_details_card_widget.dart';
-import '../widgets/placeholder_tab_widget.dart';
-import '../widgets/account_loading_section_widget.dart';
 import '../widgets/account_subscriptions_widget.dart';
 import '../widgets/account_invoices_widget.dart';
-import '../widgets/add_payment_method_dialog.dart';
-import '../widgets/add_tags_to_account_dialog.dart';
-import '../widgets/create_account_custom_field_dialog.dart';
 import '../../../../injection_container.dart';
 
 class AccountDetailsPage extends StatelessWidget {
@@ -59,17 +54,11 @@ class AccountDetailsView extends StatefulWidget {
 class _AccountDetailsViewState extends State<AccountDetailsView>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  int _currentTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 9, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        _currentTabIndex = _tabController.index;
-      });
-    });
+    _tabController = TabController(length: 8, vsync: this);
 
     // Load account details after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -266,19 +255,9 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                   ),
                 ],
               ),
-              floatingActionButton: _getFloatingActionButton(context),
-              body: SingleChildScrollView(
+              body: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildAccountHeader(context, account),
-                    const SizedBox(height: 24),
-                    AccountLoadingSectionWidget(accountId: widget.accountId),
-                    const SizedBox(height: 16),
-                    _buildTabsSection(context, widget.accountId, account),
-                  ],
-                ),
+                child: _buildTabsSection(context, widget.accountId, account),
               ),
             ),
           );
@@ -301,125 +280,6 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
     );
   }
 
-  Widget _buildAccountHeader(BuildContext context, Account account) {
-    // Defensive null checking
-    if (account.displayName.isEmpty && account.email.isEmpty) {
-      return const Card(
-        elevation: 4,
-        child: Padding(
-          padding: EdgeInsets.all(20.0),
-          child: Center(child: Text('Invalid account data')),
-        ),
-      );
-    }
-
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: Text(
-                account.displayName.isNotEmpty
-                    ? account.displayName[0].toUpperCase()
-                    : account.email[0].toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    account.displayName,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (account.company != null &&
-                      account.company!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      account.company!,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      if (account.hasBalance) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: account.balance > 0
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: account.balance > 0
-                                  ? Colors.green
-                                  : Colors.red,
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            'Balance: ${account.formattedBalance}',
-                            style: TextStyle(
-                              color: account.balance > 0
-                                  ? Colors.green
-                                  : Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      if (account.hasCba) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.blue, width: 1),
-                          ),
-                          child: Text(
-                            'CBA: ${account.formattedCba}',
-                            style: const TextStyle(
-                              color: Colors.blue,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildTabsSection(
     BuildContext context,
     String accountId,
@@ -427,29 +287,110 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
   ) {
     return Column(
       children: [
-        TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: const [
-            Tab(text: 'Details'),
-            Tab(text: 'Subscriptions'),
-            Tab(text: 'Invoices'),
-            Tab(text: 'Payments'),
-            Tab(text: 'Payment Methods'),
-            Tab(text: 'Tags'),
-            Tab(text: 'Custom Fields'),
-            Tab(text: 'Overdue'),
-            Tab(text: 'Timeline'),
-          ],
-          labelColor: Theme.of(context).colorScheme.primary,
-          unselectedLabelColor: Theme.of(
-            context,
-          ).colorScheme.onSurface.withOpacity(0.6),
-          indicatorColor: Theme.of(context).colorScheme.primary,
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceVariant.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabs: const [
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.info_outline, size: 18),
+                    SizedBox(width: 8),
+                    Text('Details'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.subscriptions, size: 18),
+                    SizedBox(width: 8),
+                    Text('Subscriptions'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.receipt_long, size: 18),
+                    SizedBox(width: 8),
+                    Text('Invoices'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.payment, size: 18),
+                    SizedBox(width: 8),
+                    Text('Payments'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.credit_card, size: 18),
+                    SizedBox(width: 8),
+                    Text('Payment Methods'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.label, size: 18),
+                    SizedBox(width: 8),
+                    Text('Tags'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.category, size: 18),
+                    SizedBox(width: 8),
+                    Text('Custom Fields'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.schedule, size: 18),
+                    SizedBox(width: 8),
+                    Text('Timeline'),
+                  ],
+                ),
+              ),
+            ],
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor: Theme.of(
+              context,
+            ).colorScheme.onSurface.withOpacity(0.6),
+            indicatorColor: Theme.of(context).colorScheme.primary,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
+          ),
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 600,
+        Expanded(
           child: TabBarView(
             controller: _tabController,
             children: [
@@ -460,59 +401,11 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
               AccountPaymentMethodsWidget(accountId: accountId),
               AccountTagsWidget(accountId: accountId),
               AccountCustomFieldsWidget(accountId: accountId),
-              PlaceholderTabWidget(tabName: 'Overdue'),
               AccountTimelineWidget(accountId: accountId),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget? _getFloatingActionButton(BuildContext context) {
-    switch (_currentTabIndex) {
-      case 4: // Payment Methods tab
-        return FloatingActionButton(
-          onPressed: () => _showAddPaymentMethodDialog(context),
-          tooltip: 'Add Payment Method',
-          child: const Icon(Icons.add),
-        );
-      case 5: // Tags tab
-        return FloatingActionButton(
-          onPressed: () => _showAddTagsDialog(context),
-          tooltip: 'Add Tags',
-          child: const Icon(Icons.add),
-        );
-      case 6: // Custom Fields tab
-        return FloatingActionButton(
-          onPressed: () => _showCreateCustomFieldDialog(context),
-          tooltip: 'Add Custom Field',
-          child: const Icon(Icons.add),
-        );
-      default:
-        return null;
-    }
-  }
-
-  void _showAddPaymentMethodDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AddPaymentMethodDialog(accountId: widget.accountId),
-    );
-  }
-
-  void _showAddTagsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AddTagsToAccountDialog(accountId: widget.accountId),
-    );
-  }
-
-  void _showCreateCustomFieldDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) =>
-          CreateAccountCustomFieldDialog(accountId: widget.accountId),
     );
   }
 }

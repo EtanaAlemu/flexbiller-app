@@ -8,107 +8,117 @@ import '../bloc/accounts_state.dart';
 class AccountTimelineWidget extends StatelessWidget {
   final String accountId;
 
-  const AccountTimelineWidget({
-    Key? key,
-    required this.accountId,
-  }) : super(key: key);
+  const AccountTimelineWidget({Key? key, required this.accountId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
-      builder: (context, state) {
-        if (state is AccountTimelineLoading) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
-          );
+    return BlocListener<AccountsBloc, AccountsState>(
+      listener: (context, state) {
+        if (state is AccountDetailsLoaded) {
+          context.read<AccountsBloc>().add(LoadAccountTimeline(accountId));
         }
+      },
+      child: BlocBuilder<AccountsBloc, AccountsState>(
+        builder: (context, state) {
+          if (state is AccountTimelineLoading) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
 
-        if (state is AccountTimelineFailure) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load timeline',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  state.message,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<AccountsBloc>().add(
-                          RefreshAccountTimeline(accountId),
-                        );
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (state is AccountTimelineLoaded) {
-          if (state.events.isEmpty) {
+          if (state is AccountTimelineFailure) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.history,
+                    Icons.error_outline,
                     size: 48,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.error,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No timeline events',
+                    'Failed to load timeline',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'This account has no activity yet',
+                    state.message,
                     style: Theme.of(context).textTheme.bodySmall,
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<AccountsBloc>().add(
+                        RefreshAccountTimeline(accountId),
+                      );
+                    },
+                    child: const Text('Retry'),
                   ),
                 ],
               ),
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<AccountsBloc>().add(
-                    RefreshAccountTimeline(accountId),
-                  );
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: state.events.length,
-              itemBuilder: (context, index) {
-                final event = state.events[index];
-                return _buildTimelineEvent(context, event, index, state.events.length);
-              },
-            ),
-          );
-        }
+          if (state is AccountTimelineLoaded) {
+            if (state.events.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.history,
+                      size: 48,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No timeline events',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'This account has no activity yet',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            }
 
-        return const Center(
-          child: Text('No timeline data available'),
-        );
-      },
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<AccountsBloc>().add(
+                  RefreshAccountTimeline(accountId),
+                );
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16.0),
+                itemCount: state.events.length,
+                itemBuilder: (context, index) {
+                  final event = state.events[index];
+                  return _buildTimelineEvent(
+                    context,
+                    event,
+                    index,
+                    state.events.length,
+                  );
+                },
+              ),
+            );
+          }
+
+          return const Center(child: Text('No timeline data available'));
+        },
+      ),
     );
   }
 
@@ -131,7 +141,7 @@ class AccountTimelineWidget extends StatelessWidget {
               color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
               margin: const EdgeInsets.only(left: 23),
             ),
-          
+
           // Event icon
           Container(
             width: 48,
@@ -153,9 +163,9 @@ class AccountTimelineWidget extends StatelessWidget {
               size: 24,
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Event content
           Expanded(
             child: Column(
@@ -166,15 +176,16 @@ class AccountTimelineWidget extends StatelessWidget {
                     Expanded(
                       child: Text(
                         event.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
                     Text(
                       event.formattedTimestamp,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ],
@@ -191,13 +202,17 @@ class AccountTimelineWidget extends StatelessWidget {
                       Icon(
                         Icons.person_outline,
                         size: 16,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         event.userName ?? event.userEmail ?? 'Unknown User',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
                         ),
                       ),
                     ],
@@ -211,7 +226,9 @@ class AccountTimelineWidget extends StatelessWidget {
                       color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outline.withOpacity(0.2),
                       ),
                     ),
                     child: Column(
@@ -224,10 +241,13 @@ class AccountTimelineWidget extends StatelessWidget {
                             children: [
                               Text(
                                 '${entry.key}: ',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
                               ),
                               Expanded(
                                 child: Text(
@@ -253,7 +273,9 @@ class AccountTimelineWidget extends StatelessWidget {
   Color _parseColor(String colorString) {
     try {
       if (colorString.startsWith('#')) {
-        return Color(int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
+        return Color(
+          int.parse(colorString.substring(1), radix: 16) + 0xFF000000,
+        );
       }
       return Colors.blue;
     } catch (e) {

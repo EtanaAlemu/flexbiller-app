@@ -12,58 +12,26 @@ class AccountInvoicesWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
-      builder: (context, state) {
-        if (state is AccountInvoicesLoading) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
+    return BlocListener<AccountsBloc, AccountsState>(
+      listener: (context, state) {
+        if (state is AccountDetailsLoaded) {
+          context.read<AccountsBloc>().add(
+            LoadAccountInvoices(accountId: accountId),
           );
         }
-
-        if (state is AccountInvoicesFailure) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load invoices',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    state.message,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<AccountsBloc>().add(
-                        LoadAccountInvoices(accountId: accountId),
-                      );
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
-                  ),
-                ],
+      },
+      child: BlocBuilder<AccountsBloc, AccountsState>(
+        builder: (context, state) {
+          if (state is AccountInvoicesLoading) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
               ),
-            ),
-          );
-        }
+            );
+          }
 
-        if (state is AccountInvoicesLoaded) {
-          if (state.invoices.isEmpty) {
+          if (state is AccountInvoicesFailure) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -71,22 +39,30 @@ class AccountInvoicesWidget extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.receipt_outlined,
+                      Icons.error_outline,
                       size: 64,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.5),
+                      color: Theme.of(context).colorScheme.error,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No invoices found',
+                      'Failed to load invoices',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'This account doesn\'t have any invoices yet.',
+                      state.message,
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(
+                          LoadAccountInvoices(accountId: accountId),
+                        );
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -94,37 +70,64 @@ class AccountInvoicesWidget extends StatelessWidget {
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<AccountsBloc>().add(
-                RefreshAccountInvoices(accountId: accountId),
+          if (state is AccountInvoicesLoaded) {
+            if (state.invoices.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.receipt_outlined,
+                        size: 64,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No invoices found',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'This account doesn\'t have any invoices yet.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
               );
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: state.invoices.length,
-              itemBuilder: (context, index) {
-                final invoice = state.invoices[index];
-                return _buildInvoiceCard(context, invoice);
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<AccountsBloc>().add(
+                  RefreshAccountInvoices(accountId: accountId),
+                );
               },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16.0),
+                itemCount: state.invoices.length,
+                itemBuilder: (context, index) {
+                  final invoice = state.invoices[index];
+                  return _buildInvoiceCard(context, invoice);
+                },
+              ),
+            );
+          }
+
+          // Default state - show loading
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
             ),
           );
-        }
-
-        // Initial state - load invoices
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<AccountsBloc>().add(
-            LoadAccountInvoices(accountId: accountId),
-          );
-        });
-
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: CircularProgressIndicator(),
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 
@@ -269,16 +272,3 @@ class AccountInvoicesWidget extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

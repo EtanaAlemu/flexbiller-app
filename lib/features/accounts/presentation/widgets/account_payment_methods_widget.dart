@@ -14,99 +14,331 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
-      builder: (context, state) {
-        if (state is AccountPaymentMethodsLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (state is AccountPaymentMethodsFailure) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load payment methods',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  state.message,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<AccountsBloc>().add(
-                      LoadAccountPaymentMethods(accountId),
-                    );
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+    return BlocListener<AccountsBloc, AccountsState>(
+      listener: (context, state) {
+        if (state is AccountDetailsLoaded) {
+          context.read<AccountsBloc>().add(
+            LoadAccountPaymentMethods(accountId),
           );
         }
+      },
+      child: BlocBuilder<AccountsBloc, AccountsState>(
+        builder: (context, state) {
+          if (state is AccountPaymentMethodsLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (state is AccountPaymentMethodsLoaded) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+          if (state is AccountPaymentMethodsFailure) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(height: 16),
                   Text(
-                    'Payment Methods (${state.paymentMethods.length})',
+                    'Failed to load payment methods',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () {
-                      context.read<AccountsBloc>().add(
-                        RefreshAccountPaymentMethods(accountId),
-                      );
-                    },
-                    tooltip: 'Refresh Payment Methods',
+                  const SizedBox(height: 8),
+                  Text(
+                    state.message,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.sync),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
                     onPressed: () {
                       context.read<AccountsBloc>().add(
-                        RefreshPaymentMethods(accountId),
+                        LoadAccountPaymentMethods(accountId),
                       );
                     },
-                    tooltip: 'Sync with External Processors',
+                    child: const Text('Retry'),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              if (state.paymentMethods.isEmpty)
+            );
+          }
+
+          if (state is AccountPaymentMethodsLoaded) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Payment Methods (${state.paymentMethods.length})',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(
+                          RefreshAccountPaymentMethods(accountId),
+                        );
+                      },
+                      tooltip: 'Refresh Payment Methods',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.sync),
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(
+                          RefreshPaymentMethods(accountId),
+                        );
+                      },
+                      tooltip: 'Sync with External Processors',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (state.paymentMethods.isEmpty)
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.payment_outlined,
+                          size: 64,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No payment methods found',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'This account has no payment methods configured',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            context.read<AccountsBloc>().add(
+                              RefreshPaymentMethods(accountId),
+                            );
+                          },
+                          icon: const Icon(Icons.sync),
+                          label: const Text('Sync Payment Methods'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: state.paymentMethods.length,
+                      itemBuilder: (context, index) {
+                        final method = state.paymentMethods[index];
+                        return _buildPaymentMethodCard(context, method);
+                      },
+                    ),
+                  ),
+              ],
+            );
+          }
+
+          if (state is RefreshingPaymentMethods) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Payment Methods',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const Spacer(),
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text(
+                        'Syncing payment methods with external processors...',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }
+
+          if (state is PaymentMethodsRefreshed) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Payment Methods (${state.paymentMethods.length})',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            size: 16,
+                            color: Colors.green,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Synced',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(
+                          RefreshAccountPaymentMethods(accountId),
+                        );
+                      },
+                      tooltip: 'Refresh Payment Methods',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.sync),
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(
+                          RefreshPaymentMethods(accountId),
+                        );
+                      },
+                      tooltip: 'Sync with External Processors',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (state.paymentMethods.isEmpty)
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.payment_outlined,
+                          size: 64,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No payment methods found',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'This account has no payment methods configured',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: state.paymentMethods.length,
+                      itemBuilder: (context, index) {
+                        final method = state.paymentMethods[index];
+                        return _buildPaymentMethodCard(context, method);
+                      },
+                    ),
+                  ),
+              ],
+            );
+          }
+
+          if (state is RefreshPaymentMethodsFailure) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Payment Methods',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(
+                          RefreshAccountPaymentMethods(accountId),
+                        );
+                      },
+                      tooltip: 'Refresh Payment Methods',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.sync),
+                      onPressed: () {
+                        context.read<AccountsBloc>().add(
+                          RefreshPaymentMethods(accountId),
+                        );
+                      },
+                      tooltip: 'Sync with External Processors',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.payment_outlined,
+                        Icons.error_outline,
                         size: 64,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.5),
+                        color: Theme.of(context).colorScheme.error,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No payment methods found',
+                        'Failed to sync payment methods',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'This account has no payment methods configured',
+                        state.message,
                         style: Theme.of(context).textTheme.bodyMedium,
                         textAlign: TextAlign.center,
                       ),
@@ -118,7 +350,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                           );
                         },
                         icon: const Icon(Icons.sync),
-                        label: const Text('Sync Payment Methods'),
+                        label: const Text('Retry Sync'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(
                             context,
@@ -130,229 +362,14 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: state.paymentMethods.length,
-                    itemBuilder: (context, index) {
-                      final method = state.paymentMethods[index];
-                      return _buildPaymentMethodCard(context, method);
-                    },
-                  ),
                 ),
-            ],
-          );
-        }
+              ],
+            );
+          }
 
-        if (state is RefreshingPaymentMethods) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Payment Methods',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const Spacer(),
-                  const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Syncing payment methods with external processors...'),
-                  ],
-                ),
-              ),
-            ],
-          );
-        }
-
-        if (state is PaymentMethodsRefreshed) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Payment Methods (${state.paymentMethods.length})',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check_circle, size: 16, color: Colors.green),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Synced',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () {
-                      context.read<AccountsBloc>().add(
-                        RefreshAccountPaymentMethods(accountId),
-                      );
-                    },
-                    tooltip: 'Refresh Payment Methods',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.sync),
-                    onPressed: () {
-                      context.read<AccountsBloc>().add(
-                        RefreshPaymentMethods(accountId),
-                      );
-                    },
-                    tooltip: 'Sync with External Processors',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (state.paymentMethods.isEmpty)
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.payment_outlined,
-                        size: 64,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No payment methods found',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'This account has no payment methods configured',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: state.paymentMethods.length,
-                    itemBuilder: (context, index) {
-                      final method = state.paymentMethods[index];
-                      return _buildPaymentMethodCard(context, method);
-                    },
-                  ),
-                ),
-            ],
-          );
-        }
-
-        if (state is RefreshPaymentMethodsFailure) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Payment Methods',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () {
-                      context.read<AccountsBloc>().add(
-                        RefreshAccountPaymentMethods(accountId),
-                      );
-                    },
-                    tooltip: 'Refresh Payment Methods',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.sync),
-                    onPressed: () {
-                      context.read<AccountsBloc>().add(
-                        RefreshPaymentMethods(accountId),
-                      );
-                    },
-                    tooltip: 'Sync with External Processors',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Failed to sync payment methods',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      state.message,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        context.read<AccountsBloc>().add(
-                          RefreshPaymentMethods(accountId),
-                        );
-                      },
-                      icon: const Icon(Icons.sync),
-                      label: const Text('Retry Sync'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(
-                          context,
-                        ).colorScheme.onPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        }
-
-        return const Center(child: Text('No payment method data available'));
-      },
+          return const Center(child: Text('No payment method data available'));
+        },
+      ),
     );
   }
 

@@ -10,36 +10,52 @@ class AccountDetailsCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Card Header
-            Row(
-              children: [
-                Icon(
-                  Icons.description,
+    return Container(
+      padding: const EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Card Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.info_outline,
                   color: Theme.of(context).colorScheme.primary,
                   size: 20,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'Account Details',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Account Information',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
 
-            // Account Information Grid
-            AccountDetailsGridWidget(account: account),
-          ],
-        ),
+          // Account Information Grid - Made scrollable
+          Expanded(
+            child: SingleChildScrollView(
+              child: AccountDetailsGridWidget(account: account),
+            ),
+          ),
+        ],
       ),
     );
   }

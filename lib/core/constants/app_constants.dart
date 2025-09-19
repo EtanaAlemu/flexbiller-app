@@ -17,7 +17,7 @@ class AppConstants {
 
   // Database
   static const String databaseName = 'flexbiller.db';
-  static const int databaseVersion = 13;
+  static const int databaseVersion = 14;
 
   // Authentication
   static const int freshLoginTimeoutSeconds =

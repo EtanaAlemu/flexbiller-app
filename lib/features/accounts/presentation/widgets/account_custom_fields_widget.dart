@@ -14,149 +14,157 @@ class AccountCustomFieldsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
-      builder: (context, state) {
-        if (state is AccountCustomFieldsLoading) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
-          );
+    return BlocListener<AccountsBloc, AccountsState>(
+      listener: (context, state) {
+        if (state is AccountDetailsLoaded) {
+          context.read<AccountsBloc>().add(LoadAccountCustomFields(accountId));
         }
+      },
+      child: BlocBuilder<AccountsBloc, AccountsState>(
+        builder: (context, state) {
+          if (state is AccountCustomFieldsLoading) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
 
-        if (state is AccountCustomFieldsFailure) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load custom fields',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  state.message,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<AccountsBloc>().add(
-                      RefreshAccountCustomFields(accountId),
-                    );
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (state is AccountCustomFieldsLoaded) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          if (state is AccountCustomFieldsFailure) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Custom Fields (${state.customFields.length})',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.error,
                   ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.delete_sweep),
-                        onPressed: () => _showDeleteMultipleCustomFieldsDialog(
-                          context,
-                          state.customFields,
-                        ),
-                        tooltip: 'Delete Multiple Fields',
-                        color: Colors.red[400],
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_note),
-                        onPressed: () => _showEditMultipleCustomFieldsDialog(
-                          context,
-                          state.customFields,
-                        ),
-                        tooltip: 'Edit Multiple Fields',
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline),
-                        onPressed: () =>
-                            _showAddMultipleCustomFieldsDialog(context),
-                        tooltip: 'Add Multiple Fields',
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () => _showAddCustomFieldDialog(context),
-                        tooltip: 'Add Custom Field',
-                      ),
-                    ],
+                  const SizedBox(height: 16),
+                  Text(
+                    'Failed to load custom fields',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    state.message,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<AccountsBloc>().add(
+                        RefreshAccountCustomFields(accountId),
+                      );
+                    },
+                    child: const Text('Retry'),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              if (state.customFields.isEmpty)
-                Center(
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.category_outlined,
-                        size: 48,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No custom fields',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Add custom fields to store additional information',
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () => _showAddCustomFieldDialog(context),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add First Custom Field'),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: state.customFields.length,
-                  itemBuilder: (context, index) {
-                    final customField = state.customFields[index];
-                    return _buildCustomFieldCard(context, customField);
-                  },
-                ),
-            ],
-          );
-        }
+            );
+          }
 
-        return const Center(child: Text('No custom fields data available'));
-      },
+          if (state is AccountCustomFieldsLoaded) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Custom Fields (${state.customFields.length})',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.delete_sweep),
+                          onPressed: () =>
+                              _showDeleteMultipleCustomFieldsDialog(
+                                context,
+                                state.customFields,
+                              ),
+                          tooltip: 'Delete Multiple Fields',
+                          color: Colors.red[400],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit_note),
+                          onPressed: () => _showEditMultipleCustomFieldsDialog(
+                            context,
+                            state.customFields,
+                          ),
+                          tooltip: 'Edit Multiple Fields',
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          onPressed: () =>
+                              _showAddMultipleCustomFieldsDialog(context),
+                          tooltip: 'Add Multiple Fields',
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () => _showAddCustomFieldDialog(context),
+                          tooltip: 'Add Custom Field',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (state.customFields.isEmpty)
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.category_outlined,
+                          size: 48,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No custom fields',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Add custom fields to store additional information',
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _showAddCustomFieldDialog(context),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add First Custom Field'),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: state.customFields.length,
+                    itemBuilder: (context, index) {
+                      final customField = state.customFields[index];
+                      return _buildCustomFieldCard(context, customField);
+                    },
+                  ),
+              ],
+            );
+          }
+
+          return const Center(child: Text('No custom fields data available'));
+        },
+      ),
     );
   }
 
