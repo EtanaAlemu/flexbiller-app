@@ -32,6 +32,17 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
   final _nameFieldKey = GlobalKey();
   final _emailFieldKey = GlobalKey();
 
+  // FocusNodes for keyboard navigation
+  final _nameFocusNode = FocusNode();
+  final _emailFocusNode = FocusNode();
+  final _phoneFocusNode = FocusNode();
+  final _companyFocusNode = FocusNode();
+  final _address1FocusNode = FocusNode();
+  final _address2FocusNode = FocusNode();
+  final _cityFocusNode = FocusNode();
+  final _stateFocusNode = FocusNode();
+  final _notesFocusNode = FocusNode();
+
   String _selectedCurrency = 'USD';
   String _selectedTimeZone = 'GMT';
   String _selectedCountry = 'US';
@@ -53,6 +64,18 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
     _stateController.dispose();
     _countryController.dispose();
     _notesController.dispose();
+
+    // Dispose FocusNodes
+    _nameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    _phoneFocusNode.dispose();
+    _companyFocusNode.dispose();
+    _address1FocusNode.dispose();
+    _address2FocusNode.dispose();
+    _cityFocusNode.dispose();
+    _stateFocusNode.dispose();
+    _notesFocusNode.dispose();
+
     super.dispose();
   }
 
@@ -243,6 +266,10 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                           icon: Icons.badge_outlined,
                           isRequired: true,
                           key: _nameFieldKey,
+                          focusNode: _nameFocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _emailFocusNode.requestFocus(),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Account name is required';
@@ -261,6 +288,10 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                           keyboardType: TextInputType.emailAddress,
                           isRequired: true,
                           key: _emailFieldKey,
+                          focusNode: _emailFocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _phoneFocusNode.requestFocus(),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Email is required';
@@ -274,31 +305,32 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                           },
                         ),
                         const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildModernTextField(
-                                theme: theme,
-                                colorScheme: colorScheme,
-                                controller: _phoneController,
-                                label: 'Phone Number',
-                                hint: 'Enter phone number',
-                                icon: Icons.phone_outlined,
-                                keyboardType: TextInputType.phone,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildModernTextField(
-                                theme: theme,
-                                colorScheme: colorScheme,
-                                controller: _companyController,
-                                label: 'Company',
-                                hint: 'Enter company name',
-                                icon: Icons.business_outlined,
-                              ),
-                            ),
-                          ],
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _phoneController,
+                          label: 'Phone Number',
+                          hint: 'Enter phone number',
+                          icon: Icons.phone_outlined,
+                          keyboardType: TextInputType.phone,
+                          focusNode: _phoneFocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _companyFocusNode.requestFocus(),
+                        ),
+
+                        const SizedBox(height: 20),
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _companyController,
+                          label: 'Company',
+                          hint: 'Enter company name',
+                          icon: Icons.business_outlined,
+                          focusNode: _companyFocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _address1FocusNode.requestFocus(),
                         ),
                       ],
                     ),
@@ -318,6 +350,10 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                           label: 'Address Line 1',
                           hint: 'Enter street address',
                           icon: Icons.home_outlined,
+                          focusNode: _address1FocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _address2FocusNode.requestFocus(),
                         ),
                         const SizedBox(height: 20),
                         _buildModernTextField(
@@ -327,34 +363,37 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                           label: 'Address Line 2',
                           hint: 'Apartment, suite, etc. (optional)',
                           icon: Icons.home_work_outlined,
+                          focusNode: _address2FocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () => _cityFocusNode.requestFocus(),
                         ),
                         const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: _buildModernTextField(
-                                theme: theme,
-                                colorScheme: colorScheme,
-                                controller: _cityController,
-                                label: 'City',
-                                hint: 'Enter city',
-                                icon: Icons.location_city_outlined,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildModernTextField(
-                                theme: theme,
-                                colorScheme: colorScheme,
-                                controller: _stateController,
-                                label: 'State',
-                                hint: 'State/Province',
-                                icon: Icons.map_outlined,
-                              ),
-                            ),
-                          ],
+
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _cityController,
+                          label: 'City',
+                          hint: 'Enter city',
+                          icon: Icons.location_city_outlined,
+                          focusNode: _cityFocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _stateFocusNode.requestFocus(),
                         ),
+
+                        const SizedBox(height: 20),
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _stateController,
+                          label: 'State',
+                          hint: 'State/Province',
+                          icon: Icons.map_outlined,
+                          focusNode: _stateFocusNode,
+                          textInputAction: TextInputAction.done,
+                        ),
+
                         const SizedBox(height: 20),
                         _buildModernDropdown(
                           theme: theme,
@@ -434,6 +473,8 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                           hint: 'Add any additional notes about this account',
                           icon: Icons.edit_note_outlined,
                           maxLines: 4,
+                          focusNode: _notesFocusNode,
+                          textInputAction: TextInputAction.done,
                         ),
                       ],
                     ),
@@ -581,6 +622,9 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
     bool isRequired = false,
     String? Function(String?)? validator,
     Key? key,
+    FocusNode? focusNode,
+    TextInputAction? textInputAction,
+    VoidCallback? onFieldSubmitted,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -615,7 +659,12 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
           key: key,
           child: TextFormField(
             controller: controller,
+            focusNode: focusNode,
             keyboardType: keyboardType,
+            textInputAction: textInputAction,
+            onFieldSubmitted: onFieldSubmitted != null
+                ? (_) => onFieldSubmitted()
+                : null,
             maxLines: maxLines,
             validator: validator,
             style: theme.textTheme.bodyLarge,
