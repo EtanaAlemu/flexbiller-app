@@ -46,9 +46,8 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
         accountId,
       );
 
-      _logger.d('Found cached timeline data for account: $accountId');
-
       if (cachedTimeline != null) {
+        _logger.d('Found cached timeline data for account: $accountId');
         // Convert model to entity
         final entity = cachedTimeline.toEntity();
 
@@ -57,7 +56,9 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
         _accountTimelineStreamController.add(entity);
 
         // Return cached data immediately for fast UI response
-        _logger.d('Returning ${entity.events.length} timeline events from local cache');
+        _logger.d(
+          'Returning ${entity.events.length} timeline events from local cache',
+        );
 
         // Start background sync if online (non-blocking)
         _performBackgroundSync(accountId);
@@ -70,18 +71,23 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
         _logger.d(
           'No cached data, fetching from remote for account: $accountId',
         );
-        final remoteTimeline = await _remoteDataSource.getAccountTimeline(
-          accountId,
-        );
+        try {
+          final remoteTimeline = await _remoteDataSource.getAccountTimeline(
+            accountId,
+          );
 
-        // Cache the remote data
-        await _localDataSource.cacheAccountTimeline(remoteTimeline);
+          // Cache the remote data
+          await _localDataSource.cacheAccountTimeline(remoteTimeline);
 
-        // Add to stream for UI update
-        final freshTimeline = remoteTimeline.toEntity();
-        _accountTimelineStreamController.add(freshTimeline);
+          // Add to stream for UI update
+          final freshTimeline = remoteTimeline.toEntity();
+          _accountTimelineStreamController.add(freshTimeline);
 
-        return freshTimeline;
+          return freshTimeline;
+        } catch (e) {
+          _logger.e('Failed to fetch timeline from remote: $e');
+          rethrow;
+        }
       } else {
         // Offline and no cached data
         _logger.w('No cached data and offline for account: $accountId');
@@ -305,7 +311,9 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
           accountId,
         );
 
-        _logger.d('Remote data source returned timeline data for account: $accountId');
+        _logger.d(
+          'Remote data source returned timeline data for account: $accountId',
+        );
         _logger.d('Caching remote data locally');
 
         // Update local cache

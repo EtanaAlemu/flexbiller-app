@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import '../../../../core/errors/app_error.dart';
+import '../../../../core/errors/exceptions.dart';
 import '../../domain/entities/account_timeline.dart';
 import '../../domain/repositories/account_timeline_repository.dart';
 import '../../domain/usecases/get_account_timeline_usecase.dart';
@@ -101,7 +103,7 @@ class AccountTimelineBloc
       emit(
         AccountTimelineFailure(
           accountId: event.accountId,
-          message: 'Failed to load timeline: $e',
+          message: _handleError(e),
         ),
       );
     }
@@ -129,7 +131,7 @@ class AccountTimelineBloc
       emit(
         AccountTimelineRefreshFailure(
           accountId: event.accountId,
-          message: 'Failed to refresh timeline: $e',
+          message: _handleError(e),
         ),
       );
     }
@@ -397,6 +399,35 @@ class AccountTimelineBloc
   ) {
     _logger.d('ClearAccountTimeline called for accountId: ${event.accountId}');
     emit(AccountTimelineInitial(event.accountId));
+  }
+
+  /// Helper method to handle errors and convert them to user-friendly messages
+  String _handleError(dynamic error) {
+    if (error is ServerException) {
+      return 'Server error occurred. Please try again later or contact support if the issue persists.';
+    } else if (error is NetworkException) {
+      return 'Network error. Please check your internet connection and try again.';
+    } else if (error is CacheException) {
+      return 'Unable to load cached data. Please try refreshing.';
+    } else if (error is AuthException) {
+      return 'Authentication error. Please log in again.';
+    } else if (error is ValidationException) {
+      return 'Validation error. Please check your input and try again.';
+    } else if (error is ServerError) {
+      return 'Server error occurred. Please try again later or contact support if the issue persists.';
+    } else if (error is NetworkError) {
+      return 'Network error. Please check your internet connection and try again.';
+    } else if (error is CacheError) {
+      return 'Unable to load cached data. Please try refreshing.';
+    } else if (error is AuthenticationError) {
+      return 'Authentication error. Please log in again.';
+    } else if (error is ValidationError) {
+      return 'Validation error. Please check your input and try again.';
+    } else if (error is BusinessLogicError) {
+      return 'Unable to load timeline data. Please contact support to resolve account configuration issues.';
+    } else {
+      return 'An unexpected error occurred. Please try again or contact support if the issue persists.';
+    }
   }
 
   @override
