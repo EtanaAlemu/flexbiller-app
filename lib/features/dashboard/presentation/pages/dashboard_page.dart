@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/back_button_handler_widget.dart';
 import '../../../../injection_container.dart';
 import '../../../accounts/presentation/pages/accounts_page.dart';
 import '../../../accounts/presentation/bloc/accounts_list_bloc.dart';
@@ -64,29 +65,33 @@ class _DashboardPageState extends State<DashboardPage> {
         BlocProvider(create: (context) => getIt<TagsBloc>()),
         BlocProvider(create: (context) => getIt<AccountsListBloc>()),
       ],
-      child: Scaffold(
-        body: SafeArea(
-          child: _isMobile
-              ? MobileDashboardLayout(
-                  isSidebarVisible: _isSidebarVisible,
-                  onToggleSidebar: _toggleSidebar,
-                  pageTitle: PageTitleHelper.getPageTitle(_currentIndex),
-                  currentPageIndex: _currentIndex,
-                  content: _pages[_currentIndex],
-                  onNavigate: _navigateToPage,
-                  onLogout: _handleLogout,
-                  accountsViewKey: _accountsViewKey,
-                )
-              : DesktopDashboardLayout(
-                  isSidebarVisible: _isSidebarVisible,
-                  onToggleSidebar: _toggleSidebar,
-                  pageTitle: PageTitleHelper.getPageTitle(_currentIndex),
-                  currentPageIndex: _currentIndex,
-                  content: _pages[_currentIndex],
-                  onNavigate: _navigateToPage,
-                  onLogout: _handleLogout,
-                  accountsViewKey: _accountsViewKey,
-                ),
+      child: DashboardNavigationHandler(
+        currentIndex: _currentIndex,
+        onNavigate: _navigateToPage,
+        child: Scaffold(
+          body: SafeArea(
+            child: _isMobile
+                ? MobileDashboardLayout(
+                    isSidebarVisible: _isSidebarVisible,
+                    onToggleSidebar: _toggleSidebar,
+                    pageTitle: PageTitleHelper.getPageTitle(_currentIndex),
+                    currentPageIndex: _currentIndex,
+                    content: _pages[_currentIndex],
+                    onNavigate: _navigateToPage,
+                    onLogout: _handleLogout,
+                    accountsViewKey: _accountsViewKey,
+                  )
+                : DesktopDashboardLayout(
+                    isSidebarVisible: _isSidebarVisible,
+                    onToggleSidebar: _toggleSidebar,
+                    pageTitle: PageTitleHelper.getPageTitle(_currentIndex),
+                    currentPageIndex: _currentIndex,
+                    content: _pages[_currentIndex],
+                    onNavigate: _navigateToPage,
+                    onLogout: _handleLogout,
+                    accountsViewKey: _accountsViewKey,
+                  ),
+          ),
         ),
       ),
     );

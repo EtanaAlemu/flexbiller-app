@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import '../../../../core/services/auth_guard_service.dart';
+import '../../../../core/widgets/back_button_handler_widget.dart';
 import '../../../../injection_container.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
 import '../pages/login_page.dart';
@@ -115,9 +116,12 @@ class _AuthenticationFlowPageState extends State<AuthenticationFlowPage> {
     }
 
     if (_shouldShowLogin) {
-      return LoginPage(
-        onLoginSuccess: _onLoginSuccess,
-        prePopulateEmail: _prePopulateEmail,
+      return BackButtonHandlerWidget(
+        exitMessage: 'Press back again to exit the app',
+        child: LoginPage(
+          onLoginSuccess: _onLoginSuccess,
+          prePopulateEmail: _prePopulateEmail,
+        ),
       );
     }
 
