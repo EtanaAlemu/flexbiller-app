@@ -222,6 +222,8 @@ import 'features/accounts/domain/usecases/update_account_usecase.dart' as _i651;
 import 'features/accounts/domain/usecases/update_multiple_account_custom_fields_usecase.dart'
     as _i435;
 import 'features/accounts/domain/usecases/update_tag_usecase.dart' as _i677;
+import 'features/accounts/presentation/bloc/account_custom_fields_bloc.dart'
+    as _i1008;
 import 'features/accounts/presentation/bloc/account_detail_bloc.dart' as _i219;
 import 'features/accounts/presentation/bloc/account_export_bloc.dart' as _i203;
 import 'features/accounts/presentation/bloc/account_invoices_bloc.dart'
@@ -955,6 +957,24 @@ _i174.GetIt $initGetIt(
   gh.factory<_i657.GetAccountAuditLogsUseCase>(
     () => _i657.GetAccountAuditLogsUseCase(
       gh<_i271.AccountAuditLogsRepository>(),
+    ),
+  );
+  gh.factory<_i1008.AccountCustomFieldsBloc>(
+    () => _i1008.AccountCustomFieldsBloc(
+      getAccountCustomFieldsUseCase: gh<_i397.GetAccountCustomFieldsUseCase>(),
+      createAccountCustomFieldUseCase:
+          gh<_i629.CreateAccountCustomFieldUseCase>(),
+      createMultipleAccountCustomFieldsUseCase:
+          gh<_i234.CreateMultipleAccountCustomFieldsUseCase>(),
+      updateAccountCustomFieldUseCase:
+          gh<_i734.UpdateAccountCustomFieldUseCase>(),
+      updateMultipleAccountCustomFieldsUseCase:
+          gh<_i435.UpdateMultipleAccountCustomFieldsUseCase>(),
+      deleteAccountCustomFieldUseCase:
+          gh<_i336.DeleteAccountCustomFieldUseCase>(),
+      deleteMultipleAccountCustomFieldsUseCase:
+          gh<_i82.DeleteMultipleAccountCustomFieldsUseCase>(),
+      accountCustomFieldsRepository: gh<_i221.AccountCustomFieldsRepository>(),
     ),
   );
   gh.factory<_i462.AccountPaymentMethodsBloc>(

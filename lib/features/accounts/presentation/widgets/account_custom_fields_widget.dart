@@ -1,26 +1,96 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_custom_field.dart';
-import "../bloc/accounts_orchestrator_bloc.dart";
-import '../bloc/events/accounts_event.dart';
-import '../bloc/states/accounts_state.dart';
+import '../bloc/account_custom_fields_bloc.dart';
+import '../bloc/account_custom_fields_events.dart';
+import '../bloc/account_custom_fields_states.dart';
 import 'create_account_custom_field_dialog.dart';
 
-class AccountCustomFieldsWidget extends StatelessWidget {
+class AccountCustomFieldsWidget extends StatefulWidget {
   final String accountId;
 
   const AccountCustomFieldsWidget({Key? key, required this.accountId})
     : super(key: key);
 
   @override
+  State<AccountCustomFieldsWidget> createState() =>
+      _AccountCustomFieldsWidgetState();
+}
+
+class _AccountCustomFieldsWidgetState extends State<AccountCustomFieldsWidget> {
+  @override
+  void initState() {
+    super.initState();
+    print(
+      '🔍 AccountCustomFieldsWidget: initState - triggering LoadAccountCustomFields',
+    );
+    context.read<AccountCustomFieldsBloc>().add(
+      LoadAccountCustomFields(widget.accountId),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
+    return BlocListener<AccountCustomFieldsBloc, AccountCustomFieldsState>(
       listener: (context, state) {
-        if (state is AccountDetailsLoaded) {
-          context.read<AccountsOrchestratorBloc>().add(LoadAccountCustomFields(accountId));
+        print(
+          '🔍 AccountCustomFieldsWidget: Received state: ${state.runtimeType}',
+        );
+        print('🔍 AccountCustomFieldsWidget: State details: $state');
+
+        if (state is AccountCustomFieldCreated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Custom field "${state.customField.name}" created successfully',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is AccountCustomFieldCreationFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to create custom field: ${state.message}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is AccountCustomFieldUpdated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Custom field updated successfully'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is AccountCustomFieldUpdateFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update custom field: ${state.message}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is AccountCustomFieldDeleted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Custom field deleted successfully'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is AccountCustomFieldDeletionFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete custom field: ${state.message}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
         }
       },
-      child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
+      child: BlocBuilder<AccountCustomFieldsBloc, AccountCustomFieldsState>(
         builder: (context, state) {
           if (state is AccountCustomFieldsLoading) {
             return const Center(
@@ -55,8 +125,8 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<AccountsOrchestratorBloc>().add(
-                        RefreshAccountCustomFields(accountId),
+                      context.read<AccountCustomFieldsBloc>().add(
+                        RefreshAccountCustomFields(widget.accountId),
                       );
                     },
                     child: const Text('Retry'),
@@ -289,7 +359,7 @@ class AccountCustomFieldsWidget extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) =>
-          CreateAccountCustomFieldDialog(accountId: accountId),
+          CreateAccountCustomFieldDialog(accountId: widget.accountId),
     );
   }
 
@@ -376,19 +446,19 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                   if (customFields.length == 1) {
                     // Single field - use single creation
                     final field = customFields.first;
-                    context.read<AccountsOrchestratorBloc>().add(
+                    context.read<AccountCustomFieldsBloc>().add(
                       CreateAccountCustomField(
-                        accountId,
-                        field['name']!,
-                        field['value']!,
+                        accountId: widget.accountId,
+                        name: field['name']!,
+                        value: field['value']!,
                       ),
                     );
                   } else {
                     // Multiple fields - use bulk creation
-                    context.read<AccountsOrchestratorBloc>().add(
+                    context.read<AccountCustomFieldsBloc>().add(
                       CreateMultipleAccountCustomFields(
-                        accountId,
-                        customFields,
+                        accountId: widget.accountId,
+                        customFields: customFields,
                       ),
                     );
                   }
@@ -409,7 +479,7 @@ class AccountCustomFieldsWidget extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => CreateAccountCustomFieldDialog(
-        accountId: accountId,
+        accountId: widget.accountId,
         existingField: {
           'id': customField.customFieldId,
           'name': customField.name,
@@ -529,20 +599,20 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                   if (updatedFields.length == 1) {
                     // Single field - use single update
                     final field = updatedFields.first;
-                    context.read<AccountsOrchestratorBloc>().add(
+                    context.read<AccountCustomFieldsBloc>().add(
                       UpdateAccountCustomField(
-                        accountId,
-                        field['customFieldId'] as String,
-                        field['name'] as String,
-                        field['value'] as String,
+                        accountId: widget.accountId,
+                        customFieldId: field['customFieldId'] as String,
+                        name: field['name'] as String,
+                        value: field['value'] as String,
                       ),
                     );
                   } else {
                     // Multiple fields - use bulk update
-                    context.read<AccountsOrchestratorBloc>().add(
+                    context.read<AccountCustomFieldsBloc>().add(
                       UpdateMultipleAccountCustomFields(
-                        accountId,
-                        updatedFields,
+                        accountId: widget.accountId,
+                        customFields: updatedFields,
                       ),
                     );
                   }
@@ -575,8 +645,11 @@ class AccountCustomFieldsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<AccountsOrchestratorBloc>().add(
-                DeleteAccountCustomField(accountId, customField.customFieldId),
+              context.read<AccountCustomFieldsBloc>().add(
+                DeleteAccountCustomField(
+                  accountId: widget.accountId,
+                  customFieldId: customField.customFieldId,
+                ),
               );
             },
             style: ElevatedButton.styleFrom(
@@ -643,18 +716,18 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                       Navigator.of(context).pop();
                       if (selectedFieldIds.length == 1) {
                         // Single field - use single delete
-                        context.read<AccountsOrchestratorBloc>().add(
+                        context.read<AccountCustomFieldsBloc>().add(
                           DeleteAccountCustomField(
-                            accountId,
-                            selectedFieldIds.first,
+                            accountId: widget.accountId,
+                            customFieldId: selectedFieldIds.first,
                           ),
                         );
                       } else {
                         // Multiple fields - use bulk delete
-                        context.read<AccountsOrchestratorBloc>().add(
+                        context.read<AccountCustomFieldsBloc>().add(
                           DeleteMultipleAccountCustomFields(
-                            accountId,
-                            selectedFieldIds,
+                            accountId: widget.accountId,
+                            customFieldIds: selectedFieldIds,
                           ),
                         );
                       }
