@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -13,7 +13,7 @@ class DeleteAccountDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsBloc, AccountsState>(
+    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
         if (state is AccountDeleted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -215,13 +215,13 @@ class DeleteAccountDialog extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: BlocBuilder<AccountsBloc, AccountsState>(
+                      child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
                         builder: (context, state) {
                           return ElevatedButton(
                             onPressed: state is AccountDeleting
                                 ? null
                                 : () {
-                                    context.read<AccountsBloc>().add(
+                                    context.read<AccountsOrchestratorBloc>().add(
                                       DeleteAccount(account.accountId),
                                     );
                                   },

@@ -603,11 +603,21 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
     LoadAccountPayments event,
     Emitter<AccountDetailState> emit,
   ) async {
+    print(
+      '🔍 AccountDetailBloc: Received LoadAccountPayments for accountId: ${event.accountId}',
+    );
     try {
+      print('🔍 AccountDetailBloc: Emitting AccountPaymentsLoading');
       emit(AccountPaymentsLoading(event.accountId));
+      print('🔍 AccountDetailBloc: Calling _getAccountPaymentsUseCase');
       final payments = await _getAccountPaymentsUseCase(event.accountId);
+      print(
+        '🔍 AccountDetailBloc: Use case returned ${payments.length} payments',
+      );
+      print('🔍 AccountDetailBloc: Emitting AccountPaymentsLoaded');
       emit(AccountPaymentsLoaded(event.accountId, payments));
     } catch (e) {
+      print('🔍 AccountDetailBloc: Error loading account payments: $e');
       _logger.e('Error loading account payments: $e');
       emit(AccountPaymentsFailure(e.toString(), event.accountId));
     }

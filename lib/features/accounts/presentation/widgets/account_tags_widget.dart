@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_tag.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -13,13 +13,13 @@ class AccountTagsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsBloc, AccountsState>(
+    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
         if (state is AccountDetailsLoaded) {
-          context.read<AccountsBloc>().add(LoadAccountTags(accountId));
+          context.read<AccountsOrchestratorBloc>().add(LoadAccountTags(accountId));
         }
       },
-      child: BlocBuilder<AccountsBloc, AccountsState>(
+      child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
         builder: (context, state) {
           if (state is AccountTagsLoading) {
             return const Center(
@@ -54,7 +54,7 @@ class AccountTagsWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<AccountsBloc>().add(
+                      context.read<AccountsOrchestratorBloc>().add(
                         RefreshAccountTags(accountId),
                       );
                     },
@@ -83,7 +83,7 @@ class AccountTagsWidget extends StatelessWidget {
                         IconButton(
                           icon: const Icon(Icons.refresh),
                           onPressed: () {
-                            context.read<AccountsBloc>().add(
+                            context.read<AccountsOrchestratorBloc>().add(
                               RefreshAccountTags(accountId),
                             );
                           },
@@ -141,7 +141,7 @@ class AccountTagsWidget extends StatelessWidget {
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: () async {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           RefreshAccountTags(accountId),
                         );
                       },
@@ -193,7 +193,7 @@ class AccountTagsWidget extends StatelessWidget {
 
   void _showAddTagDialog(BuildContext context) {
     // Load all available tags first
-    context.read<AccountsBloc>().add(LoadAllTagsForAccount(accountId));
+    context.read<AccountsOrchestratorBloc>().add(LoadAllTagsForAccount(accountId));
 
     showDialog(
       context: context,
@@ -202,12 +202,12 @@ class AccountTagsWidget extends StatelessWidget {
       if (selectedTagIds != null && selectedTagIds is List<String>) {
         if (selectedTagIds.length == 1) {
           // Single tag assignment
-          context.read<AccountsBloc>().add(
+          context.read<AccountsOrchestratorBloc>().add(
             AssignTagToAccount(accountId, selectedTagIds.first),
           );
         } else {
           // Multiple tag assignment
-          context.read<AccountsBloc>().add(
+          context.read<AccountsOrchestratorBloc>().add(
             AssignMultipleTagsToAccount(accountId, selectedTagIds),
           );
         }
@@ -231,7 +231,7 @@ class AccountTagsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<AccountsBloc>().add(
+              context.read<AccountsOrchestratorBloc>().add(
                 RemoveTagFromAccount(accountId, tag.tagId),
               );
             },
@@ -262,7 +262,7 @@ class AccountTagsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<AccountsBloc>().add(
+              context.read<AccountsOrchestratorBloc>().add(
                 RemoveAllTagsFromAccount(accountId),
               );
             },
@@ -326,7 +326,7 @@ class _AddTagDialogState extends State<AddTagDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
+    return BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
       builder: (context, state) {
         if (state is AllTagsForAccountLoading) {
           return const AlertDialog(
@@ -348,7 +348,7 @@ class _AddTagDialogState extends State<AddTagDialog> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  context.read<AccountsBloc>().add(
+                  context.read<AccountsOrchestratorBloc>().add(
                     RefreshAllTagsForAccount(widget.accountId),
                   );
                 },

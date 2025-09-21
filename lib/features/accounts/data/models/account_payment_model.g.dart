@@ -6,65 +6,87 @@ part of 'account_payment_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+PaymentTransactionModel _$PaymentTransactionModelFromJson(
+  Map<String, dynamic> json,
+) => PaymentTransactionModel(
+  transactionId: json['transactionId'] as String,
+  transactionExternalKey: json['transactionExternalKey'] as String?,
+  paymentId: json['paymentId'] as String,
+  paymentExternalKey: json['paymentExternalKey'] as String?,
+  transactionType: json['transactionType'] as String,
+  amount: (json['amount'] as num).toDouble(),
+  currency: json['currency'] as String,
+  effectiveDate: DateTime.parse(json['effectiveDate'] as String),
+  processedAmount: (json['processedAmount'] as num).toDouble(),
+  processedCurrency: json['processedCurrency'] as String,
+  status: json['status'] as String,
+  gatewayErrorCode: json['gatewayErrorCode'] as String?,
+  gatewayErrorMsg: json['gatewayErrorMsg'] as String?,
+  firstPaymentReferenceId: json['firstPaymentReferenceId'] as String?,
+  secondPaymentReferenceId: json['secondPaymentReferenceId'] as String?,
+  properties: json['properties'] as Map<String, dynamic>?,
+  auditLogs: json['auditLogs'] as List<dynamic>?,
+);
+
+Map<String, dynamic> _$PaymentTransactionModelToJson(
+  PaymentTransactionModel instance,
+) => <String, dynamic>{
+  'transactionId': instance.transactionId,
+  'transactionExternalKey': instance.transactionExternalKey,
+  'paymentId': instance.paymentId,
+  'paymentExternalKey': instance.paymentExternalKey,
+  'transactionType': instance.transactionType,
+  'amount': instance.amount,
+  'currency': instance.currency,
+  'effectiveDate': instance.effectiveDate.toIso8601String(),
+  'processedAmount': instance.processedAmount,
+  'processedCurrency': instance.processedCurrency,
+  'status': instance.status,
+  'gatewayErrorCode': instance.gatewayErrorCode,
+  'gatewayErrorMsg': instance.gatewayErrorMsg,
+  'firstPaymentReferenceId': instance.firstPaymentReferenceId,
+  'secondPaymentReferenceId': instance.secondPaymentReferenceId,
+  'properties': instance.properties,
+  'auditLogs': instance.auditLogs,
+};
+
 AccountPaymentModel _$AccountPaymentModelFromJson(Map<String, dynamic> json) =>
     AccountPaymentModel(
-      id: json['id'] as String,
+      id: json['paymentId'] as String,
       accountId: json['accountId'] as String,
-      paymentType: json['paymentType'] as String,
-      paymentStatus: json['paymentStatus'] as String,
-      amount: (json['amount'] as num).toDouble(),
+      paymentNumber: json['paymentNumber'] as String?,
+      paymentExternalKey: json['paymentExternalKey'] as String?,
+      authAmount: (json['authAmount'] as num).toDouble(),
+      capturedAmount: (json['capturedAmount'] as num).toDouble(),
+      purchasedAmount: (json['purchasedAmount'] as num).toDouble(),
+      refundedAmount: (json['refundedAmount'] as num).toDouble(),
+      creditedAmount: (json['creditedAmount'] as num).toDouble(),
       currency: json['currency'] as String,
       paymentMethodId: json['paymentMethodId'] as String,
-      paymentMethodName: json['paymentMethodName'] as String?,
-      paymentMethodType: json['paymentMethodType'] as String?,
-      transactionId: json['transactionId'] as String?,
-      referenceNumber: json['referenceNumber'] as String?,
-      description: json['description'] as String?,
-      notes: json['notes'] as String?,
-      paymentDate: DateTime.parse(json['paymentDate'] as String),
-      processedDate: json['processedDate'] == null
-          ? null
-          : DateTime.parse(json['processedDate'] as String),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] == null
-          ? null
-          : DateTime.parse(json['updatedAt'] as String),
-      metadata: json['metadata'] as Map<String, dynamic>?,
-      failureReason: json['failureReason'] as String?,
-      gatewayResponse: json['gatewayResponse'] as String?,
-      isRefunded: json['isRefunded'] as bool,
-      refundedAmount: (json['refundedAmount'] as num?)?.toDouble(),
-      refundedDate: json['refundedDate'] == null
-          ? null
-          : DateTime.parse(json['refundedDate'] as String),
-      refundReason: json['refundReason'] as String?,
+      transactions: (json['transactions'] as List<dynamic>)
+          .map(
+            (e) => PaymentTransactionModel.fromJson(e as Map<String, dynamic>),
+          )
+          .toList(),
+      paymentAttempts: json['paymentAttempts'] as List<dynamic>?,
+      auditLogs: json['auditLogs'] as List<dynamic>?,
     );
 
 Map<String, dynamic> _$AccountPaymentModelToJson(
   AccountPaymentModel instance,
 ) => <String, dynamic>{
-  'id': instance.id,
+  'paymentId': instance.id,
   'accountId': instance.accountId,
-  'paymentType': instance.paymentType,
-  'paymentStatus': instance.paymentStatus,
-  'amount': instance.amount,
+  'paymentNumber': instance.paymentNumber,
+  'paymentExternalKey': instance.paymentExternalKey,
+  'authAmount': instance.authAmount,
+  'capturedAmount': instance.capturedAmount,
+  'purchasedAmount': instance.purchasedAmount,
+  'refundedAmount': instance.refundedAmount,
+  'creditedAmount': instance.creditedAmount,
   'currency': instance.currency,
   'paymentMethodId': instance.paymentMethodId,
-  'paymentMethodName': instance.paymentMethodName,
-  'paymentMethodType': instance.paymentMethodType,
-  'transactionId': instance.transactionId,
-  'referenceNumber': instance.referenceNumber,
-  'description': instance.description,
-  'notes': instance.notes,
-  'paymentDate': instance.paymentDate.toIso8601String(),
-  'processedDate': instance.processedDate?.toIso8601String(),
-  'createdAt': instance.createdAt.toIso8601String(),
-  'updatedAt': instance.updatedAt?.toIso8601String(),
-  'metadata': instance.metadata,
-  'failureReason': instance.failureReason,
-  'gatewayResponse': instance.gatewayResponse,
-  'isRefunded': instance.isRefunded,
-  'refundedAmount': instance.refundedAmount,
-  'refundedDate': instance.refundedDate?.toIso8601String(),
-  'refundReason': instance.refundReason,
+  'transactions': instance.transactions,
+  'paymentAttempts': instance.paymentAttempts,
+  'auditLogs': instance.auditLogs,
 };

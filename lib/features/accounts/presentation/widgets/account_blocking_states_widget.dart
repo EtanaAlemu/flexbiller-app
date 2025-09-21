@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_blocking_state.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -12,7 +12,7 @@ class AccountBlockingStatesWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
+    return BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
       builder: (context, state) {
         if (state is AccountBlockingStatesLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -42,7 +42,7 @@ class AccountBlockingStatesWidget extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    context.read<AccountsBloc>().add(LoadAccountBlockingStates(accountId));
+                    context.read<AccountsOrchestratorBloc>().add(LoadAccountBlockingStates(accountId));
                   },
                   child: const Text('Retry'),
                 ),
@@ -65,7 +65,7 @@ class AccountBlockingStatesWidget extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     onPressed: () {
-                      context.read<AccountsBloc>().add(RefreshAccountBlockingStates(accountId));
+                      context.read<AccountsOrchestratorBloc>().add(RefreshAccountBlockingStates(accountId));
                     },
                     tooltip: 'Refresh Blocking States',
                   ),

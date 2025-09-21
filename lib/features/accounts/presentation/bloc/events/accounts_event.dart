@@ -1,6 +1,14 @@
 import 'package:equatable/equatable.dart';
 import '../../../domain/entities/accounts_query_params.dart';
 import '../../../domain/entities/account.dart';
+import 'accounts_list_events.dart';
+import 'account_detail_events.dart';
+import 'account_multiselect_events.dart';
+import 'account_export_events.dart';
+import '../states/accounts_list_states.dart';
+import '../states/account_detail_states.dart';
+import '../states/account_multiselect_states.dart';
+import '../states/account_export_states.dart';
 
 abstract class AccountsEvent extends Equatable {
   const AccountsEvent();
@@ -640,4 +648,41 @@ class BulkExportAccounts extends AccountsEvent {
 
   @override
   List<Object?> get props => [accounts, format];
+}
+
+// Forward events for orchestrator BLoC
+class ForwardAccountsListState extends AccountsEvent {
+  final AccountsListState state;
+
+  const ForwardAccountsListState(this.state);
+
+  @override
+  List<Object?> get props => [state];
+}
+
+class ForwardAccountDetailState extends AccountsEvent {
+  final AccountDetailState state;
+
+  const ForwardAccountDetailState(this.state);
+
+  @override
+  List<Object?> get props => [state];
+}
+
+class ForwardAccountMultiSelectState extends AccountsEvent {
+  final AccountMultiSelectState state;
+
+  const ForwardAccountMultiSelectState(this.state);
+
+  @override
+  List<Object?> get props => [state];
+}
+
+class ForwardAccountExportState extends AccountsEvent {
+  final AccountExportState state;
+
+  const ForwardAccountExportState(this.state);
+
+  @override
+  List<Object?> get props => [state];
 }

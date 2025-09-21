@@ -73,25 +73,44 @@ class AccountPaymentsRemoteDataSourceImpl
 
   @override
   Future<List<AccountPaymentModel>> getAccountPayments(String accountId) async {
+    print(
+      '🔍 AccountPaymentsRemoteDataSource: getAccountPayments called for accountId: $accountId',
+    );
     try {
+      print(
+        '🔍 AccountPaymentsRemoteDataSource: Making API call to /accounts/$accountId/payments',
+      );
       final response = await _dioClient.dio.get(
         '/accounts/$accountId/payments',
+      );
+      print(
+        '🔍 AccountPaymentsRemoteDataSource: API response status: ${response.statusCode}',
       );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
+        print(
+          '🔍 AccountPaymentsRemoteDataSource: Response data keys: ${responseData.keys.toList()}',
+        );
 
         // Handle new response format with payments array
         if (responseData['payments'] != null &&
             responseData['payments'] is List) {
+          print(
+            '🔍 AccountPaymentsRemoteDataSource: Found payments array with ${(responseData['payments'] as List).length} items',
+          );
           final List<dynamic> paymentsData =
               responseData['payments'] as List<dynamic>;
-          return paymentsData
+          final result = paymentsData
               .map(
                 (item) =>
                     AccountPaymentModel.fromJson(item as Map<String, dynamic>),
               )
               .toList();
+          print(
+            '🔍 AccountPaymentsRemoteDataSource: Parsed ${result.length} payment models',
+          );
+          return result;
         }
         // Handle old response format with data field
         else if (responseData['success'] == true &&

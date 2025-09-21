@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_payment_method.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 import '../pages/payment_method_detail_page.dart';
@@ -14,15 +14,15 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsBloc, AccountsState>(
+    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
         if (state is AccountDetailsLoaded) {
-          context.read<AccountsBloc>().add(
+          context.read<AccountsOrchestratorBloc>().add(
             LoadAccountPaymentMethods(accountId),
           );
         }
       },
-      child: BlocBuilder<AccountsBloc, AccountsState>(
+      child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
         builder: (context, state) {
           if (state is AccountPaymentMethodsLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -52,7 +52,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<AccountsBloc>().add(
+                      context.read<AccountsOrchestratorBloc>().add(
                         LoadAccountPaymentMethods(accountId),
                       );
                     },
@@ -77,7 +77,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           RefreshAccountPaymentMethods(accountId),
                         );
                       },
@@ -86,7 +86,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.sync),
                       onPressed: () {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           RefreshPaymentMethods(accountId),
                         );
                       },
@@ -121,7 +121,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () {
-                            context.read<AccountsBloc>().add(
+                            context.read<AccountsOrchestratorBloc>().add(
                               RefreshPaymentMethods(accountId),
                             );
                           },
@@ -232,7 +232,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           RefreshAccountPaymentMethods(accountId),
                         );
                       },
@@ -241,7 +241,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.sync),
                       onPressed: () {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           RefreshPaymentMethods(accountId),
                         );
                       },
@@ -304,7 +304,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           RefreshAccountPaymentMethods(accountId),
                         );
                       },
@@ -313,7 +313,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.sync),
                       onPressed: () {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           RefreshPaymentMethods(accountId),
                         );
                       },
@@ -345,7 +345,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
                         onPressed: () {
-                          context.read<AccountsBloc>().add(
+                          context.read<AccountsOrchestratorBloc>().add(
                             RefreshPaymentMethods(accountId),
                           );
                         },
@@ -728,7 +728,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<AccountsBloc>().add(
+              context.read<AccountsOrchestratorBloc>().add(
                 SetDefaultPaymentMethod(
                   accountId: accountId,
                   paymentMethodId: method.id,

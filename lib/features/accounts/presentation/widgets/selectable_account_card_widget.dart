@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account.dart';
 import '../pages/account_details_page.dart';
 import '../widgets/delete_account_dialog.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 
 class SelectableAccountCardWidget extends StatelessWidget {
@@ -218,7 +218,7 @@ class SelectableAccountCardWidget extends StatelessWidget {
     // Provide haptic feedback for selection
     HapticFeedback.lightImpact();
 
-    final bloc = context.read<AccountsBloc>();
+    final bloc = context.read<AccountsOrchestratorBloc>();
     if (isSelected) {
       bloc.add(DeselectAccount(account));
     } else {
@@ -247,7 +247,7 @@ class SelectableAccountCardWidget extends StatelessWidget {
   }
 
   void _showDeleteDialog(BuildContext context) {
-    final accountsBloc = context.read<AccountsBloc>();
+    final accountsBloc = context.read<AccountsOrchestratorBloc>();
     showDialog(
       context: context,
       builder: (BuildContext context) => BlocProvider.value(
@@ -261,7 +261,7 @@ class SelectableAccountCardWidget extends StatelessWidget {
     // Provide haptic feedback for long press
     HapticFeedback.mediumImpact();
 
-    final bloc = context.read<AccountsBloc>();
+    final bloc = context.read<AccountsOrchestratorBloc>();
     bloc.add(const EnableMultiSelectMode());
     // Add a small delay to ensure multi-select mode is enabled before selecting
     Future.delayed(const Duration(milliseconds: 100), () {

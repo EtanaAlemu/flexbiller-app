@@ -607,10 +607,113 @@ class DatabaseService {
         _logger.d('Account payments table does not exist, creating it...');
         await db.execute(AccountPaymentDao.createTableSQL);
         _logger.d('Account payments table created successfully');
+      } else {
+        // Table exists, check if we need to migrate schema
+        await _migrateAccountPaymentsTable(db);
       }
     } catch (e) {
       _logger.e('Error ensuring account payments table exists: $e');
       rethrow;
+    }
+  }
+
+  Future<void> _migrateAccountPaymentsTable(Database db) async {
+    try {
+      // Check current table structure
+      final columns = await db.rawQuery('PRAGMA table_info(account_payments)');
+      final columnNames = columns.map((col) => col['name'] as String).toList();
+      _logger.d('Current account_payments columns: $columnNames');
+
+      // List of required columns for the new schema
+      final requiredColumns = [
+        'paymentNumber',
+        'paymentExternalKey',
+        'authAmount',
+        'capturedAmount',
+        'purchasedAmount',
+        'refundedAmount',
+        'creditedAmount',
+        'transactions',
+        'paymentAttempts',
+        'auditLogs',
+      ];
+
+      // Check which columns are missing
+      final missingColumns = requiredColumns
+          .where((col) => !columnNames.contains(col))
+          .toList();
+
+      if (missingColumns.isNotEmpty) {
+        _logger.d(
+          'Migrating account_payments table to add missing columns: $missingColumns',
+        );
+
+        // Add missing columns one by one
+        for (final column in missingColumns) {
+          try {
+            String alterStatement;
+            switch (column) {
+              case 'paymentNumber':
+                alterStatement =
+                    'ALTER TABLE account_payments ADD COLUMN paymentNumber TEXT';
+                break;
+              case 'paymentExternalKey':
+                alterStatement =
+                    'ALTER TABLE account_payments ADD COLUMN paymentExternalKey TEXT';
+                break;
+              case 'authAmount':
+                alterStatement =
+                    'ALTER TABLE account_payments ADD COLUMN authAmount REAL NOT NULL DEFAULT 0';
+                break;
+              case 'capturedAmount':
+                alterStatement =
+                    'ALTER TABLE account_payments ADD COLUMN capturedAmount REAL NOT NULL DEFAULT 0';
+                break;
+              case 'purchasedAmount':
+                alterStatement =
+                    'ALTER TABLE account_payments ADD COLUMN purchasedAmount REAL NOT NULL DEFAULT 0';
+                break;
+              case 'refundedAmount':
+                alterStatement =
+                    'ALTER TABLE account_payments ADD COLUMN refundedAmount REAL NOT NULL DEFAULT 0';
+                break;
+              case 'creditedAmount':
+                alterStatement =
+                    'ALTER TABLE account_payments ADD COLUMN creditedAmount REAL NOT NULL DEFAULT 0';
+                break;
+              case 'transactions':
+                alterStatement =
+                    'ALTER TABLE account_payments ADD COLUMN transactions TEXT NOT NULL DEFAULT "[]"';
+                break;
+              case 'paymentAttempts':
+                alterStatement =
+                    'ALTER TABLE account_payments ADD COLUMN paymentAttempts TEXT';
+                break;
+              case 'auditLogs':
+                alterStatement =
+                    'ALTER TABLE account_payments ADD COLUMN auditLogs TEXT';
+                break;
+              default:
+                _logger.w('Unknown column for migration: $column');
+                continue;
+            }
+
+            _logger.d('Adding column: $column');
+            await db.execute(alterStatement);
+            _logger.d('Successfully added column: $column');
+          } catch (e) {
+            _logger.e('Error adding column $column: $e');
+            // Continue with other columns even if one fails
+          }
+        }
+
+        _logger.d('Account payments table migration completed');
+      } else {
+        _logger.d('Account payments table is already up to date');
+      }
+    } catch (e) {
+      _logger.e('Error migrating account_payments table: $e');
+      // Don't rethrow - migration errors shouldn't break the app
     }
   }
 

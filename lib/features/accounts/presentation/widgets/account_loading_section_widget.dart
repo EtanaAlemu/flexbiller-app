@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -44,7 +44,7 @@ class AccountLoadingSectionWidget extends StatelessWidget {
   }
 
   Widget _buildLoadingButtons(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
+    return BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
       builder: (context, state) {
         final isLoading = _isLoading(state);
         final loadedDetails = _getLoadedDetailsCount(state);
@@ -99,7 +99,7 @@ class AccountLoadingSectionWidget extends StatelessWidget {
   }
 
   Widget _buildProgressIndicator(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
+    return BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
       builder: (context, state) {
         final totalDetails = 5;
         final loadedDetails = _getLoadedDetailsCount(state);
@@ -144,7 +144,7 @@ class AccountLoadingSectionWidget extends StatelessWidget {
   }
 
   Widget _buildStatusChips(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
+    return BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
       builder: (context, state) {
         return Wrap(
           spacing: 8,
@@ -201,29 +201,29 @@ class AccountLoadingSectionWidget extends StatelessWidget {
   }
 
   void _loadAllDetails(BuildContext context) {
-    context.read<AccountsBloc>().add(LoadAccountTags(accountId));
-    context.read<AccountsBloc>().add(LoadAllTagsForAccount(accountId));
-    context.read<AccountsBloc>().add(LoadAccountCustomFields(accountId));
-    context.read<AccountsBloc>().add(LoadAccountPaymentMethods(accountId));
-    context.read<AccountsBloc>().add(LoadAccountPayments(accountId));
-    context.read<AccountsBloc>().add(LoadAccountTimeline(accountId));
+    context.read<AccountsOrchestratorBloc>().add(LoadAccountTags(accountId));
+    context.read<AccountsOrchestratorBloc>().add(LoadAllTagsForAccount(accountId));
+    context.read<AccountsOrchestratorBloc>().add(LoadAccountCustomFields(accountId));
+    context.read<AccountsOrchestratorBloc>().add(LoadAccountPaymentMethods(accountId));
+    context.read<AccountsOrchestratorBloc>().add(LoadAccountPayments(accountId));
+    context.read<AccountsOrchestratorBloc>().add(LoadAccountTimeline(accountId));
   }
 
   void _loadMissingDetails(BuildContext context, AccountsState state) {
     if (state is! AccountTagsLoaded) {
-      context.read<AccountsBloc>().add(LoadAccountTags(accountId));
+      context.read<AccountsOrchestratorBloc>().add(LoadAccountTags(accountId));
     }
     if (state is! AccountCustomFieldsLoaded) {
-      context.read<AccountsBloc>().add(LoadAccountCustomFields(accountId));
+      context.read<AccountsOrchestratorBloc>().add(LoadAccountCustomFields(accountId));
     }
     if (state is! AccountPaymentMethodsLoaded) {
-      context.read<AccountsBloc>().add(LoadAccountPaymentMethods(accountId));
+      context.read<AccountsOrchestratorBloc>().add(LoadAccountPaymentMethods(accountId));
     }
     if (state is! AccountPaymentsLoaded) {
-      context.read<AccountsBloc>().add(LoadAccountPayments(accountId));
+      context.read<AccountsOrchestratorBloc>().add(LoadAccountPayments(accountId));
     }
     if (state is! AccountTimelineLoaded) {
-      context.read<AccountsBloc>().add(LoadAccountTimeline(accountId));
+      context.read<AccountsOrchestratorBloc>().add(LoadAccountTimeline(accountId));
     }
   }
 }

@@ -39,8 +39,6 @@ class PaymentDetailPage extends StatelessWidget {
               const SizedBox(height: 16),
               _buildRefundDetailsCard(context),
             ],
-            const SizedBox(height: 16),
-            _buildActionsCard(context),
           ],
         ),
       ),
@@ -170,13 +168,8 @@ class PaymentDetailPage extends StatelessWidget {
               _buildInfoRow('Transaction ID', payment.transactionId),
             if (payment.referenceNumber != null)
               _buildInfoRow('Reference Number', payment.referenceNumber),
-            if (payment.gateway != null)
-              _buildInfoRow('Gateway', payment.gateway),
-            if (payment.gatewayTransactionId != null)
-              _buildInfoRow(
-                'Gateway Transaction ID',
-                payment.gatewayTransactionId,
-              ),
+            if (payment.gatewayResponse != null)
+              _buildInfoRow('Gateway Response', payment.gatewayResponse),
             if (payment.paymentMethodId != null)
               _buildInfoRow('Payment Method ID', payment.paymentMethodId),
             if (payment.accountId != null)
@@ -218,53 +211,6 @@ class PaymentDetailPage extends StatelessWidget {
               _buildInfoRow('Refund Reason', payment.refundReason),
             if (payment.refundedDate != null)
               _buildInfoRow('Refund Date', _formatDate(payment.refundedDate)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionsCard(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Actions',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                if (payment.paymentStatus == 'completed' &&
-                    payment.isRefunded != true)
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _showRefundDialog(context),
-                      icon: const Icon(Icons.undo),
-                      label: const Text('Refund Payment'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                if (payment.paymentStatus == 'completed' &&
-                    payment.isRefunded != true)
-                  const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _printPayment(context),
-                    icon: const Icon(Icons.print),
-                    label: const Text('Print'),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -356,16 +302,6 @@ class PaymentDetailPage extends StatelessWidget {
             child: const Text('Refund'),
           ),
         ],
-      ),
-    );
-  }
-
-  void _printPayment(BuildContext context) {
-    // TODO: Implement print functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Print functionality coming soon'),
-        backgroundColor: Colors.blue,
       ),
     );
   }

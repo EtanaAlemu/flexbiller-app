@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -43,7 +43,7 @@ class _CreateInvoicePaymentFormState extends State<CreateInvoicePaymentForm> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsBloc, AccountsState>(
+    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
         if (state is InvoicePaymentCreated) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -68,7 +68,7 @@ class _CreateInvoicePaymentFormState extends State<CreateInvoicePaymentForm> {
           backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: Theme.of(context).colorScheme.onPrimary,
         ),
-        body: BlocBuilder<AccountsBloc, AccountsState>(
+        body: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
           builder: (context, state) {
             return Padding(
               padding: const EdgeInsets.all(16.0),
@@ -217,7 +217,7 @@ class _CreateInvoicePaymentFormState extends State<CreateInvoicePaymentForm> {
       final method = _paymentMethodController.text;
       final notes = _notesController.text.isNotEmpty ? _notesController.text : null;
 
-      context.read<AccountsBloc>().add(
+      context.read<AccountsOrchestratorBloc>().add(
             CreateInvoicePayment(
               accountId: widget.accountId,
               paymentAmount: amount,

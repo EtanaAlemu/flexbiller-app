@@ -13,11 +13,16 @@ abstract class ExportEvent extends Equatable {
 class ExportAccounts extends ExportEvent {
   final List<Account> accounts;
   final String format; // 'excel' or 'csv'
+  final String? filePath; // Optional custom file path
 
-  const ExportAccounts({required this.accounts, required this.format});
+  const ExportAccounts({
+    required this.accounts, 
+    required this.format,
+    this.filePath,
+  });
 
   @override
-  List<Object?> get props => [accounts, format];
+  List<Object?> get props => [accounts, format, filePath];
 }
 
 class ExportSelectedAccounts extends ExportEvent {

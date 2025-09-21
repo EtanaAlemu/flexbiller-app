@@ -41,11 +41,11 @@ class AccountExportBloc extends Bloc<ExportEvent, AccountExportState> {
       String fileName;
 
       if (event.format.toLowerCase() == 'excel') {
-        final result = await _exportToExcel(event.accounts);
+        final result = await _exportToExcel(event.accounts, event.filePath);
         filePath = result['filePath'] as String;
         fileName = result['fileName'] as String;
       } else {
-        final result = await _exportToCSV(event.accounts);
+        final result = await _exportToCSV(event.accounts, event.filePath);
         filePath = result['filePath'] as String;
         fileName = result['fileName'] as String;
       }
@@ -107,12 +107,20 @@ class AccountExportBloc extends Bloc<ExportEvent, AccountExportState> {
   }
 
   /// Export accounts to Excel format
-  Future<Map<String, String>> _exportToExcel(List<Account> accounts) async {
+  Future<Map<String, String>> _exportToExcel(List<Account> accounts, String? customFilePath) async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'accounts_export_$timestamp.xlsx';
-      final filePath = '${directory.path}/$fileName';
+      String filePath;
+      String fileName;
+      
+      if (customFilePath != null) {
+        filePath = customFilePath;
+        fileName = customFilePath.split('/').last;
+      } else {
+        final directory = await getApplicationDocumentsDirectory();
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        fileName = 'accounts_export_$timestamp.xlsx';
+        filePath = '${directory.path}/$fileName';
+      }
 
       // Create Excel file content
       final excelContent = _generateExcelContent(accounts);
@@ -129,12 +137,20 @@ class AccountExportBloc extends Bloc<ExportEvent, AccountExportState> {
   }
 
   /// Export accounts to CSV format
-  Future<Map<String, String>> _exportToCSV(List<Account> accounts) async {
+  Future<Map<String, String>> _exportToCSV(List<Account> accounts, String? customFilePath) async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'accounts_export_$timestamp.csv';
-      final filePath = '${directory.path}/$fileName';
+      String filePath;
+      String fileName;
+      
+      if (customFilePath != null) {
+        filePath = customFilePath;
+        fileName = customFilePath.split('/').last;
+      } else {
+        final directory = await getApplicationDocumentsDirectory();
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        fileName = 'accounts_export_$timestamp.csv';
+        filePath = '${directory.path}/$fileName';
+      }
 
       // Create CSV content
       final csvContent = _generateCSVContent(accounts);

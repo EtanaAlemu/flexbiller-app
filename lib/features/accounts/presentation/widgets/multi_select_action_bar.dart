@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -19,7 +19,7 @@ class MultiSelectActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsBloc, AccountsState>(
+    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
         if (state is BulkAccountsExportSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -120,11 +120,11 @@ class MultiSelectActionBar extends StatelessWidget {
   }
 
   void _disableMultiSelectMode(BuildContext context) {
-    context.read<AccountsBloc>().add(const DisableMultiSelectMode());
+    context.read<AccountsOrchestratorBloc>().add(const DisableMultiSelectMode());
   }
 
   void _toggleSelectAll(BuildContext context) {
-    final bloc = context.read<AccountsBloc>();
+    final bloc = context.read<AccountsOrchestratorBloc>();
     if (isAllSelected) {
       bloc.add(const DeselectAllAccounts());
     } else {
@@ -133,7 +133,7 @@ class MultiSelectActionBar extends StatelessWidget {
   }
 
   void _showExportOptions(BuildContext context) {
-    final accountsBloc = context.read<AccountsBloc>();
+    final accountsBloc = context.read<AccountsOrchestratorBloc>();
     showModalBottomSheet(
       context: context,
       builder: (context) => BlocProvider.value(
@@ -171,14 +171,14 @@ class MultiSelectActionBar extends StatelessWidget {
     );
   }
 
-  void _exportAccounts(AccountsBloc accountsBloc, String format) {
+  void _exportAccounts(AccountsOrchestratorBloc accountsBloc, String format) {
     accountsBloc.add(
       BulkExportAccounts(accounts: selectedAccounts, format: format),
     );
   }
 
   void _showDeleteConfirmation(BuildContext context) {
-    final accountsBloc = context.read<AccountsBloc>();
+    final accountsBloc = context.read<AccountsOrchestratorBloc>();
     showDialog(
       context: context,
       builder: (context) => BlocProvider.value(
@@ -210,7 +210,7 @@ class MultiSelectActionBar extends StatelessWidget {
     );
   }
 
-  void _deleteAccounts(AccountsBloc accountsBloc) {
+  void _deleteAccounts(AccountsOrchestratorBloc accountsBloc) {
     accountsBloc.add(BulkDeleteAccounts(accounts: selectedAccounts));
   }
 }

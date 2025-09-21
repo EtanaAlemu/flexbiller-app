@@ -6,6 +6,7 @@ import '../../domain/entities/account_payment.dart';
 import '../../domain/repositories/account_payments_repository.dart';
 import '../datasources/remote/account_payments_remote_data_source.dart';
 import '../datasources/local/account_payments_local_data_source.dart';
+import '../models/account_payment_model.dart';
 
 @Injectable(as: AccountPaymentsRepository)
 class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
@@ -30,63 +31,88 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
 
   @override
   Future<List<AccountPayment>> getAccountPayments(String accountId) async {
+    print(
+      '🔍 AccountPaymentsRepositoryImpl: getAccountPayments called for accountId: $accountId',
+    );
     try {
-      // First, get data from local cache for immediate response
+      // LOCAL-FIRST: Always read from local cache first (single source of truth)
+      print(
+        '🔍 AccountPaymentsRepositoryImpl: Getting cached payments from local data source',
+      );
       final cachedPayments = await _localDataSource.getCachedAccountPayments(
         accountId,
       );
+      print(
+        '🔍 AccountPaymentsRepositoryImpl: Found ${cachedPayments.length} cached payments',
+      );
 
-      // Emit cached data immediately for UI responsiveness
-      if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments
-            .map((model) => model.toEntity())
-            .toList();
-        _accountPaymentsController.add(entities);
-      }
+      // Convert to entities and emit immediately for instant UI response
+      final entities = cachedPayments.map((model) => model.toEntity()).toList();
 
-      // Check if device is online for background synchronization
+      print(
+        '🔍 AccountPaymentsRepositoryImpl: Emitting cached data to stream immediately',
+      );
+      _accountPaymentsController.add(entities);
+
+      // Return local data immediately (local-first principle)
+      print(
+        '🔍 AccountPaymentsRepositoryImpl: Returning ${entities.length} payments from local cache',
+      );
+
+      // BACKGROUND SYNC: Check if device is online for background synchronization
+      print('🔍 AccountPaymentsRepositoryImpl: Checking network connectivity');
       if (await _networkInfo.isConnected) {
-        try {
-          // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource.getAccountPayments(
-            accountId,
-          );
+        print(
+          '🔍 AccountPaymentsRepositoryImpl: Device is online, starting background sync',
+        );
 
-          // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(
-            accountId,
-            remotePayments,
-          );
-
-          // Emit updated data
-          final entities = remotePayments
-              .map((model) => model.toEntity())
-              .toList();
-          _accountPaymentsController.add(entities);
-
-          _logger.d('Synchronized payments for account: $accountId');
-          return entities;
-        } catch (e) {
-          _logger.w('Remote sync failed for account $accountId: $e');
-          // Return cached data if remote sync fails
-          if (cachedPayments.isNotEmpty) {
-            return cachedPayments.map((model) => model.toEntity()).toList();
-          }
-          rethrow;
-        }
+        // Perform background sync without blocking the UI
+        _performBackgroundSync(accountId);
       } else {
         _logger.d(
           'Device offline, using cached payments for account: $accountId',
         );
-        // Return cached data if offline
-        if (cachedPayments.isNotEmpty) {
-          return cachedPayments.map((model) => model.toEntity()).toList();
-        }
-        throw Exception('No cached data available and device is offline');
       }
+
+      // Always return local data (even if empty)
+      return entities;
     } catch (e) {
       _logger.e('Error getting payments for account $accountId: $e');
       rethrow;
+    }
+  }
+
+  /// Performs background synchronization with remote server
+  Future<void> _performBackgroundSync(String accountId) async {
+    try {
+      print('🔍 AccountPaymentsRepositoryImpl: Starting background sync');
+
+      // Fetch fresh data from remote source
+      final remotePayments = await _remoteDataSource.getAccountPayments(
+        accountId,
+      );
+      print(
+        '🔍 AccountPaymentsRepositoryImpl: Remote data source returned ${remotePayments.length} payments',
+      );
+
+      // Cache the fresh data locally (this becomes the new source of truth)
+      print('🔍 AccountPaymentsRepositoryImpl: Caching remote data locally');
+      await _localDataSource.cacheAccountPayments(accountId, remotePayments);
+
+      // Emit updated data to stream (UI will reactively update)
+      print(
+        '🔍 AccountPaymentsRepositoryImpl: Emitting updated data to stream',
+      );
+      final entities = remotePayments.map((model) => model.toEntity()).toList();
+      _accountPaymentsController.add(entities);
+
+      print(
+        '🔍 AccountPaymentsRepositoryImpl: Background sync completed for account: $accountId',
+      );
+      _logger.d('Background sync completed for account: $accountId');
+    } catch (e) {
+      _logger.w('Background sync failed for account $accountId: $e');
+      // Don't throw - background sync failures shouldn't affect the UI
     }
   }
 
@@ -96,12 +122,13 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
     String paymentId,
   ) async {
     try {
-      // First, try to get from local cache
+      // LOCAL-FIRST: Always try local cache first
       final cachedPayment = await _localDataSource.getCachedAccountPayment(
         paymentId,
       );
 
       if (cachedPayment != null) {
+        _logger.d('Payment $paymentId found in local cache');
         return cachedPayment.toEntity();
       }
 
@@ -113,9 +140,12 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
             paymentId,
           );
 
-          // Cache the fetched data
+          // Cache the fetched data locally
           await _localDataSource.cacheAccountPayment(remotePayment);
 
+          _logger.d(
+            'Payment $paymentId fetched from remote and cached locally',
+          );
           return remotePayment.toEntity();
         } catch (e) {
           _logger.w('Remote fetch failed for payment $paymentId: $e');
@@ -136,66 +166,56 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
     String status,
   ) async {
     try {
-      // First, get data from local cache for immediate response
+      // LOCAL-FIRST: Always read from local cache first
       final cachedPayments = await _localDataSource.getCachedPaymentsByStatus(
         accountId,
         status,
       );
 
-      // Emit cached data immediately for UI responsiveness
-      if (cachedPayments.isNotEmpty) {
-        final entities = cachedPayments
-            .map((model) => model.toEntity())
-            .toList();
-        _accountPaymentsController.add(entities);
-      }
+      // Convert to entities and emit immediately
+      final entities = cachedPayments.map((model) => model.toEntity()).toList();
+      _accountPaymentsController.add(entities);
 
-      // Check if device is online for background synchronization
+      // Return local data immediately
+      _logger.d(
+        'Returning ${entities.length} payments by status $status from local cache',
+      );
+
+      // BACKGROUND SYNC: If online, sync in background
       if (await _networkInfo.isConnected) {
-        try {
-          // Fetch fresh data from remote source
-          final remotePayments = await _remoteDataSource
-              .getAccountPaymentsByStatus(accountId, status);
-
-          // Cache the fresh data locally
-          await _localDataSource.cacheAccountPayments(
-            accountId,
-            remotePayments,
-          );
-
-          // Emit updated data
-          final entities = remotePayments
-              .map((model) => model.toEntity())
-              .toList();
-          _accountPaymentsController.add(entities);
-
-          _logger.d(
-            'Synchronized payments by status $status for account: $accountId',
-          );
-          return entities;
-        } catch (e) {
-          _logger.w('Remote sync failed for payments by status $status: $e');
-          // Return cached data if remote sync fails
-          if (cachedPayments.isNotEmpty) {
-            return cachedPayments.map((model) => model.toEntity()).toList();
-          }
-          rethrow;
-        }
+        _performBackgroundSyncByStatus(accountId, status);
       } else {
-        _logger.d(
-          'Device offline, using cached payments by status $status for account: $accountId',
-        );
-        // Return cached data if offline
-        if (cachedPayments.isNotEmpty) {
-          return cachedPayments.map((model) => model.toEntity()).toList();
-        }
-        throw Exception('No cached data available and device is offline');
+        _logger.d('Device offline, using cached payments by status $status');
       }
+
+      return entities;
     } catch (e) {
       _logger.e(
         'Error getting payments by status $status for account $accountId: $e',
       );
       rethrow;
+    }
+  }
+
+  /// Performs background synchronization for payments by status
+  Future<void> _performBackgroundSyncByStatus(
+    String accountId,
+    String status,
+  ) async {
+    try {
+      final remotePayments = await _remoteDataSource.getAccountPaymentsByStatus(
+        accountId,
+        status,
+      );
+
+      await _localDataSource.cacheAccountPayments(accountId, remotePayments);
+
+      final entities = remotePayments.map((model) => model.toEntity()).toList();
+      _accountPaymentsController.add(entities);
+
+      _logger.d('Background sync completed for payments by status $status');
+    } catch (e) {
+      _logger.w('Background sync failed for payments by status $status: $e');
     }
   }
 
@@ -757,45 +777,94 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
     Map<String, dynamic>? properties,
   }) async {
     try {
-      // If online, create on remote first
+      // LOCAL-FIRST: Create payment locally first (optimistic UI)
+      final localPayment = AccountPayment.create(
+        accountId: accountId,
+        paymentMethodId: paymentMethodId,
+        transactionType: transactionType,
+        amount: amount,
+        currency: currency,
+        effectiveDate: effectiveDate,
+        description: description,
+        properties: properties,
+      );
+
+      // Cache the payment locally immediately
+      await _localDataSource.cacheAccountPayment(
+        AccountPaymentModel.fromEntity(localPayment),
+      );
+
+      // Emit updated data immediately for instant UI feedback
+      final cachedPayments = await _localDataSource.getCachedAccountPayments(
+        accountId,
+      );
+      final entities = cachedPayments.map((model) => model.toEntity()).toList();
+      _accountPaymentsController.add(entities);
+
+      _logger.d('Payment created locally for account: $accountId');
+
+      // BACKGROUND SYNC: If online, sync with remote server
       if (await _networkInfo.isConnected) {
-        try {
-          final remotePayment = await _remoteDataSource.createAccountPayment(
-            accountId: accountId,
-            paymentMethodId: paymentMethodId,
-            transactionType: transactionType,
-            amount: amount,
-            currency: currency,
-            effectiveDate: effectiveDate,
-            description: description,
-            properties: properties,
-          );
-
-          // Cache the created payment locally
-          await _localDataSource.cacheAccountPayment(remotePayment);
-
-          // Emit updated data
-          final cachedPayments = await _localDataSource
-              .getCachedAccountPayments(accountId);
-          final entities = cachedPayments
-              .map((model) => model.toEntity())
-              .toList();
-          _accountPaymentsController.add(entities);
-
-          _logger.d(
-            'Created payment ${remotePayment.id} for account: $accountId',
-          );
-          return remotePayment.toEntity();
-        } catch (e) {
-          _logger.w('Remote creation failed: $e');
-          rethrow;
-        }
+        _performBackgroundCreatePayment(
+          accountId: accountId,
+          paymentMethodId: paymentMethodId,
+          transactionType: transactionType,
+          amount: amount,
+          currency: currency,
+          effectiveDate: effectiveDate,
+          description: description,
+          properties: properties,
+        );
       } else {
-        throw Exception('Cannot create payment while offline');
+        _logger.d('Device offline, payment will be synced when online');
       }
+
+      return localPayment;
     } catch (e) {
       _logger.e('Error creating payment for account $accountId: $e');
       rethrow;
+    }
+  }
+
+  /// Performs background synchronization for payment creation
+  Future<void> _performBackgroundCreatePayment({
+    required String accountId,
+    required String paymentMethodId,
+    required String transactionType,
+    required double amount,
+    required String currency,
+    required DateTime effectiveDate,
+    String? description,
+    Map<String, dynamic>? properties,
+  }) async {
+    try {
+      final remotePayment = await _remoteDataSource.createAccountPayment(
+        accountId: accountId,
+        paymentMethodId: paymentMethodId,
+        transactionType: transactionType,
+        amount: amount,
+        currency: currency,
+        effectiveDate: effectiveDate,
+        description: description,
+        properties: properties,
+      );
+
+      // Update local cache with server response
+      await _localDataSource.cacheAccountPayment(remotePayment);
+
+      // Emit updated data
+      final cachedPayments = await _localDataSource.getCachedAccountPayments(
+        accountId,
+      );
+      final entities = cachedPayments.map((model) => model.toEntity()).toList();
+      _accountPaymentsController.add(entities);
+
+      _logger.d(
+        'Payment ${remotePayment.id} synced with server for account: $accountId',
+      );
+    } catch (e) {
+      _logger.w('Background sync failed for payment creation: $e');
+      // Could implement retry logic or mark as pending sync
     }
   }
 

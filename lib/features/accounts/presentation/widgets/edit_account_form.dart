@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -118,13 +118,13 @@ class _EditAccountFormState extends State<EditAccountForm> {
             : _notesController.text.trim(),
       );
 
-      context.read<AccountsBloc>().add(UpdateAccount(updatedAccount));
+      context.read<AccountsOrchestratorBloc>().add(UpdateAccount(updatedAccount));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsBloc, AccountsState>(
+    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
         if (state is AccountUpdated) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -151,7 +151,7 @@ class _EditAccountFormState extends State<EditAccountForm> {
           title: const Text('Edit Account'),
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         ),
-        body: BlocBuilder<AccountsBloc, AccountsState>(
+        body: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
           builder: (context, state) {
             return Form(
               key: _formKey,

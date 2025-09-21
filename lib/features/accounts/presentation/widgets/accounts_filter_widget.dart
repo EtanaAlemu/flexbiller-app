@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/accounts_bloc.dart';
-import '../bloc/events/accounts_event.dart';
+import '../bloc/accounts_list_bloc.dart';
+import '../bloc/events/accounts_list_events.dart';
 
 class AccountsFilterWidget extends StatefulWidget {
   const AccountsFilterWidget({Key? key}) : super(key: key);
@@ -28,18 +28,21 @@ class _AccountsFilterWidgetState extends State<AccountsFilterWidget> {
 
     // Apply company filter if provided
     if (company.isNotEmpty) {
-      context.read<AccountsBloc>().add(FilterAccountsByCompany(company));
+      context.read<AccountsListBloc>().add(FilterAccountsByCompany(company));
     }
 
     // Apply balance filter if provided
     if (balance > 0) {
-      context.read<AccountsBloc>().add(
-        FilterAccountsByBalance(balance, double.infinity),
+      context.read<AccountsListBloc>().add(
+        FilterAccountsByBalance(
+          minBalance: balance,
+          maxBalance: double.infinity,
+        ),
       );
     }
 
     // Apply audit level filter
-    context.read<AccountsBloc>().add(
+    context.read<AccountsListBloc>().add(
       FilterAccountsByAuditLevel(_selectedAuditLevel),
     );
 
@@ -51,7 +54,7 @@ class _AccountsFilterWidgetState extends State<AccountsFilterWidget> {
     _balanceController.clear();
     _selectedAuditLevel = 'FULL';
 
-    context.read<AccountsBloc>().add(ClearFilters());
+    context.read<AccountsListBloc>().add(const ClearFilters());
     Navigator.of(context).pop();
   }
 

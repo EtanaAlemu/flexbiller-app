@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/accounts_bloc.dart';
-import '../bloc/events/accounts_event.dart';
-import '../bloc/states/accounts_state.dart';
+import '../bloc/account_payments_bloc.dart';
+import '../bloc/account_payments_events.dart';
+import '../bloc/account_payments_states.dart';
 import '../pages/payment_detail_page.dart';
 
 class AccountPaymentsWidget extends StatefulWidget {
@@ -16,44 +16,45 @@ class AccountPaymentsWidget extends StatefulWidget {
 }
 
 class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
-  final _amountController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _notesController = TextEditingController();
-  String _selectedPaymentType = 'credit';
+  bool _paymentsLoaded = false;
+  AccountPaymentsLoaded? _lastPaymentsState;
+
+  @override
+  void initState() {
+    super.initState();
+    _paymentsLoaded = false;
+    print(
+      '🔍 AccountPaymentsWidget: initState - triggering LoadAccountPayments',
+    );
+    // Trigger payments loading when widget initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AccountPaymentsBloc>().add(
+        LoadAccountPayments(widget.accountId),
+      );
+    });
+  }
 
   @override
   void dispose() {
-    _amountController.dispose();
-    _descriptionController.dispose();
-    _notesController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsBloc, AccountsState>(
+    print(
+      '🔍 AccountPaymentsWidget: Building with accountId: ${widget.accountId}',
+    );
+
+    return BlocListener<AccountPaymentsBloc, AccountPaymentsState>(
       listener: (context, state) {
-        if (state is AccountDetailsLoaded) {
-          context.read<AccountsBloc>().add(
-            LoadAccountPayments(widget.accountId),
+        print('🔍 AccountPaymentsWidget: Received state: ${state.runtimeType}');
+        print('🔍 AccountPaymentsWidget: State details: $state');
+        if (state is AccountPaymentsLoaded) {
+          print(
+            '🔍 AccountPaymentsWidget: Received AccountPaymentsLoaded with ${state.payments.length} payments',
           );
-        } else if (state is AccountPaymentCreated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment created successfully'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
-            ),
-          );
-          _clearForm();
-        } else if (state is AccountPaymentCreationFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Payment creation failed: ${state.message}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
-          );
+          _paymentsLoaded = true;
+          _lastPaymentsState = state;
         } else if (state is AccountPaymentRefunded) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -72,18 +73,100 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
           );
         }
       },
-      child: BlocBuilder<AccountsBloc, AccountsState>(
+      child: BlocBuilder<AccountPaymentsBloc, AccountPaymentsState>(
         builder: (context, state) {
+          print(
+            '🔍 AccountPaymentsWidget: Building with state: ${state.runtimeType}',
+          );
+          print('🔍 AccountPaymentsWidget: State details in builder: $state');
+          print(
+            '🔍 AccountPaymentsWidget: _paymentsLoaded: $_paymentsLoaded, _lastPaymentsState: ${_lastPaymentsState?.payments.length ?? 'null'}',
+          );
+
+          // Check for AccountPaymentsLoaded first to prioritize it over AccountDetailsLoaded
+          if (state is AccountPaymentsLoaded) {
+            print(
+              '🔍 AccountPaymentsWidget: Building AccountPaymentsLoaded with ${state.payments.length} payments',
+            );
+            return Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Payments (${state.payments.length})',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                // Payments list
+                Expanded(
+                  child: state.payments.isEmpty
+                      ? _buildEmptyState(context)
+                      : RefreshIndicator(
+                          onRefresh: () async {
+                            context.read<AccountPaymentsBloc>().add(
+                              RefreshAccountPayments(widget.accountId),
+                            );
+                          },
+                          child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            itemCount: state.payments.length,
+                            itemBuilder: (context, index) {
+                              final payment = state.payments[index];
+                              return _buildPaymentCard(context, payment);
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            );
+          }
+
           if (state is AccountPaymentsLoading) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(),
-              ),
+            print('🔍 AccountPaymentsWidget: Showing loading indicator');
+            return Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Payments',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                // Loading indicator for payments section only
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading payments...',
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             );
           }
 
           if (state is AccountPaymentsFailure) {
+            print('🔍 AccountPaymentsWidget: Showing failure state');
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -109,7 +192,7 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountPaymentsBloc>().add(
                           LoadAccountPayments(widget.accountId),
                         );
                       },
@@ -122,61 +205,43 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
             );
           }
 
-          if (state is AccountPaymentsLoaded) {
-            return Column(
-              children: [
-                // Header with create payment button
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
+          // Default state - show loading
+          print(
+            '🔍 AccountPaymentsWidget: Fallback case - showing loading for state: ${state.runtimeType}',
+          );
+          return Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Payments',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+              // Loading indicator for payments section only
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: Text(
-                          'Payments (${state.payments.length})',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Loading payments...',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
                         ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () => _showCreatePaymentDialog(context),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Create Payment'),
                       ),
                     ],
                   ),
                 ),
-                // Payments list
-                Expanded(
-                  child: state.payments.isEmpty
-                      ? _buildEmptyState(context)
-                      : RefreshIndicator(
-                          onRefresh: () async {
-                            context.read<AccountsBloc>().add(
-                              RefreshAccountPayments(widget.accountId),
-                            );
-                          },
-                          child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            itemCount: state.payments.length,
-                            itemBuilder: (context, index) {
-                              final payment = state.payments[index];
-                              return _buildPaymentCard(context, payment);
-                            },
-                          ),
-                        ),
-                ),
-              ],
-            );
-          }
-
-          // Default state - show loading
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
+              ),
+            ],
           );
         },
       ),
@@ -205,12 +270,6 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
               'This account doesn\'t have any payments yet.',
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => _showCreatePaymentDialog(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Create First Payment'),
             ),
           ],
         ),
@@ -357,76 +416,6 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
     );
   }
 
-  void _showCreatePaymentDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Create Payment'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                value: _selectedPaymentType,
-                decoration: const InputDecoration(
-                  labelText: 'Payment Type',
-                  border: OutlineInputBorder(),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'credit', child: Text('Credit')),
-                  DropdownMenuItem(value: 'debit', child: Text('Debit')),
-                  DropdownMenuItem(value: 'refund', child: Text('Refund')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedPaymentType = value ?? 'credit';
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _amountController,
-                decoration: const InputDecoration(
-                  labelText: 'Amount',
-                  border: OutlineInputBorder(),
-                  prefixText: '\$',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes (Optional)',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 2,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => _createPayment(context),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showRefundDialog(BuildContext context, dynamic payment) {
     final refundController = TextEditingController();
     final reasonController = TextEditingController();
@@ -495,40 +484,6 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
             PaymentDetailPage(payment: payment, accountId: widget.accountId),
       ),
     );
-  }
-
-  void _createPayment(BuildContext context) {
-    final amount = double.tryParse(_amountController.text);
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid amount'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    context.read<AccountsBloc>().add(
-      CreateAccountPayment(
-        accountId: widget.accountId,
-        paymentMethodId: 'default', // In a real app, this would be selected
-        transactionType: _selectedPaymentType,
-        amount: amount,
-        currency: 'USD',
-        effectiveDate: DateTime.now(),
-        description: _descriptionController.text,
-        properties: {'notes': _notesController.text},
-      ),
-    );
-    Navigator.pop(context);
-  }
-
-  void _clearForm() {
-    _amountController.clear();
-    _descriptionController.clear();
-    _notesController.clear();
-    _selectedPaymentType = 'credit';
   }
 
   Color _getStatusColor(String? status) {

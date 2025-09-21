@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_invoice_payment.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 import 'create_invoice_payment_form.dart';
@@ -21,7 +21,7 @@ class AccountInvoicePaymentsWidget extends StatelessWidget {
         child: const Icon(Icons.add),
         tooltip: 'Create Invoice Payment',
       ),
-      body: BlocBuilder<AccountsBloc, AccountsState>(
+      body: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
         builder: (context, state) {
           if (state is AccountInvoicePaymentsLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -51,7 +51,7 @@ class AccountInvoicePaymentsWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<AccountsBloc>().add(LoadAccountInvoicePayments(accountId));
+                      context.read<AccountsOrchestratorBloc>().add(LoadAccountInvoicePayments(accountId));
                     },
                     child: const Text('Retry'),
                   ),
@@ -74,7 +74,7 @@ class AccountInvoicePaymentsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
-                        context.read<AccountsBloc>().add(RefreshAccountInvoicePayments(accountId));
+                        context.read<AccountsOrchestratorBloc>().add(RefreshAccountInvoicePayments(accountId));
                       },
                       tooltip: 'Refresh Invoice Payments',
                     ),

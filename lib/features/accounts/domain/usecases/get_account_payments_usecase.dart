@@ -9,6 +9,14 @@ class GetAccountPaymentsUseCase {
   GetAccountPaymentsUseCase(this._paymentsRepository);
 
   Future<List<AccountPayment>> call(String accountId) async {
-    return await _paymentsRepository.getAccountPayments(accountId);
+    print('🔍 GetAccountPaymentsUseCase: Called with accountId: $accountId');
+    print(
+      '🔍 GetAccountPaymentsUseCase: Calling repository.getAccountPayments',
+    );
+    final result = await _paymentsRepository.getAccountPayments(accountId);
+    print(
+      '🔍 GetAccountPaymentsUseCase: Repository returned ${result.length} payments',
+    );
+    return result;
   }
 }

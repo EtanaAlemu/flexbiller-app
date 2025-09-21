@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_email.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -12,7 +12,7 @@ class AccountEmailsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
+    return BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
       builder: (context, state) {
         if (state is AccountEmailsLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -42,7 +42,7 @@ class AccountEmailsWidget extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    context.read<AccountsBloc>().add(LoadAccountEmails(accountId));
+                    context.read<AccountsOrchestratorBloc>().add(LoadAccountEmails(accountId));
                   },
                   child: const Text('Retry'),
                 ),
@@ -185,7 +185,7 @@ class AccountEmailsWidget extends StatelessWidget {
             onPressed: () {
               if (emailController.text.isNotEmpty) {
                 Navigator.of(context).pop();
-                context.read<AccountsBloc>().add(
+                context.read<AccountsOrchestratorBloc>().add(
                       CreateAccountEmail(accountId, emailController.text.trim()),
                     );
               }
@@ -221,7 +221,7 @@ class AccountEmailsWidget extends StatelessWidget {
             onPressed: () {
               if (emailController.text.isNotEmpty) {
                 Navigator.of(context).pop();
-                context.read<AccountsBloc>().add(
+                context.read<AccountsOrchestratorBloc>().add(
                       UpdateAccountEmail(accountId, email.email, emailController.text.trim()), // Use email address instead of accountId
                     );
               }
@@ -249,7 +249,7 @@ class AccountEmailsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<AccountsBloc>().add(
+              context.read<AccountsOrchestratorBloc>().add(
                     DeleteAccountEmail(accountId, email.email), // Use email address instead of accountId
                   );
             },

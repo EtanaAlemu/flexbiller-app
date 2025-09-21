@@ -11,6 +11,8 @@ import 'events/account_detail_events.dart' as detail_events;
 import 'events/account_multiselect_events.dart' as multiselect_events;
 import 'events/account_export_events.dart' as export_events;
 import 'states/accounts_state.dart';
+import 'states/account_detail_states.dart' as detail_states;
+import '../../domain/entities/accounts_query_params.dart';
 
 /// Main orchestrator BLoC that coordinates between specialized BLoCs
 @injectable
@@ -92,33 +94,44 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
     on<ExportAccounts>(_onExportAccounts);
     on<ExportSelectedAccounts>(_onExportSelectedAccounts);
     on<ShareFile>(_onShareExportedFile);
+
+    // Forward Events
+    on<ForwardAccountDetailState>(_onForwardAccountDetailState);
   }
 
   void _initializeStreamSubscriptions() {
-    // Listen to accounts list state changes
-    _accountsListSubscription = _accountsListBloc.stream.listen((state) {
-      // Note: We don't emit states from stream listeners as it's not allowed
-      // The UI should listen to the individual specialized blocs directly
-    });
-
-    // Listen to account detail state changes
+    print('🔍 AccountsOrchestratorBloc: Initializing stream subscriptions');
+    // Listen to account detail state changes and forward them to the UI
     _accountDetailSubscription = _accountDetailBloc.stream.listen((state) {
-      // Note: We don't emit states from stream listeners as it's not allowed
-      // The UI should listen to the individual specialized blocs directly
-    });
-
-    // Listen to multi-select state changes
-    _accountMultiSelectSubscription = _accountMultiSelectBloc.stream.listen((
-      state,
-    ) {
-      // Note: We don't emit states from stream listeners as it's not allowed
-      // The UI should listen to the individual specialized blocs directly
-    });
-
-    // Listen to export state changes
-    _accountExportSubscription = _accountExportBloc.stream.listen((state) {
-      // Note: We don't emit states from stream listeners as it's not allowed
-      // The UI should listen to the individual specialized blocs directly
+      print(
+        '🔍 AccountsOrchestratorBloc: Stream received state: ${state.runtimeType}',
+      );
+      // Forward the state to the UI by emitting it directly
+      if (state is detail_states.AccountDetailsLoaded) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDetailsLoaded');
+        add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountDetailsLoading) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDetailsLoading');
+        add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountDetailsFailure) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDetailsFailure');
+        add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountPaymentsLoading) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountPaymentsLoading');
+        add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountPaymentsLoaded) {
+        print(
+          '🔍 AccountsOrchestratorBloc: Received AccountPaymentsLoaded from AccountDetailBloc with ${state.payments.length} payments, forwarding...',
+        );
+        add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountPaymentsFailure) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountPaymentsFailure');
+        add(ForwardAccountDetailState(state));
+      } else {
+        print(
+          '🔍 AccountsOrchestratorBloc: Unknown state type: ${state.runtimeType}',
+        );
+      }
     });
   }
 
@@ -384,6 +397,10 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
     LoadAccountPayments event,
     Emitter<AccountsState> emit,
   ) async {
+    print(
+      '🔍 AccountsOrchestratorBloc: Received LoadAccountPayments for accountId: ${event.accountId}',
+    );
+    print('🔍 AccountsOrchestratorBloc: Forwarding to AccountDetailBloc');
     _accountDetailBloc.add(detail_events.LoadAccountPayments(event.accountId));
   }
 
@@ -493,6 +510,78 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
         fileName: event.filePath.split('/').last, // Extract filename from path
       ),
     );
+  }
+
+  // State conversion methods
+  AccountsEvent _convertAccountsListStateToAccountsState(dynamic state) {
+    // Convert AccountsListState to AccountsEvent for forwarding
+    if (state.toString().contains('AccountsListLoaded')) {
+      return LoadAccounts(AccountsQueryParams());
+    } else if (state.toString().contains('AccountsListLoading')) {
+      return LoadAccounts(AccountsQueryParams());
+    } else if (state.toString().contains('AccountsListFailure')) {
+      return LoadAccounts(AccountsQueryParams());
+    }
+    return LoadAccounts(AccountsQueryParams());
+  }
+
+  AccountsEvent _convertAccountDetailStateToAccountsState(dynamic state) {
+    // Convert AccountDetailState to AccountsEvent for forwarding
+    return LoadAccounts(AccountsQueryParams());
+  }
+
+  AccountsEvent _convertMultiSelectStateToAccountsState(dynamic state) {
+    // Convert MultiSelectState to AccountsEvent for forwarding
+    return LoadAccounts(AccountsQueryParams());
+  }
+
+  AccountsEvent _convertExportStateToAccountsState(dynamic state) {
+    // Convert ExportState to AccountsEvent for forwarding
+    return LoadAccounts(AccountsQueryParams());
+  }
+
+  // Forward Event Handlers
+  Future<void> _onForwardAccountDetailState(
+    ForwardAccountDetailState event,
+    Emitter<AccountsState> emit,
+  ) async {
+    print(
+      '🔍 AccountsOrchestratorBloc: _onForwardAccountDetailState called with state: ${event.state.runtimeType}',
+    );
+    // Convert AccountDetailState to AccountsState and emit
+    if (event.state is detail_states.AccountDetailsLoaded) {
+      final loadedState = event.state as detail_states.AccountDetailsLoaded;
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountDetailsLoaded');
+      emit(AccountDetailsLoaded(loadedState.account));
+    } else if (event.state is detail_states.AccountDetailsLoading) {
+      final loadingState = event.state as detail_states.AccountDetailsLoading;
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountDetailsLoading');
+      emit(AccountDetailsLoading(loadingState.accountId));
+    } else if (event.state is detail_states.AccountDetailsFailure) {
+      final failureState = event.state as detail_states.AccountDetailsFailure;
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountDetailsFailure');
+      emit(AccountDetailsFailure(failureState.message, failureState.accountId));
+    } else if (event.state is detail_states.AccountPaymentsLoading) {
+      final loadingState = event.state as detail_states.AccountPaymentsLoading;
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountPaymentsLoading');
+      emit(AccountPaymentsLoading(loadingState.accountId));
+    } else if (event.state is detail_states.AccountPaymentsLoaded) {
+      final loadedState = event.state as detail_states.AccountPaymentsLoaded;
+      print(
+        '🔍 AccountsOrchestratorBloc: Emitting AccountPaymentsLoaded with ${loadedState.payments.length} payments',
+      );
+      emit(AccountPaymentsLoaded(loadedState.accountId, loadedState.payments));
+    } else if (event.state is detail_states.AccountPaymentsFailure) {
+      final failureState = event.state as detail_states.AccountPaymentsFailure;
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountPaymentsFailure');
+      emit(
+        AccountPaymentsFailure(failureState.message, failureState.accountId),
+      );
+    } else {
+      print(
+        '🔍 AccountsOrchestratorBloc: Unknown state type in _onForwardAccountDetailState: ${event.state.runtimeType}',
+      );
+    }
   }
 
   @override

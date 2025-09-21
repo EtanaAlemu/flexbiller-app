@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_audit_log.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -12,7 +12,7 @@ class AccountAuditLogsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
+    return BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
       builder: (context, state) {
         if (state is AccountAuditLogsLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -42,7 +42,7 @@ class AccountAuditLogsWidget extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    context.read<AccountsBloc>().add(LoadAccountAuditLogs(accountId));
+                    context.read<AccountsOrchestratorBloc>().add(LoadAccountAuditLogs(accountId));
                   },
                   child: const Text('Retry'),
                 ),
@@ -65,7 +65,7 @@ class AccountAuditLogsWidget extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     onPressed: () {
-                      context.read<AccountsBloc>().add(RefreshAccountAuditLogs(accountId));
+                      context.read<AccountsOrchestratorBloc>().add(RefreshAccountAuditLogs(accountId));
                     },
                     tooltip: 'Refresh Audit Logs',
                   ),

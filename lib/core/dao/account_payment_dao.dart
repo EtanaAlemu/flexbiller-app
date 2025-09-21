@@ -10,28 +10,18 @@ class AccountPaymentDao {
     CREATE TABLE $tableName (
       id TEXT PRIMARY KEY,
       accountId TEXT NOT NULL,
-      paymentType TEXT NOT NULL,
-      paymentStatus TEXT NOT NULL,
-      amount REAL NOT NULL,
+      paymentNumber TEXT,
+      paymentExternalKey TEXT,
+      authAmount REAL NOT NULL,
+      capturedAmount REAL NOT NULL,
+      purchasedAmount REAL NOT NULL,
+      refundedAmount REAL NOT NULL,
+      creditedAmount REAL NOT NULL,
       currency TEXT NOT NULL,
       paymentMethodId TEXT NOT NULL,
-      paymentMethodName TEXT,
-      paymentMethodType TEXT,
-      transactionId TEXT,
-      referenceNumber TEXT,
-      description TEXT,
-      notes TEXT,
-      paymentDate TEXT NOT NULL,
-      processedDate TEXT,
-      createdAt TEXT NOT NULL,
-      updatedAt TEXT,
-      metadata TEXT,
-      failureReason TEXT,
-      gatewayResponse TEXT,
-      isRefunded INTEGER NOT NULL,
-      refundedAmount REAL,
-      refundedDate TEXT,
-      refundReason TEXT,
+      transactions TEXT NOT NULL,
+      paymentAttempts TEXT,
+      auditLogs TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )
@@ -42,30 +32,24 @@ class AccountPaymentDao {
     return {
       'id': payment.id,
       'accountId': payment.accountId,
-      'paymentType': payment.paymentType,
-      'paymentStatus': payment.paymentStatus,
-      'amount': payment.amount,
+      'paymentNumber': payment.paymentNumber,
+      'paymentExternalKey': payment.paymentExternalKey,
+      'authAmount': payment.authAmount,
+      'capturedAmount': payment.capturedAmount,
+      'purchasedAmount': payment.purchasedAmount,
+      'refundedAmount': payment.refundedAmount,
+      'creditedAmount': payment.creditedAmount,
       'currency': payment.currency,
       'paymentMethodId': payment.paymentMethodId,
-      'paymentMethodName': payment.paymentMethodName,
-      'paymentMethodType': payment.paymentMethodType,
-      'transactionId': payment.transactionId,
-      'referenceNumber': payment.referenceNumber,
-      'description': payment.description,
-      'notes': payment.notes,
-      'paymentDate': payment.paymentDate.toIso8601String(),
-      'processedDate': payment.processedDate?.toIso8601String(),
-      'createdAt': payment.createdAt.toIso8601String(),
-      'updatedAt': payment.updatedAt?.toIso8601String(),
-      'metadata': payment.metadata != null
-          ? jsonEncode(payment.metadata)
+      'transactions': jsonEncode(
+        payment.transactions.map((t) => t.toJson()).toList(),
+      ),
+      'paymentAttempts': payment.paymentAttempts != null
+          ? jsonEncode(payment.paymentAttempts)
           : null,
-      'failureReason': payment.failureReason,
-      'gatewayResponse': payment.gatewayResponse,
-      'isRefunded': payment.isRefunded ? 1 : 0,
-      'refundedAmount': payment.refundedAmount,
-      'refundedDate': payment.refundedDate?.toIso8601String(),
-      'refundReason': payment.refundReason,
+      'auditLogs': payment.auditLogs != null
+          ? jsonEncode(payment.auditLogs)
+          : null,
       'created_at': now,
       'updated_at': now,
     };
@@ -75,36 +59,26 @@ class AccountPaymentDao {
     return AccountPaymentModel(
       id: map['id'] as String,
       accountId: map['accountId'] as String,
-      paymentType: map['paymentType'] as String,
-      paymentStatus: map['paymentStatus'] as String,
-      amount: map['amount'] as double,
+      paymentNumber: map['paymentNumber'] as String?,
+      paymentExternalKey: map['paymentExternalKey'] as String?,
+      authAmount: map['authAmount'] as double,
+      capturedAmount: map['capturedAmount'] as double,
+      purchasedAmount: map['purchasedAmount'] as double,
+      refundedAmount: map['refundedAmount'] as double,
+      creditedAmount: map['creditedAmount'] as double,
       currency: map['currency'] as String,
       paymentMethodId: map['paymentMethodId'] as String,
-      paymentMethodName: map['paymentMethodName'] as String?,
-      paymentMethodType: map['paymentMethodType'] as String?,
-      transactionId: map['transactionId'] as String?,
-      referenceNumber: map['referenceNumber'] as String?,
-      description: map['description'] as String?,
-      notes: map['notes'] as String?,
-      paymentDate: DateTime.parse(map['paymentDate'] as String),
-      processedDate: map['processedDate'] != null
-          ? DateTime.parse(map['processedDate'] as String)
+      transactions: (jsonDecode(map['transactions'] as String) as List)
+          .map(
+            (t) => PaymentTransactionModel.fromJson(t as Map<String, dynamic>),
+          )
+          .toList(),
+      paymentAttempts: map['paymentAttempts'] != null
+          ? jsonDecode(map['paymentAttempts'] as String) as List
           : null,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.parse(map['updatedAt'] as String)
+      auditLogs: map['auditLogs'] != null
+          ? jsonDecode(map['auditLogs'] as String) as List
           : null,
-      metadata: map['metadata'] != null
-          ? jsonDecode(map['metadata'] as String) as Map<String, dynamic>
-          : null,
-      failureReason: map['failureReason'] as String?,
-      gatewayResponse: map['gatewayResponse'] as String?,
-      isRefunded: (map['isRefunded'] as int) == 1,
-      refundedAmount: map['refundedAmount'] as double?,
-      refundedDate: map['refundedDate'] != null
-          ? DateTime.parse(map['refundedDate'] as String)
-          : null,
-      refundReason: map['refundReason'] as String?,
     );
   }
 
@@ -138,14 +112,22 @@ class AccountPaymentDao {
     dynamic db,
     String accountId,
   ) async {
+    print(
+      '🔍 AccountPaymentDao: getByAccountId called for accountId: $accountId',
+    );
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
       where: 'accountId = ?',
       whereArgs: [accountId],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
+    print('🔍 AccountPaymentDao: Database query returned ${maps.length} rows');
 
-    return List.generate(maps.length, (i) => fromMap(maps[i]));
+    final result = List.generate(maps.length, (i) => fromMap(maps[i]));
+    print(
+      '🔍 AccountPaymentDao: Generated ${result.length} AccountPaymentModel objects',
+    );
+    return result;
   }
 
   // Get a specific payment by ID
@@ -173,7 +155,7 @@ class AccountPaymentDao {
       tableName,
       where: 'accountId = ? AND paymentStatus = ?',
       whereArgs: [accountId, paymentStatus],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));
@@ -189,7 +171,7 @@ class AccountPaymentDao {
       tableName,
       where: 'accountId = ? AND paymentType = ?',
       whereArgs: [accountId, paymentType],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));
@@ -205,7 +187,7 @@ class AccountPaymentDao {
       tableName,
       where: 'accountId = ? AND paymentMethodId = ?',
       whereArgs: [accountId, paymentMethodId],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));
@@ -220,13 +202,13 @@ class AccountPaymentDao {
   ) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
-      where: 'accountId = ? AND paymentDate BETWEEN ? AND ?',
+      where: 'accountId = ? AND created_at BETWEEN ? AND ?',
       whereArgs: [
         accountId,
         startDate.toIso8601String(),
         endDate.toIso8601String(),
       ],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));
@@ -244,7 +226,7 @@ class AccountPaymentDao {
       tableName,
       where: 'accountId = ?',
       whereArgs: [accountId],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
       limit: pageSize,
       offset: offset,
     );
@@ -256,7 +238,7 @@ class AccountPaymentDao {
   static Future<List<AccountPaymentModel>> getAll(dynamic db) async {
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
-      orderBy: 'accountId, paymentDate DESC, createdAt DESC',
+      orderBy: 'accountId, created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));
@@ -271,7 +253,7 @@ class AccountPaymentDao {
       tableName,
       where: 'accountId = ? AND paymentStatus = ?',
       whereArgs: [accountId, 'SUCCESS'],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));
@@ -286,7 +268,7 @@ class AccountPaymentDao {
       tableName,
       where: 'accountId = ? AND paymentStatus = ?',
       whereArgs: [accountId, 'FAILED'],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));
@@ -301,7 +283,7 @@ class AccountPaymentDao {
       tableName,
       where: 'accountId = ? AND paymentStatus = ?',
       whereArgs: [accountId, 'PENDING'],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));
@@ -511,7 +493,7 @@ class AccountPaymentDao {
       tableName,
       where: 'accountId = ? AND (description LIKE ? OR notes LIKE ?)',
       whereArgs: [accountId, '%$searchTerm%', '%$searchTerm%'],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));
@@ -545,7 +527,7 @@ class AccountPaymentDao {
       tableName,
       where: 'accountId = ? AND referenceNumber = ?',
       whereArgs: [accountId, referenceNumber],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));
@@ -561,7 +543,7 @@ class AccountPaymentDao {
       tableName,
       where: 'accountId = ? AND currency = ?',
       whereArgs: [accountId, currency],
-      orderBy: 'paymentDate DESC, createdAt DESC',
+      orderBy: 'created_at DESC, updated_at DESC',
     );
 
     return List.generate(maps.length, (i) => fromMap(maps[i]));

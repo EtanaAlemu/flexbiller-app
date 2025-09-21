@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/accounts_bloc.dart';
-import '../bloc/events/accounts_event.dart';
-import '../bloc/states/accounts_state.dart';
+import '../bloc/accounts_list_bloc.dart';
+import '../bloc/account_detail_bloc.dart';
+import '../bloc/events/accounts_list_events.dart';
+import '../bloc/states/accounts_list_states.dart';
+import '../../../../injection_container.dart';
 import '../widgets/accounts_list_widget.dart';
 import '../widgets/create_account_form.dart';
 import '../../domain/entities/accounts_query_params.dart';
@@ -19,12 +21,12 @@ class AccountsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Load accounts when the page is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AccountsBloc>().add(
+      context.read<AccountsListBloc>().add(
         const LoadAccounts(AccountsQueryParams()),
       );
     });
 
-    return BlocListener<AccountsBloc, AccountsState>(
+    return BlocListener<AccountsListBloc, AccountsListState>(
       listener: (context, state) {
         if (state is AllAccountsLoaded) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -40,30 +42,6 @@ class AccountsPage extends StatelessWidget {
               content: Text('Refreshing all accounts...'),
               backgroundColor: Colors.blue,
               duration: Duration(seconds: 1),
-            ),
-          );
-        } else if (state is AccountsExportSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Successfully exported ${state.exportedCount} accounts to ${state.fileName}',
-              ),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 3),
-              action: SnackBarAction(
-                label: 'Open',
-                onPressed: () {
-                  _openOrShareFile(state.filePath, state.fileName, context);
-                },
-              ),
-            ),
-          );
-        } else if (state is AccountsExportFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
             ),
           );
         }
@@ -132,19 +110,21 @@ class AccountsViewState extends State<AccountsView> {
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
       if (searchKey.isEmpty) {
         // If search is empty, load all accounts
-        context.read<AccountsBloc>().add(
+        context.read<AccountsListBloc>().add(
           const LoadAccounts(AccountsQueryParams()),
         );
       } else {
         // Search accounts by search key
-        context.read<AccountsBloc>().add(SearchAccounts(searchKey));
+        context.read<AccountsListBloc>().add(SearchAccounts(searchKey));
       }
     });
   }
 
   void _clearSearch() {
     _searchController.clear();
-    context.read<AccountsBloc>().add(const LoadAccounts(AccountsQueryParams()));
+    context.read<AccountsListBloc>().add(
+      const LoadAccounts(AccountsQueryParams()),
+    );
   }
 
   void _toggleSearchBar() {
@@ -248,16 +228,17 @@ class AccountsViewState extends State<AccountsView> {
                 right: 16,
                 child: FloatingActionButton.extended(
                   onPressed: () {
-                    // Capture the AccountsBloc instance before navigation
-                    final accountsBloc = context.read<AccountsBloc>();
+                    // Capture the AccountsListBloc instance before navigation
+                    final accountsBloc = context.read<AccountsListBloc>();
+                    final accountDetailBloc = getIt<AccountDetailBloc>();
 
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => BlocProvider.value(
-                          value: accountsBloc,
+                          value: accountDetailBloc,
                           child: CreateAccountForm(
                             onAccountCreated: () {
-                              // Refresh the accounts list after creation using the captured instance
+                              // Refresh the accounts list after creation
                               accountsBloc.add(const RefreshAccounts());
                             },
                           ),

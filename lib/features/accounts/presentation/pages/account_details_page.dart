@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account.dart';
-import '../bloc/accounts_bloc.dart';
+import '../bloc/accounts_orchestrator_bloc.dart';
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 import '../widgets/edit_account_form.dart';
@@ -11,6 +11,7 @@ import '../widgets/account_tags_widget.dart';
 import '../widgets/account_custom_fields_widget.dart';
 import '../widgets/account_payment_methods_widget.dart';
 import '../widgets/account_payments_widget.dart';
+import '../bloc/account_payments_bloc.dart';
 import '../widgets/account_details_card_widget.dart';
 import '../widgets/account_subscriptions_widget.dart';
 import '../bloc/account_subscriptions_bloc.dart';
@@ -28,7 +29,7 @@ class AccountDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Try to get the existing BLoC from context, if not available create a new one
     try {
-      final existingBloc = context.read<AccountsBloc>();
+      final existingBloc = context.read<AccountsOrchestratorBloc>();
       return BlocProvider.value(
         value: existingBloc,
         child: AccountDetailsView(accountId: accountId),
@@ -36,7 +37,7 @@ class AccountDetailsPage extends StatelessWidget {
     } catch (e) {
       // If no BLoC is available in context, create a new one
       return BlocProvider(
-        create: (context) => getIt<AccountsBloc>(),
+        create: (context) => getIt<AccountsOrchestratorBloc>(),
         child: AccountDetailsView(accountId: accountId),
       );
     }
@@ -64,7 +65,9 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
 
     // Load account details after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AccountsBloc>().add(LoadAccountDetails(widget.accountId));
+      context.read<AccountsOrchestratorBloc>().add(
+        LoadAccountDetails(widget.accountId),
+      );
     });
   }
 
@@ -76,7 +79,7 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
+    return BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
       builder: (context, state) {
         if (state is AccountDetailsLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -108,7 +111,7 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () {
-                      context.read<AccountsBloc>().add(
+                      context.read<AccountsOrchestratorBloc>().add(
                         LoadAccountDetails(widget.accountId),
                       );
                     },
@@ -131,13 +134,13 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
 
         if (state is AccountDetailsLoaded) {
           final account = state.account;
-          return BlocListener<AccountsBloc, AccountsState>(
+          return BlocListener<AccountsOrchestratorBloc, AccountsState>(
             listener: (context, state) {
               if (state is TagAssigned ||
                   state is TagRemoved ||
                   state is AccountUpdated) {
                 // Refresh account details after changes
-                context.read<AccountsBloc>().add(
+                context.read<AccountsOrchestratorBloc>().add(
                   LoadAccountDetails(widget.accountId),
                 );
               } else if (state is AccountTimelineLoaded ||
@@ -180,34 +183,34 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                       label: 'Retry',
                       onPressed: () {
                         // Retry loading additional details
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           LoadAccountTimeline(widget.accountId),
                         );
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           LoadAccountTags(widget.accountId),
                         );
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           LoadAllTagsForAccount(widget.accountId),
                         );
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           LoadAccountCustomFields(widget.accountId),
                         );
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           LoadAccountEmails(widget.accountId),
                         );
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           LoadAccountBlockingStates(widget.accountId),
                         );
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           LoadAccountInvoicePayments(widget.accountId),
                         );
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           LoadAccountAuditLogs(widget.accountId),
                         );
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           LoadAccountPaymentMethods(widget.accountId),
                         );
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           LoadAccountPayments(widget.accountId),
                         );
                       },
@@ -224,7 +227,8 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                     icon: const Icon(Icons.edit),
                     onPressed: () {
                       // Capture the BLoC reference before navigation
-                      final accountsBloc = context.read<AccountsBloc>();
+                      final accountsBloc = context
+                          .read<AccountsOrchestratorBloc>();
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => BlocProvider.value(
@@ -405,7 +409,10 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                 create: (context) => getIt<AccountInvoicesBloc>(),
                 child: AccountInvoicesWidget(accountId: accountId),
               ),
-              AccountPaymentsWidget(accountId: accountId),
+              BlocProvider(
+                create: (context) => getIt<AccountPaymentsBloc>(),
+                child: AccountPaymentsWidget(accountId: accountId),
+              ),
               AccountPaymentMethodsWidget(accountId: accountId),
               AccountTagsWidget(accountId: accountId),
               AccountCustomFieldsWidget(accountId: accountId),

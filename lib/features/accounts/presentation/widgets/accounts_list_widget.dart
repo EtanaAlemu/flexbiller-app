@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
-import '../bloc/accounts_bloc.dart';
-import '../bloc/events/accounts_event.dart';
-import '../bloc/states/accounts_state.dart';
+import "../bloc/accounts_list_bloc.dart";
+import '../bloc/events/accounts_list_events.dart';
+import '../bloc/states/accounts_list_states.dart';
 import '../../domain/entities/account.dart';
 import '../../domain/entities/accounts_query_params.dart';
 import 'selectable_account_card_widget.dart';
@@ -23,149 +23,23 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
+    return BlocBuilder<AccountsListBloc, AccountsListState>(
       builder: (context, state) {
         _logger.d(
           '🔍 DEBUG: AccountsListWidget - Current state: ${state.runtimeType}',
         );
 
         // Cache accounts when they are loaded - update for any state that has accounts
-        if (state is AccountsLoaded) {
+        if (state is AccountsListLoaded) {
           _cachedAccounts = state.accounts;
         } else if (state is AllAccountsLoaded) {
           _cachedAccounts = state.accounts;
-        } else if (state is AccountsSearchResults) {
-          _cachedAccounts = state.accounts;
         } else if (state is AccountsFiltered) {
           _cachedAccounts = state.accounts;
-        } else if (state is BulkAccountsDeleting) {
-          // Update cached accounts when deleting to reflect current state
-          _cachedAccounts = state.accountsToDelete;
-        } else if (state is BulkAccountsExporting) {
-          // Update cached accounts when exporting to reflect current state
-          _cachedAccounts = state.accountsToExport;
         }
 
-        // Handle multi-select states
-        if (state is MultiSelectModeEnabled) {
-          return _buildMultiSelectMode(context, state.selectedAccounts);
-        }
-
-        if (state is AccountSelected) {
-          return _buildMultiSelectMode(context, state.selectedAccounts);
-        }
-
-        if (state is AccountDeselected) {
-          return _buildMultiSelectMode(context, state.selectedAccounts);
-        }
-
-        if (state is AllAccountsSelected) {
-          return _buildMultiSelectMode(context, state.selectedAccounts);
-        }
-
-        if (state is AllAccountsDeselected) {
-          return _buildMultiSelectMode(context, []);
-        }
-
-        if (state is BulkAccountsDeleting) {
-          return _buildMultiSelectMode(context, state.accountsToDelete);
-        }
-
-        if (state is AccountDeleted) {
-          // After successful single account deletion, refresh the accounts list
-          _logger.d('Account deleted successfully, refreshing accounts list');
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<AccountsBloc>().add(
-              const LoadAccounts(AccountsQueryParams()),
-            );
-          });
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Refreshing accounts...'),
-              ],
-            ),
-          );
-        }
-
-        if (state is BulkAccountsDeleted) {
-          // After successful bulk deletion, refresh the accounts list
-          _logger.d('Accounts deleted successfully, refreshing accounts list');
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<AccountsBloc>().add(
-              const LoadAccounts(AccountsQueryParams()),
-            );
-          });
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Refreshing accounts...'),
-              ],
-            ),
-          );
-        }
-
-        if (state is AccountDeletionFailure) {
-          // Handle single account deletion failure
-          _logger.d('Account deletion failed: ${state.message}');
-          // Refresh accounts list to show current state
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<AccountsBloc>().add(
-              const LoadAccounts(AccountsQueryParams()),
-            );
-          });
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Refreshing accounts...'),
-              ],
-            ),
-          );
-        }
-
-        if (state is BulkAccountsDeletionFailure) {
-          // Handle bulk deletion failure
-          _logger.d('Account deletion failed: ${state.message}');
-          // Refresh accounts list to show current state
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<AccountsBloc>().add(
-              const LoadAccounts(AccountsQueryParams()),
-            );
-          });
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Refreshing accounts...'),
-              ],
-            ),
-          );
-        }
-
-        if (state is BulkAccountsExporting) {
-          return _buildMultiSelectMode(context, state.accountsToExport);
-        }
-
-        if (state is BulkAccountsExportSuccess) {
-          return _buildMultiSelectMode(context, _cachedAccounts);
-        }
-
-        if (state is BulkAccountsExportFailure) {
-          return _buildMultiSelectMode(context, _cachedAccounts);
-        }
-
-        if (state is AccountsLoading) {
+        // Handle loading states
+        if (state is AccountsListLoading) {
           // If we have cached accounts, show them during loading
           if (_cachedAccounts.isNotEmpty) {
             _logger.d(
@@ -269,7 +143,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                       ElevatedButton.icon(
                         onPressed: () {
                           // Navigate to create account
-                          final accountsBloc = context.read<AccountsBloc>();
+                          final accountsBloc = context.read<AccountsListBloc>();
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => BlocProvider.value(
@@ -330,7 +204,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                     ),
                     TextButton.icon(
                       onPressed: () {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsListBloc>().add(
                           const LoadAccounts(AccountsQueryParams()),
                         );
                       },
@@ -343,11 +217,11 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                     const SizedBox(width: 8),
                     IconButton(
                       onPressed: () {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsListBloc>().add(
                           const RefreshAllAccounts(),
                         );
                       },
-                      icon: BlocBuilder<AccountsBloc, AccountsState>(
+                      icon: BlocBuilder<AccountsListBloc, AccountsListState>(
                         builder: (context, state) {
                           if (state is AllAccountsRefreshing) {
                             return const SizedBox(
@@ -422,7 +296,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
           );
         }
 
-        if (state is AccountsFailure) {
+        if (state is AccountsListFailure) {
           return Center(
             child: SingleChildScrollView(
               child: Padding(
@@ -469,7 +343,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                       children: [
                         OutlinedButton.icon(
                           onPressed: () {
-                            context.read<AccountsBloc>().add(
+                            context.read<AccountsListBloc>().add(
                               const LoadAccounts(AccountsQueryParams()),
                             );
                           },
@@ -488,7 +362,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                         const SizedBox(width: 12),
                         ElevatedButton.icon(
                           onPressed: () {
-                            context.read<AccountsBloc>().add(
+                            context.read<AccountsListBloc>().add(
                               const LoadAccounts(AccountsQueryParams()),
                             );
                           },
@@ -519,7 +393,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
           );
         }
 
-        if (state is AccountsLoaded) {
+        if (state is AccountsListLoaded) {
           if (state.accounts.isEmpty) {
             return Center(
               child: SingleChildScrollView(
@@ -569,7 +443,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                         children: [
                           OutlinedButton.icon(
                             onPressed: () {
-                              context.read<AccountsBloc>().add(
+                              context.read<AccountsListBloc>().add(
                                 const LoadAccounts(AccountsQueryParams()),
                               );
                             },
@@ -588,7 +462,8 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                           const SizedBox(width: 12),
                           ElevatedButton.icon(
                             onPressed: () {
-                              final accountsBloc = context.read<AccountsBloc>();
+                              final accountsBloc = context
+                                  .read<AccountsListBloc>();
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => BlocProvider.value(
@@ -689,7 +564,9 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                         children: [
                           OutlinedButton.icon(
                             onPressed: () {
-                              context.read<AccountsBloc>().add(ClearFilters());
+                              context.read<AccountsListBloc>().add(
+                                ClearFilters(),
+                              );
                             },
                             icon: const Icon(Icons.clear_rounded),
                             label: const Text('Clear Filter'),
@@ -706,7 +583,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                           const SizedBox(width: 12),
                           ElevatedButton.icon(
                             onPressed: () {
-                              context.read<AccountsBloc>().add(
+                              context.read<AccountsListBloc>().add(
                                 const LoadAccounts(AccountsQueryParams()),
                               );
                             },
@@ -745,7 +622,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
           );
         }
 
-        if (state is AccountsSearching) {
+        if (state is AccountsListLoading) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -753,7 +630,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
                 Text(
-                  'Searching for "${state.searchKey}"...',
+                  'Searching for accounts...',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
@@ -761,7 +638,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
           );
         }
 
-        if (state is AccountsSearchResults) {
+        if (state is AccountsFiltered) {
           if (state.accounts.isEmpty) {
             return Center(
               child: SingleChildScrollView(
@@ -797,7 +674,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'No accounts match your search for "${state.searchKey}"',
+                        'No accounts match your search',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: Theme.of(
                             context,
@@ -811,7 +688,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                         children: [
                           OutlinedButton.icon(
                             onPressed: () {
-                              context.read<AccountsBloc>().add(
+                              context.read<AccountsListBloc>().add(
                                 const LoadAccounts(AccountsQueryParams()),
                               );
                             },
@@ -830,7 +707,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                           const SizedBox(width: 12),
                           ElevatedButton.icon(
                             onPressed: () {
-                              context.read<AccountsBloc>().add(
+                              context.read<AccountsListBloc>().add(
                                 const LoadAccounts(AccountsQueryParams()),
                               );
                             },
@@ -868,13 +745,13 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
                 child: Row(
                   children: [
                     Text(
-                      '${state.accounts.length} search results for "${state.searchKey}"',
+                      '${state.accounts.length} search results',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const Spacer(),
                     TextButton(
                       onPressed: () {
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsListBloc>().add(
                           const LoadAccounts(AccountsQueryParams()),
                         );
                       },
@@ -904,56 +781,60 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
           );
         }
 
-        if (state is AccountsRefreshing) {
+        if (state is AllAccountsRefreshing) {
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<AccountsBloc>().add(const RefreshAccounts());
+              context.read<AccountsListBloc>().add(const RefreshAccounts());
             },
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount: state.accounts.length,
-              itemBuilder: (context, index) {
-                final account = state.accounts[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: SelectableAccountCardWidget(
-                    account: account,
-                    isSelected: false,
-                    isMultiSelectMode: false,
-                  ),
-                );
-              },
-            ),
+            child: _cachedAccounts.isNotEmpty
+                ? ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    itemCount: _cachedAccounts.length,
+                    itemBuilder: (context, index) {
+                      final account = _cachedAccounts[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: SelectableAccountCardWidget(
+                          account: account,
+                          isSelected: false,
+                          isMultiSelectMode: false,
+                        ),
+                      );
+                    },
+                  )
+                : const Center(child: CircularProgressIndicator()),
           );
         }
 
-        if (state is AccountsLoadingMore) {
+        if (state is AccountsListLoading) {
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<AccountsBloc>().add(const RefreshAccounts());
+              context.read<AccountsListBloc>().add(const RefreshAccounts());
             },
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount: state.accounts.length + 1,
-              itemBuilder: (context, index) {
-                if (index == state.accounts.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
+            child: _cachedAccounts.isNotEmpty
+                ? ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    itemCount: _cachedAccounts.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == _cachedAccounts.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
 
-                final account = state.accounts[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: SelectableAccountCardWidget(
-                    account: account,
-                    isSelected: false,
-                    isMultiSelectMode: false,
-                  ),
-                );
-              },
-            ),
+                      final account = _cachedAccounts[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: SelectableAccountCardWidget(
+                          account: account,
+                          isSelected: false,
+                          isMultiSelectMode: false,
+                        ),
+                      );
+                    },
+                  )
+                : const Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -970,11 +851,11 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
           );
         }
 
-        // Handle AccountsInitial state by triggering a load
-        if (state is AccountsInitial) {
-          _logger.d('State is AccountsInitial, triggering load accounts');
+        // Handle AccountsListInitial state by triggering a load
+        if (state is AccountsListInitial) {
+          _logger.d('State is AccountsListInitial, triggering load accounts');
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<AccountsBloc>().add(
+            context.read<AccountsListBloc>().add(
               const LoadAccounts(AccountsQueryParams()),
             );
           });
@@ -994,12 +875,12 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         _logger.d('No cached accounts and state is: ${state.runtimeType}');
 
         // If we have any state that might indicate we should show accounts, try to load them
-        if (state is! AccountsFailure && state is! AccountDetailsFailure) {
+        if (state is! AccountsListFailure) {
           _logger.d(
             'Triggering load accounts for unexpected state: ${state.runtimeType}',
           );
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<AccountsBloc>().add(
+            context.read<AccountsListBloc>().add(
               const LoadAccounts(AccountsQueryParams()),
             );
           });
@@ -1040,8 +921,8 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
               if (hasReachedMax == false)
                 TextButton(
                   onPressed: () {
-                    context.read<AccountsBloc>().add(
-                      LoadMoreAccounts(offset: currentOffset, limit: 20),
+                    context.read<AccountsListBloc>().add(
+                      const LoadMoreAccounts(),
                     );
                   },
                   child: const Text('Load More'),
@@ -1052,7 +933,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
-              context.read<AccountsBloc>().add(const RefreshAccounts());
+              context.read<AccountsListBloc>().add(const RefreshAccounts());
             },
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),

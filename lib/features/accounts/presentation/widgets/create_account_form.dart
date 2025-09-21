@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import '../../domain/entities/account.dart';
-import '../bloc/accounts_bloc.dart';
-import '../bloc/events/accounts_event.dart';
-import '../bloc/states/accounts_state.dart';
+import "../bloc/account_detail_bloc.dart";
+import '../bloc/events/account_detail_events.dart';
+import '../bloc/states/account_detail_states.dart';
 
 class CreateAccountForm extends StatefulWidget {
   final VoidCallback? onAccountCreated;
@@ -118,7 +118,7 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
       auditLogs: [],
     );
 
-    context.read<AccountsBloc>().add(CreateAccount(account));
+    context.read<AccountDetailBloc>().add(CreateAccount(account));
   }
 
   void _scrollToFirstInvalidField() {
@@ -153,7 +153,7 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return BlocListener<AccountsBloc, AccountsState>(
+    return BlocListener<AccountDetailBloc, AccountDetailState>(
       listener: (context, state) {
         if (state is AccountCreated) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -225,7 +225,7 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
           ),
           centerTitle: false,
         ),
-        body: BlocBuilder<AccountsBloc, AccountsState>(
+        body: BlocBuilder<AccountDetailBloc, AccountDetailState>(
           builder: (context, state) {
             return Form(
               key: _formKey,
@@ -1125,7 +1125,7 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
   Widget _buildActionButtons(
     ThemeData theme,
     ColorScheme colorScheme,
-    AccountsState state,
+    AccountDetailState state,
   ) {
     final isLoading = state is AccountCreating;
 

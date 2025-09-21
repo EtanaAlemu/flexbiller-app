@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -90,7 +90,7 @@ class _CreateAccountPaymentFormState extends State<CreateAccountPaymentForm> {
         return;
       }
 
-      context.read<AccountsBloc>().add(
+      context.read<AccountsOrchestratorBloc>().add(
         CreateAccountPayment(
           accountId: widget.accountId,
           paymentMethodId: _selectedPaymentMethodId,
@@ -139,7 +139,7 @@ class _CreateAccountPaymentFormState extends State<CreateAccountPaymentForm> {
           ),
         ],
       ),
-      body: BlocListener<AccountsBloc, AccountsState>(
+      body: BlocListener<AccountsOrchestratorBloc, AccountsState>(
         listener: (context, state) {
           if (state is AccountPaymentCreated) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -160,7 +160,7 @@ class _CreateAccountPaymentFormState extends State<CreateAccountPaymentForm> {
             );
           }
         },
-        child: BlocBuilder<AccountsBloc, AccountsState>(
+        child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
           builder: (context, state) {
             final isLoading = state is CreatingAccountPayment;
 

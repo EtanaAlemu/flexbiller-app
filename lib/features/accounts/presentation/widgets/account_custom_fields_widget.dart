@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_custom_field.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 import 'create_account_custom_field_dialog.dart';
@@ -14,13 +14,13 @@ class AccountCustomFieldsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsBloc, AccountsState>(
+    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
         if (state is AccountDetailsLoaded) {
-          context.read<AccountsBloc>().add(LoadAccountCustomFields(accountId));
+          context.read<AccountsOrchestratorBloc>().add(LoadAccountCustomFields(accountId));
         }
       },
-      child: BlocBuilder<AccountsBloc, AccountsState>(
+      child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
         builder: (context, state) {
           if (state is AccountCustomFieldsLoading) {
             return const Center(
@@ -55,7 +55,7 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<AccountsBloc>().add(
+                      context.read<AccountsOrchestratorBloc>().add(
                         RefreshAccountCustomFields(accountId),
                       );
                     },
@@ -376,7 +376,7 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                   if (customFields.length == 1) {
                     // Single field - use single creation
                     final field = customFields.first;
-                    context.read<AccountsBloc>().add(
+                    context.read<AccountsOrchestratorBloc>().add(
                       CreateAccountCustomField(
                         accountId,
                         field['name']!,
@@ -385,7 +385,7 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                     );
                   } else {
                     // Multiple fields - use bulk creation
-                    context.read<AccountsBloc>().add(
+                    context.read<AccountsOrchestratorBloc>().add(
                       CreateMultipleAccountCustomFields(
                         accountId,
                         customFields,
@@ -529,7 +529,7 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                   if (updatedFields.length == 1) {
                     // Single field - use single update
                     final field = updatedFields.first;
-                    context.read<AccountsBloc>().add(
+                    context.read<AccountsOrchestratorBloc>().add(
                       UpdateAccountCustomField(
                         accountId,
                         field['customFieldId'] as String,
@@ -539,7 +539,7 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                     );
                   } else {
                     // Multiple fields - use bulk update
-                    context.read<AccountsBloc>().add(
+                    context.read<AccountsOrchestratorBloc>().add(
                       UpdateMultipleAccountCustomFields(
                         accountId,
                         updatedFields,
@@ -575,7 +575,7 @@ class AccountCustomFieldsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<AccountsBloc>().add(
+              context.read<AccountsOrchestratorBloc>().add(
                 DeleteAccountCustomField(accountId, customField.customFieldId),
               );
             },
@@ -643,7 +643,7 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                       Navigator.of(context).pop();
                       if (selectedFieldIds.length == 1) {
                         // Single field - use single delete
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           DeleteAccountCustomField(
                             accountId,
                             selectedFieldIds.first,
@@ -651,7 +651,7 @@ class AccountCustomFieldsWidget extends StatelessWidget {
                         );
                       } else {
                         // Multiple fields - use bulk delete
-                        context.read<AccountsBloc>().add(
+                        context.read<AccountsOrchestratorBloc>().add(
                           DeleteMultipleAccountCustomFields(
                             accountId,
                             selectedFieldIds,

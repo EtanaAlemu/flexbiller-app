@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_timeline.dart';
-import '../bloc/accounts_bloc.dart';
+import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 
@@ -13,13 +13,13 @@ class AccountTimelineWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsBloc, AccountsState>(
+    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
         if (state is AccountDetailsLoaded) {
-          context.read<AccountsBloc>().add(LoadAccountTimeline(accountId));
+          context.read<AccountsOrchestratorBloc>().add(LoadAccountTimeline(accountId));
         }
       },
-      child: BlocBuilder<AccountsBloc, AccountsState>(
+      child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
         builder: (context, state) {
           if (state is AccountTimelineLoading) {
             return const Center(
@@ -54,7 +54,7 @@ class AccountTimelineWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<AccountsBloc>().add(
+                      context.read<AccountsOrchestratorBloc>().add(
                         RefreshAccountTimeline(accountId),
                       );
                     },
@@ -96,7 +96,7 @@ class AccountTimelineWidget extends StatelessWidget {
 
             return RefreshIndicator(
               onRefresh: () async {
-                context.read<AccountsBloc>().add(
+                context.read<AccountsOrchestratorBloc>().add(
                   RefreshAccountTimeline(accountId),
                 );
               },

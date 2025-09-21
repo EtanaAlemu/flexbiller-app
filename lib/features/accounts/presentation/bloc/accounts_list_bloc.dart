@@ -49,20 +49,48 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
     // Listen to accounts list updates from repository background sync
     _accountsStreamSubscription = _accountsRepository.accountsStream.listen(
       (response) {
-        if (response.isLoading) {
-          // Handle loading state - don't emit if we already have data
-          final currentState = state;
-          if (currentState is! AccountsListLoaded &&
-              currentState is! AllAccountsLoaded) {
-            add(LoadAccounts(_currentQueryParams));
-          }
-        } else if (response.isSuccess && response.data != null) {
-          // Update accounts list with fresh data
+        if (response.isSuccess && response.data != null) {
+          // Update accounts list with fresh data directly without triggering new events
           final accounts = response.data!;
-          add(LoadAccounts(_currentQueryParams));
-          _logger.d(
-            'Accounts list updated from background sync: ${accounts.length} accounts',
-          );
+          final currentState = state;
+
+          // Update if we're in a loaded state or loading state
+          if (currentState is AccountsListLoaded) {
+            emit(
+              AccountsListLoaded(
+                accounts: accounts,
+                currentOffset: currentState.currentOffset,
+                totalCount: accounts.length,
+                hasReachedMax: accounts.length < _currentQueryParams.limit,
+              ),
+            );
+            _logger.d(
+              'Accounts list updated from background sync: ${accounts.length} accounts',
+            );
+          } else if (currentState is AllAccountsLoaded) {
+            emit(
+              AllAccountsLoaded(
+                accounts: accounts,
+                totalCount: accounts.length,
+              ),
+            );
+            _logger.d(
+              'All accounts updated from background sync: ${accounts.length} accounts',
+            );
+          } else if (currentState is AccountsListLoading) {
+            // Handle the case when we're still loading and background sync completes
+            emit(
+              AccountsListLoaded(
+                accounts: accounts,
+                currentOffset: _currentQueryParams.offset,
+                totalCount: accounts.length,
+                hasReachedMax: accounts.length < _currentQueryParams.limit,
+              ),
+            );
+            _logger.d(
+              'Accounts list loaded from background sync: ${accounts.length} accounts',
+            );
+          }
         } else if (response.hasError) {
           _logger.e('Error in accounts stream: ${response.errorMessage}');
         }
