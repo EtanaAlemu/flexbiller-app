@@ -10,6 +10,7 @@ import '../widgets/account_timeline_widget.dart';
 import '../widgets/account_tags_widget.dart';
 import '../widgets/account_custom_fields_widget.dart';
 import '../widgets/account_payment_methods_widget.dart';
+import '../bloc/account_payment_methods_bloc.dart';
 import '../widgets/account_payments_widget.dart';
 import '../bloc/account_payments_bloc.dart';
 import '../widgets/account_details_card_widget.dart';
@@ -413,7 +414,10 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                 create: (context) => getIt<AccountPaymentsBloc>(),
                 child: AccountPaymentsWidget(accountId: accountId),
               ),
-              AccountPaymentMethodsWidget(accountId: accountId),
+              BlocProvider(
+                create: (context) => getIt<AccountPaymentMethodsBloc>(),
+                child: AccountPaymentMethodsWidget(accountId: accountId),
+              ),
               AccountTagsWidget(accountId: accountId),
               AccountCustomFieldsWidget(accountId: accountId),
               AccountTimelineWidget(accountId: accountId),

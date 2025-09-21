@@ -219,6 +219,8 @@ import 'features/accounts/presentation/bloc/account_invoices_bloc.dart'
     as _i116;
 import 'features/accounts/presentation/bloc/account_multiselect_bloc.dart'
     as _i966;
+import 'features/accounts/presentation/bloc/account_payment_methods_bloc.dart'
+    as _i462;
 import 'features/accounts/presentation/bloc/account_payments_bloc.dart'
     as _i406;
 import 'features/accounts/presentation/bloc/account_subscriptions_bloc.dart'
@@ -910,6 +912,15 @@ _i174.GetIt $initGetIt(
   gh.factory<_i657.GetAccountAuditLogsUseCase>(
     () => _i657.GetAccountAuditLogsUseCase(
       gh<_i271.AccountAuditLogsRepository>(),
+    ),
+  );
+  gh.factory<_i462.AccountPaymentMethodsBloc>(
+    () => _i462.AccountPaymentMethodsBloc(
+      getAccountPaymentMethodsUseCase:
+          gh<_i600.GetAccountPaymentMethodsUseCase>(),
+      setDefaultPaymentMethodUseCase:
+          gh<_i706.SetDefaultPaymentMethodUseCase>(),
+      refreshPaymentMethodsUseCase: gh<_i905.RefreshPaymentMethodsUseCase>(),
     ),
   );
   gh.factory<_i993.ForgotPasswordUseCase>(

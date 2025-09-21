@@ -62,7 +62,9 @@ class AccountPaymentMethodsRemoteDataSourceImpl
     String accountId,
   ) async {
     try {
-      final response = await _dioClient.dio.get('/accounts/$accountId/paymentMethods');
+      final response = await _dioClient.dio.get(
+        '/accounts/$accountId/paymentMethods',
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -92,6 +94,13 @@ class AccountPaymentMethodsRemoteDataSourceImpl
                 ),
               )
               .toList();
+        }
+        // Handle empty response (no payment methods)
+        else if (responseData['message'] != null &&
+            responseData['message'].toString().contains('successfully')) {
+          // API returned success message but no payment methods data
+          // This means there are no payment methods for this account
+          return [];
         } else {
           throw ServerException(
             responseData['message'] ??

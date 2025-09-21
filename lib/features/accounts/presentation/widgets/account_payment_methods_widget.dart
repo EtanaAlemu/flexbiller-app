@@ -1,69 +1,137 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_payment_method.dart';
-import "../bloc/accounts_orchestrator_bloc.dart";
-import '../bloc/events/accounts_event.dart';
-import '../bloc/states/accounts_state.dart';
+import '../bloc/account_payment_methods_bloc.dart';
+import '../bloc/account_payment_methods_events.dart';
+import '../bloc/account_payment_methods_states.dart';
 import '../pages/payment_method_detail_page.dart';
 
-class AccountPaymentMethodsWidget extends StatelessWidget {
+class AccountPaymentMethodsWidget extends StatefulWidget {
   final String accountId;
 
   const AccountPaymentMethodsWidget({Key? key, required this.accountId})
     : super(key: key);
 
   @override
+  State<AccountPaymentMethodsWidget> createState() =>
+      _AccountPaymentMethodsWidgetState();
+}
+
+class _AccountPaymentMethodsWidgetState
+    extends State<AccountPaymentMethodsWidget> {
+  @override
+  void initState() {
+    super.initState();
+    print(
+      '🔍 AccountPaymentMethodsWidget: initState - triggering LoadAccountPaymentMethods',
+    );
+    // Trigger payment methods loading when widget initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AccountPaymentMethodsBloc>().add(
+        LoadAccountPaymentMethods(widget.accountId),
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
+    print(
+      '🔍 AccountPaymentMethodsWidget: Building with accountId: ${widget.accountId}',
+    );
+
+    return BlocListener<AccountPaymentMethodsBloc, AccountPaymentMethodsState>(
       listener: (context, state) {
-        if (state is AccountDetailsLoaded) {
-          context.read<AccountsOrchestratorBloc>().add(
-            LoadAccountPaymentMethods(accountId),
+        print(
+          '🔍 AccountPaymentMethodsWidget: Received state: ${state.runtimeType}',
+        );
+        print('🔍 AccountPaymentMethodsWidget: State details: $state');
+
+        if (state is DefaultPaymentMethodSet) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Default payment method set successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        } else if (state is DefaultPaymentMethodSetFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed to set default payment method: ${state.message}',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is PaymentMethodDeactivated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment method deactivated successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        } else if (state is PaymentMethodDeactivationFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed to deactivate payment method: ${state.message}',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is PaymentMethodReactivated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment method reactivated successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        } else if (state is PaymentMethodReactivationFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed to reactivate payment method: ${state.message}',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is PaymentMethodsSynced) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment methods synced successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        } else if (state is PaymentMethodsSyncFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to sync payment methods: ${state.message}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
           );
         }
       },
-      child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
+      child: BlocBuilder<AccountPaymentMethodsBloc, AccountPaymentMethodsState>(
         builder: (context, state) {
-          if (state is AccountPaymentMethodsLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          print(
+            '🔍 AccountPaymentMethodsWidget: Building with state: ${state.runtimeType}',
+          );
+          print(
+            '🔍 AccountPaymentMethodsWidget: State details in builder: $state',
+          );
 
-          if (state is AccountPaymentMethodsFailure) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load payment methods',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    state.message,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<AccountsOrchestratorBloc>().add(
-                        LoadAccountPaymentMethods(accountId),
-                      );
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
+          // Check for AccountPaymentMethodsLoaded first to prioritize it
           if (state is AccountPaymentMethodsLoaded) {
+            print(
+              '🔍 AccountPaymentMethodsWidget: Building AccountPaymentMethodsLoaded with ${state.paymentMethods.length} payment methods',
+            );
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -77,8 +145,8 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
-                        context.read<AccountsOrchestratorBloc>().add(
-                          RefreshAccountPaymentMethods(accountId),
+                        context.read<AccountPaymentMethodsBloc>().add(
+                          RefreshAccountPaymentMethods(widget.accountId),
                         );
                       },
                       tooltip: 'Refresh Payment Methods',
@@ -86,8 +154,8 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.sync),
                       onPressed: () {
-                        context.read<AccountsOrchestratorBloc>().add(
-                          RefreshPaymentMethods(accountId),
+                        context.read<AccountPaymentMethodsBloc>().add(
+                          SyncPaymentMethods(widget.accountId),
                         );
                       },
                       tooltip: 'Sync with External Processors',
@@ -121,8 +189,8 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () {
-                            context.read<AccountsOrchestratorBloc>().add(
-                              RefreshPaymentMethods(accountId),
+                            context.read<AccountPaymentMethodsBloc>().add(
+                              SyncPaymentMethods(widget.accountId),
                             );
                           },
                           icon: const Icon(Icons.sync),
@@ -153,7 +221,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
             );
           }
 
-          if (state is RefreshingPaymentMethods) {
+          if (state is AccountPaymentMethodsLoading) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -188,7 +256,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
             );
           }
 
-          if (state is PaymentMethodsRefreshed) {
+          if (state is PaymentMethodsSynced) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -232,8 +300,8 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
-                        context.read<AccountsOrchestratorBloc>().add(
-                          RefreshAccountPaymentMethods(accountId),
+                        context.read<AccountPaymentMethodsBloc>().add(
+                          RefreshAccountPaymentMethods(widget.accountId),
                         );
                       },
                       tooltip: 'Refresh Payment Methods',
@@ -241,8 +309,8 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.sync),
                       onPressed: () {
-                        context.read<AccountsOrchestratorBloc>().add(
-                          RefreshPaymentMethods(accountId),
+                        context.read<AccountPaymentMethodsBloc>().add(
+                          SyncPaymentMethods(widget.accountId),
                         );
                       },
                       tooltip: 'Sync with External Processors',
@@ -290,7 +358,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
             );
           }
 
-          if (state is RefreshPaymentMethodsFailure) {
+          if (state is AccountPaymentMethodsFailure) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -304,8 +372,8 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
-                        context.read<AccountsOrchestratorBloc>().add(
-                          RefreshAccountPaymentMethods(accountId),
+                        context.read<AccountPaymentMethodsBloc>().add(
+                          RefreshAccountPaymentMethods(widget.accountId),
                         );
                       },
                       tooltip: 'Refresh Payment Methods',
@@ -313,8 +381,8 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.sync),
                       onPressed: () {
-                        context.read<AccountsOrchestratorBloc>().add(
-                          RefreshPaymentMethods(accountId),
+                        context.read<AccountPaymentMethodsBloc>().add(
+                          SyncPaymentMethods(widget.accountId),
                         );
                       },
                       tooltip: 'Sync with External Processors',
@@ -345,8 +413,8 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
                         onPressed: () {
-                          context.read<AccountsOrchestratorBloc>().add(
-                            RefreshPaymentMethods(accountId),
+                          context.read<AccountPaymentMethodsBloc>().add(
+                            SyncPaymentMethods(widget.accountId),
                           );
                         },
                         icon: const Icon(Icons.sync),
@@ -639,7 +707,7 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => PaymentMethodDetailPage(
           paymentMethod: method,
-          accountId: accountId,
+          accountId: widget.accountId,
         ),
       ),
     );
@@ -728,9 +796,9 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<AccountsOrchestratorBloc>().add(
+              context.read<AccountPaymentMethodsBloc>().add(
                 SetDefaultPaymentMethod(
-                  accountId: accountId,
+                  accountId: widget.accountId,
                   paymentMethodId: method.id,
                   payAllUnpaidInvoices: false, // TODO: Get from checkbox
                 ),
@@ -762,7 +830,12 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // TODO: Implement deactivate functionality
+              context.read<AccountPaymentMethodsBloc>().add(
+                DeactivatePaymentMethod(
+                  accountId: widget.accountId,
+                  paymentMethodId: method.id,
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
@@ -794,7 +867,12 @@ class AccountPaymentMethodsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // TODO: Implement reactivate functionality
+              context.read<AccountPaymentMethodsBloc>().add(
+                ReactivatePaymentMethod(
+                  accountId: widget.accountId,
+                  paymentMethodId: method.id,
+                ),
+              );
             },
             child: const Text('Reactivate'),
           ),
