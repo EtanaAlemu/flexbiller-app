@@ -88,8 +88,8 @@ class _SidebarMenuState extends State<SidebarMenu>
       activeIcon: Icons.settings,
       title: 'Settings',
       index: 7,
-      isAvailable: false,
-      badge: 'Soon',
+      isAvailable: true,
+      badge: null,
     ),
     // Profile and Logout items
     SidebarMenuItem(
@@ -99,7 +99,7 @@ class _SidebarMenuState extends State<SidebarMenu>
       index: 8,
       isAvailable: true,
       badge: null,
-      isSpecial: true, // Special styling for profile/logout
+      isSpecial: false, // Changed to false so it navigates normally
     ),
     SidebarMenuItem(
       icon: Icons.logout_outlined,
@@ -297,12 +297,7 @@ class _SidebarMenuState extends State<SidebarMenu>
           onTap: isAvailable
               ? () {
                   if (item.isSpecial) {
-                    if (item.title == 'Profile') {
-                      _showProfileDialog(
-                        context,
-                        context.read<AuthBloc>().state,
-                      );
-                    } else if (item.title == 'Logout') {
+                    if (item.title == 'Logout') {
                       _showLogoutDialog(context);
                     }
                     // Close sidebar after special actions
@@ -453,107 +448,6 @@ class _SidebarMenuState extends State<SidebarMenu>
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
           },
         ),
-      ),
-    );
-  }
-
-  void _showProfileDialog(BuildContext context, AuthState state) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(
-              Icons.person_outline_rounded,
-              color: theme.colorScheme.primary,
-              size: 24,
-            ),
-            const SizedBox(width: 12),
-            const Text('Profile'),
-          ],
-        ),
-        content: Container(
-          width: 300,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (state is LoginSuccess) ...[
-                _buildProfileField('Name', state.user.name),
-                _buildProfileField('Email', state.user.email),
-                _buildProfileField('Role', state.user.role),
-                _buildProfileField('Phone', state.user.phone ?? 'N/A'),
-              ] else if (state is AuthSuccess) ...[
-                _buildProfileField('Name', state.user.name),
-                _buildProfileField('Email', state.user.email),
-                _buildProfileField('Role', state.user.role),
-                _buildProfileField('Phone', state.user.phone ?? 'N/A'),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(
-              foregroundColor: isDark
-                  ? const Color(0xFF9CA3AF)
-                  : const Color(0xFF6B7280),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileField(String label, String value) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isDark ? const Color(0xFF374151) : const Color(0xFFE2E8F0),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isDark
-                    ? const Color(0xFF9CA3AF)
-                    : const Color(0xFF6B7280),
-                fontSize: 12,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF1F2937),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

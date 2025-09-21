@@ -11,6 +11,8 @@ import '../../../tags/presentation/pages/tags_page.dart';
 import '../widgets/mobile_dashboard_layout.dart';
 import '../widgets/desktop_dashboard_layout.dart';
 import '../widgets/page_title_helper.dart';
+import 'profile_page.dart';
+import 'settings_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -34,7 +36,8 @@ class _DashboardPageState extends State<DashboardPage> {
     const _PaymentsPage(),
     const _ReportsPage(),
     const TagsPage(),
-    const _SettingsPage(),
+    const SettingsPage(),
+    const ProfilePage(),
   ];
 
   void _switchTab(int index) {
@@ -352,37 +355,6 @@ class _ReportsPage extends StatelessWidget {
           SizedBox(height: 8),
           Text(
             'Business analytics and reporting features\nwill be available soon.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SettingsPage extends StatelessWidget {
-  const _SettingsPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.settings, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Settings Coming Soon',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Application settings and preferences\nwill be available soon.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16, color: Colors.grey),
           ),

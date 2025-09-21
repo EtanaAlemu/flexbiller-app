@@ -23,6 +23,7 @@ import 'core/network/network_info.dart' as _i75;
 import 'core/services/auth_guard_service.dart' as _i280;
 import 'core/services/authentication_state_service.dart' as _i751;
 import 'core/services/biometric_auth_service.dart' as _i626;
+import 'core/services/cache_service.dart' as _i325;
 import 'core/services/database_service.dart' as _i916;
 import 'core/services/export_service.dart' as _i580;
 import 'core/services/jwt_service.dart' as _i842;
@@ -738,6 +739,12 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i553.ExportAccountDataUseCase>(
     () => _i553.ExportAccountDataUseCase(gh<_i930.AccountExportRepository>()),
+  );
+  gh.factory<_i325.CacheService>(
+    () => _i325.CacheService(
+      gh<_i915.UserPersistenceService>(),
+      gh<_i493.SecureStorageService>(),
+    ),
   );
   gh.factory<_i400.GetAccountByIdUseCase>(
     () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
