@@ -8,6 +8,7 @@ import '../widgets/edit_account_form.dart';
 import '../widgets/delete_account_dialog.dart';
 import '../widgets/account_timeline_widget.dart';
 import '../widgets/account_tags_widget.dart';
+import '../bloc/account_tags_bloc.dart';
 import '../widgets/account_custom_fields_widget.dart';
 import '../widgets/account_payment_methods_widget.dart';
 import '../bloc/account_payment_methods_bloc.dart';
@@ -418,7 +419,10 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                 create: (context) => getIt<AccountPaymentMethodsBloc>(),
                 child: AccountPaymentMethodsWidget(accountId: accountId),
               ),
-              AccountTagsWidget(accountId: accountId),
+              BlocProvider(
+                create: (context) => getIt<AccountTagsBloc>(),
+                child: AccountTagsWidget(accountId: accountId),
+              ),
               AccountCustomFieldsWidget(accountId: accountId),
               AccountTimelineWidget(accountId: accountId),
             ],

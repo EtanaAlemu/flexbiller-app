@@ -1,26 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_tag.dart';
-import "../bloc/accounts_orchestrator_bloc.dart";
-import '../bloc/events/accounts_event.dart';
-import '../bloc/states/accounts_state.dart';
+import '../bloc/account_tags_bloc.dart';
+import '../bloc/account_tags_events.dart';
+import '../bloc/account_tags_states.dart';
 
-class AccountTagsWidget extends StatelessWidget {
+class AccountTagsWidget extends StatefulWidget {
   final String accountId;
 
   const AccountTagsWidget({Key? key, required this.accountId})
     : super(key: key);
 
   @override
+  State<AccountTagsWidget> createState() => _AccountTagsWidgetState();
+}
+
+class _AccountTagsWidgetState extends State<AccountTagsWidget> {
+  @override
+  void initState() {
+    super.initState();
+    print('🔍 AccountTagsWidget: initState - triggering LoadAccountTags');
+    context.read<AccountTagsBloc>().add(LoadAccountTags(widget.accountId));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
+    return BlocListener<AccountTagsBloc, AccountTagsState>(
       listener: (context, state) {
-        if (state is AccountDetailsLoaded) {
-          context.read<AccountsOrchestratorBloc>().add(LoadAccountTags(accountId));
+        print('🔍 AccountTagsWidget: Received state: ${state.runtimeType}');
+        print('🔍 AccountTagsWidget: State details: $state');
+
+        if (state is TagAssigned) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Tag "${state.tagAssignment.tagName}" assigned successfully',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is TagAssignmentFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to assign tag: ${state.message}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is TagRemoved) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Tag removed successfully'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is TagRemovalFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to remove tag: ${state.message}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is MultipleTagsAssigned) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${state.tagAssignments.length} tags assigned successfully',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is MultipleTagsAssignmentFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to assign tags: ${state.message}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is MultipleTagsRemoved) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${state.tagIds.length} tags removed successfully'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is MultipleTagsRemovalFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to remove tags: ${state.message}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
         }
       },
-      child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
+      child: BlocBuilder<AccountTagsBloc, AccountTagsState>(
         builder: (context, state) {
+          print(
+            '🔍 AccountTagsWidget: Building with state: ${state.runtimeType}',
+          );
+          print('🔍 AccountTagsWidget: State details in builder: $state');
+
           if (state is AccountTagsLoading) {
             return const Center(
               child: Padding(
@@ -54,8 +140,8 @@ class AccountTagsWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<AccountsOrchestratorBloc>().add(
-                        RefreshAccountTags(accountId),
+                      context.read<AccountTagsBloc>().add(
+                        RefreshAccountTags(widget.accountId),
                       );
                     },
                     child: const Text('Retry'),
@@ -83,8 +169,8 @@ class AccountTagsWidget extends StatelessWidget {
                         IconButton(
                           icon: const Icon(Icons.refresh),
                           onPressed: () {
-                            context.read<AccountsOrchestratorBloc>().add(
-                              RefreshAccountTags(accountId),
+                            context.read<AccountTagsBloc>().add(
+                              RefreshAccountTags(widget.accountId),
                             );
                           },
                           tooltip: 'Refresh Tags',
@@ -141,8 +227,8 @@ class AccountTagsWidget extends StatelessWidget {
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: () async {
-                        context.read<AccountsOrchestratorBloc>().add(
-                          RefreshAccountTags(accountId),
+                        context.read<AccountTagsBloc>().add(
+                          RefreshAccountTags(widget.accountId),
                         );
                       },
                       child: SingleChildScrollView(
@@ -193,22 +279,30 @@ class AccountTagsWidget extends StatelessWidget {
 
   void _showAddTagDialog(BuildContext context) {
     // Load all available tags first
-    context.read<AccountsOrchestratorBloc>().add(LoadAllTagsForAccount(accountId));
+    context.read<AccountTagsBloc>().add(
+      LoadAllTagsForAccount(widget.accountId),
+    );
 
     showDialog(
       context: context,
-      builder: (context) => AddTagDialog(accountId: accountId),
+      builder: (context) => AddTagDialog(accountId: widget.accountId),
     ).then((selectedTagIds) {
       if (selectedTagIds != null && selectedTagIds is List<String>) {
         if (selectedTagIds.length == 1) {
           // Single tag assignment
-          context.read<AccountsOrchestratorBloc>().add(
-            AssignTagToAccount(accountId, selectedTagIds.first),
+          context.read<AccountTagsBloc>().add(
+            AssignTagToAccount(
+              accountId: widget.accountId,
+              tagId: selectedTagIds.first,
+            ),
           );
         } else {
           // Multiple tag assignment
-          context.read<AccountsOrchestratorBloc>().add(
-            AssignMultipleTagsToAccount(accountId, selectedTagIds),
+          context.read<AccountTagsBloc>().add(
+            AssignMultipleTagsToAccount(
+              accountId: widget.accountId,
+              tagIds: selectedTagIds,
+            ),
           );
         }
       }
@@ -231,8 +325,11 @@ class AccountTagsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<AccountsOrchestratorBloc>().add(
-                RemoveTagFromAccount(accountId, tag.tagId),
+              context.read<AccountTagsBloc>().add(
+                RemoveTagFromAccount(
+                  accountId: widget.accountId,
+                  tagId: tag.tagId,
+                ),
               );
             },
             style: ElevatedButton.styleFrom(
@@ -262,9 +359,19 @@ class AccountTagsWidget extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<AccountsOrchestratorBloc>().add(
-                RemoveAllTagsFromAccount(accountId),
-              );
+              // Get current tags and remove them all
+              final currentState = context.read<AccountTagsBloc>().state;
+              if (currentState is AccountTagsLoaded) {
+                final tagIds = currentState.tags
+                    .map((tag) => tag.tagId)
+                    .toList();
+                context.read<AccountTagsBloc>().add(
+                  RemoveMultipleTagsFromAccount(
+                    accountId: widget.accountId,
+                    tagIds: tagIds,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -326,7 +433,7 @@ class _AddTagDialogState extends State<AddTagDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
+    return BlocBuilder<AccountTagsBloc, AccountTagsState>(
       builder: (context, state) {
         if (state is AllTagsForAccountLoading) {
           return const AlertDialog(
@@ -348,8 +455,8 @@ class _AddTagDialogState extends State<AddTagDialog> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  context.read<AccountsOrchestratorBloc>().add(
-                    RefreshAllTagsForAccount(widget.accountId),
+                  context.read<AccountTagsBloc>().add(
+                    LoadAllTagsForAccount(widget.accountId),
                   );
                 },
                 child: const Text('Retry'),
@@ -359,7 +466,7 @@ class _AddTagDialogState extends State<AddTagDialog> {
         }
 
         if (state is AllTagsForAccountLoaded) {
-          if (state.tags.isEmpty) {
+          if (state.allTags.isEmpty) {
             return AlertDialog(
               title: const Text('No Tags Available'),
               content: const Text(
@@ -383,7 +490,7 @@ class _AddTagDialogState extends State<AddTagDialog> {
                 children: [
                   const Text('Select tags to assign to this account:'),
                   const SizedBox(height: 16),
-                  ...state.tags.map((tag) {
+                  ...state.allTags.map((tag) {
                     return CheckboxListTile(
                       value: selectedTagIds.contains(tag.id),
                       onChanged: (bool? value) {

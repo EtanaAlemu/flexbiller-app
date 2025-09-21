@@ -147,6 +147,8 @@ import 'features/accounts/domain/repositories/child_account_repository.dart'
     as _i596;
 import 'features/accounts/domain/usecases/assign_multiple_tags_to_account_usecase.dart'
     as _i377;
+import 'features/accounts/domain/usecases/assign_tag_to_account_usecase.dart'
+    as _i221;
 import 'features/accounts/domain/usecases/create_account_custom_field_usecase.dart'
     as _i629;
 import 'features/accounts/domain/usecases/create_account_payment_usecase.dart'
@@ -160,11 +162,13 @@ import 'features/accounts/domain/usecases/create_invoice_payment_usecase.dart'
     as _i350;
 import 'features/accounts/domain/usecases/create_multiple_account_custom_fields_usecase.dart'
     as _i234;
+import 'features/accounts/domain/usecases/create_tag_usecase.dart' as _i0;
 import 'features/accounts/domain/usecases/delete_account_custom_field_usecase.dart'
     as _i336;
 import 'features/accounts/domain/usecases/delete_account_usecase.dart' as _i823;
 import 'features/accounts/domain/usecases/delete_multiple_account_custom_fields_usecase.dart'
     as _i82;
+import 'features/accounts/domain/usecases/delete_tag_usecase.dart' as _i277;
 import 'features/accounts/domain/usecases/export_account_data_usecase.dart'
     as _i553;
 import 'features/accounts/domain/usecases/get_account_audit_logs_usecase.dart'
@@ -198,12 +202,16 @@ import 'features/accounts/domain/usecases/get_overdue_state_usecase.dart'
 import 'features/accounts/domain/usecases/get_paginated_invoices_usecase.dart'
     as _i887;
 import 'features/accounts/domain/usecases/rebalance_cba_usecase.dart' as _i84;
+import 'features/accounts/domain/usecases/refresh_account_tags_usecase.dart'
+    as _i911;
 import 'features/accounts/domain/usecases/refresh_payment_methods_usecase.dart'
     as _i905;
 import 'features/accounts/domain/usecases/refund_account_payment_usecase.dart'
     as _i781;
 import 'features/accounts/domain/usecases/remove_multiple_tags_from_account_usecase.dart'
     as _i582;
+import 'features/accounts/domain/usecases/remove_tag_from_account_usecase.dart'
+    as _i279;
 import 'features/accounts/domain/usecases/search_accounts_usecase.dart'
     as _i266;
 import 'features/accounts/domain/usecases/set_default_payment_method_use_case.dart'
@@ -213,6 +221,7 @@ import 'features/accounts/domain/usecases/update_account_custom_field_usecase.da
 import 'features/accounts/domain/usecases/update_account_usecase.dart' as _i651;
 import 'features/accounts/domain/usecases/update_multiple_account_custom_fields_usecase.dart'
     as _i435;
+import 'features/accounts/domain/usecases/update_tag_usecase.dart' as _i677;
 import 'features/accounts/presentation/bloc/account_detail_bloc.dart' as _i219;
 import 'features/accounts/presentation/bloc/account_export_bloc.dart' as _i203;
 import 'features/accounts/presentation/bloc/account_invoices_bloc.dart'
@@ -225,6 +234,7 @@ import 'features/accounts/presentation/bloc/account_payments_bloc.dart'
     as _i406;
 import 'features/accounts/presentation/bloc/account_subscriptions_bloc.dart'
     as _i892;
+import 'features/accounts/presentation/bloc/account_tags_bloc.dart' as _i859;
 import 'features/accounts/presentation/bloc/accounts_list_bloc.dart' as _i470;
 import 'features/accounts/presentation/bloc/accounts_orchestrator_bloc.dart'
     as _i421;
@@ -704,6 +714,24 @@ _i174.GetIt $initGetIt(
   gh.factory<_i384.GetAllTagsForAccountUseCase>(
     () => _i384.GetAllTagsForAccountUseCase(gh<_i363.AccountTagsRepository>()),
   );
+  gh.factory<_i911.RefreshAccountTagsUseCase>(
+    () => _i911.RefreshAccountTagsUseCase(gh<_i363.AccountTagsRepository>()),
+  );
+  gh.factory<_i0.CreateTagUseCase>(
+    () => _i0.CreateTagUseCase(gh<_i363.AccountTagsRepository>()),
+  );
+  gh.factory<_i677.UpdateTagUseCase>(
+    () => _i677.UpdateTagUseCase(gh<_i363.AccountTagsRepository>()),
+  );
+  gh.factory<_i279.RemoveTagFromAccountUseCase>(
+    () => _i279.RemoveTagFromAccountUseCase(gh<_i363.AccountTagsRepository>()),
+  );
+  gh.factory<_i277.DeleteTagUseCase>(
+    () => _i277.DeleteTagUseCase(gh<_i363.AccountTagsRepository>()),
+  );
+  gh.factory<_i221.AssignTagToAccountUseCase>(
+    () => _i221.AssignTagToAccountUseCase(gh<_i363.AccountTagsRepository>()),
+  );
   gh.factory<_i553.ExportAccountDataUseCase>(
     () => _i553.ExportAccountDataUseCase(gh<_i930.AccountExportRepository>()),
   );
@@ -766,6 +794,21 @@ _i174.GetIt $initGetIt(
       getAccountsUseCase: gh<_i684.GetAccountsUseCase>(),
       searchAccountsUseCase: gh<_i266.SearchAccountsUseCase>(),
       accountsRepository: gh<_i42.AccountsRepository>(),
+    ),
+  );
+  gh.factory<_i859.AccountTagsBloc>(
+    () => _i859.AccountTagsBloc(
+      gh<_i227.GetAccountTagsUseCase>(),
+      gh<_i384.GetAllTagsForAccountUseCase>(),
+      gh<_i0.CreateTagUseCase>(),
+      gh<_i677.UpdateTagUseCase>(),
+      gh<_i277.DeleteTagUseCase>(),
+      gh<_i221.AssignTagToAccountUseCase>(),
+      gh<_i377.AssignMultipleTagsToAccountUseCase>(),
+      gh<_i279.RemoveTagFromAccountUseCase>(),
+      gh<_i582.RemoveMultipleTagsFromAccountUseCase>(),
+      gh<_i911.RefreshAccountTagsUseCase>(),
+      gh<_i363.AccountTagsRepository>(),
     ),
   );
   gh.factory<_i280.AuthGuardService>(

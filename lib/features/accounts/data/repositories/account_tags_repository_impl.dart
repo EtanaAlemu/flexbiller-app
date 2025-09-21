@@ -32,85 +32,120 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
   @override
   Future<List<AccountTagAssignment>> getAccountTags(String accountId) async {
     try {
-      // For now, we'll use a simplified approach since we don't have full tag assignment caching
-      // This method will primarily rely on remote data with basic local caching
+      print(
+        '🔍 AccountTagsRepositoryImpl: getAccountTags called for accountId: $accountId',
+      );
 
-      // Check if device is online for data synchronization
+      // LOCAL-FIRST: Try to get cached data first for immediate UI response
+      print(
+        '🔍 AccountTagsRepositoryImpl: Getting cached tags from local data source',
+      );
+      final cachedTags = await _localDataSource.getCachedTagsForAccount(
+        accountId,
+      );
+      print(
+        '🔍 AccountTagsRepositoryImpl: Found ${cachedTags.length} cached tags',
+      );
+
+      // Convert to entities and emit immediately for instant UI response
+      final entities = cachedTags.map((model) => model.toEntity()).toList();
+
+      // Convert AccountTag entities to AccountTagAssignment entities
+      final assignments = entities
+          .map(
+            (tag) => AccountTagAssignment(
+              id: tag.id,
+              accountId: accountId,
+              tagId: tag.id,
+              tagName: tag.name,
+              tagColor: tag.color,
+              tagIcon: tag.icon,
+              assignedAt: tag.createdAt,
+              assignedBy: tag.createdBy,
+            ),
+          )
+          .toList();
+
+      print(
+        '🔍 AccountTagsRepositoryImpl: Emitting cached data to stream immediately',
+      );
+      _accountTagsController.add(assignments);
+
+      print(
+        '🔍 AccountTagsRepositoryImpl: Returning ${assignments.length} tag assignments from local cache',
+      );
+
+      // BACKGROUND SYNC: Check if device is online for background synchronization
+      print('🔍 AccountTagsRepositoryImpl: Checking network connectivity');
       if (await _networkInfo.isConnected) {
-        try {
-          // Fetch fresh data from remote source
-          final remoteTagModels = await _remoteDataSource.getAccountTags(
-            accountId,
-          );
+        print(
+          '🔍 AccountTagsRepositoryImpl: Device is online, starting background sync',
+        );
 
-          // Convert models to entities
-          final remoteTags = remoteTagModels
-              .map((model) => model.toEntity())
-              .toList();
-
-          // Cache the tag definitions locally (not the assignments yet)
-          // This is a simplified approach - in a full implementation, we'd cache assignments
-          // For now, we'll extract the tag information from assignments and cache them
-          final tagModels = <AccountTagModel>[];
-          for (final assignment in remoteTagModels) {
-            // Create a tag model from the assignment data
-            final tagModel = AccountTagModel(
-              id: assignment.tagDefinitionId,
-              name: assignment.tagDefinitionName,
-              description: null,
-              color: null,
-              icon: null,
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-              createdBy: 'System',
-              isActive: true,
-            );
-            tagModels.add(tagModel);
-          }
-          await _localDataSource.cacheTags(tagModels);
-
-          // Emit updated data
-          _accountTagsController.add(remoteTags);
-
-          _logger.d('Synchronized account tags for account: $accountId');
-          return remoteTags;
-        } catch (e) {
-          _logger.w('Remote sync failed for account $accountId: $e');
-          rethrow;
-        }
+        // Perform background sync without blocking the UI
+        _performBackgroundSync(accountId);
       } else {
-        _logger.d(
-          'Device offline, attempting to use cached tags for account: $accountId',
+        print(
+          '🔍 AccountTagsRepositoryImpl: Device is offline, using cached data only',
         );
-        // Try to get cached tags as fallback
-        final cachedTags = await _localDataSource.getCachedTagsForAccount(
-          accountId,
-        );
-        if (cachedTags.isNotEmpty) {
-          // Convert cached tags to assignments (simplified)
-          final assignments = cachedTags
-              .map(
-                (tag) => AccountTagAssignment(
-                  id: tag.id,
-                  accountId: accountId,
-                  tagId: tag.id,
-                  tagName: tag.name,
-                  tagColor: tag.color,
-                  tagIcon: tag.icon,
-                  assignedAt: tag.createdAt,
-                  assignedBy: tag.createdBy,
-                ),
-              )
-              .toList();
-
-          _accountTagsController.add(assignments);
-          return assignments;
-        }
-        throw Exception('No cached data available and device is offline');
       }
+
+      return assignments;
     } catch (e) {
+      print('🔍 AccountTagsRepositoryImpl: Error in getAccountTags: $e');
       _logger.e('Error getting account tags for account $accountId: $e');
       rethrow;
+    }
+  }
+
+  /// Perform background synchronization with remote data source
+  Future<void> _performBackgroundSync(String accountId) async {
+    try {
+      print('🔍 AccountTagsRepositoryImpl: Starting background sync');
+
+      // Fetch fresh data from remote source
+      final remoteTagModels = await _remoteDataSource.getAccountTags(accountId);
+      print(
+        '🔍 AccountTagsRepositoryImpl: Remote data source returned ${remoteTagModels.length} tag assignments',
+      );
+
+      // Cache the fresh data locally (this becomes the new source of truth)
+      print('🔍 AccountTagsRepositoryImpl: Caching remote data locally');
+
+      // Convert assignments to tag models and cache them
+      final tagModels = <AccountTagModel>[];
+      for (final assignment in remoteTagModels) {
+        // Create a tag model from the assignment data
+        final tagModel = AccountTagModel(
+          id: assignment.tagDefinitionId,
+          name: assignment.tagDefinitionName,
+          description: null,
+          color: null,
+          icon: null,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          createdBy: 'System',
+          isActive: true,
+        );
+        tagModels.add(tagModel);
+      }
+      await _localDataSource.cacheTags(tagModels);
+
+      // Emit updated data to stream (UI will reactively update)
+      final entities = remoteTagModels
+          .map((model) => model.toEntity())
+          .toList();
+      print('🔍 AccountTagsRepositoryImpl: Emitting updated data to stream');
+      _accountTagsController.add(entities);
+
+      print(
+        '🔍 AccountTagsRepositoryImpl: Background sync completed for account: $accountId',
+      );
+    } catch (e) {
+      print(
+        '🔍 AccountTagsRepositoryImpl: Background sync failed for account $accountId: $e',
+      );
+      _logger.w('Background sync failed for account $accountId: $e');
     }
   }
 
@@ -305,36 +340,145 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
     String tagId,
   ) async {
     try {
-      // If online, assign on remote first
+      print(
+        '🔍 AccountTagsRepositoryImpl: assignTagToAccount called for accountId: $accountId, tagId: $tagId',
+      );
+
+      // LOCAL-FIRST: Create optimistic assignment locally first
+      print(
+        '🔍 AccountTagsRepositoryImpl: Creating optimistic assignment locally',
+      );
+      final optimisticAssignment = AccountTagAssignment(
+        id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+        accountId: accountId,
+        tagId: tagId,
+        tagName: 'Loading...', // Will be updated after sync
+        tagColor: null,
+        tagIcon: null,
+        assignedAt: DateTime.now(),
+        assignedBy: 'System',
+      );
+
+      // Create a temporary tag model for local caching
+      final tempTagModel = AccountTagModel(
+        id: tagId,
+        name: 'Loading...',
+        description: null,
+        color: null,
+        icon: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        createdBy: 'System',
+        isActive: true,
+      );
+
+      // Cache the optimistic assignment locally
+      await _localDataSource.cacheTag(tempTagModel);
+
+      // Emit updated data immediately for instant UI response
+      final currentTags = await _localDataSource.getCachedTagsForAccount(
+        accountId,
+      );
+      final entities = currentTags.map((model) => model.toEntity()).toList();
+      final assignments = entities
+          .map(
+            (tag) => AccountTagAssignment(
+              id: tag.id,
+              accountId: accountId,
+              tagId: tag.id,
+              tagName: tag.name,
+              tagColor: tag.color,
+              tagIcon: tag.icon,
+              assignedAt: tag.createdAt,
+              assignedBy: tag.createdBy,
+            ),
+          )
+          .toList();
+      _accountTagsController.add(assignments);
+
+      print(
+        '🔍 AccountTagsRepositoryImpl: Optimistic assignment created and cached',
+      );
+
+      // BACKGROUND SYNC: Sync with remote server
       if (await _networkInfo.isConnected) {
-        try {
-          final assignmentModel = await _remoteDataSource.assignTagToAccount(
-            accountId,
-            tagId,
-          );
-
-          // Convert model to entity
-          final assignment = assignmentModel.toEntity();
-
-          // Note: We don't have local caching for assignments yet
-          // In a full implementation, we'd cache the assignment
-
-          // Emit updated data
-          final currentTags = await getAccountTags(accountId);
-          _accountTagsController.add(currentTags);
-
-          _logger.d('Assigned tag $tagId to account: $accountId');
-          return assignment;
-        } catch (e) {
-          _logger.w('Remote assignment failed: $e');
-          rethrow;
-        }
+        print(
+          '🔍 AccountTagsRepositoryImpl: Device is online, starting background sync',
+        );
+        _performBackgroundAssignTag(accountId, tagId);
       } else {
-        throw Exception('Cannot assign tag while offline');
+        print(
+          '🔍 AccountTagsRepositoryImpl: Device is offline, assignment will sync when online',
+        );
       }
+
+      return optimisticAssignment;
     } catch (e) {
+      print('🔍 AccountTagsRepositoryImpl: Error in assignTagToAccount: $e');
       _logger.e('Error assigning tag $tagId to account $accountId: $e');
       rethrow;
+    }
+  }
+
+  /// Perform background tag assignment synchronization
+  Future<void> _performBackgroundAssignTag(
+    String accountId,
+    String tagId,
+  ) async {
+    try {
+      print(
+        '🔍 AccountTagsRepositoryImpl: Starting background tag assignment sync',
+      );
+
+      // Assign on remote server
+      final assignmentModel = await _remoteDataSource.assignTagToAccount(
+        accountId,
+        tagId,
+      );
+
+      // Update local cache with real assignment data
+      final realTagModel = AccountTagModel(
+        id: assignmentModel.tagDefinitionId,
+        name: assignmentModel.tagDefinitionName,
+        description: null,
+        color: null,
+        icon: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        createdBy: 'System',
+        isActive: true,
+      );
+      await _localDataSource.updateCachedTag(realTagModel);
+
+      // Emit updated data
+      final currentTags = await _localDataSource.getCachedTagsForAccount(
+        accountId,
+      );
+      final entities = currentTags.map((model) => model.toEntity()).toList();
+      final assignments = entities
+          .map(
+            (tag) => AccountTagAssignment(
+              id: tag.id,
+              accountId: accountId,
+              tagId: tag.id,
+              tagName: tag.name,
+              tagColor: tag.color,
+              tagIcon: tag.icon,
+              assignedAt: tag.createdAt,
+              assignedBy: tag.createdBy,
+            ),
+          )
+          .toList();
+      _accountTagsController.add(assignments);
+
+      print(
+        '🔍 AccountTagsRepositoryImpl: Background tag assignment sync completed',
+      );
+    } catch (e) {
+      print(
+        '🔍 AccountTagsRepositoryImpl: Background tag assignment sync failed: $e',
+      );
+      _logger.w('Background tag assignment sync failed: $e');
     }
   }
 
@@ -380,29 +524,76 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
   @override
   Future<void> removeTagFromAccount(String accountId, String tagId) async {
     try {
-      // If online, remove on remote first
+      print(
+        '🔍 AccountTagsRepositoryImpl: removeTagFromAccount called for accountId: $accountId, tagId: $tagId',
+      );
+
+      // LOCAL-FIRST: Remove from local cache immediately
+      print('🔍 AccountTagsRepositoryImpl: Removing tag from local cache');
+      await _localDataSource.deleteCachedTag(tagId);
+
+      // Emit updated data immediately for instant UI response
+      final currentTags = await _localDataSource.getCachedTagsForAccount(
+        accountId,
+      );
+      final entities = currentTags.map((model) => model.toEntity()).toList();
+      final assignments = entities
+          .map(
+            (tag) => AccountTagAssignment(
+              id: tag.id,
+              accountId: accountId,
+              tagId: tag.id,
+              tagName: tag.name,
+              tagColor: tag.color,
+              tagIcon: tag.icon,
+              assignedAt: tag.createdAt,
+              assignedBy: tag.createdBy,
+            ),
+          )
+          .toList();
+      _accountTagsController.add(assignments);
+
+      print('🔍 AccountTagsRepositoryImpl: Tag removed from local cache');
+
+      // BACKGROUND SYNC: Sync with remote server
       if (await _networkInfo.isConnected) {
-        try {
-          await _remoteDataSource.removeTagFromAccount(accountId, tagId);
-
-          // Note: We don't have local caching for assignments yet
-          // In a full implementation, we'd remove the assignment from cache
-
-          // Emit updated data
-          final currentTags = await getAccountTags(accountId);
-          _accountTagsController.add(currentTags);
-
-          _logger.d('Removed tag $tagId from account: $accountId');
-        } catch (e) {
-          _logger.w('Remote removal failed: $e');
-          rethrow;
-        }
+        print(
+          '🔍 AccountTagsRepositoryImpl: Device is online, starting background sync',
+        );
+        _performBackgroundRemoveTag(accountId, tagId);
       } else {
-        throw Exception('Cannot remove tag while offline');
+        print(
+          '🔍 AccountTagsRepositoryImpl: Device is offline, removal will sync when online',
+        );
       }
     } catch (e) {
+      print('🔍 AccountTagsRepositoryImpl: Error in removeTagFromAccount: $e');
       _logger.e('Error removing tag $tagId from account $accountId: $e');
       rethrow;
+    }
+  }
+
+  /// Perform background tag removal synchronization
+  Future<void> _performBackgroundRemoveTag(
+    String accountId,
+    String tagId,
+  ) async {
+    try {
+      print(
+        '🔍 AccountTagsRepositoryImpl: Starting background tag removal sync',
+      );
+
+      // Remove from remote server
+      await _remoteDataSource.removeTagFromAccount(accountId, tagId);
+
+      print(
+        '🔍 AccountTagsRepositoryImpl: Background tag removal sync completed',
+      );
+    } catch (e) {
+      print(
+        '🔍 AccountTagsRepositoryImpl: Background tag removal sync failed: $e',
+      );
+      _logger.w('Background tag removal sync failed: $e');
     }
   }
 

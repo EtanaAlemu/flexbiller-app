@@ -1,5 +1,4 @@
 import 'package:sqflite_sqlcipher/sqflite.dart';
-import '../../features/accounts/data/models/account_tag_model.dart';
 
 /// Data Access Object for AccountTagModel
 class AccountTagDao {
@@ -54,14 +53,24 @@ class AccountTagDao {
   // Convert database map to AccountTagModel
   static Map<String, dynamic>? fromMap(Map<String, dynamic> map) {
     try {
+      // Handle DateTime conversion more robustly
+      DateTime parseDateTime(dynamic value) {
+        if (value == null) return DateTime.now();
+        if (value is DateTime) return value;
+        if (value is String) {
+          return DateTime.tryParse(value) ?? DateTime.now();
+        }
+        return DateTime.now();
+      }
+
       return {
         'id': map[columnId],
         'name': map[columnName],
         'description': map[columnDescription],
         'color': map[columnColor],
         'icon': map[columnIcon],
-        'createdAt': DateTime.tryParse(map[columnCreatedAt] ?? ''),
-        'updatedAt': DateTime.tryParse(map[columnUpdatedAt] ?? ''),
+        'createdAt': parseDateTime(map[columnCreatedAt]).toIso8601String(),
+        'updatedAt': parseDateTime(map[columnUpdatedAt]).toIso8601String(),
         'createdBy': map[columnCreatedBy],
         'isActive': map[columnIsActive] == 1,
         'syncStatus': map[columnSyncStatus],
@@ -76,7 +85,11 @@ class AccountTagDao {
     dynamic db,
     Map<String, dynamic> tagData,
   ) async {
-    await db.insert(tableName, toMap(tagData));
+    await db.insert(
+      tableName,
+      toMap(tagData),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   static Future<void> updateTag(
