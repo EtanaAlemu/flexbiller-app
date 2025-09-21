@@ -38,53 +38,52 @@ class AccountTimelineBloc
   void _initializeStreamSubscriptions() {
     _logger.d('Initializing stream subscriptions for account timeline');
     _accountTimelineSubscription?.cancel();
-    _accountTimelineSubscription =
-        _accountTimelineRepository.accountTimelineStream.listen(
-      (updatedTimeline) {
-        _logger.d(
-          'Stream update received for timeline, currentAccountId: $_currentAccountId',
+    _accountTimelineSubscription = _accountTimelineRepository
+        .accountTimelineStream
+        .listen(
+          (updatedTimeline) {
+            _logger.d(
+              'Stream update received for timeline, currentAccountId: $_currentAccountId',
+            );
+            if (_currentAccountId != null &&
+                updatedTimeline.accountId == _currentAccountId) {
+              final currentState = state;
+              if (currentState is AccountTimelineLoaded) {
+                emit(
+                  AccountTimelineLoaded(
+                    accountId: _currentAccountId!,
+                    timeline: updatedTimeline,
+                  ),
+                );
+              } else if (currentState is AccountTimelineLoading) {
+                emit(
+                  AccountTimelineLoaded(
+                    accountId: _currentAccountId!,
+                    timeline: updatedTimeline,
+                  ),
+                );
+              }
+            }
+          },
+          onError: (error) {
+            _logger.e('Stream error for account timeline: $error');
+            if (_currentAccountId != null) {
+              emit(
+                AccountTimelineFailure(
+                  accountId: _currentAccountId!,
+                  message: 'Stream error: $error',
+                ),
+              );
+            }
+          },
         );
-        if (_currentAccountId != null &&
-            updatedTimeline.accountId == _currentAccountId) {
-          final currentState = state;
-          if (currentState is AccountTimelineLoaded) {
-            emit(
-              AccountTimelineLoaded(
-                accountId: _currentAccountId!,
-                timeline: updatedTimeline,
-              ),
-            );
-          } else if (currentState is AccountTimelineLoading) {
-            emit(
-              AccountTimelineLoaded(
-                accountId: _currentAccountId!,
-                timeline: updatedTimeline,
-              ),
-            );
-          }
-        }
-      },
-      onError: (error) {
-        _logger.e('Stream error for account timeline: $error');
-        if (_currentAccountId != null) {
-          emit(
-            AccountTimelineFailure(
-              accountId: _currentAccountId!,
-              message: 'Stream error: $error',
-            ),
-          );
-        }
-      },
-    );
   }
 
   Future<void> _onLoadAccountTimeline(
     LoadAccountTimeline event,
     Emitter<AccountTimelineState> emit,
   ) async {
-    _logger.d(
-      'LoadAccountTimeline called for accountId: ${event.accountId}',
-    );
+    _logger.d('LoadAccountTimeline called for accountId: ${event.accountId}');
     _currentAccountId = event.accountId;
 
     if (_accountTimelineSubscription == null) {
@@ -95,10 +94,7 @@ class AccountTimelineBloc
     try {
       final timeline = await _getAccountTimelineUseCase(event.accountId);
       emit(
-        AccountTimelineLoaded(
-          accountId: event.accountId,
-          timeline: timeline,
-        ),
+        AccountTimelineLoaded(accountId: event.accountId, timeline: timeline),
       );
     } catch (e) {
       _logger.e('Error loading account timeline: $e');
@@ -149,11 +145,12 @@ class AccountTimelineBloc
     _currentAccountId = event.accountId;
     emit(AccountTimelinePaginatedLoading(event.accountId));
     try {
-      final timeline = await _accountTimelineRepository.getAccountTimelinePaginated(
-        event.accountId,
-        offset: event.offset,
-        limit: event.limit,
-      );
+      final timeline = await _accountTimelineRepository
+          .getAccountTimelinePaginated(
+            event.accountId,
+            offset: event.offset,
+            limit: event.limit,
+          );
       emit(
         AccountTimelinePaginatedLoaded(
           accountId: event.accountId,
@@ -184,10 +181,8 @@ class AccountTimelineBloc
     _currentAccountId = event.accountId;
     emit(AccountTimelineFilteredLoading(event.accountId));
     try {
-      final timeline = await _accountTimelineRepository.getAccountTimelineByEventType(
-        event.accountId,
-        event.eventType,
-      );
+      final timeline = await _accountTimelineRepository
+          .getAccountTimelineByEventType(event.accountId, event.eventType);
       emit(
         AccountTimelineFilteredLoaded(
           accountId: event.accountId,
@@ -217,11 +212,12 @@ class AccountTimelineBloc
     _currentAccountId = event.accountId;
     emit(AccountTimelineFilteredLoading(event.accountId));
     try {
-      final timeline = await _accountTimelineRepository.getAccountTimelineByDateRange(
-        event.accountId,
-        event.startDate,
-        event.endDate,
-      );
+      final timeline = await _accountTimelineRepository
+          .getAccountTimelineByDateRange(
+            event.accountId,
+            event.startDate,
+            event.endDate,
+          );
       emit(
         AccountTimelineFilteredLoaded(
           accountId: event.accountId,
@@ -257,16 +253,22 @@ class AccountTimelineBloc
       // For now, we'll use the basic timeline and filter client-side
       // In a real implementation, you might want to add search to the repository
       final timeline = await _getAccountTimelineUseCase(event.accountId);
-      
+
       // Filter events based on search query
       final filteredEvents = timeline.events.where((timelineEvent) {
-        return timelineEvent.title.toLowerCase().contains(event.query.toLowerCase()) ||
-               timelineEvent.description.toLowerCase().contains(event.query.toLowerCase()) ||
-               timelineEvent.eventType.toLowerCase().contains(event.query.toLowerCase());
+        return timelineEvent.title.toLowerCase().contains(
+              event.query.toLowerCase(),
+            ) ||
+            timelineEvent.description.toLowerCase().contains(
+              event.query.toLowerCase(),
+            ) ||
+            timelineEvent.eventType.toLowerCase().contains(
+              event.query.toLowerCase(),
+            );
       }).toList();
-      
+
       final filteredTimeline = timeline.copyWith(events: filteredEvents);
-      
+
       emit(
         AccountTimelineSearchLoaded(
           accountId: event.accountId,
@@ -295,10 +297,8 @@ class AccountTimelineBloc
     _currentAccountId = event.accountId;
     emit(AccountTimelineFilteredLoading(event.accountId));
     try {
-      final timeline = await _accountTimelineRepository.getAccountTimelineByEventType(
-        event.accountId,
-        event.eventType,
-      );
+      final timeline = await _accountTimelineRepository
+          .getAccountTimelineByEventType(event.accountId, event.eventType);
       emit(
         AccountTimelineFilteredLoaded(
           accountId: event.accountId,
@@ -328,11 +328,12 @@ class AccountTimelineBloc
     _currentAccountId = event.accountId;
     emit(AccountTimelineFilteredLoading(event.accountId));
     try {
-      final timeline = await _accountTimelineRepository.getAccountTimelineByDateRange(
-        event.accountId,
-        event.startDate,
-        event.endDate,
-      );
+      final timeline = await _accountTimelineRepository
+          .getAccountTimelineByDateRange(
+            event.accountId,
+            event.startDate,
+            event.endDate,
+          );
       emit(
         AccountTimelineFilteredLoaded(
           accountId: event.accountId,
@@ -371,18 +372,13 @@ class AccountTimelineBloc
     SyncAccountTimeline event,
     Emitter<AccountTimelineState> emit,
   ) async {
-    _logger.d(
-      'SyncAccountTimeline called for accountId: ${event.accountId}',
-    );
+    _logger.d('SyncAccountTimeline called for accountId: ${event.accountId}');
     _currentAccountId = event.accountId;
     emit(AccountTimelineSyncing(event.accountId));
     try {
       final timeline = await _getAccountTimelineUseCase(event.accountId);
       emit(
-        AccountTimelineSynced(
-          accountId: event.accountId,
-          timeline: timeline,
-        ),
+        AccountTimelineSynced(accountId: event.accountId, timeline: timeline),
       );
     } catch (e) {
       _logger.e('Error syncing account timeline: $e');
@@ -399,9 +395,7 @@ class AccountTimelineBloc
     ClearAccountTimeline event,
     Emitter<AccountTimelineState> emit,
   ) {
-    _logger.d(
-      'ClearAccountTimeline called for accountId: ${event.accountId}',
-    );
+    _logger.d('ClearAccountTimeline called for accountId: ${event.accountId}');
     emit(AccountTimelineInitial(event.accountId));
   }
 

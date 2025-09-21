@@ -46,7 +46,7 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
         accountId,
       );
 
-      _logger.d('Found ${cachedTimeline?.events.length ?? 0} cached timeline events');
+      _logger.d('Found cached timeline data for account: $accountId');
 
       if (cachedTimeline != null) {
         // Convert model to entity
@@ -305,7 +305,7 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
           accountId,
         );
 
-        _logger.d('Remote data source returned ${remoteTimeline.events.length} timeline events');
+        _logger.d('Remote data source returned timeline data for account: $accountId');
         _logger.d('Caching remote data locally');
 
         // Update local cache

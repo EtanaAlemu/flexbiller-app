@@ -48,7 +48,7 @@ class AccountTimelinePaginatedLoaded extends AccountTimelineState {
   final int offset;
   final int limit;
   final bool hasMore;
-  
+
   const AccountTimelinePaginatedLoaded({
     required String accountId,
     required this.timeline,
@@ -80,7 +80,7 @@ class AccountTimelineFilteredLoaded extends AccountTimelineState {
   final AccountTimeline timeline;
   final String filterType;
   final Map<String, dynamic> filterParams;
-  
+
   const AccountTimelineFilteredLoaded({
     required String accountId,
     required this.timeline,
@@ -110,7 +110,7 @@ class AccountTimelineSearching extends AccountTimelineState {
 class AccountTimelineSearchLoaded extends AccountTimelineState {
   final AccountTimeline timeline;
   final String query;
-  
+
   const AccountTimelineSearchLoaded({
     required String accountId,
     required this.timeline,

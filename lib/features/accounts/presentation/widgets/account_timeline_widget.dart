@@ -22,22 +22,30 @@ class _AccountTimelineWidgetState extends State<AccountTimelineWidget> {
   @override
   void initState() {
     super.initState();
-    _logger.d('AccountTimelineWidget: initState - triggering LoadAccountTimeline');
-    context.read<AccountTimelineBloc>().add(LoadAccountTimeline(widget.accountId));
+    _logger.d(
+      'AccountTimelineWidget: initState - triggering LoadAccountTimeline',
+    );
+    context.read<AccountTimelineBloc>().add(
+      LoadAccountTimeline(widget.accountId),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<AccountTimelineBloc, AccountTimelineState>(
       listener: (context, state) {
-        _logger.d('AccountTimelineWidget: Received state: ${state.runtimeType}');
+        _logger.d(
+          'AccountTimelineWidget: Received state: ${state.runtimeType}',
+        );
         _logger.d('AccountTimelineWidget: State details: $state');
       },
       child: BlocBuilder<AccountTimelineBloc, AccountTimelineState>(
         builder: (context, state) {
-          _logger.d('AccountTimelineWidget: Building with state: ${state.runtimeType}');
+          _logger.d(
+            'AccountTimelineWidget: Building with state: ${state.runtimeType}',
+          );
           _logger.d('AccountTimelineWidget: State details in builder: $state');
-          
+
           if (state is AccountTimelineLoading) {
             return const Center(
               child: Padding(

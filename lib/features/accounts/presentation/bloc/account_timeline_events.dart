@@ -19,7 +19,7 @@ class RefreshAccountTimeline extends AccountTimelineEvent {
 class LoadAccountTimelinePaginated extends AccountTimelineEvent {
   final int offset;
   final int limit;
-  
+
   const LoadAccountTimelinePaginated({
     required String accountId,
     this.offset = 0,
@@ -32,7 +32,7 @@ class LoadAccountTimelinePaginated extends AccountTimelineEvent {
 
 class LoadAccountTimelineByEventType extends AccountTimelineEvent {
   final String eventType;
-  
+
   const LoadAccountTimelineByEventType({
     required String accountId,
     required this.eventType,
@@ -45,7 +45,7 @@ class LoadAccountTimelineByEventType extends AccountTimelineEvent {
 class LoadAccountTimelineByDateRange extends AccountTimelineEvent {
   final DateTime startDate;
   final DateTime endDate;
-  
+
   const LoadAccountTimelineByDateRange({
     required String accountId,
     required this.startDate,
@@ -58,11 +58,9 @@ class LoadAccountTimelineByDateRange extends AccountTimelineEvent {
 
 class SearchAccountTimeline extends AccountTimelineEvent {
   final String query;
-  
-  const SearchAccountTimeline({
-    required String accountId,
-    required this.query,
-  }) : super(accountId);
+
+  const SearchAccountTimeline({required String accountId, required this.query})
+    : super(accountId);
 
   @override
   List<Object> get props => [accountId, query];
@@ -70,7 +68,7 @@ class SearchAccountTimeline extends AccountTimelineEvent {
 
 class FilterAccountTimelineByEventType extends AccountTimelineEvent {
   final String eventType;
-  
+
   const FilterAccountTimelineByEventType({
     required String accountId,
     required this.eventType,
@@ -83,7 +81,7 @@ class FilterAccountTimelineByEventType extends AccountTimelineEvent {
 class FilterAccountTimelineByDateRange extends AccountTimelineEvent {
   final DateTime startDate;
   final DateTime endDate;
-  
+
   const FilterAccountTimelineByDateRange({
     required String accountId,
     required this.startDate,
