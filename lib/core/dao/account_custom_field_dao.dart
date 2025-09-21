@@ -48,16 +48,37 @@ class AccountCustomFieldDao {
   // Convert database map to AccountCustomFieldModel
   static AccountCustomFieldModel? fromMap(Map<String, dynamic> map) {
     try {
+      // Handle auditLogs parsing more robustly
+      List<Map<String, dynamic>>? auditLogs;
+      if (map[columnAuditLogs] != null) {
+        final auditLogsData = map[columnAuditLogs];
+        if (auditLogsData is String) {
+          // If it's a JSON string, decode it
+          final decoded = jsonDecode(auditLogsData);
+          if (decoded is List) {
+            auditLogs = decoded
+                .map((item) => item is Map<String, dynamic> 
+                    ? item 
+                    : Map<String, dynamic>.from(item))
+                .toList();
+          }
+        } else if (auditLogsData is List) {
+          // If it's already a list, convert each item to Map<String, dynamic>
+          auditLogs = auditLogsData
+              .map((item) => item is Map<String, dynamic> 
+                  ? item 
+                  : Map<String, dynamic>.from(item))
+              .toList();
+        }
+      }
+
       return AccountCustomFieldModel(
         customFieldId: map[columnId] as String,
         objectId: map[columnAccountId] as String,
         objectType: map[columnObjectType] as String,
         name: map[columnName] as String,
         value: map[columnValue] as String,
-        auditLogs: map[columnAuditLogs] != null
-            ? jsonDecode(map[columnAuditLogs] as String)
-                  as List<Map<String, dynamic>>
-            : null,
+        auditLogs: auditLogs,
       );
     } catch (e) {
       print('Error parsing AccountCustomFieldModel from database: $e');
