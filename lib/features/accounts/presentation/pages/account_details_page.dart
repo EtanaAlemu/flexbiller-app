@@ -7,6 +7,7 @@ import '../bloc/states/accounts_state.dart';
 import '../widgets/edit_account_form.dart';
 import '../widgets/delete_account_dialog.dart';
 import '../widgets/account_timeline_widget.dart';
+import '../bloc/account_timeline_bloc.dart';
 import '../widgets/account_tags_widget.dart';
 import '../bloc/account_tags_bloc.dart';
 import '../widgets/account_custom_fields_widget.dart';
@@ -428,7 +429,10 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                 create: (context) => getIt<AccountCustomFieldsBloc>(),
                 child: AccountCustomFieldsWidget(accountId: accountId),
               ),
-              AccountTimelineWidget(accountId: accountId),
+              BlocProvider(
+                create: (context) => getIt<AccountTimelineBloc>(),
+                child: AccountTimelineWidget(accountId: accountId),
+              ),
             ],
           ),
         ),

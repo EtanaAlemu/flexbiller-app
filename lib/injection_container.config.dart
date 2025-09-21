@@ -237,6 +237,8 @@ import 'features/accounts/presentation/bloc/account_payments_bloc.dart'
 import 'features/accounts/presentation/bloc/account_subscriptions_bloc.dart'
     as _i892;
 import 'features/accounts/presentation/bloc/account_tags_bloc.dart' as _i859;
+import 'features/accounts/presentation/bloc/account_timeline_bloc.dart'
+    as _i1052;
 import 'features/accounts/presentation/bloc/accounts_list_bloc.dart' as _i470;
 import 'features/accounts/presentation/bloc/accounts_orchestrator_bloc.dart'
     as _i421;
@@ -1005,6 +1007,12 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i457.UpdateUserUseCase>(
     () => _i457.UpdateUserUseCase(gh<_i1015.AuthRepository>()),
+  );
+  gh.factory<_i1052.AccountTimelineBloc>(
+    () => _i1052.AccountTimelineBloc(
+      gh<_i711.GetAccountTimelineUseCase>(),
+      gh<_i446.AccountTimelineRepository>(),
+    ),
   );
   gh.factory<_i675.SubscriptionsBloc>(
     () => _i675.SubscriptionsBloc(

@@ -57,17 +57,21 @@ class AccountCustomFieldDao {
           final decoded = jsonDecode(auditLogsData);
           if (decoded is List) {
             auditLogs = decoded
-                .map((item) => item is Map<String, dynamic> 
-                    ? item 
-                    : Map<String, dynamic>.from(item))
+                .map(
+                  (item) => item is Map<String, dynamic>
+                      ? item
+                      : Map<String, dynamic>.from(item),
+                )
                 .toList();
           }
         } else if (auditLogsData is List) {
           // If it's already a list, convert each item to Map<String, dynamic>
           auditLogs = auditLogsData
-              .map((item) => item is Map<String, dynamic> 
-                  ? item 
-                  : Map<String, dynamic>.from(item))
+              .map(
+                (item) => item is Map<String, dynamic>
+                    ? item
+                    : Map<String, dynamic>.from(item),
+              )
               .toList();
         }
       }
@@ -93,7 +97,7 @@ class AccountCustomFieldDao {
     AccountCustomFieldModel customField,
   ) async {
     await db.insert(
-      tableName, 
+      tableName,
       toMap(customField),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -106,7 +110,7 @@ class AccountCustomFieldDao {
     await db.transaction((txn) async {
       for (final customField in customFields) {
         await txn.insert(
-          tableName, 
+          tableName,
           toMap(customField),
           conflictAlgorithm: ConflictAlgorithm.replace,
         );

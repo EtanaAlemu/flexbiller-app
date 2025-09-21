@@ -1,26 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../../domain/entities/account_timeline.dart';
-import "../bloc/accounts_orchestrator_bloc.dart";
-import '../bloc/events/accounts_event.dart';
-import '../bloc/states/accounts_state.dart';
+import '../bloc/account_timeline_bloc.dart';
+import '../bloc/account_timeline_events.dart';
+import '../bloc/account_timeline_states.dart';
 
-class AccountTimelineWidget extends StatelessWidget {
+class AccountTimelineWidget extends StatefulWidget {
   final String accountId;
 
   const AccountTimelineWidget({Key? key, required this.accountId})
     : super(key: key);
 
   @override
+  State<AccountTimelineWidget> createState() => _AccountTimelineWidgetState();
+}
+
+class _AccountTimelineWidgetState extends State<AccountTimelineWidget> {
+  final Logger _logger = Logger();
+
+  @override
+  void initState() {
+    super.initState();
+    _logger.d('AccountTimelineWidget: initState - triggering LoadAccountTimeline');
+    context.read<AccountTimelineBloc>().add(LoadAccountTimeline(widget.accountId));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocListener<AccountsOrchestratorBloc, AccountsState>(
+    return BlocListener<AccountTimelineBloc, AccountTimelineState>(
       listener: (context, state) {
-        if (state is AccountDetailsLoaded) {
-          context.read<AccountsOrchestratorBloc>().add(LoadAccountTimeline(accountId));
-        }
+        _logger.d('AccountTimelineWidget: Received state: ${state.runtimeType}');
+        _logger.d('AccountTimelineWidget: State details: $state');
       },
-      child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
+      child: BlocBuilder<AccountTimelineBloc, AccountTimelineState>(
         builder: (context, state) {
+          _logger.d('AccountTimelineWidget: Building with state: ${state.runtimeType}');
+          _logger.d('AccountTimelineWidget: State details in builder: $state');
+          
           if (state is AccountTimelineLoading) {
             return const Center(
               child: Padding(
@@ -54,8 +71,8 @@ class AccountTimelineWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<AccountsOrchestratorBloc>().add(
-                        RefreshAccountTimeline(accountId),
+                      context.read<AccountTimelineBloc>().add(
+                        RefreshAccountTimeline(widget.accountId),
                       );
                     },
                     child: const Text('Retry'),
@@ -66,7 +83,7 @@ class AccountTimelineWidget extends StatelessWidget {
           }
 
           if (state is AccountTimelineLoaded) {
-            if (state.events.isEmpty) {
+            if (state.timeline.events.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -96,20 +113,20 @@ class AccountTimelineWidget extends StatelessWidget {
 
             return RefreshIndicator(
               onRefresh: () async {
-                context.read<AccountsOrchestratorBloc>().add(
-                  RefreshAccountTimeline(accountId),
+                context.read<AccountTimelineBloc>().add(
+                  RefreshAccountTimeline(widget.accountId),
                 );
               },
               child: ListView.builder(
                 padding: const EdgeInsets.all(16.0),
-                itemCount: state.events.length,
+                itemCount: state.timeline.events.length,
                 itemBuilder: (context, index) {
-                  final event = state.events[index];
+                  final event = state.timeline.events[index];
                   return _buildTimelineEvent(
                     context,
                     event,
                     index,
-                    state.events.length,
+                    state.timeline.events.length,
                   );
                 },
               ),

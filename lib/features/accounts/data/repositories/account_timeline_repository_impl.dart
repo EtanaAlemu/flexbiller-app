@@ -40,20 +40,32 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
   @override
   Future<AccountTimeline> getAccountTimeline(String accountId) async {
     try {
-      // 1. First, try to get data from local cache
+      _logger.d('Getting cached account timeline from local data source');
+      // LOCAL-FIRST: Always try to get data from local cache first
       final cachedTimeline = await _localDataSource.getCachedAccountTimeline(
         accountId,
       );
+
+      _logger.d('Found ${cachedTimeline?.events.length ?? 0} cached timeline events');
+
       if (cachedTimeline != null) {
-        _logger.d('Returning cached account timeline for account: $accountId');
+        // Convert model to entity
+        final entity = cachedTimeline.toEntity();
 
-        // 2. Start background sync to get fresh data
-        _syncAccountTimelineInBackground(accountId);
+        // Emit cached data to stream immediately for reactive UI updates
+        _logger.d('Emitting cached data to stream immediately');
+        _accountTimelineStreamController.add(entity);
 
-        return cachedTimeline.toEntity();
+        // Return cached data immediately for fast UI response
+        _logger.d('Returning ${entity.events.length} timeline events from local cache');
+
+        // Start background sync if online (non-blocking)
+        _performBackgroundSync(accountId);
+
+        return entity;
       }
 
-      // 3. If no cached data, check network and fetch from remote
+      // If no cached data, check network and fetch from remote
       if (await _networkInfo.isConnected) {
         _logger.d(
           'No cached data, fetching from remote for account: $accountId',
@@ -62,16 +74,16 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
           accountId,
         );
 
-        // 4. Cache the remote data
+        // Cache the remote data
         await _localDataSource.cacheAccountTimeline(remoteTimeline);
 
-        // 5. Add to stream for UI update
+        // Add to stream for UI update
         final freshTimeline = remoteTimeline.toEntity();
         _accountTimelineStreamController.add(freshTimeline);
 
         return freshTimeline;
       } else {
-        // 6. Offline and no cached data
+        // Offline and no cached data
         _logger.w('No cached data and offline for account: $accountId');
         throw Exception('No data available offline');
       }
@@ -158,7 +170,7 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
         );
 
         // 2. Start background sync to get fresh data
-        _syncAccountTimelineInBackground(accountId);
+        _performBackgroundSync(accountId);
 
         final timeline = cachedTimeline.toEntity();
         final filteredEvents = timeline.events
@@ -227,7 +239,7 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
         );
 
         // 2. Start background sync to get fresh data
-        _syncAccountTimelineInBackground(accountId);
+        _performBackgroundSync(accountId);
 
         final timeline = cachedTimeline.toEntity();
         final filteredEvents = timeline.events
@@ -281,28 +293,36 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
     }
   }
 
-  /// Background synchronization for account timeline
-  Future<void> _syncAccountTimelineInBackground(String accountId) async {
+  /// Background synchronization method for account timeline
+  Future<void> _performBackgroundSync(String accountId) async {
     try {
+      _logger.d('Checking network connectivity');
       if (await _networkInfo.isConnected) {
-        _logger.d('Starting background sync for account timeline: $accountId');
+        _logger.d('Device is online, starting background sync');
+        _logger.d('Starting background sync');
+
         final remoteTimeline = await _remoteDataSource.getAccountTimeline(
           accountId,
         );
 
+        _logger.d('Remote data source returned ${remoteTimeline.events.length} timeline events');
+        _logger.d('Caching remote data locally');
+
         // Update local cache
         await _localDataSource.cacheAccountTimeline(remoteTimeline);
 
-        // Add fresh data to stream for UI update
-        final freshTimeline = remoteTimeline.toEntity();
-        _accountTimelineStreamController.add(freshTimeline);
+        // Convert to entity and add to stream for reactive UI update
+        final entity = remoteTimeline.toEntity();
 
-        _logger.d(
-          'Background sync completed for account timeline: $accountId - UI updated with fresh data',
-        );
+        _logger.d('Emitting updated data to stream');
+        _accountTimelineStreamController.add(entity);
+
+        _logger.d('Background sync completed for account: $accountId');
+      } else {
+        _logger.d('Device is offline, skipping background sync');
       }
     } catch (e) {
-      _logger.w('Background sync failed for account timeline: $accountId - $e');
+      _logger.w('Background sync failed for account timeline: $e');
     }
   }
 
