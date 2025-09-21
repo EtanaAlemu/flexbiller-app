@@ -38,43 +38,30 @@ class AccountCustomFieldsRepositoryImpl
     String accountId,
   ) async {
     try {
-      // First, try to get data from local cache
+      _logger.d('Getting cached custom fields from local data source');
+      // LOCAL-FIRST: Always try to get data from local cache first
       final cachedCustomFields = await _localDataSource.getCachedCustomFields(
         accountId,
       );
 
-      if (cachedCustomFields.isNotEmpty) {
-        // Convert models to entities and add to stream
-        final entities = cachedCustomFields
-            .map((model) => model.toEntity())
-            .toList();
-        _customFieldsStreamController.add(entities);
+      _logger.d('Found ${cachedCustomFields.length} cached custom fields');
+      
+      // Convert models to entities
+      final entities = cachedCustomFields
+          .map((model) => model.toEntity())
+          .toList();
 
-        // Start background sync if online
-        _syncCustomFieldsInBackground(accountId);
+      // Emit cached data to stream immediately for reactive UI updates
+      _logger.d('Emitting cached data to stream immediately');
+      _customFieldsStreamController.add(entities);
 
-        return entities;
-      }
+      // Return cached data immediately for fast UI response
+      _logger.d('Returning ${entities.length} custom fields from local cache');
 
-      // If no cached data, check if online and fetch from remote
-      if (await _networkInfo.isConnected) {
-        final remoteCustomFields = await _remoteDataSource
-            .getAccountCustomFields(accountId);
+      // Start background sync if online (non-blocking)
+      _performBackgroundSync(accountId);
 
-        // Cache the remote data
-        await _localDataSource.cacheCustomFields(remoteCustomFields);
-
-        // Convert to entities and add to stream
-        final entities = remoteCustomFields
-            .map((model) => model.toEntity())
-            .toList();
-        _customFieldsStreamController.add(entities);
-
-        return entities;
-      } else {
-        // Offline and no cached data
-        throw Exception('No data available offline');
-      }
+      return entities;
     } catch (e) {
       _logger.e('Error getting account custom fields: $e');
       rethrow;
@@ -296,7 +283,7 @@ class AccountCustomFieldsRepositoryImpl
             .toList();
 
         // Start background sync if online
-        _syncCustomFieldsInBackground(accountId);
+        _performBackgroundSync(accountId);
 
         return entities;
       }
@@ -336,7 +323,7 @@ class AccountCustomFieldsRepositoryImpl
             .toList();
 
         // Start background sync if online
-        _syncCustomFieldsInBackground(accountId);
+        _performBackgroundSync(accountId);
 
         return entities;
       }
@@ -362,12 +349,19 @@ class AccountCustomFieldsRepositoryImpl
   }
 
   /// Background synchronization method for custom fields
-  Future<void> _syncCustomFieldsInBackground(String accountId) async {
+  Future<void> _performBackgroundSync(String accountId) async {
     try {
+      _logger.d('Checking network connectivity');
       if (await _networkInfo.isConnected) {
+        _logger.d('Device is online, starting background sync');
+        _logger.d('Starting background sync');
+        
         final remoteCustomFields = await _remoteDataSource
             .getAccountCustomFields(accountId);
 
+        _logger.d('Remote data source returned ${remoteCustomFields.length} custom fields');
+        _logger.d('Caching remote data locally');
+        
         // Update local cache
         await _localDataSource.cacheCustomFields(remoteCustomFields);
 
@@ -375,11 +369,13 @@ class AccountCustomFieldsRepositoryImpl
         final entities = remoteCustomFields
             .map((model) => model.toEntity())
             .toList();
+        
+        _logger.d('Emitting updated data to stream');
         _customFieldsStreamController.add(entities);
 
-        _logger.d(
-          'Background sync completed for account custom fields: $accountId',
-        );
+        _logger.d('Background sync completed for account: $accountId');
+      } else {
+        _logger.d('Device is offline, skipping background sync');
       }
     } catch (e) {
       _logger.w('Background sync failed for account custom fields: $e');

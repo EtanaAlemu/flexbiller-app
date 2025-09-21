@@ -71,7 +71,11 @@ class AccountCustomFieldDao {
     dynamic db,
     AccountCustomFieldModel customField,
   ) async {
-    await db.insert(tableName, toMap(customField));
+    await db.insert(
+      tableName, 
+      toMap(customField),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   static Future<void> insertMultipleCustomFields(
@@ -80,7 +84,11 @@ class AccountCustomFieldDao {
   ) async {
     await db.transaction((txn) async {
       for (final customField in customFields) {
-        await txn.insert(tableName, toMap(customField));
+        await txn.insert(
+          tableName, 
+          toMap(customField),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
     });
   }
