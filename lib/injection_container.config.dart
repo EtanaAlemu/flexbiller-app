@@ -260,6 +260,16 @@ import 'features/auth/domain/usecases/logout_usecase.dart' as _i824;
 import 'features/auth/domain/usecases/reset_password_usecase.dart' as _i1070;
 import 'features/auth/domain/usecases/update_user_usecase.dart' as _i457;
 import 'features/auth/presentation/bloc/auth_bloc.dart' as _i363;
+import 'features/dashboard/data/datasources/dashboard_local_data_source.dart'
+    as _i336;
+import 'features/dashboard/data/datasources/dashboard_mock_data_source.dart'
+    as _i500;
+import 'features/dashboard/data/repositories/dashboard_repository_impl.dart'
+    as _i448;
+import 'features/dashboard/domain/repositories/dashboard_repository.dart'
+    as _i557;
+import 'features/dashboard/domain/usecases/get_dashboard_data.dart' as _i983;
+import 'features/dashboard/presentation/bloc/dashboard_bloc.dart' as _i521;
 import 'features/subscriptions/data/datasources/subscriptions_local_data_source.dart'
     as _i167;
 import 'features/subscriptions/data/datasources/subscriptions_remote_data_source.dart'
@@ -388,6 +398,9 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
+  gh.lazySingleton<_i336.DashboardLocalDataSource>(
+    () => _i500.DashboardMockDataSource(),
+  );
   gh.lazySingleton<_i563.CrashAnalyticsInitializer>(
     () => _i563.CrashAnalyticsInitializer(gh<_i974.Logger>()),
   );
@@ -411,6 +424,11 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i1058.ChildAccountRemoteDataSource>(
     () => _i1058.ChildAccountRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
+  gh.lazySingleton<_i557.DashboardRepository>(
+    () => _i448.DashboardRepositoryImpl(
+      localDataSource: gh<_i336.DashboardLocalDataSource>(),
+    ),
   );
   gh.factory<_i335.SearchTagsUseCase>(
     () => _i335.SearchTagsUseCase(gh<_i734.TagsRepository>()),
@@ -568,6 +586,9 @@ _i174.GetIt $initGetIt(
       gh<_i140.UserSessionService>(),
     ),
   );
+  gh.factory<_i983.GetDashboardData>(
+    () => _i983.GetDashboardData(gh<_i557.DashboardRepository>()),
+  );
   gh.factory<_i521.AccountInvoicesRepository>(
     () => _i309.AccountInvoicesRepositoryImpl(
       gh<_i225.AccountInvoicesRemoteDataSource>(),
@@ -663,6 +684,9 @@ _i174.GetIt $initGetIt(
     () => _i706.SetDefaultPaymentMethodUseCase(
       gh<_i845.AccountPaymentMethodsRepository>(),
     ),
+  );
+  gh.factory<_i521.DashboardBloc>(
+    () => _i521.DashboardBloc(getDashboardData: gh<_i983.GetDashboardData>()),
   );
   gh.factory<_i1067.AccountCbaRebalancingRepository>(
     () => _i761.AccountCbaRebalancingRepositoryImpl(

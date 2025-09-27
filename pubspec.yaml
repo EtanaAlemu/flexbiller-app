@@ -70,6 +70,7 @@ dependencies:
   excel: ^4.0.6
   share_plus: ^7.2.2
   open_file: ^3.3.2
+  dartz: ^0.10.1
 
   # External Storage (Android 15 compliant)
   permission_handler: ^11.3.1
@@ -88,6 +89,13 @@ dependencies:
   country_state_city_picker_2: ^1.0.5
   currency_picker: ^2.0.13
   dropdown_search: ^5.0.6
+
+  # Syncfusion Flutter Components
+  syncfusion_flutter_charts: ^31.1.21
+  syncfusion_flutter_datepicker: ^31.1.21
+  syncfusion_flutter_core: ^31.1.21
+  syncfusion_flutter_calendar: ^31.1.21
+  syncfusion_flutter_datagrid: ^31.1.21
 
 dev_dependencies:
   flutter_test:
