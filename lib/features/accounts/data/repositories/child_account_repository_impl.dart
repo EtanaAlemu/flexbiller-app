@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import '../../../../core/errors/exceptions.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/child_account.dart';
 import '../../domain/repositories/child_account_repository.dart';
@@ -40,50 +41,55 @@ class ChildAccountRepositoryImpl implements ChildAccountRepository {
     try {
       final childAccountModel = ChildAccountModel.fromEntity(childAccount);
 
-      // 1. IMMEDIATELY save to local database first (Local-First)
-      await _localDataSource.cacheChildAccount(childAccountModel);
-      _logger.d('Child account saved locally: ${childAccountModel.email}');
-
-      // 2. Return the locally saved data immediately for instant UI update
-      final localChildAccount = childAccountModel.toEntity();
-
-      // 3. Attempt remote sync in background if online
-      if (await _networkInfo.isConnected) {
-        _syncChildAccountInBackground(childAccountModel);
+      // Check if we're online before attempting to create child account
+      if (!await _networkInfo.isConnected) {
+        throw NetworkException(
+          'No network connection available. Please check your internet connection and try again.',
+        );
       }
 
-      return localChildAccount;
+      _logger.d(
+        'Creating child account on remote server: ${childAccountModel.email}',
+      );
+
+      // Create child account on remote server first and wait for response
+      final remoteChildAccount = await _remoteDataSource.createChildAccount(
+        childAccountModel,
+      );
+      _logger.d(
+        'Child account created successfully on remote server: ${remoteChildAccount.email}',
+      );
+
+      // Save the remote response to local cache
+      await _localDataSource.cacheChildAccount(remoteChildAccount);
+      _logger.d(
+        'Child account saved to local cache: ${remoteChildAccount.email}',
+      );
+
+      // Emit updated list for UI refresh
+      final updatedChildAccounts = await _localDataSource
+          .getCachedChildAccountsByParent(childAccount.parentAccountId);
+      final entities = updatedChildAccounts
+          .map((model) => model.toEntity())
+          .toList();
+      _childAccountsStreamController.add(entities);
+
+      return remoteChildAccount.toEntity();
+    } on ValidationException catch (e) {
+      _logger.e('Validation error while creating child account: ${e.message}');
+      rethrow;
+    } on ServerException catch (e) {
+      _logger.e('Server error while creating child account: ${e.message}');
+      rethrow;
+    } on NetworkException catch (e) {
+      _logger.e('Network error while creating child account: ${e.message}');
+      rethrow;
+    } on AuthException catch (e) {
+      _logger.e('Auth error while creating child account: ${e.message}');
+      rethrow;
     } catch (e) {
       _logger.e('Error creating child account: $e');
       rethrow;
-    }
-  }
-
-  // Background synchronization method for creating child account
-  Future<void> _syncChildAccountInBackground(
-    ChildAccountModel childAccount,
-  ) async {
-    try {
-      _logger.d('Syncing child account in background: ${childAccount.email}');
-      final createdModel = await _remoteDataSource.createChildAccount(
-        childAccount,
-      );
-
-      // Update local cache with server response (in case server added fields)
-      await _localDataSource.cacheChildAccount(createdModel);
-
-      // 🔥 KEY: Update UI with fresh data via stream
-      final freshChildAccount = createdModel.toEntity();
-      _childAccountStreamController.add(freshChildAccount);
-
-      _logger.d(
-        'Child account synced successfully: ${createdModel.email} - UI updated with fresh data',
-      );
-    } catch (e) {
-      _logger.w(
-        'Background sync failed for child account ${childAccount.email}: $e',
-      );
-      // Don't rethrow - background sync failures shouldn't affect main flow
     }
   }
 

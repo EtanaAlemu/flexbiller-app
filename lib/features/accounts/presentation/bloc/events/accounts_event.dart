@@ -598,6 +598,15 @@ class EnableMultiSelectMode extends AccountsEvent {
   const EnableMultiSelectMode();
 }
 
+class EnableMultiSelectModeAndSelect extends AccountsEvent {
+  final Account account;
+
+  const EnableMultiSelectModeAndSelect(this.account);
+
+  @override
+  List<Object?> get props => [account];
+}
+
 class DisableMultiSelectMode extends AccountsEvent {
   const DisableMultiSelectMode();
 }

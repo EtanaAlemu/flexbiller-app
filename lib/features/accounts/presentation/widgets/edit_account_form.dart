@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import '../../domain/entities/account.dart';
 import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
@@ -21,6 +22,7 @@ class EditAccountForm extends StatefulWidget {
 
 class _EditAccountFormState extends State<EditAccountForm> {
   final _formKey = GlobalKey<FormState>();
+  final _scrollController = ScrollController();
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
@@ -31,23 +33,26 @@ class _EditAccountFormState extends State<EditAccountForm> {
   late final TextEditingController _stateController;
   late final TextEditingController _notesController;
 
+  // GlobalKeys for required fields to enable scrolling to them
+  final _nameFieldKey = GlobalKey();
+  final _emailFieldKey = GlobalKey();
+
+  // FocusNodes for keyboard navigation
+  final _nameFocusNode = FocusNode();
+  final _emailFocusNode = FocusNode();
+  final _phoneFocusNode = FocusNode();
+  final _companyFocusNode = FocusNode();
+  final _address1FocusNode = FocusNode();
+  final _address2FocusNode = FocusNode();
+  final _notesFocusNode = FocusNode();
+
   late String _selectedCurrency;
   late String _selectedTimeZone;
   late String _selectedCountry;
+  late String _selectedState;
+  late String _selectedCity;
 
-  final List<String> _currencies = ['USD', 'EUR', 'GBP', 'ETB', 'KES', 'NGN'];
-  final List<String> _timeZones = [
-    'Etc/GMT',
-    'UTC',
-    'America/New_York',
-    'America/Los_Angeles',
-    'Europe/London',
-    'Europe/Paris',
-    'Africa/Addis_Ababa',
-    'Africa/Nairobi',
-    'Africa/Lagos',
-  ];
-  final List<String> _countries = ['US', 'ET', 'KE', 'NG', 'GB', 'DE', 'FR'];
+  final List<String> _timeZones = ['GMT', 'UTC', 'EST', 'PST', 'CET', 'EAT'];
 
   @override
   void initState() {
@@ -71,10 +76,13 @@ class _EditAccountFormState extends State<EditAccountForm> {
     _selectedCurrency = widget.account.currency;
     _selectedTimeZone = widget.account.timeZone;
     _selectedCountry = widget.account.country ?? 'US';
+    _selectedState = widget.account.state ?? '';
+    _selectedCity = widget.account.city ?? '';
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -84,55 +92,111 @@ class _EditAccountFormState extends State<EditAccountForm> {
     _cityController.dispose();
     _stateController.dispose();
     _notesController.dispose();
+
+    // Dispose FocusNodes
+    _nameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    _phoneFocusNode.dispose();
+    _companyFocusNode.dispose();
+    _address1FocusNode.dispose();
+    _address2FocusNode.dispose();
+    _notesFocusNode.dispose();
+
     super.dispose();
   }
 
   void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      final updatedAccount = widget.account.copyWith(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        currency: _selectedCurrency,
-        timeZone: _selectedTimeZone,
-        address1: _address1Controller.text.trim().isEmpty
-            ? null
-            : _address1Controller.text.trim(),
-        address2: _address2Controller.text.trim().isEmpty
-            ? null
-            : _address2Controller.text.trim(),
-        company: _companyController.text.trim().isEmpty
-            ? null
-            : _companyController.text.trim(),
-        city: _cityController.text.trim().isEmpty
-            ? null
-            : _cityController.text.trim(),
-        state: _stateController.text.trim().isEmpty
-            ? null
-            : _stateController.text.trim(),
-        country: _selectedCountry,
-        phone: _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
-      );
+    if (!_formKey.currentState!.validate()) {
+      // Find the first invalid field and scroll to it
+      _scrollToFirstInvalidField();
+      return;
+    }
 
-      context.read<AccountsOrchestratorBloc>().add(UpdateAccount(updatedAccount));
+    final updatedAccount = widget.account.copyWith(
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      currency: _selectedCurrency,
+      timeZone: _selectedTimeZone,
+      address1: _address1Controller.text.trim().isEmpty
+          ? null
+          : _address1Controller.text.trim(),
+      address2: _address2Controller.text.trim().isEmpty
+          ? null
+          : _address2Controller.text.trim(),
+      company: _companyController.text.trim().isEmpty
+          ? null
+          : _companyController.text.trim(),
+      city: _selectedCity.isEmpty ? null : _selectedCity,
+      state: _selectedState.isEmpty ? null : _selectedState,
+      country: _selectedCountry,
+      phone: _phoneController.text.trim().isEmpty
+          ? null
+          : _phoneController.text.trim(),
+      notes: _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
+    );
+
+    context.read<AccountsOrchestratorBloc>().add(UpdateAccount(updatedAccount));
+  }
+
+  void _scrollToFirstInvalidField() {
+    // Check required fields in order and scroll to the first empty one
+    if (_nameController.text.trim().isEmpty) {
+      _scrollToField(_nameFieldKey);
+    } else if (_emailController.text.trim().isEmpty) {
+      _scrollToField(_emailFieldKey);
+    }
+  }
+
+  void _scrollToField(GlobalKey fieldKey) {
+    final RenderBox? renderBox =
+        fieldKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      final position = renderBox.localToGlobal(Offset.zero);
+      final scrollOffset =
+          _scrollController.offset +
+          position.dy -
+          100; // 100px padding from top
+
+      _scrollController.animateTo(
+        scrollOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
         if (state is AccountUpdated) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Account "${state.account.name}" updated successfully!',
+              content: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Account "${state.account.name}" updated successfully!',
+                    ),
+                  ),
+                ],
               ),
               backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           );
           widget.onAccountUpdated?.call();
@@ -140,143 +204,225 @@ class _EditAccountFormState extends State<EditAccountForm> {
         } else if (state is AccountUpdateFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to update account: ${state.message}'),
+              content: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.white, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text('Failed to update account: ${state.message}'),
+                  ),
+                ],
+              ),
               backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           );
         }
       },
       child: Scaffold(
+        backgroundColor: colorScheme.surface,
         appBar: AppBar(
-          title: const Text('Edit Account'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          leading: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Icon(
+              Icons.arrow_back_ios_rounded,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          title: Text(
+            'Edit Account',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          centerTitle: false,
         ),
         body: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
           builder: (context, state) {
             return Form(
               key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16.0),
-                children: [
-                  // Basic Information
-                  _buildSectionHeader('Basic Information'),
-                  _buildTextField(
-                    controller: _nameController,
-                    label: 'Account Name *',
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Account name is required';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _emailController,
-                    label: 'Email Address *',
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Email is required';
-                      }
-                      if (!RegExp(
-                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                      ).hasMatch(value)) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _phoneController,
-                    label: 'Phone Number',
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _companyController,
-                    label: 'Company',
-                  ),
-                  const SizedBox(height: 24),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Card
+                    _buildHeaderCard(theme, colorScheme),
+                    const SizedBox(height: 24),
 
-                  // Location Information
-                  _buildSectionHeader('Location Information'),
-                  _buildTextField(
-                    controller: _address1Controller,
-                    label: 'Address Line 1',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _address2Controller,
-                    label: 'Address Line 2',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextField(controller: _cityController, label: 'City'),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _stateController,
-                    label: 'State/Province',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDropdown(
-                    label: 'Country',
-                    value: _selectedCountry,
-                    items: _countries,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCountry = value!;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Account Settings
-                  _buildSectionHeader('Account Settings'),
-                  _buildDropdown(
-                    label: 'Currency',
-                    value: _selectedCurrency,
-                    items: _currencies,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCurrency = value!;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDropdown(
-                    label: 'Time Zone',
-                    value: _selectedTimeZone,
-                    items: _timeZones,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedTimeZone = value!;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Additional Information
-                  _buildSectionHeader('Additional Information'),
-                  _buildTextField(
-                    controller: _notesController,
-                    label: 'Notes',
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Submit Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: state is AccountUpdating ? null : _submitForm,
-                      child: state is AccountUpdating
-                          ? const CircularProgressIndicator()
-                          : const Text('Update Account'),
+                    // Basic Information Card
+                    _buildSectionCard(
+                      theme: theme,
+                      colorScheme: colorScheme,
+                      title: 'Basic Information',
+                      icon: Icons.person_outline_rounded,
+                      children: [
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _nameController,
+                          label: 'Account Name',
+                          hint: 'Enter account name',
+                          icon: Icons.badge_outlined,
+                          isRequired: true,
+                          key: _nameFieldKey,
+                          focusNode: _nameFocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _emailFocusNode.requestFocus(),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Account name is required';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _emailController,
+                          label: 'Email Address',
+                          hint: 'Enter email address',
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          isRequired: true,
+                          key: _emailFieldKey,
+                          focusNode: _emailFocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _phoneFocusNode.requestFocus(),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Email is required';
+                            }
+                            if (!RegExp(
+                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                            ).hasMatch(value)) {
+                              return 'Please enter a valid email';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _phoneController,
+                          label: 'Phone Number',
+                          hint: 'Enter phone number',
+                          icon: Icons.phone_outlined,
+                          keyboardType: TextInputType.phone,
+                          focusNode: _phoneFocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _companyFocusNode.requestFocus(),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _companyController,
+                          label: 'Company',
+                          hint: 'Enter company name',
+                          icon: Icons.business_outlined,
+                          focusNode: _companyFocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _address1FocusNode.requestFocus(),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 24),
+
+                    // Location Information Card
+                    _buildSectionCard(
+                      theme: theme,
+                      colorScheme: colorScheme,
+                      title: 'Location Information',
+                      icon: Icons.location_on_outlined,
+                      children: [
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _address1Controller,
+                          label: 'Address Line 1',
+                          hint: 'Enter street address',
+                          icon: Icons.home_outlined,
+                          focusNode: _address1FocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _address2FocusNode.requestFocus(),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _address2Controller,
+                          label: 'Address Line 2',
+                          hint: 'Apartment, suite, etc. (optional)',
+                          icon: Icons.home_work_outlined,
+                          focusNode: _address2FocusNode,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: () =>
+                              _notesFocusNode.requestFocus(),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Country, State, City Picker
+                        _buildCountryStateCityPicker(theme, colorScheme),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Account Settings Card
+                    _buildSectionCard(
+                      theme: theme,
+                      colorScheme: colorScheme,
+                      title: 'Account Settings',
+                      icon: Icons.settings_outlined,
+                      children: [
+                        _buildCurrencyDropdown(theme, colorScheme),
+                        const SizedBox(height: 20),
+                        _buildTimeZoneDropdown(theme, colorScheme),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Additional Information Card
+                    _buildSectionCard(
+                      theme: theme,
+                      colorScheme: colorScheme,
+                      title: 'Additional Information',
+                      icon: Icons.note_outlined,
+                      children: [
+                        _buildModernTextField(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          controller: _notesController,
+                          label: 'Notes',
+                          hint: 'Add any additional notes about this account',
+                          icon: Icons.edit_note_outlined,
+                          maxLines: 4,
+                          focusNode: _notesFocusNode,
+                          textInputAction: TextInputAction.done,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Action Buttons
+                    _buildActionButtons(theme, colorScheme, state),
+                  ],
+                ),
               ),
             );
           },
@@ -285,57 +431,789 @@ class _EditAccountFormState extends State<EditAccountForm> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
+  Widget _buildCountryStateCityPicker(
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Country Dropdown
+        _buildDropdownField(
+          theme: theme,
+          colorScheme: colorScheme,
+          label: 'Country',
+          icon: Icons.public_outlined,
+          value: _selectedCountry,
+          allowCustomInput: true,
+          items: const [
+            'US',
+            'ET',
+            'KE',
+            'NG',
+            'GB',
+            'DE',
+            'FR',
+            'CA',
+            'AU',
+            'IN',
+            'BR',
+            'MX',
+          ],
+          onChanged: (value) {
+            setState(() {
+              _selectedCountry = value ?? 'US';
+              _selectedState = '';
+              _selectedCity = '';
+            });
+          },
         ),
-      ),
+        const SizedBox(height: 20),
+
+        // State Dropdown
+        _buildDropdownField(
+          theme: theme,
+          colorScheme: colorScheme,
+          label: 'State/Province',
+          icon: Icons.map_outlined,
+          value: _selectedState,
+          allowCustomInput: true,
+          items: _getStatesForCountry(_selectedCountry),
+          onChanged: (value) {
+            setState(() {
+              _selectedState = value ?? '';
+              _selectedCity = '';
+            });
+          },
+        ),
+        const SizedBox(height: 20),
+
+        // City Dropdown
+        _buildDropdownField(
+          theme: theme,
+          colorScheme: colorScheme,
+          label: 'City',
+          icon: Icons.location_city_outlined,
+          value: _selectedCity,
+          allowCustomInput: true,
+          items: _getCitiesForState(_selectedState),
+          onChanged: (value) {
+            setState(() {
+              _selectedCity = value ?? '';
+            });
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
-      ),
-    );
+  List<String> _getStatesForCountry(String country) {
+    switch (country) {
+      case 'US':
+        return ['CA', 'NY', 'TX', 'FL', 'IL', 'PA', 'OH', 'GA', 'NC', 'MI'];
+      case 'ET':
+        return [
+          'Addis Ababa',
+          'Oromia',
+          'Amhara',
+          'Tigray',
+          'SNNPR',
+          'Afar',
+          'Somali',
+          'Harari',
+        ];
+      case 'KE':
+        return [
+          'Nairobi',
+          'Mombasa',
+          'Kisumu',
+          'Nakuru',
+          'Eldoret',
+          'Thika',
+          'Malindi',
+          'Kitale',
+        ];
+      case 'NG':
+        return [
+          'Lagos',
+          'Kano',
+          'Abuja',
+          'Rivers',
+          'Oyo',
+          'Kaduna',
+          'Enugu',
+          'Delta',
+        ];
+      case 'GB':
+        return ['England', 'Scotland', 'Wales', 'Northern Ireland'];
+      case 'DE':
+        return [
+          'Bavaria',
+          'Baden-Württemberg',
+          'North Rhine-Westphalia',
+          'Hesse',
+          'Saxony',
+        ];
+      case 'FR':
+        return [
+          'Île-de-France',
+          'Auvergne-Rhône-Alpes',
+          'Hauts-de-France',
+          'Occitanie',
+          'Nouvelle-Aquitaine',
+        ];
+      case 'CA':
+        return [
+          'Ontario',
+          'Quebec',
+          'British Columbia',
+          'Alberta',
+          'Manitoba',
+          'Saskatchewan',
+        ];
+      case 'AU':
+        return [
+          'New South Wales',
+          'Victoria',
+          'Queensland',
+          'Western Australia',
+          'South Australia',
+          'Tasmania',
+        ];
+      case 'IN':
+        return [
+          'Maharashtra',
+          'Uttar Pradesh',
+          'Karnataka',
+          'Gujarat',
+          'Tamil Nadu',
+          'Rajasthan',
+        ];
+      case 'BR':
+        return [
+          'São Paulo',
+          'Rio de Janeiro',
+          'Minas Gerais',
+          'Bahia',
+          'Paraná',
+          'Rio Grande do Sul',
+        ];
+      case 'MX':
+        return [
+          'Mexico City',
+          'Jalisco',
+          'Nuevo León',
+          'Puebla',
+          'Guanajuato',
+          'Veracruz',
+        ];
+      default:
+        return [];
+    }
   }
 
-  Widget _buildDropdown({
+  List<String> _getCitiesForState(String state) {
+    switch (state) {
+      case 'CA':
+        return [
+          'Los Angeles',
+          'San Francisco',
+          'San Diego',
+          'San Jose',
+          'Fresno',
+          'Sacramento',
+        ];
+      case 'NY':
+        return [
+          'New York City',
+          'Buffalo',
+          'Rochester',
+          'Yonkers',
+          'Syracuse',
+          'Albany',
+        ];
+      case 'TX':
+        return [
+          'Houston',
+          'San Antonio',
+          'Dallas',
+          'Austin',
+          'Fort Worth',
+          'El Paso',
+        ];
+      case 'FL':
+        return [
+          'Miami',
+          'Tampa',
+          'Orlando',
+          'Jacksonville',
+          'St. Petersburg',
+          'Hialeah',
+        ];
+      case 'Nairobi':
+        return [
+          'Nairobi Central',
+          'Westlands',
+          'Eastleigh',
+          'Karen',
+          'Runda',
+          'Kilimani',
+        ];
+      case 'Lagos':
+        return [
+          'Lagos Island',
+          'Victoria Island',
+          'Ikoyi',
+          'Surulere',
+          'Yaba',
+          'Ikeja',
+        ];
+      case 'England':
+        return [
+          'London',
+          'Birmingham',
+          'Manchester',
+          'Liverpool',
+          'Leeds',
+          'Sheffield',
+        ];
+      case 'Bavaria':
+        return [
+          'Munich',
+          'Nuremberg',
+          'Augsburg',
+          'Würzburg',
+          'Regensburg',
+          'Ingolstadt',
+        ];
+      case 'Île-de-France':
+        return [
+          'Paris',
+          'Boulogne-Billancourt',
+          'Saint-Denis',
+          'Argenteuil',
+          'Montreuil',
+          'Créteil',
+        ];
+      case 'Ontario':
+        return [
+          'Toronto',
+          'Ottawa',
+          'Mississauga',
+          'Hamilton',
+          'Brampton',
+          'London',
+        ];
+      case 'New South Wales':
+        return [
+          'Sydney',
+          'Newcastle',
+          'Wollongong',
+          'Wagga Wagga',
+          'Albury',
+          'Tamworth',
+        ];
+      case 'Maharashtra':
+        return ['Mumbai', 'Pune', 'Nagpur', 'Nashik', 'Aurangabad', 'Solapur'];
+      case 'São Paulo':
+        return [
+          'São Paulo',
+          'Guarulhos',
+          'Campinas',
+          'São Bernardo do Campo',
+          'Santo André',
+          'Osasco',
+        ];
+      case 'Mexico City':
+        return [
+          'Mexico City',
+          'Iztapalapa',
+          'Gustavo A. Madero',
+          'Álvaro Obregón',
+          'Coyoacán',
+          'Cuauhtémoc',
+        ];
+      default:
+        return [];
+    }
+  }
+
+  Widget _buildDropdownField({
+    required ThemeData theme,
+    required ColorScheme colorScheme,
     required String label,
+    required IconData icon,
     required String value,
     required List<String> items,
     required ValueChanged<String?> onChanged,
+    bool allowCustomInput = false,
   }) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        filled: true,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: colorScheme.primary.withOpacity(0.7)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        DropdownSearch<String>(
+          popupProps: PopupProps.menu(
+            showSearchBox: true,
+            searchFieldProps: TextFieldProps(
+              decoration: InputDecoration(
+                hintText: allowCustomInput
+                    ? "Search $label or type custom value..."
+                    : "Search $label...",
+                filled: true,
+                fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              ),
+            ),
+            itemBuilder: (context, item, isSelected) => ListTile(
+              title: Text(item),
+              trailing: allowCustomInput && !items.contains(item)
+                  ? Icon(
+                      Icons.add_circle_outline,
+                      size: 16,
+                      color: colorScheme.primary,
+                    )
+                  : null,
+            ),
+          ),
+          items: items,
+          onChanged: onChanged,
+          selectedItem: value.isEmpty ? null : value,
+          dropdownBuilder: (context, selectedItem) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                selectedItem ?? "Select $label",
+                style: theme.textTheme.bodyLarge,
+              ),
+            );
+          },
+          asyncItems: allowCustomInput
+              ? (String filter) async {
+                  // If user types something not in the list, add it as an option
+                  if (filter.isNotEmpty &&
+                      !items.any(
+                        (item) =>
+                            item.toLowerCase().contains(filter.toLowerCase()),
+                      )) {
+                    return [
+                      filter,
+                      ...items
+                          .where(
+                            (item) => item.toLowerCase().contains(
+                              filter.toLowerCase(),
+                            ),
+                          )
+                          .toList(),
+                    ];
+                  }
+                  return items
+                      .where(
+                        (item) =>
+                            item.toLowerCase().contains(filter.toLowerCase()),
+                      )
+                      .toList();
+                }
+              : null,
+          dropdownDecoratorProps: DropDownDecoratorProps(
+            dropdownSearchDecoration: InputDecoration(
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrencyDropdown(ThemeData theme, ColorScheme colorScheme) {
+    final currencies = [
+      'USD - US Dollar',
+      'EUR - Euro',
+      'GBP - British Pound',
+      'ETB - Ethiopian Birr',
+      'KES - Kenyan Shilling',
+      'NGN - Nigerian Naira',
+      'CAD - Canadian Dollar',
+      'AUD - Australian Dollar',
+      'INR - Indian Rupee',
+      'BRL - Brazilian Real',
+      'MXN - Mexican Peso',
+      'JPY - Japanese Yen',
+      'CNY - Chinese Yuan',
+      'ZAR - South African Rand',
+    ];
+
+    return _buildDropdownField(
+      theme: theme,
+      colorScheme: colorScheme,
+      label: 'Currency',
+      icon: Icons.attach_money_outlined,
+      value: _selectedCurrency,
+      allowCustomInput: true,
+      items: currencies,
+      onChanged: (value) {
+        if (value != null) {
+          setState(() {
+            // If it's a custom input (not in predefined list), use as is
+            if (currencies.contains(value)) {
+              _selectedCurrency = value.split(
+                ' - ',
+              )[0]; // Extract currency code
+            } else {
+              _selectedCurrency = value; // Use custom input directly
+            }
+          });
+        }
+      },
+    );
+  }
+
+  Widget _buildTimeZoneDropdown(ThemeData theme, ColorScheme colorScheme) {
+    return _buildDropdownField(
+      theme: theme,
+      colorScheme: colorScheme,
+      label: 'Time Zone',
+      icon: Icons.schedule_outlined,
+      value: _selectedTimeZone,
+      allowCustomInput: true,
+      items: _timeZones,
+      onChanged: (value) {
+        setState(() {
+          _selectedTimeZone = value ?? 'GMT';
+        });
+      },
+    );
+  }
+
+  Widget _buildHeaderCard(ThemeData theme, ColorScheme colorScheme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primary.withOpacity(0.1),
+            colorScheme.primary.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.primary.withOpacity(0.2),
+          width: 1,
+        ),
       ),
-      items: items.map((item) {
-        return DropdownMenuItem(value: item, child: Text(item));
-      }).toList(),
-      onChanged: onChanged,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              Icons.edit_rounded,
+              color: colorScheme.primary,
+              size: 32,
+            ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Edit Account',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Update the account information below. All changes will be saved immediately.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: colorScheme.primary, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernTextField({
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    bool isRequired = false,
+    String? Function(String?)? validator,
+    Key? key,
+    FocusNode? focusNode,
+    TextInputAction? textInputAction,
+    VoidCallback? onFieldSubmitted,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: colorScheme.primary.withOpacity(0.7)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ),
+            if (isRequired) ...[
+              const SizedBox(width: 4),
+              Text(
+                '*',
+                style: TextStyle(
+                  color: colorScheme.error,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          key: key,
+          child: TextFormField(
+            controller: controller,
+            focusNode: focusNode,
+            keyboardType: keyboardType,
+            textInputAction: textInputAction,
+            onFieldSubmitted: onFieldSubmitted != null
+                ? (_) => onFieldSubmitted()
+                : null,
+            maxLines: maxLines,
+            validator: validator,
+            style: theme.textTheme.bodyLarge,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.5),
+              ),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.error, width: 1),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.error, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    AccountsState state,
+  ) {
+    final isLoading = state is AccountUpdating;
+
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: isLoading ? null : () => Navigator.of(context).pop(),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              side: BorderSide(
+                color: colorScheme.outline.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              'Cancel',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          flex: 2,
+          child: ElevatedButton(
+            onPressed: isLoading ? null : _submitForm,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 2,
+              shadowColor: colorScheme.primary.withOpacity(0.3),
+            ),
+            child: isLoading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colorScheme.onPrimary,
+                      ),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.save_rounded, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Update Account',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
     );
   }
 }

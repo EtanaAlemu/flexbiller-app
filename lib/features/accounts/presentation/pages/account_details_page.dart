@@ -255,10 +255,23 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                   IconButton(
                     icon: const Icon(Icons.delete),
                     onPressed: () {
+                      // Capture the BLoC reference before showing dialog
+                      final accountsBloc = context
+                          .read<AccountsOrchestratorBloc>();
                       showDialog(
                         context: context,
-                        builder: (context) =>
-                            DeleteAccountDialog(account: account),
+                        builder: (context) => BlocProvider.value(
+                          value: accountsBloc,
+                          child: DeleteAccountDialog(
+                            account: account,
+                            onAccountDeleted: () {
+                              // Navigate back to accounts page after successful deletion
+                              Navigator.of(
+                                context,
+                              ).popUntil((route) => route.isFirst);
+                            },
+                          ),
+                        ),
                       );
                     },
                     tooltip: 'Delete Account',

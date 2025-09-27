@@ -62,6 +62,40 @@ class ChildAccountRemoteDataSourceImpl implements ChildAccountRemoteDataSource {
         throw ValidationException('Invalid child account data');
       } else if (e.response?.statusCode == 409) {
         throw ValidationException('Account with this email already exists');
+      } else if (e.response?.statusCode == 500) {
+        // Handle 500 error with meaningful error messages
+        final responseData = e.response?.data;
+        if (responseData != null) {
+          // Check for CONNECTION_ERROR with meaningful original error
+          if (responseData['error'] == 'CONNECTION_ERROR') {
+            final details = responseData['details'];
+            if (details != null && details['originalError'] != null) {
+              final originalError = details['originalError'] as String;
+              if (originalError.contains("Account already exists")) {
+                throw ValidationException(
+                  'Account already exists. Please use a different email or external key.',
+                );
+              } else if (originalError.contains("doesn't exist")) {
+                throw ValidationException('Resource not found');
+              } else {
+                throw ServerException('Server error: $originalError');
+              }
+            }
+          }
+
+          // Check for direct error message in response
+          if (responseData['message'] != null) {
+            final message = responseData['message'] as String;
+            if (message.contains("Account already exists")) {
+              throw ValidationException(
+                'Account already exists. Please use a different email or external key.',
+              );
+            } else {
+              throw ServerException('Server error: $message');
+            }
+          }
+        }
+        throw ServerException('Server error while creating child account');
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException(

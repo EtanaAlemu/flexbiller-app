@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../../core/network/dio_client.dart';
 import '../../../../../core/errors/exceptions.dart';
-import '../../../../../core/models/api_response.dart';
 import '../../models/account_model.dart';
 import '../../../domain/entities/accounts_query_params.dart';
 
@@ -206,7 +205,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
     try {
       final response = await _dioClient.dio.post(
         '/accounts',
-        data: account.toJson(),
+        data: account.toJsonForApi(),
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -253,13 +252,33 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
       } else if (e.response?.statusCode == 500) {
         // Handle 500 error which might indicate server issues
         final responseData = e.response?.data;
-        if (responseData != null &&
-            responseData['error'] == 'CONNECTION_ERROR') {
-          final details = responseData['details'];
-          if (details != null && details['originalError'] != null) {
-            final originalError = details['originalError'] as String;
-            if (originalError.contains("doesn't exist")) {
-              throw ValidationException('Resource not found');
+        if (responseData != null) {
+          // Check for CONNECTION_ERROR with meaningful original error
+          if (responseData['error'] == 'CONNECTION_ERROR') {
+            final details = responseData['details'];
+            if (details != null && details['originalError'] != null) {
+              final originalError = details['originalError'] as String;
+              if (originalError.contains("Account already exists")) {
+                throw ValidationException(
+                  'Account already exists. Please use a different email or external key.',
+                );
+              } else if (originalError.contains("doesn't exist")) {
+                throw ValidationException('Resource not found');
+              } else {
+                throw ServerException('Server error: $originalError');
+              }
+            }
+          }
+
+          // Check for direct error message in response
+          if (responseData['message'] != null) {
+            final message = responseData['message'] as String;
+            if (message.contains("Account already exists")) {
+              throw ValidationException(
+                'Account already exists. Please use a different email or external key.',
+              );
+            } else {
+              throw ServerException('Server error: $message');
             }
           }
         }
@@ -277,7 +296,7 @@ class AccountsRemoteDataSourceImpl implements AccountsRemoteDataSource {
     try {
       final response = await _dioClient.dio.put(
         '/accounts/${account.accountId}',
-        data: account.toJson(),
+        data: account.toJsonForApi(),
       );
 
       if (response.statusCode == 200) {

@@ -12,6 +12,8 @@ import 'events/account_multiselect_events.dart' as multiselect_events;
 import 'events/account_export_events.dart' as export_events;
 import 'states/accounts_state.dart';
 import 'states/account_detail_states.dart' as detail_states;
+import 'states/account_multiselect_states.dart' as multiselect_states;
+import 'states/account_export_states.dart' as export_states;
 import '../../domain/entities/accounts_query_params.dart';
 
 /// Main orchestrator BLoC that coordinates between specialized BLoCs
@@ -83,6 +85,7 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
 
     // Multi-Select Events
     on<EnableMultiSelectMode>(_onEnableMultiSelectMode);
+    on<EnableMultiSelectModeAndSelect>(_onEnableMultiSelectModeAndSelect);
     on<DisableMultiSelectMode>(_onDisableMultiSelectMode);
     on<SelectAccount>(_onSelectAccount);
     on<DeselectAccount>(_onDeselectAccount);
@@ -93,6 +96,7 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
     // Export Events
     on<ExportAccounts>(_onExportAccounts);
     on<ExportSelectedAccounts>(_onExportSelectedAccounts);
+    on<BulkExportAccounts>(_onBulkExportAccounts);
     on<ShareFile>(_onShareExportedFile);
 
     // Forward Events
@@ -101,6 +105,82 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
 
   void _initializeStreamSubscriptions() {
     print('🔍 AccountsOrchestratorBloc: Initializing stream subscriptions');
+
+    // Listen to multi-select state changes and forward them to the UI
+    _accountMultiSelectSubscription = _accountMultiSelectBloc.stream.listen((
+      state,
+    ) {
+      print(
+        '🔍 AccountsOrchestratorBloc: Multi-select stream received state: ${state.runtimeType}',
+      );
+      if (state is multiselect_states.MultiSelectModeEnabled) {
+        print(
+          '🔍 AccountsOrchestratorBloc: Forwarding MultiSelectModeEnabled with ${state.selectedAccounts.length} selected accounts',
+        );
+        emit(MultiSelectModeEnabled(selectedAccounts: state.selectedAccounts));
+      } else if (state is multiselect_states.MultiSelectModeDisabled) {
+        print(
+          '🔍 AccountsOrchestratorBloc: Forwarding MultiSelectModeDisabled',
+        );
+        emit(MultiSelectModeDisabled());
+      } else if (state is multiselect_states.AccountSelected) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountSelected');
+        emit(
+          AccountSelected(
+            account: state.account,
+            selectedAccounts: state.selectedAccounts,
+          ),
+        );
+      } else if (state is multiselect_states.AccountDeselected) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDeselected');
+        emit(
+          AccountDeselected(
+            account: state.account,
+            selectedAccounts: state.selectedAccounts,
+          ),
+        );
+      } else if (state is multiselect_states.AllAccountsSelected) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AllAccountsSelected');
+        emit(AllAccountsSelected(selectedAccounts: state.selectedAccounts));
+      } else if (state is multiselect_states.AllAccountsDeselected) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AllAccountsDeselected');
+        emit(AllAccountsDeselected());
+      } else if (state is multiselect_states.BulkDeleteInProgress) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding BulkDeleteInProgress');
+        print(
+          '🔍 AccountsOrchestratorBloc: Emitting BulkAccountsDeleting with ${state.accountsToDelete.length} accounts',
+        );
+        emit(BulkAccountsDeleting(accountsToDelete: state.accountsToDelete));
+      } else if (state is multiselect_states.BulkDeleteCompleted) {
+        print(
+          '🔍 AccountsOrchestratorBloc: Forwarding BulkDeleteCompleted with ${state.deletedCount} deleted accounts',
+        );
+        print(
+          '🔍 AccountsOrchestratorBloc: Emitting BulkAccountsDeleted state',
+        );
+        emit(
+          BulkAccountsDeleted(
+            deletedAccountIds: List.generate(
+              state.deletedCount,
+              (index) => 'deleted_$index',
+            ),
+          ),
+        ); // Generate placeholder IDs for the count
+      } else if (state is multiselect_states.BulkDeleteFailure) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding BulkDeleteFailure');
+        emit(
+          BulkAccountsDeletionFailure(
+            message: state.message,
+            accountsToDelete: state.failedAccounts,
+          ),
+        );
+      } else {
+        print(
+          '🔍 AccountsOrchestratorBloc: Unknown multi-select state type: ${state.runtimeType}',
+        );
+      }
+    });
+
     // Listen to account detail state changes and forward them to the UI
     _accountDetailSubscription = _accountDetailBloc.stream.listen((state) {
       print(
@@ -136,9 +216,40 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
       } else if (state is detail_states.AccountDeleteFailure) {
         print('🔍 AccountsOrchestratorBloc: Forwarding AccountDeleteFailure');
         add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountUpdating) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountUpdating');
+        add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountUpdated) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountUpdated');
+        add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountUpdateFailure) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountUpdateFailure');
+        add(ForwardAccountDetailState(state));
       } else {
         print(
           '🔍 AccountsOrchestratorBloc: Unknown state type: ${state.runtimeType}',
+        );
+      }
+    });
+
+    // Listen to export state changes
+    _accountExportSubscription = _accountExportBloc.stream.listen((state) {
+      print(
+        '🔍 AccountsOrchestratorBloc: Export stream received state: ${state.runtimeType}',
+      );
+      if (state is export_states.AccountsExportSuccess) {
+        print(
+          '🔍 AccountsOrchestratorBloc: Export successful, disabling multi-select mode',
+        );
+        // Disable multi-select mode after successful export
+        _accountMultiSelectBloc.add(
+          multiselect_events.DisableMultiSelectMode(),
+        );
+      } else if (state is export_states.AccountsExportFailure) {
+        print('🔍 AccountsOrchestratorBloc: Export failed: ${state.message}');
+        // Optionally disable multi-select mode on failure too
+        _accountMultiSelectBloc.add(
+          multiselect_events.DisableMultiSelectMode(),
         );
       }
     });
@@ -438,6 +549,15 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
     _accountMultiSelectBloc.add(multiselect_events.EnableMultiSelectMode());
   }
 
+  Future<void> _onEnableMultiSelectModeAndSelect(
+    EnableMultiSelectModeAndSelect event,
+    Emitter<AccountsState> emit,
+  ) async {
+    _accountMultiSelectBloc.add(
+      multiselect_events.EnableMultiSelectModeAndSelect(event.account),
+    );
+  }
+
   Future<void> _onDisableMultiSelectMode(
     DisableMultiSelectMode event,
     Emitter<AccountsState> emit,
@@ -467,7 +587,9 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
     SelectAllAccounts event,
     Emitter<AccountsState> emit,
   ) async {
-    _accountMultiSelectBloc.add(multiselect_events.SelectAllAccounts());
+    _accountMultiSelectBloc.add(
+      multiselect_events.SelectAllAccounts(accounts: event.accounts),
+    );
   }
 
   Future<void> _onDeselectAllAccounts(
@@ -504,6 +626,31 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
     _accountExportBloc.add(
       export_events.ExportSelectedAccounts(
         accountIds: event.accountIds,
+        format: event.format,
+      ),
+    );
+  }
+
+  Future<void> _onBulkExportAccounts(
+    BulkExportAccounts event,
+    Emitter<AccountsState> emit,
+  ) async {
+    // Get selected accounts from multi-select bloc
+    final selectedAccounts = _accountMultiSelectBloc.selectedAccounts;
+
+    if (selectedAccounts.isEmpty) {
+      print('🔍 AccountsOrchestratorBloc: No accounts selected for export');
+      return;
+    }
+
+    print(
+      '🔍 AccountsOrchestratorBloc: Exporting ${selectedAccounts.length} accounts in ${event.format} format',
+    );
+
+    // Forward to export bloc with the selected accounts
+    _accountExportBloc.add(
+      export_events.ExportAccounts(
+        accounts: selectedAccounts,
         format: event.format,
       ),
     );
@@ -605,6 +752,19 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
       emit(
         AccountDeletionFailure(failureState.message, failureState.accountId),
       );
+    } else if (event.state is detail_states.AccountUpdating) {
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountUpdating');
+      emit(AccountUpdating());
+    } else if (event.state is detail_states.AccountUpdated) {
+      final updatedState = event.state as detail_states.AccountUpdated;
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountUpdated');
+      emit(AccountUpdated(updatedState.account));
+
+      // Note: No need to refresh accounts list as the stream will update the UI automatically
+    } else if (event.state is detail_states.AccountUpdateFailure) {
+      final failureState = event.state as detail_states.AccountUpdateFailure;
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountUpdateFailure');
+      emit(AccountUpdateFailure(failureState.message));
     } else {
       print(
         '🔍 AccountsOrchestratorBloc: Unknown state type in _onForwardAccountDetailState: ${event.state.runtimeType}',

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account.dart';
 import '../pages/account_details_page.dart';
 import '../widgets/delete_account_dialog.dart';
+import '../widgets/edit_account_form.dart';
 import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 
@@ -33,7 +34,7 @@ class SelectableAccountCardWidget extends StatelessWidget {
                 width: 1,
               ),
       ),
-      child: InkWell(
+      child: GestureDetector(
         onTap: () {
           if (isMultiSelectMode) {
             _toggleSelection(context);
@@ -41,172 +42,188 @@ class SelectableAccountCardWidget extends StatelessWidget {
             _navigateToDetails(context);
           }
         },
+        onLongPressStart: (details) {
+          print('🐛 Long press start detected on account: ${account.name}');
+        },
         onLongPress: () {
+          print('🐛 Long press detected on account: ${account.name}');
           if (!isMultiSelectMode) {
             _enableMultiSelectModeAndSelect(context);
           }
         },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: isSelected
-                ? Theme.of(
-                    context,
-                  ).colorScheme.primaryContainer.withOpacity(0.1)
-                : Theme.of(context).colorScheme.surface,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                // Selection checkbox
-                if (isMultiSelectMode)
-                  Container(
-                    margin: const EdgeInsets.only(right: 12.0),
-                    child: Checkbox(
-                      value: isSelected,
-                      onChanged: (value) => _toggleSelection(context),
-                      activeColor: Theme.of(context).colorScheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
+        child: InkWell(
+          onTap: () {
+            if (isMultiSelectMode) {
+              _toggleSelection(context);
+            } else {
+              _navigateToDetails(context);
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: isSelected
+                  ? Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer.withOpacity(0.1)
+                  : Theme.of(context).colorScheme.surface,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  // Selection checkbox
+                  if (isMultiSelectMode)
+                    Container(
+                      margin: const EdgeInsets.only(right: 12.0),
+                      child: Checkbox(
+                        value: isSelected,
+                        onChanged: (value) => _toggleSelection(context),
+                        activeColor: Theme.of(context).colorScheme.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  // Account avatar
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: Text(
+                      _getInitials(account),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
-                // Account avatar
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  child: Text(
-                    _getInitials(account),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                  const SizedBox(width: 12),
+                  // Account details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          account.displayName.isNotEmpty
+                              ? account.displayName
+                              : account.name,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          account.email.isNotEmpty ? account.email : 'No email',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                                fontSize: 12,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                // Account details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        account.displayName.isNotEmpty
-                            ? account.displayName
-                            : account.name,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  // Balance indicator
+                  if (account.hasBalance)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        account.email.isNotEmpty ? account.email : 'No email',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      decoration: BoxDecoration(
+                        color: account.balance > 0
+                            ? Colors.green.withOpacity(0.1)
+                            : Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        account.formattedBalance,
+                        style: TextStyle(
+                          color: account.balance > 0
+                              ? Colors.green.shade700
+                              : Colors.red.shade700,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  // Action button
+                  if (!isMultiSelectMode) ...[
+                    const SizedBox(width: 8),
+                    PopupMenuButton<String>(
+                      onSelected: (value) => _handleMenuAction(context, value),
+                      itemBuilder: (BuildContext context) => [
+                        PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.edit_outlined,
+                                size: 18,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Edit Account',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Delete Account',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceVariant.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.more_vert,
+                          size: 18,
                           color: Theme.of(
                             context,
                           ).colorScheme.onSurface.withOpacity(0.6),
-                          fontSize: 12,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                // Balance indicator
-                if (account.hasBalance)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: account.balance > 0
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      account.formattedBalance,
-                      style: TextStyle(
-                        color: account.balance > 0
-                            ? Colors.green.shade700
-                            : Colors.red.shade700,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                // Action button
-                if (!isMultiSelectMode) ...[
-                  const SizedBox(width: 8),
-                  PopupMenuButton<String>(
-                    onSelected: (value) => _handleMenuAction(context, value),
-                    itemBuilder: (BuildContext context) => [
-                      PopupMenuItem<String>(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.edit_outlined,
-                              size: 18,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Edit Account',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
                         ),
                       ),
-                      PopupMenuItem<String>(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delete_outline,
-                              size: 18,
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Delete Account',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceVariant.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.more_vert,
-                        size: 18,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -227,10 +244,34 @@ class SelectableAccountCardWidget extends StatelessWidget {
   }
 
   void _navigateToDetails(BuildContext context) {
+    // Capture the BLoC reference before navigation
+    final accountsBloc = context.read<AccountsOrchestratorBloc>();
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AccountDetailsPage(accountId: account.id),
+        builder: (context) => BlocProvider.value(
+          value: accountsBloc,
+          child: AccountDetailsPage(accountId: account.id),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToEditForm(BuildContext context) {
+    // Capture the BLoC reference before navigation
+    final accountsBloc = context.read<AccountsOrchestratorBloc>();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: accountsBloc,
+          child: EditAccountForm(
+            account: account,
+            onAccountUpdated: () {
+              // Refresh the accounts list after update
+              accountsBloc.add(const RefreshAccounts());
+            },
+          ),
+        ),
       ),
     );
   }
@@ -238,7 +279,7 @@ class SelectableAccountCardWidget extends StatelessWidget {
   void _handleMenuAction(BuildContext context, String action) {
     switch (action) {
       case 'edit':
-        _navigateToDetails(context);
+        _navigateToEditForm(context);
         break;
       case 'delete':
         _showDeleteDialog(context);
@@ -253,21 +294,22 @@ class SelectableAccountCardWidget extends StatelessWidget {
       context: context,
       builder: (BuildContext dialogContext) => BlocProvider.value(
         value: accountsBloc,
-        child: DeleteAccountDialog(account: account),
+        child: DeleteAccountDialog(
+          account: account,
+        ), // No callback needed for accounts list
       ),
     );
   }
 
   void _enableMultiSelectModeAndSelect(BuildContext context) {
+    print(
+      '🐛 _enableMultiSelectModeAndSelect called for account: ${account.name}',
+    );
     // Provide haptic feedback for long press
     HapticFeedback.mediumImpact();
 
     final bloc = context.read<AccountsOrchestratorBloc>();
-    bloc.add(const EnableMultiSelectMode());
-    // Add a small delay to ensure multi-select mode is enabled before selecting
-    Future.delayed(const Duration(milliseconds: 100), () {
-      bloc.add(SelectAccount(account));
-    });
+    bloc.add(EnableMultiSelectModeAndSelect(account));
   }
 
   String _getInitials(Account account) {

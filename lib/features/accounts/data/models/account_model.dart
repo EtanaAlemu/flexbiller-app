@@ -80,7 +80,16 @@ class AccountModel {
 
   factory AccountModel.fromJson(Map<String, dynamic> json) =>
       _$AccountModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$AccountModelToJson(this);
+
+  /// Custom toJson method that excludes userId field for API requests
+  /// The server doesn't accept userId field in account update requests
+  Map<String, dynamic> toJsonForApi() {
+    final json = _$AccountModelToJson(this);
+    json.remove('userId'); // Remove userId field as server doesn't accept it
+    return json;
+  }
 
   Account toEntity() {
     return Account(

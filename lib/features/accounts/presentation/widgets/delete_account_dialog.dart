@@ -7,9 +7,13 @@ import '../bloc/states/accounts_state.dart';
 
 class DeleteAccountDialog extends StatelessWidget {
   final Account account;
+  final VoidCallback? onAccountDeleted;
 
-  const DeleteAccountDialog({Key? key, required this.account})
-    : super(key: key);
+  const DeleteAccountDialog({
+    Key? key,
+    required this.account,
+    this.onAccountDeleted,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +27,8 @@ class DeleteAccountDialog extends StatelessWidget {
             ),
           );
           Navigator.of(context).pop();
+          // Call the callback if provided (for navigation back to accounts page)
+          onAccountDeleted?.call();
         } else if (state is AccountDeletionFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -215,44 +221,50 @@ class DeleteAccountDialog extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
-                        builder: (context, state) {
-                          return ElevatedButton(
-                            onPressed: state is AccountDeleting
-                                ? null
-                                : () {
-                                    context.read<AccountsOrchestratorBloc>().add(
-                                      DeleteAccount(account.accountId),
-                                    );
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                              foregroundColor: Theme.of(
-                                context,
-                              ).colorScheme.onError,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: state is AccountDeleting
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : const Text('Delete'),
-                          );
-                        },
-                      ),
+                      child:
+                          BlocBuilder<AccountsOrchestratorBloc, AccountsState>(
+                            builder: (context, state) {
+                              return ElevatedButton(
+                                onPressed: state is AccountDeleting
+                                    ? null
+                                    : () {
+                                        context
+                                            .read<AccountsOrchestratorBloc>()
+                                            .add(
+                                              DeleteAccount(account.accountId),
+                                            );
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.error,
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onError,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: state is AccountDeleting
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                        ),
+                                      )
+                                    : const Text('Delete'),
+                              );
+                            },
+                          ),
                     ),
                   ],
                 ),

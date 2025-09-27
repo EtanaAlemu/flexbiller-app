@@ -14,6 +14,16 @@ class EnableMultiSelectMode extends MultiSelectEvent {
   const EnableMultiSelectMode();
 }
 
+/// Event to enable multi-select mode and select an account
+class EnableMultiSelectModeAndSelect extends MultiSelectEvent {
+  final Account account;
+
+  const EnableMultiSelectModeAndSelect(this.account);
+
+  @override
+  List<Object?> get props => [account];
+}
+
 /// Event to disable multi-select mode
 class DisableMultiSelectMode extends MultiSelectEvent {
   const DisableMultiSelectMode();
@@ -41,7 +51,12 @@ class DeselectAccount extends MultiSelectEvent {
 
 /// Event to select all accounts
 class SelectAllAccounts extends MultiSelectEvent {
-  const SelectAllAccounts();
+  final List<Account> accounts;
+
+  const SelectAllAccounts({required this.accounts});
+
+  @override
+  List<Object?> get props => [accounts];
 }
 
 /// Event to deselect all accounts

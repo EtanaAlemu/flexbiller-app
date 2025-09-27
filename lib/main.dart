@@ -6,7 +6,7 @@ import 'injection_container.dart' as di;
 import 'features/auth/presentation/pages/authentication_flow_page.dart';
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
-import 'features/auth/data/repositories/auth_repository_impl.dart';
+import 'features/auth/domain/repositories/auth_repository.dart';
 import 'core/services/authentication_state_service.dart';
 import 'core/services/crash_analytics_initializer.dart';
 import 'core/services/crash_analytics_service.dart';
@@ -61,7 +61,7 @@ Future<void> _initializeApp() async {
 
   // Restore user context for multi-user support (only if user is authenticated)
   try {
-    final authRepository = di.getIt<AuthRepositoryImpl>();
+    final authRepository = di.getIt<AuthRepository>();
     final authStateService = di.getIt<AuthenticationStateService>();
 
     // Only restore user context if user is actually authenticated
@@ -86,6 +86,10 @@ Future<void> _initializeApp() async {
   ]);
 }
 
+// Global key for ScaffoldMessenger to show SnackBars from anywhere
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -104,7 +108,7 @@ class MyApp extends StatelessWidget {
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
                 themeMode: themeProvider.themeMode,
-
+                scaffoldMessengerKey: scaffoldMessengerKey, // Add global key
                 // Localization
                 localizationsDelegates: AppLocalizations.localizationsDelegates,
                 supportedLocales: AppLocalizations.supportedLocalesList,

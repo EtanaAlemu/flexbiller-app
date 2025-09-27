@@ -41,6 +41,13 @@ class AccountsRepositoryImpl implements AccountsRepository {
   // Track if we're currently processing an account to prevent loops
   final Set<String> _processingAccounts = <String>{};
 
+  // Track if we're currently syncing accounts list to prevent loops
+  bool _isSyncingAccountsList = false;
+  DateTime? _lastAccountsListSyncTime;
+
+  // Flag to prevent recursive stream emissions during background sync
+  bool _isEmittingFromBackgroundSync = false;
+
   AccountsRepositoryImpl({
     required AccountsRemoteDataSource remoteDataSource,
     required AccountsLocalDataSource localDataSource,
@@ -106,6 +113,7 @@ class AccountsRepositoryImpl implements AccountsRepository {
         _accountsStreamController.add(RepositoryResponse.success(accounts));
 
         // Then, in the background, try to sync with remote if online
+        // Only sync if we haven't synced recently to prevent loops
         _syncAccountsInBackground(params);
 
         return accounts;
@@ -338,33 +346,46 @@ class AccountsRepositoryImpl implements AccountsRepository {
         auditLogs: const [],
       );
 
-      // First, save to local cache
-      await _localDataSource.cacheAccount(accountModel);
+      // Check if we're online before attempting to create account
+      if (!await _networkInfo.isConnected) {
+        throw NetworkException(
+          'No network connection available. Please check your internet connection and try again.',
+        );
+      }
+
+      _logger.d('Creating account on remote server: ${account.accountId}');
+
+      // Create account on remote server first and wait for response
+      final remoteAccount = await _remoteDataSource.createAccount(accountModel);
+      _logger.d(
+        'Account created successfully on remote server: ${account.accountId}',
+      );
+
+      // Save the remote response to local cache
+      await _localDataSource.cacheAccount(remoteAccount);
       _logger.d('Account saved to local cache: ${account.accountId}');
 
-      // Emit success state with local data
-      _accountStreamController.add(RepositoryResponse.success(account));
+      // Emit success state with remote data
+      final createdAccount = remoteAccount.toEntity();
+      _accountStreamController.add(RepositoryResponse.success(createdAccount));
 
-      // Queue sync operation for background processing
-      _syncService.queueOperation(() async {
-        try {
-          final remoteAccount = await _remoteDataSource.createAccount(
-            accountModel,
-          );
-          await _localDataSource.updateCachedAccount(remoteAccount);
-
-          // Emit updated data from remote
-          _accountStreamController.add(
-            RepositoryResponse.success(remoteAccount.toEntity()),
-          );
-          _logger.d('Account synced with remote: ${account.accountId}');
-        } catch (e) {
-          _logger.w('Failed to sync account with remote: $e');
-          // Don't rethrow - this is a background operation
-        }
-      });
-
-      return account;
+      return createdAccount;
+    } on ValidationException catch (e) {
+      _logger.e('Validation error while creating account: ${e.message}');
+      _accountStreamController.add(RepositoryResponse.error(exception: e));
+      rethrow;
+    } on ServerException catch (e) {
+      _logger.e('Server error while creating account: ${e.message}');
+      _accountStreamController.add(RepositoryResponse.error(exception: e));
+      rethrow;
+    } on NetworkException catch (e) {
+      _logger.e('Network error while creating account: ${e.message}');
+      _accountStreamController.add(RepositoryResponse.error(exception: e));
+      rethrow;
+    } on AuthException catch (e) {
+      _logger.e('Auth error while creating account: ${e.message}');
+      _accountStreamController.add(RepositoryResponse.error(exception: e));
+      rethrow;
     } catch (e) {
       _logger.e('Unexpected error in createAccount: $e');
       final exception = e is Exception ? e : Exception(e.toString());
@@ -683,6 +704,27 @@ class AccountsRepositoryImpl implements AccountsRepository {
 
   // Background synchronization methods
   Future<void> _syncAccountsInBackground(AccountsQueryParams params) async {
+    // Prevent duplicate syncs and rapid successive syncs
+    if (_isSyncingAccountsList) {
+      _logger.d(
+        'Accounts list sync already in progress, skipping duplicate sync',
+      );
+      return;
+    }
+
+    // Check if we've synced recently (within last 30 seconds)
+    final now = DateTime.now();
+    if (_lastAccountsListSyncTime != null &&
+        now.difference(_lastAccountsListSyncTime!).inSeconds < 30) {
+      _logger.d(
+        'Accounts list synced recently, skipping rapid successive sync',
+      );
+      return;
+    }
+
+    _isSyncingAccountsList = true;
+    _lastAccountsListSyncTime = now;
+
     _syncService.queueOperation(() async {
       try {
         final remoteAccounts = await _remoteDataSource.getAccounts(params);
@@ -696,10 +738,14 @@ class AccountsRepositoryImpl implements AccountsRepository {
             .map((model) => model.toEntity())
             .toList();
 
-        // Emit success state with fresh data
-        _accountsStreamController.add(
-          RepositoryResponse.success(sortedAccounts),
-        );
+        // Emit success state with fresh data (only if not already emitting from background sync)
+        if (!_isEmittingFromBackgroundSync) {
+          _isEmittingFromBackgroundSync = true;
+          _accountsStreamController.add(
+            RepositoryResponse.success(sortedAccounts),
+          );
+          _isEmittingFromBackgroundSync = false;
+        }
 
         _logger.d(
           'Background sync completed for accounts - UI updated with fresh data (sorted consistently)',
@@ -711,6 +757,8 @@ class AccountsRepositoryImpl implements AccountsRepository {
             exception: e is Exception ? e : Exception(e.toString()),
           ),
         );
+      } finally {
+        _isSyncingAccountsList = false;
       }
     });
   }

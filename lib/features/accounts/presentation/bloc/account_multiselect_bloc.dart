@@ -21,6 +21,7 @@ class AccountMultiSelectBloc
       super(const AccountMultiSelectInitial()) {
     // Register event handlers
     on<EnableMultiSelectMode>(_onEnableMultiSelectMode);
+    on<EnableMultiSelectModeAndSelect>(_onEnableMultiSelectModeAndSelect);
     on<DisableMultiSelectMode>(_onDisableMultiSelectMode);
     on<SelectAccount>(_onSelectAccount);
     on<DeselectAccount>(_onDeselectAccount);
@@ -54,6 +55,21 @@ class AccountMultiSelectBloc
     _isMultiSelectMode = true;
     _selectedAccounts.clear();
     emit(MultiSelectModeEnabled(selectedAccounts: _selectedAccounts));
+  }
+
+  void _onEnableMultiSelectModeAndSelect(
+    EnableMultiSelectModeAndSelect event,
+    Emitter<AccountMultiSelectState> emit,
+  ) {
+    _logger.d(
+      'Enabling multi-select mode and selecting account: ${event.account.accountId}',
+    );
+    _isMultiSelectMode = true;
+    _selectedAccounts.clear();
+    _selectedAccounts.add(event.account);
+    emit(
+      MultiSelectModeEnabled(selectedAccounts: List.from(_selectedAccounts)),
+    );
   }
 
   void _onDisableMultiSelectMode(
@@ -125,9 +141,12 @@ class AccountMultiSelectBloc
       return;
     }
 
-    _logger.d('Selecting all accounts');
-    // Note: This would need access to the current accounts list
-    // For now, we'll emit the state with the current selected accounts
+    _logger.d('Selecting all ${event.accounts.length} accounts');
+
+    // Clear current selections and add all accounts
+    _selectedAccounts.clear();
+    _selectedAccounts.addAll(event.accounts);
+
     emit(AllAccountsSelected(selectedAccounts: List.from(_selectedAccounts)));
   }
 
@@ -183,9 +202,12 @@ class AccountMultiSelectBloc
       _selectedAccounts.clear();
 
       if (failedAccounts.isEmpty) {
+        // Disable multi-select mode after successful deletion
+        _isMultiSelectMode = false;
         emit(BulkDeleteCompleted(deletedCount: deletedCount));
+        emit(const MultiSelectModeDisabled());
         _logger.d(
-          'Bulk delete completed successfully: $deletedCount accounts deleted',
+          'Bulk delete completed successfully: $deletedCount accounts deleted, multi-select mode disabled',
         );
       } else {
         emit(
