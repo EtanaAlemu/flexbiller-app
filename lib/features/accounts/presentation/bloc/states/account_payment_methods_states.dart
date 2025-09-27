@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/account_payment_method.dart';
+import '../../../domain/entities/account_payment_method.dart';
 
 abstract class AccountPaymentMethodsState extends Equatable {
   final String accountId;

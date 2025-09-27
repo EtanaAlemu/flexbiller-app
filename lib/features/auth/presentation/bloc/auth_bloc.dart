@@ -9,6 +9,8 @@ import '../../domain/usecases/change_password_usecase.dart';
 import '../../domain/usecases/reset_password_usecase.dart';
 import '../../domain/usecases/update_user_usecase.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/utils/error_handler.dart';
+import 'package:dio/dio.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -83,10 +85,36 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           ),
         );
       } else {
-        emit(LoginFailure('Authentication Failed', e.message));
+        final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+          e,
+          context: 'login',
+        );
+        emit(LoginFailure('Authentication Failed', userFriendlyMessage));
       }
+    } on DioException catch (e) {
+      final userFriendlyMessage = ErrorHandler.convertDioExceptionToUserMessage(
+        e,
+        context: 'login',
+      );
+      emit(LoginFailure('Connection Error', userFriendlyMessage));
+    } on ServerException catch (e) {
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e.message,
+        context: 'login',
+      );
+      emit(LoginFailure('Server Error', userFriendlyMessage));
+    } on NetworkException catch (e) {
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e.message,
+        context: 'login',
+      );
+      emit(LoginFailure('Network Error', userFriendlyMessage));
     } catch (e) {
-      emit(LoginFailure('Error', e.toString()));
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e,
+        context: 'login',
+      );
+      emit(LoginFailure('Error', userFriendlyMessage));
     }
   }
 
@@ -97,10 +125,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       _logger.i('🔄 Logout requested - Starting logout process');
-      
+
       // Execute logout use case to clear all data and stop background operations
       await _logoutUseCase();
-      
+
       _logger.i('✅ Logout completed successfully');
       emit(AuthUnauthenticated());
     } catch (e) {
@@ -197,7 +225,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } catch (e) {
-      emit(ForgotPasswordFailure(e.toString()));
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e,
+        context: 'forgot_password',
+      );
+      emit(ForgotPasswordFailure(userFriendlyMessage));
     }
   }
 
@@ -228,23 +260,43 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       _logger.i('🎉 ChangePasswordSuccess State Emitted');
     } on AuthException catch (e) {
       _logger.e('❌ AuthException during password change: ${e.message}');
-      emit(ChangePasswordFailure(e.message));
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e,
+        context: 'change_password',
+      );
+      emit(ChangePasswordFailure(userFriendlyMessage));
       _logger.i('💥 ChangePasswordFailure State Emitted (AuthException)');
     } on ValidationException catch (e) {
       _logger.e('❌ ValidationException during password change: ${e.message}');
-      emit(ChangePasswordFailure(e.message));
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e,
+        context: 'change_password',
+      );
+      emit(ChangePasswordFailure(userFriendlyMessage));
       _logger.i('💥 ChangePasswordFailure State Emitted (ValidationException)');
     } on NetworkException catch (e) {
       _logger.e('❌ NetworkException during password change: ${e.message}');
-      emit(ChangePasswordFailure(e.message));
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e,
+        context: 'change_password',
+      );
+      emit(ChangePasswordFailure(userFriendlyMessage));
       _logger.i('💥 ChangePasswordFailure State Emitted (NetworkException)');
     } on ServerException catch (e) {
       _logger.e('❌ ServerException during password change: ${e.message}');
-      emit(ChangePasswordFailure(e.message));
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e,
+        context: 'change_password',
+      );
+      emit(ChangePasswordFailure(userFriendlyMessage));
       _logger.i('💥 ChangePasswordFailure State Emitted (ServerException)');
     } catch (e) {
       _logger.e('❌ Unexpected error during password change: $e');
-      emit(ChangePasswordFailure(e.toString()));
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e,
+        context: 'change_password',
+      );
+      emit(ChangePasswordFailure(userFriendlyMessage));
       _logger.i('💥 ChangePasswordFailure State Emitted (Unexpected Error)');
     }
   }
@@ -262,7 +314,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } catch (e) {
-      emit(ResetPasswordFailure(e.toString()));
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e,
+        context: 'reset_password',
+      );
+      emit(ResetPasswordFailure(userFriendlyMessage));
     }
   }
 
@@ -280,7 +336,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } catch (e) {
-      emit(UpdateUserFailure(e.toString()));
+      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+        e,
+        context: 'update_user',
+      );
+      emit(UpdateUserFailure(userFriendlyMessage));
     }
   }
 }

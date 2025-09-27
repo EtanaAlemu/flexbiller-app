@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/account_tag.dart';
+import '../../../domain/entities/account_tag.dart';
 
 abstract class AccountTagsEvent extends Equatable {
   final String accountId;

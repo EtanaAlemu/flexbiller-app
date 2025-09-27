@@ -2,8 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/usecases/get_account_payments_usecase.dart';
 import '../../domain/usecases/refund_account_payment_usecase.dart';
-import 'account_payments_events.dart';
-import 'account_payments_states.dart';
+import 'events/account_payments_events.dart';
+import 'states/account_payments_states.dart';
 
 @injectable
 class AccountPaymentsBloc

@@ -25,7 +25,7 @@
     
     
     <application
-        android:label="flexbiller_app"
+        android:label="flexbiller"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_payment_method.dart';
 import '../bloc/account_payment_methods_bloc.dart';
-import '../bloc/account_payment_methods_events.dart';
-import '../bloc/account_payment_methods_states.dart';
+import '../bloc/events/account_payment_methods_events.dart';
+import '../bloc/states/account_payment_methods_states.dart';
 import '../pages/payment_method_detail_page.dart';
 
 class AccountPaymentMethodsWidget extends StatefulWidget {

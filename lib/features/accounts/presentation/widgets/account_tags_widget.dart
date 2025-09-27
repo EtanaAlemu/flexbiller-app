@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_tag.dart';
 import '../bloc/account_tags_bloc.dart';
-import '../bloc/account_tags_events.dart';
-import '../bloc/account_tags_states.dart';
+import '../bloc/events/account_tags_events.dart';
+import '../bloc/states/account_tags_states.dart';
 
 class AccountTagsWidget extends StatefulWidget {
   final String accountId;

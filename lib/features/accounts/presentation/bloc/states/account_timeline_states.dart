@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/account_timeline.dart';
+import '../../../domain/entities/account_timeline.dart';
 
 abstract class AccountTimelineState extends Equatable {
   final String accountId;

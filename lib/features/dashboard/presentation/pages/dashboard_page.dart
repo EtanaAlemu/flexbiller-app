@@ -1,3 +1,4 @@
+import 'package:flexbiller_app/features/accounts/presentation/bloc/accounts_orchestrator_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -67,6 +68,7 @@ class _DashboardPageState extends State<DashboardPage> {
       providers: [
         BlocProvider(create: (context) => getIt<TagsBloc>()),
         BlocProvider(create: (context) => getIt<AccountsListBloc>()),
+        BlocProvider(create: (context) => getIt<AccountsOrchestratorBloc>()),
       ],
       child: DashboardNavigationHandler(
         currentIndex: _currentIndex,

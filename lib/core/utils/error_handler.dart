@@ -1,9 +1,24 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:injectable/injectable.dart';
+import 'package:get_it/get_it.dart';
+import '../services/crash_analytics_service.dart';
 
 /// Centralized error handling utility for converting technical errors to user-friendly messages
 class ErrorHandler {
   /// Converts technical error messages to user-friendly messages
   static String getUserFriendlyMessage(dynamic error, {String? context}) {
+    // Report error to crash analytics
+    _reportError(error, context: context);
+
+    return _getUserFriendlyMessageInternal(error, context: context);
+  }
+
+  /// Internal method for getting user-friendly messages
+  static String _getUserFriendlyMessageInternal(
+    dynamic error, {
+    String? context,
+  }) {
     if (error is DioException) {
       return _handleDioException(error, context);
     }
@@ -18,6 +33,46 @@ class ErrorHandler {
 
     // Default fallback
     return _getDefaultMessage(context);
+  }
+
+  /// Static method for backward compatibility
+  static String getUserFriendlyMessageStatic(dynamic error, {String? context}) {
+    return _getUserFriendlyMessageInternal(error, context: context);
+  }
+
+  /// Converts DioException to user-friendly message with enhanced 502 handling
+  static String convertDioExceptionToUserMessage(
+    DioException error, {
+    String? context,
+  }) {
+    // Report error to crash analytics
+    _reportError(error, context: context);
+
+    return _handleDioException(error, context);
+  }
+
+  /// Report error to crash analytics
+  static void _reportError(dynamic error, {String? context}) {
+    try {
+      final crashAnalytics =
+          GetIt.instance.isRegistered<CrashAnalyticsService>()
+          ? GetIt.instance<CrashAnalyticsService>()
+          : null;
+
+      crashAnalytics?.recordError(
+        error,
+        StackTrace.current,
+        reason: 'Error handled by ErrorHandler',
+        customKeys: {
+          'context': context ?? 'unknown',
+          'error_type': error.runtimeType.toString(),
+        },
+        fatal: false,
+      );
+    } catch (e) {
+      // Don't let crash analytics errors break the app
+      debugPrint('Failed to report error to crash analytics: $e');
+    }
   }
 
   /// Handles DioException errors
@@ -101,6 +156,18 @@ class ErrorHandler {
     // Handle server response errors
     if (lowerError.contains('status code of 500')) {
       return 'The server is temporarily unavailable. Please try again later.';
+    }
+
+    if (lowerError.contains('status code of 502')) {
+      return 'Service temporarily unavailable. Our servers are experiencing issues. Please try again in a few minutes.';
+    }
+
+    if (lowerError.contains('status code of 503')) {
+      return 'Service temporarily unavailable. Please try again later.';
+    }
+
+    if (lowerError.contains('status code of 504')) {
+      return 'Request timeout. The server is taking too long to respond. Please try again.';
     }
 
     if (lowerError.contains('status code of 404')) {

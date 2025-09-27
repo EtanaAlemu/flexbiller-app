@@ -13,8 +13,8 @@ import '../../domain/usecases/remove_tag_from_account_usecase.dart';
 import '../../domain/usecases/update_tag_usecase.dart';
 import '../../domain/repositories/account_tags_repository.dart';
 import '../../domain/entities/account_tag.dart';
-import 'account_tags_events.dart';
-import 'account_tags_states.dart';
+import 'events/account_tags_events.dart';
+import 'states/account_tags_states.dart';
 
 @injectable
 class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {

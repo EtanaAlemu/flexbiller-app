@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/account_custom_field.dart';
+import '../../../domain/entities/account_custom_field.dart';
 
 abstract class AccountCustomFieldsState extends Equatable {
   final String accountId;

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account_custom_field.dart';
 import '../bloc/account_custom_fields_bloc.dart';
-import '../bloc/account_custom_fields_events.dart';
-import '../bloc/account_custom_fields_states.dart';
+import '../bloc/events/account_custom_fields_events.dart';
+import '../bloc/states/account_custom_fields_states.dart';
 import 'create_account_custom_field_dialog.dart';
 
 class AccountCustomFieldsWidget extends StatefulWidget {

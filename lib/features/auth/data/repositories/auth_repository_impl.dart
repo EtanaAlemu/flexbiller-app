@@ -6,11 +6,11 @@ import '../datasources/user_local_data_source.dart';
 import '../models/auth_response.dart';
 import 'package:flexbiller_app/core/services/secure_storage_service.dart';
 import 'package:flexbiller_app/core/services/jwt_service.dart';
-import 'package:flexbiller_app/core/services/authentication_state_service.dart';
 import 'package:flexbiller_app/core/services/user_session_service.dart';
 import 'package:flexbiller_app/core/errors/exceptions.dart';
-import 'package:flexbiller_app/injection_container.dart';
+import 'package:flexbiller_app/core/utils/error_handler.dart';
 import 'package:logger/logger.dart';
+import 'package:dio/dio.dart';
 
 @Injectable(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -211,11 +211,41 @@ class AuthRepositoryImpl implements AuthRepository {
         _logger.e('Network Exception - Message: ${e.message}');
       } else if (e is AuthException) {
         _logger.e('Auth Exception - Message: ${e.message}');
+      } else if (e is DioException) {
+        _logger.e(
+          'Dio Exception - Type: ${e.type}, Status: ${e.response?.statusCode}, Message: ${e.message}',
+        );
       } else {
         _logger.e('Unexpected Exception Type: ${e.runtimeType} - Message: $e');
       }
 
-      rethrow;
+      // Convert technical errors to user-friendly exceptions
+      if (e is DioException) {
+        final userFriendlyMessage =
+            ErrorHandler.convertDioExceptionToUserMessage(e, context: 'login');
+        throw ServerException(userFriendlyMessage, e.response?.statusCode);
+      } else if (e is ServerException) {
+        final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+          e.message,
+          context: 'login',
+        );
+        throw ServerException(userFriendlyMessage, e.statusCode);
+      } else if (e is NetworkException) {
+        final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+          e.message,
+          context: 'login',
+        );
+        throw NetworkException(userFriendlyMessage);
+      } else if (e is AuthException) {
+        // Don't modify AuthException messages as they might be business logic specific
+        rethrow;
+      } else {
+        final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+          e,
+          context: 'login',
+        );
+        throw ServerException(userFriendlyMessage);
+      }
     }
   }
 

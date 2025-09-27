@@ -75,6 +75,10 @@ dependencies:
   permission_handler: ^11.3.1
   file_picker: ^8.0.0+1
 
+  # Crash Analytics
+  firebase_core: ^4.1.1
+  firebase_crashlytics: ^5.0.2
+
   # Localization
   flutter_localizations:
     sdk: flutter

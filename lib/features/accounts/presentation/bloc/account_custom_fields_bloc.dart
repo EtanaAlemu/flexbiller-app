@@ -11,8 +11,8 @@ import '../../domain/usecases/update_account_custom_field_usecase.dart';
 import '../../domain/usecases/update_multiple_account_custom_fields_usecase.dart';
 import '../../domain/usecases/delete_account_custom_field_usecase.dart';
 import '../../domain/usecases/delete_multiple_account_custom_fields_usecase.dart';
-import 'account_custom_fields_events.dart';
-import 'account_custom_fields_states.dart';
+import 'events/account_custom_fields_events.dart';
+import 'states/account_custom_fields_states.dart';
 
 /// BLoC for handling account custom fields operations
 @injectable

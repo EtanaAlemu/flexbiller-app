@@ -3,8 +3,8 @@ import 'package:injectable/injectable.dart';
 import '../../domain/usecases/get_account_payment_methods_usecase.dart';
 import '../../domain/usecases/set_default_payment_method_use_case.dart';
 import '../../domain/usecases/refresh_payment_methods_usecase.dart';
-import 'account_payment_methods_events.dart';
-import 'account_payment_methods_states.dart';
+import 'events/account_payment_methods_events.dart';
+import 'states/account_payment_methods_states.dart';
 
 @injectable
 class AccountPaymentMethodsBloc

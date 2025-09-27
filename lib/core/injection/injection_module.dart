@@ -4,10 +4,14 @@ import 'package:dio/dio.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:logger/logger.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../constants/app_constants.dart';
 import '../services/sync_service.dart';
 import '../services/export_service.dart';
+import '../services/crash_analytics_service.dart';
+import '../services/crash_analytics_initializer.dart';
 import '../network/network_info.dart';
+import 'analytics_module.dart';
 
 @module
 abstract class InjectionModule {
@@ -44,4 +48,7 @@ abstract class InjectionModule {
 
   @singleton
   SyncService syncService(NetworkInfo networkInfo) => SyncService(networkInfo);
+
+  @singleton
+  FirebaseCrashlytics get firebaseCrashlytics => FirebaseCrashlytics.instance;
 }

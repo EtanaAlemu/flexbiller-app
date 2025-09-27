@@ -1,4 +1,4 @@
-package com.example.flexbiller_app
+package org.aumtech.flexbiller
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

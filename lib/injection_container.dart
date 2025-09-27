@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'injection_container.config.dart';
 import 'core/services/export_service.dart';
 import 'core/services/cache_service.dart';
+import 'core/injection/analytics_module.dart';
 
 final getIt = GetIt.instance;
 

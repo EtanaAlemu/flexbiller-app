@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/account_payments_bloc.dart';
-import '../bloc/account_payments_events.dart';
-import '../bloc/account_payments_states.dart';
+import '../bloc/events/account_payments_events.dart';
+import '../bloc/states/account_payments_states.dart';
 import '../pages/payment_detail_page.dart';
 
 class AccountPaymentsWidget extends StatefulWidget {

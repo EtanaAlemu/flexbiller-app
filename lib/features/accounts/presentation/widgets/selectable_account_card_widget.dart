@@ -247,10 +247,11 @@ class SelectableAccountCardWidget extends StatelessWidget {
   }
 
   void _showDeleteDialog(BuildContext context) {
+    // Get the bloc from the current context before showing dialog
     final accountsBloc = context.read<AccountsOrchestratorBloc>();
     showDialog(
       context: context,
-      builder: (BuildContext context) => BlocProvider.value(
+      builder: (BuildContext dialogContext) => BlocProvider.value(
         value: accountsBloc,
         child: DeleteAccountDialog(account: account),
       ),

@@ -7,8 +7,8 @@ import '../../../../core/errors/exceptions.dart';
 import '../../domain/entities/account_timeline.dart';
 import '../../domain/repositories/account_timeline_repository.dart';
 import '../../domain/usecases/get_account_timeline_usecase.dart';
-import 'account_timeline_events.dart';
-import 'account_timeline_states.dart';
+import 'events/account_timeline_events.dart';
+import 'states/account_timeline_states.dart';
 
 @injectable
 class AccountTimelineBloc

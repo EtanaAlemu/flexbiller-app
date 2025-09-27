@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import '../../domain/entities/account_timeline.dart';
 import '../bloc/account_timeline_bloc.dart';
-import '../bloc/account_timeline_events.dart';
-import '../bloc/account_timeline_states.dart';
+import '../bloc/events/account_timeline_events.dart';
+import '../bloc/states/account_timeline_states.dart';
 
 class AccountTimelineWidget extends StatefulWidget {
   final String accountId;

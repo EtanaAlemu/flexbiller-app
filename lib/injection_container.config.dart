@@ -11,12 +11,14 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:connectivity_plus/connectivity_plus.dart' as _i895;
 import 'package:dio/dio.dart' as _i361;
+import 'package:firebase_crashlytics/firebase_crashlytics.dart' as _i141;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:local_auth/local_auth.dart' as _i152;
 import 'package:logger/logger.dart' as _i974;
 
+import 'core/injection/analytics_module.dart' as _i950;
 import 'core/injection/injection_module.dart' as _i670;
 import 'core/network/dio_client.dart' as _i45;
 import 'core/network/network_info.dart' as _i75;
@@ -24,9 +26,13 @@ import 'core/services/auth_guard_service.dart' as _i280;
 import 'core/services/authentication_state_service.dart' as _i751;
 import 'core/services/biometric_auth_service.dart' as _i626;
 import 'core/services/cache_service.dart' as _i325;
+import 'core/services/crash_analytics_config.dart' as _i1059;
+import 'core/services/crash_analytics_initializer.dart' as _i563;
+import 'core/services/crash_analytics_service.dart' as _i924;
 import 'core/services/database_service.dart' as _i916;
 import 'core/services/export_service.dart' as _i580;
 import 'core/services/jwt_service.dart' as _i842;
+import 'core/services/mock_crash_analytics_service.dart' as _i579;
 import 'core/services/secure_storage_service.dart' as _i493;
 import 'core/services/sync_service.dart' as _i443;
 import 'core/services/user_persistence_service.dart' as _i915;
@@ -317,6 +323,8 @@ import 'features/tags/domain/usecases/get_all_tags_usecase.dart' as _i348;
 import 'features/tags/domain/usecases/search_tags_usecase.dart' as _i335;
 import 'features/tags/presentation/bloc/tags_bloc.dart' as _i844;
 
+const String _test = 'test';
+
 // initializes the registration of main-scope dependencies inside of GetIt
 _i174.GetIt $initGetIt(
   _i174.GetIt getIt, {
@@ -325,6 +333,7 @@ _i174.GetIt $initGetIt(
 }) {
   final gh = _i526.GetItHelper(getIt, environment, environmentFilter);
   final injectionModule = _$InjectionModule();
+  final analyticsModule = _$AnalyticsModule();
   gh.factory<_i203.AccountExportBloc>(() => _i203.AccountExportBloc());
   gh.factory<_i842.JwtService>(() => _i842.JwtService());
   gh.factory<_i580.ExportServiceImpl>(() => _i580.ExportServiceImpl());
@@ -334,6 +343,12 @@ _i174.GetIt $initGetIt(
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
   gh.singleton<_i152.LocalAuthentication>(() => injectionModule.localAuth);
   gh.singleton<_i895.Connectivity>(() => injectionModule.connectivity);
+  gh.singleton<_i141.FirebaseCrashlytics>(
+    () => injectionModule.firebaseCrashlytics,
+  );
+  gh.singleton<_i1059.CrashAnalyticsConfig>(
+    () => analyticsModule.crashAnalyticsConfig(),
+  );
   gh.singleton<_i45.DioClient>(
     () => _i45.DioClient(gh<_i361.Dio>(), gh<_i558.FlutterSecureStorage>()),
   );
@@ -343,6 +358,17 @@ _i174.GetIt $initGetIt(
   gh.lazySingleton<_i75.NetworkInfo>(() => _i75.NetworkInfoImpl());
   gh.factory<_i692.TagDefinitionsRemoteDataSource>(
     () => _i692.TagDefinitionsRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
+  gh.lazySingleton<_i924.CrashAnalyticsService>(
+    () => _i924.CrashAnalyticsServiceImpl(
+      gh<_i141.FirebaseCrashlytics>(),
+      gh<_i974.Logger>(),
+      gh<_i1059.CrashAnalyticsConfig>(),
+    ),
+  );
+  gh.lazySingleton<_i924.CrashAnalyticsService>(
+    () => _i579.MockCrashAnalyticsService(),
+    registerFor: {_test},
   );
   gh.factory<_i493.SecureStorageService>(
     () => _i493.SecureStorageService(
@@ -355,6 +381,15 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i734.TagsRepository>(
     () => _i990.TagsRepositoryImpl(gh<_i376.TagsRemoteDataSource>()),
+  );
+  gh.singleton<_i924.CrashAnalyticsErrorHandler>(
+    () => analyticsModule.crashAnalyticsErrorHandler(
+      gh<_i924.CrashAnalyticsService>(),
+      gh<_i974.Logger>(),
+    ),
+  );
+  gh.lazySingleton<_i563.CrashAnalyticsInitializer>(
+    () => _i563.CrashAnalyticsInitializer(gh<_i974.Logger>()),
   );
   gh.factory<_i976.SubscriptionsRemoteDataSource>(
     () => _i976.SubscriptionsRemoteDataSourceImpl(gh<_i361.Dio>()),
@@ -708,6 +743,9 @@ _i174.GetIt $initGetIt(
       gh<_i363.AccountTagsRepository>(),
     ),
   );
+  gh.factory<_i911.RefreshAccountTagsUseCase>(
+    () => _i911.RefreshAccountTagsUseCase(gh<_i363.AccountTagsRepository>()),
+  );
   gh.factory<_i582.RemoveMultipleTagsFromAccountUseCase>(
     () => _i582.RemoveMultipleTagsFromAccountUseCase(
       gh<_i363.AccountTagsRepository>(),
@@ -715,12 +753,6 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i227.GetAccountTagsUseCase>(
     () => _i227.GetAccountTagsUseCase(gh<_i363.AccountTagsRepository>()),
-  );
-  gh.factory<_i384.GetAllTagsForAccountUseCase>(
-    () => _i384.GetAllTagsForAccountUseCase(gh<_i363.AccountTagsRepository>()),
-  );
-  gh.factory<_i911.RefreshAccountTagsUseCase>(
-    () => _i911.RefreshAccountTagsUseCase(gh<_i363.AccountTagsRepository>()),
   );
   gh.factory<_i0.CreateTagUseCase>(
     () => _i0.CreateTagUseCase(gh<_i363.AccountTagsRepository>()),
@@ -733,6 +765,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i277.DeleteTagUseCase>(
     () => _i277.DeleteTagUseCase(gh<_i363.AccountTagsRepository>()),
+  );
+  gh.factory<_i384.GetAllTagsForAccountUseCase>(
+    () => _i384.GetAllTagsForAccountUseCase(gh<_i363.AccountTagsRepository>()),
   );
   gh.factory<_i221.AssignTagToAccountUseCase>(
     () => _i221.AssignTagToAccountUseCase(gh<_i363.AccountTagsRepository>()),
@@ -1106,3 +1141,5 @@ _i174.GetIt $initGetIt(
 }
 
 class _$InjectionModule extends _i670.InjectionModule {}
+
+class _$AnalyticsModule extends _i950.AnalyticsModule {}

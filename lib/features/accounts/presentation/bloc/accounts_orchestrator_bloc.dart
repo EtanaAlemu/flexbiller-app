@@ -127,6 +127,15 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
       } else if (state is detail_states.AccountPaymentsFailure) {
         print('🔍 AccountsOrchestratorBloc: Forwarding AccountPaymentsFailure');
         add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountDeleting) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDeleting');
+        add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountDeleted) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDeleted');
+        add(ForwardAccountDetailState(state));
+      } else if (state is detail_states.AccountDeleteFailure) {
+        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDeleteFailure');
+        add(ForwardAccountDetailState(state));
       } else {
         print(
           '🔍 AccountsOrchestratorBloc: Unknown state type: ${state.runtimeType}',
@@ -576,6 +585,25 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
       print('🔍 AccountsOrchestratorBloc: Emitting AccountPaymentsFailure');
       emit(
         AccountPaymentsFailure(failureState.message, failureState.accountId),
+      );
+    } else if (event.state is detail_states.AccountDeleting) {
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountDeleting');
+      emit(AccountDeleting());
+    } else if (event.state is detail_states.AccountDeleted) {
+      final deletedState = event.state as detail_states.AccountDeleted;
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountDeleted');
+      emit(AccountDeleted(deletedState.accountId));
+
+      // Also refresh the accounts list to remove the deleted account
+      print(
+        '🔍 AccountsOrchestratorBloc: Refreshing accounts list after deletion',
+      );
+      _accountsListBloc.add(list_events.RefreshAccounts());
+    } else if (event.state is detail_states.AccountDeleteFailure) {
+      final failureState = event.state as detail_states.AccountDeleteFailure;
+      print('🔍 AccountsOrchestratorBloc: Emitting AccountDeletionFailure');
+      emit(
+        AccountDeletionFailure(failureState.message, failureState.accountId),
       );
     } else {
       print(
