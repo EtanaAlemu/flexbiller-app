@@ -11,16 +11,26 @@ import '../widgets/product_error_state.dart';
 import '../widgets/product_loading_state.dart';
 
 class ProductsPage extends StatefulWidget {
-  const ProductsPage({super.key});
+  final GlobalKey<ProductsViewState>? productsViewKey;
+
+  const ProductsPage({super.key, this.productsViewKey});
 
   @override
   State<ProductsPage> createState() => _ProductsPageState();
 }
 
-class _ProductsPageState extends State<ProductsPage> {
+class ProductsView extends StatefulWidget {
+  const ProductsView({Key? key}) : super(key: key);
+
+  @override
+  State<ProductsView> createState() => ProductsViewState();
+}
+
+class ProductsViewState extends State<ProductsView> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isSearching = false;
+  bool _showSearchBar = false;
 
   @override
   void initState() {
@@ -82,6 +92,7 @@ class _ProductsPageState extends State<ProductsPage> {
     _searchController.clear();
     setState(() {
       _isSearching = false;
+      _showSearchBar = false;
     });
     context.read<ProductsListBloc>().add(const GetAllProducts());
   }
@@ -89,28 +100,16 @@ class _ProductsPageState extends State<ProductsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Products'),
-        elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _onRefresh,
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
       body: Column(
         children: [
-          // Search bar
-          ProductSearchBar(
-            controller: _searchController,
-            onChanged: _onSearchChanged,
-            onClear: _onClearSearch,
-            isSearching: _isSearching,
-          ),
+          // Search bar (conditionally shown)
+          if (_showSearchBar)
+            ProductSearchBar(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              onClear: _onClearSearch,
+              isSearching: _isSearching,
+            ),
 
           // Products list
           Expanded(
@@ -222,5 +221,22 @@ class _ProductsPageState extends State<ProductsPage> {
         ],
       ),
     );
+  }
+
+  // Method to toggle search bar from outside (called by dashboard app bar)
+  void toggleSearchBar() {
+    setState(() {
+      _showSearchBar = !_showSearchBar;
+      if (!_showSearchBar) {
+        _onClearSearch();
+      }
+    });
+  }
+}
+
+class _ProductsPageState extends State<ProductsPage> {
+  @override
+  Widget build(BuildContext context) {
+    return ProductsView(key: widget.productsViewKey);
   }
 }

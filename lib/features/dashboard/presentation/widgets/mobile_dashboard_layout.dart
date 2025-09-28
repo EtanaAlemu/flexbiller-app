@@ -12,6 +12,7 @@ class MobileDashboardLayout extends StatelessWidget {
   final Function(int) onNavigate;
   final VoidCallback onLogout;
   final GlobalKey? accountsViewKey;
+  final GlobalKey? productsViewKey;
 
   const MobileDashboardLayout({
     Key? key,
@@ -23,6 +24,7 @@ class MobileDashboardLayout extends StatelessWidget {
     required this.onNavigate,
     required this.onLogout,
     this.accountsViewKey,
+    this.productsViewKey,
   }) : super(key: key);
 
   @override
@@ -40,6 +42,7 @@ class MobileDashboardLayout extends StatelessWidget {
               pageTitle: pageTitle,
               currentPageIndex: currentPageIndex,
               accountsViewKey: accountsViewKey,
+              productsViewKey: productsViewKey,
             ),
             Expanded(child: SafeArea(child: content)),
           ],

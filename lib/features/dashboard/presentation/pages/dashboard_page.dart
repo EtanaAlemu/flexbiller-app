@@ -30,12 +30,14 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _isMobile = false;
   final GlobalKey<AccountsViewState> _accountsViewKey =
       GlobalKey<AccountsViewState>();
+  final GlobalKey<ProductsViewState> _productsViewKey =
+      GlobalKey<ProductsViewState>();
 
   List<Widget> get _pages => [
     const DashboardDemoPage(),
     AccountsPage(accountsViewKey: _accountsViewKey),
     const SubscriptionsDemoPage(),
-    const ProductsPage(),
+    ProductsPage(productsViewKey: _productsViewKey),
     const _InvoicesPage(),
     const _PaymentsPage(),
     const _ReportsPage(),
@@ -89,6 +91,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     onNavigate: _navigateToPage,
                     onLogout: _handleLogout,
                     accountsViewKey: _accountsViewKey,
+                    productsViewKey: _productsViewKey,
                   )
                 : DesktopDashboardLayout(
                     isSidebarVisible: _isSidebarVisible,
@@ -99,6 +102,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     onNavigate: _navigateToPage,
                     onLogout: _handleLogout,
                     accountsViewKey: _accountsViewKey,
+                    productsViewKey: _productsViewKey,
                   ),
           ),
         ),

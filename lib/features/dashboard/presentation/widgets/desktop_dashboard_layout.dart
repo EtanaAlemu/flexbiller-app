@@ -11,6 +11,7 @@ class DesktopDashboardLayout extends StatelessWidget {
   final Function(int) onNavigate;
   final VoidCallback onLogout;
   final GlobalKey? accountsViewKey;
+  final GlobalKey? productsViewKey;
 
   const DesktopDashboardLayout({
     Key? key,
@@ -22,6 +23,7 @@ class DesktopDashboardLayout extends StatelessWidget {
     required this.onNavigate,
     required this.onLogout,
     this.accountsViewKey,
+    this.productsViewKey,
   }) : super(key: key);
 
   @override
@@ -49,6 +51,7 @@ class DesktopDashboardLayout extends StatelessWidget {
                 pageTitle: pageTitle,
                 currentPageIndex: currentPageIndex,
                 accountsViewKey: accountsViewKey,
+                productsViewKey: productsViewKey,
               ),
               Expanded(child: SafeArea(child: content)),
             ],

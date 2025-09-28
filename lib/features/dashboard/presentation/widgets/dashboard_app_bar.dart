@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'accounts_action_menu.dart';
+import 'products_action_menu.dart';
 
 class DashboardAppBar extends StatelessWidget {
   final bool isSidebarVisible;
@@ -7,6 +8,7 @@ class DashboardAppBar extends StatelessWidget {
   final String pageTitle;
   final int currentPageIndex;
   final GlobalKey? accountsViewKey;
+  final GlobalKey? productsViewKey;
 
   const DashboardAppBar({
     Key? key,
@@ -15,6 +17,7 @@ class DashboardAppBar extends StatelessWidget {
     required this.pageTitle,
     required this.currentPageIndex,
     this.accountsViewKey,
+    this.productsViewKey,
   }) : super(key: key);
 
   @override
@@ -57,6 +60,18 @@ class DashboardAppBar extends StatelessWidget {
                 AccountsActionMenu(accountsViewKey: accountsViewKey),
               ],
             ),
+          // Products-specific actions
+          if (currentPageIndex == 3) // Products page
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () => _toggleProductsSearchBar(),
+                  icon: const Icon(Icons.search_rounded),
+                  tooltip: 'Search Products',
+                ),
+                ProductsActionMenu(productsViewKey: productsViewKey),
+              ],
+            ),
           const SizedBox(width: 16),
         ],
       ),
@@ -66,6 +81,12 @@ class DashboardAppBar extends StatelessWidget {
   void _toggleSearchBar() {
     if (accountsViewKey?.currentState != null) {
       (accountsViewKey!.currentState as dynamic).toggleSearchBar();
+    }
+  }
+
+  void _toggleProductsSearchBar() {
+    if (productsViewKey?.currentState != null) {
+      (productsViewKey!.currentState as dynamic).toggleSearchBar();
     }
   }
 }
