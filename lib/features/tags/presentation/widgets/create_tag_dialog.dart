@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/widgets/custom_snackbar.dart';
 
 class CreateTagDialog extends StatefulWidget {
   const CreateTagDialog({super.key});
@@ -354,23 +355,14 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Tag "${_tagNameController.text}" created successfully',
-            ),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
+        CustomSnackBar.showSuccess(
+          context,
+          message: 'Tag "${_tagNameController.text}" created successfully',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create tag: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        CustomSnackBar.showError(context, message: 'Failed to create tag: $e');
       }
     } finally {
       if (mounted) {

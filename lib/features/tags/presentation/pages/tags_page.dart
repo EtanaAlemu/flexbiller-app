@@ -7,6 +7,7 @@ import '../bloc/tags_state.dart';
 import '../widgets/selectable_tag_card_widget.dart';
 import '../widgets/tags_multi_select_action_bar.dart';
 import '../widgets/create_tag_dialog.dart';
+import '../../../../core/widgets/custom_snackbar.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:open_file/open_file.dart';
 
@@ -80,47 +81,24 @@ class _TagsPageState extends State<TagsPage> with TickerProviderStateMixin {
       body: BlocListener<TagsBloc, TagsState>(
         listener: (context, state) {
           if (state is TagsExportSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
+            CustomSnackBar.showSuccess(
+              context,
+              message:
                   'Successfully exported ${state.exportedCount} tags to ${state.fileName}',
-                ),
-                backgroundColor: Colors.green,
-                duration: const Duration(seconds: 3),
-                action: SnackBarAction(
-                  label: 'Open',
-                  onPressed: () {
-                    _openOrShareFile(state.filePath, state.fileName, context);
-                  },
-                ),
-              ),
+              actionLabel: 'Open',
+              onActionPressed: () {
+                _openOrShareFile(state.filePath, state.fileName, context);
+              },
             );
           } else if (state is TagsExportFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
+            CustomSnackBar.showError(context, message: state.message);
           } else if (state is TagsDeleteSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Successfully deleted ${state.deletedCount} tags',
-                ),
-                backgroundColor: Colors.green,
-                duration: const Duration(seconds: 3),
-              ),
+            CustomSnackBar.showSuccess(
+              context,
+              message: 'Successfully deleted ${state.deletedCount} tags',
             );
           } else if (state is TagsDeleteFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
+            CustomSnackBar.showError(context, message: state.message);
           } else if (state is TagsWithSelection) {
             // Handle multi-select mode changes
             if (state.isMultiSelectMode && !_isMultiSelectMode) {
@@ -130,6 +108,15 @@ class _TagsPageState extends State<TagsPage> with TickerProviderStateMixin {
               });
               _fabAnimationController.forward();
             } else if (!state.isMultiSelectMode && _isMultiSelectMode) {
+              setState(() {
+                _isMultiSelectMode = false;
+                _isFabVisible = true;
+              });
+              _fabAnimationController.reverse();
+            }
+          } else if (state is TagsLoaded) {
+            // Handle normal loaded state - ensure FAB is visible
+            if (_isMultiSelectMode) {
               setState(() {
                 _isMultiSelectMode = false;
                 _isFabVisible = true;
