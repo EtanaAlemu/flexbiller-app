@@ -270,6 +270,15 @@ import 'features/dashboard/domain/repositories/dashboard_repository.dart'
     as _i557;
 import 'features/dashboard/domain/usecases/get_dashboard_data.dart' as _i983;
 import 'features/dashboard/presentation/bloc/dashboard_bloc.dart' as _i521;
+import 'features/plans/data/datasources/local/plans_local_data_source.dart'
+    as _i52;
+import 'features/plans/data/datasources/remote/plans_remote_data_source.dart'
+    as _i393;
+import 'features/plans/data/repositories/plans_repository_impl.dart' as _i14;
+import 'features/plans/domain/repositories/plans_repository.dart' as _i692;
+import 'features/plans/domain/usecases/get_plan_by_id.dart' as _i868;
+import 'features/plans/domain/usecases/get_plans.dart' as _i460;
+import 'features/plans/presentation/bloc/plans_bloc.dart' as _i451;
 import 'features/products/data/datasources/local/products_local_data_source.dart'
     as _i229;
 import 'features/products/data/datasources/remote/products_remote_data_source.dart'
@@ -459,6 +468,9 @@ _i174.GetIt $initGetIt(
     () =>
         _i1063.AccountBlockingStatesRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
+  gh.lazySingleton<_i393.PlansRemoteDataSource>(
+    () => _i393.PlansRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
   gh.factory<_i1020.AccountExportRemoteDataSource>(
     () => _i1020.AccountExportRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
@@ -498,6 +510,12 @@ _i174.GetIt $initGetIt(
   gh.factory<_i961.AccountInvoicePaymentsRemoteDataSource>(
     () =>
         _i961.AccountInvoicePaymentsRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
+  gh.lazySingleton<_i52.PlansLocalDataSource>(
+    () => _i52.PlansLocalDataSourceImpl(
+      gh<_i916.DatabaseService>(),
+      gh<_i974.Logger>(),
+    ),
   );
   gh.factory<_i241.AccountCustomFieldsRemoteDataSource>(
     () => _i241.AccountCustomFieldsRemoteDataSourceImpl(gh<_i45.DioClient>()),
@@ -671,6 +689,13 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
+  gh.lazySingleton<_i692.PlansRepository>(
+    () => _i14.PlansRepositoryImpl(
+      remoteDataSource: gh<_i393.PlansRemoteDataSource>(),
+      localDataSource: gh<_i52.PlansLocalDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
+    ),
+  );
   gh.factory<_i804.AccountBlockingStatesLocalDataSource>(
     () => _i804.AccountBlockingStatesLocalDataSourceImpl(
       gh<_i916.DatabaseService>(),
@@ -697,6 +722,10 @@ _i174.GetIt $initGetIt(
       gh<_i335.SearchTagsUseCase>(),
       gh<_i580.ExportService>(),
     ),
+  );
+  gh.factory<_i460.GetPlans>(() => _i460.GetPlans(gh<_i692.PlansRepository>()));
+  gh.factory<_i868.GetPlanById>(
+    () => _i868.GetPlanById(gh<_i692.PlansRepository>()),
   );
   gh.factory<_i905.RefreshPaymentMethodsUseCase>(
     () => _i905.RefreshPaymentMethodsUseCase(
@@ -765,6 +794,12 @@ _i174.GetIt $initGetIt(
       gh<_i167.SubscriptionsLocalDataSource>(),
       gh<_i75.NetworkInfo>(),
       gh<_i974.Logger>(),
+    ),
+  );
+  gh.factory<_i451.PlansBloc>(
+    () => _i451.PlansBloc(
+      getPlans: gh<_i460.GetPlans>(),
+      getPlanById: gh<_i868.GetPlanById>(),
     ),
   );
   gh.factory<_i824.LogoutUseCase>(

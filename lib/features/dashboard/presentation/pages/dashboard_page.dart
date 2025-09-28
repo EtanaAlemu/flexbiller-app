@@ -8,6 +8,8 @@ import '../../../accounts/presentation/bloc/accounts_list_bloc.dart';
 import '../../../subscriptions/presentation/pages/subscriptions_demo_page.dart';
 import '../../../products/presentation/pages/products_page.dart';
 import '../../../products/presentation/bloc/products_list_bloc.dart';
+import '../../../plans/presentation/pages/plans_page.dart';
+import '../../../plans/presentation/bloc/plans_bloc.dart';
 import '../../../tags/presentation/bloc/tags_bloc.dart';
 import '../../../tags/presentation/pages/tags_page.dart';
 import '../widgets/mobile_dashboard_layout.dart';
@@ -38,6 +40,7 @@ class _DashboardPageState extends State<DashboardPage> {
     AccountsPage(accountsViewKey: _accountsViewKey),
     const SubscriptionsDemoPage(),
     ProductsPage(productsViewKey: _productsViewKey),
+    const PlansPage(),
     const _InvoicesPage(),
     const _PaymentsPage(),
     const _ReportsPage(),
@@ -75,6 +78,7 @@ class _DashboardPageState extends State<DashboardPage> {
         BlocProvider(create: (context) => getIt<AccountsListBloc>()),
         BlocProvider(create: (context) => getIt<AccountsOrchestratorBloc>()),
         BlocProvider(create: (context) => getIt<ProductsListBloc>()),
+        BlocProvider(create: (context) => getIt<PlansBloc>()),
       ],
       child: DashboardNavigationHandler(
         currentIndex: _currentIndex,

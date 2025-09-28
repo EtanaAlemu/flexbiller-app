@@ -32,4 +32,7 @@ class ApiEndpoints {
   static const String getTagDefinitionById = '/tagDefinitions';
   static const String getTagDefinitionAuditLogsWithHistory = '/tagDefinitions';
   static const String deleteTagDefinition = '/tagDefinitions';
+
+  // Plans endpoints
+  static const String plans = '/plans';
 }

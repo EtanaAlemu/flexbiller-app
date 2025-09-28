@@ -15,6 +15,7 @@ import '../dao/account_payment_method_dao.dart';
 import '../dao/account_payment_dao.dart';
 import '../dao/account_invoices_dao.dart';
 import '../dao/product_dao.dart';
+import '../dao/plan_dao.dart';
 import 'package:logger/logger.dart';
 
 @injectable
@@ -71,6 +72,9 @@ class DatabaseService {
 
     // Ensure products table exists after database initialization
     await _ensureProductsTableExists();
+
+    // Ensure plans table exists after database initialization
+    await _ensurePlansTableExists();
 
     return _database!;
   }
@@ -1111,6 +1115,26 @@ class DatabaseService {
       }
     } catch (e) {
       _logger.e('Error ensuring products table exists: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _ensurePlansTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'plans'],
+      );
+
+      if (tables.isEmpty) {
+        await PlanDao.createTable(db);
+        await PlanDao.createPlanFeaturesTable(db);
+        _logger.d('Plans and plan_features tables created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring plans table exists: $e');
       rethrow;
     }
   }
