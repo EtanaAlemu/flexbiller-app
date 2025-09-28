@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/tag.dart';
 import '../bloc/tags_bloc.dart';
@@ -21,15 +22,18 @@ class SelectableTagCardWidget extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      elevation: 0,
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      elevation: isSelected ? 4 : 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         side: isSelected
             ? BorderSide(color: theme.colorScheme.primary, width: 2)
-            : BorderSide.none,
+            : BorderSide(
+                color: theme.colorScheme.outline.withOpacity(0.1),
+                width: 1,
+              ),
       ),
-      child: InkWell(
+      child: GestureDetector(
         onTap: () {
           if (isMultiSelectMode) {
             _toggleSelection(context);
@@ -42,13 +46,25 @@ class SelectableTagCardWidget extends StatelessWidget {
             _enableMultiSelectModeAndSelect(context);
           }
         },
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: InkWell(
+          onTap: () {
+            if (isMultiSelectMode) {
+              _toggleSelection(context);
+            } else {
+              _showTagDetails(context);
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: isSelected
+                  ? theme.colorScheme.primaryContainer.withOpacity(0.1)
+                  : theme.colorScheme.surface,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
                 children: [
                   // Selection checkbox
                   if (isMultiSelectMode)
@@ -64,6 +80,40 @@ class SelectableTagCardWidget extends StatelessWidget {
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
+                  // Tag icon
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: _getObjectTypeColor(tag.objectType),
+                    child: Icon(Icons.label, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  // Tag details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tag.tagDefinitionName,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${tag.objectType} • ${tag.objectId.substring(0, 8)}...',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
                   // Object type badge
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -71,105 +121,26 @@ class SelectableTagCardWidget extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getObjectTypeColor(tag.objectType),
-                      borderRadius: BorderRadius.circular(12),
+                      color: _getObjectTypeColor(
+                        tag.objectType,
+                      ).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       tag.objectType,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
+                        color: _getObjectTypeColor(tag.objectType),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
                       ),
                     ),
                   ),
-                  const Spacer(),
-                  Icon(Icons.label, color: theme.colorScheme.primary, size: 20),
                 ],
               ),
-              const SizedBox(height: 12),
-              Text(
-                tag.tagDefinitionName,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoItem(
-                      'Tag ID',
-                      tag.tagId,
-                      Icons.fingerprint,
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildInfoItem(
-                      'Object ID',
-                      tag.objectId,
-                      Icons.link,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoItem(
-                      'Definition ID',
-                      tag.tagDefinitionId,
-                      Icons.category,
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildInfoItem(
-                      'Audit Logs',
-                      '${tag.auditLogs.length}',
-                      Icons.history,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildInfoItem(String label, String value, IconData icon) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 14, color: Colors.grey.shade600),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'monospace',
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
     );
   }
 
@@ -199,18 +170,56 @@ class SelectableTagCardWidget extends StatelessWidget {
   }
 
   void _enableMultiSelectModeAndSelect(BuildContext context) {
-    context.read<TagsBloc>().add(EnableMultiSelectMode());
-    // Add a small delay to ensure the multi-select mode is enabled
-    Future.delayed(const Duration(milliseconds: 100), () {
-      context.read<TagsBloc>().add(SelectTag(tag));
-    });
+    // Provide haptic feedback for long press
+    HapticFeedback.mediumImpact();
+
+    // Enable multi-select mode and select the tag in one event
+    context.read<TagsBloc>().add(EnableMultiSelectModeAndSelect(tag));
   }
 
   void _showTagDetails(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Tag: ${tag.tagDefinitionName}'),
-        duration: const Duration(seconds: 2),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(tag.tagDefinitionName),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDetailRow('Tag ID', tag.tagId),
+            _buildDetailRow('Object Type', tag.objectType),
+            _buildDetailRow('Object ID', tag.objectId),
+            _buildDetailRow('Definition ID', tag.tagDefinitionId),
+            _buildDetailRow('Audit Logs', '${tag.auditLogs.length}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontFamily: 'monospace')),
+          ),
+        ],
       ),
     );
   }

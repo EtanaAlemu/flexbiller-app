@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/services/export_service.dart';
 import '../../domain/entities/tag.dart';
 import '../../domain/usecases/get_all_tags_usecase.dart';
 import '../../domain/usecases/search_tags_usecase.dart';
+import '../../data/datasources/tags_local_data_source.dart';
+import '../../data/models/tag_model.dart';
 import 'tags_event.dart';
 import 'tags_state.dart';
 
@@ -12,15 +15,18 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
   final GetAllTagsUseCase _getAllTagsUseCase;
   final SearchTagsUseCase _searchTagsUseCase;
   final ExportService _exportService;
+  final TagsLocalDataSource _localDataSource;
 
   List<Tag> _selectedTags = [];
   List<Tag> _allTags = [];
   bool _isMultiSelectMode = false;
+  StreamSubscription<List<TagModel>>? _tagsSubscription;
 
   TagsBloc(
     this._getAllTagsUseCase,
     this._searchTagsUseCase,
     this._exportService,
+    this._localDataSource,
   ) : super(TagsInitial()) {
     on<LoadAllTags>(_onLoadAllTags);
     on<RefreshTags>(_onRefreshTags);
@@ -29,6 +35,7 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
 
     // Selection event handlers
     on<EnableMultiSelectMode>(_onEnableMultiSelectMode);
+    on<EnableMultiSelectModeAndSelect>(_onEnableMultiSelectModeAndSelect);
     on<DisableMultiSelectMode>(_onDisableMultiSelectMode);
     on<SelectTag>(_onSelectTag);
     on<DeselectTag>(_onDeselectTag);
@@ -49,10 +56,29 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
     Emitter<TagsState> emit,
   ) async {
     emit(TagsLoading());
+
     try {
-      final tags = await _getAllTagsUseCase();
-      _allTags = tags;
-      emit(TagsLoaded(tags));
+      // First, try to get data from local cache (local-first)
+      final cachedTags = await _localDataSource.getCachedTags();
+
+      if (cachedTags.isNotEmpty) {
+        _allTags = cachedTags.map((model) => model.toEntity()).toList();
+        emit(TagsLoaded(_allTags));
+
+        // Start listening to local data changes
+        _startListeningToLocalData();
+
+        // Trigger background sync if online
+        _syncTagsInBackground();
+      } else {
+        // If no cached data, fetch from remote
+        final tags = await _getAllTagsUseCase();
+        _allTags = tags;
+        emit(TagsLoaded(tags));
+
+        // Start listening to local data changes
+        _startListeningToLocalData();
+      }
     } catch (e) {
       emit(TagsError(e.toString()));
     }
@@ -112,6 +138,23 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
       TagsWithSelection(
         tags: _allTags,
         selectedTags: _selectedTags,
+        isMultiSelectMode: true,
+      ),
+    );
+  }
+
+  void _onEnableMultiSelectModeAndSelect(
+    EnableMultiSelectModeAndSelect event,
+    Emitter<TagsState> emit,
+  ) {
+    _isMultiSelectMode = true;
+    if (!_selectedTags.contains(event.tag)) {
+      _selectedTags.add(event.tag);
+    }
+    emit(
+      TagsWithSelection(
+        tags: _allTags,
+        selectedTags: List.from(_selectedTags),
         isMultiSelectMode: true,
       ),
     );
@@ -244,15 +287,11 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
         ),
       );
 
-      // After a short delay, return to multi-select mode
+      // After a short delay, disable multi-select mode
       await Future.delayed(const Duration(milliseconds: 1500));
-      emit(
-        TagsWithSelection(
-          tags: _allTags,
-          selectedTags: _selectedTags,
-          isMultiSelectMode: _isMultiSelectMode,
-        ),
-      );
+      _isMultiSelectMode = false;
+      _selectedTags.clear();
+      emit(TagsLoaded(_allTags));
     } catch (e) {
       emit(TagsExportFailure('Failed to export selected tags: $e'));
     }
@@ -275,20 +314,11 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
 
       emit(TagsDeleteSuccess(deletedCount: event.tags.length));
 
-      // After a short delay, return to multi-select mode or normal mode
+      // After a short delay, disable multi-select mode
       await Future.delayed(const Duration(milliseconds: 1500));
-
-      if (_isMultiSelectMode) {
-        emit(
-          TagsWithSelection(
-            tags: _allTags,
-            selectedTags: _selectedTags,
-            isMultiSelectMode: true,
-          ),
-        );
-      } else {
-        emit(TagsLoaded(_allTags));
-      }
+      _isMultiSelectMode = false;
+      _selectedTags.clear();
+      emit(TagsLoaded(_allTags));
     } catch (e) {
       emit(
         TagsDeleteFailure(
@@ -332,5 +362,55 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
         ),
       );
     }
+  }
+
+  // Start listening to local data changes for reactive updates
+  void _startListeningToLocalData() {
+    _tagsSubscription?.cancel();
+    _tagsSubscription = _localDataSource.watchTags().listen(
+      (cachedTags) {
+        if (!isClosed) {
+          _allTags = cachedTags.map((model) => model.toEntity()).toList();
+
+          // Update selected tags to maintain selection state
+          _selectedTags = _selectedTags
+              .where(
+                (selectedTag) =>
+                    _allTags.any((tag) => tag.tagId == selectedTag.tagId),
+              )
+              .toList();
+
+          // Emit appropriate state based on current mode
+          if (_isMultiSelectMode) {
+            add(LoadAllTags()); // This will emit TagsWithSelection
+          } else {
+            add(LoadAllTags()); // This will emit TagsLoaded
+          }
+        }
+      },
+      onError: (error) {
+        if (!isClosed) {
+          add(LoadAllTags()); // Retry on error
+        }
+      },
+    );
+  }
+
+  // Background sync method
+  Future<void> _syncTagsInBackground() async {
+    try {
+      await _getAllTagsUseCase();
+      // The local data source will automatically update the stream
+      // when new data is cached, triggering UI updates
+    } catch (e) {
+      // Log error but don't throw - this is background sync
+      print('Background sync failed: $e');
+    }
+  }
+
+  @override
+  Future<void> close() {
+    _tagsSubscription?.cancel();
+    return super.close();
   }
 }

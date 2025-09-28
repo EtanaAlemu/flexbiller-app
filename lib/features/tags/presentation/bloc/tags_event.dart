@@ -34,6 +34,15 @@ class ClearSearch extends TagsEvent {}
 // Selection events
 class EnableMultiSelectMode extends TagsEvent {}
 
+class EnableMultiSelectModeAndSelect extends TagsEvent {
+  final Tag tag;
+
+  const EnableMultiSelectModeAndSelect(this.tag);
+
+  @override
+  List<Object?> get props => [tag];
+}
+
 class DisableMultiSelectMode extends TagsEvent {}
 
 class SelectTag extends TagsEvent {

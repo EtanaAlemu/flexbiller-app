@@ -1,46 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/tag.dart';
 import '../bloc/tags_bloc.dart';
 import '../bloc/tags_event.dart';
 import '../bloc/tags_state.dart';
 import '../widgets/selectable_tag_card_widget.dart';
 import '../widgets/tags_multi_select_action_bar.dart';
-import '../widgets/export_tags_dialog.dart';
+import '../widgets/create_tag_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:open_file/open_file.dart';
 
-class TagsPage extends StatelessWidget {
+class TagsPage extends StatefulWidget {
   const TagsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  State<TagsPage> createState() => _TagsPageState();
+}
+
+class _TagsPageState extends State<TagsPage> with TickerProviderStateMixin {
+  final ScrollController _scrollController = ScrollController();
+  bool _isFabVisible = true;
+  bool _isMultiSelectMode = false;
+  late AnimationController _fabAnimationController;
+  late Animation<double> _fabAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _fabAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fabAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _fabAnimationController, curve: Curves.easeInOut),
+    );
+
+    _scrollController.addListener(_onScroll);
+
     // Trigger loading of tags when the page is built
     context.read<TagsBloc>().add(LoadAllTags());
+  }
 
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _fabAnimationController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Don't show/hide FAB during multi-select mode
+    if (_isMultiSelectMode) return;
+
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.reverse) {
+      // Scrolling down - hide FAB
+      if (_isFabVisible) {
+        setState(() {
+          _isFabVisible = false;
+        });
+        _fabAnimationController.forward();
+      }
+    } else if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
+      // Scrolling up - show FAB
+      if (!_isFabVisible) {
+        setState(() {
+          _isFabVisible = true;
+        });
+        _fabAnimationController.reverse();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('All Tags'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddTagDialog(context),
-            tooltip: 'Add Tag',
-          ),
-          IconButton(
-            icon: const Icon(Icons.download),
-            onPressed: () => _exportAllTags(context),
-            tooltip: 'Export All Tags',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<TagsBloc>().add(RefreshTags());
-            },
-            tooltip: 'Refresh Tags',
-          ),
-        ],
-      ),
       body: BlocListener<TagsBloc, TagsState>(
         listener: (context, state) {
           if (state is TagsExportSuccess) {
@@ -85,6 +121,21 @@ class TagsPage extends StatelessWidget {
                 duration: const Duration(seconds: 3),
               ),
             );
+          } else if (state is TagsWithSelection) {
+            // Handle multi-select mode changes
+            if (state.isMultiSelectMode && !_isMultiSelectMode) {
+              setState(() {
+                _isMultiSelectMode = true;
+                _isFabVisible = false;
+              });
+              _fabAnimationController.forward();
+            } else if (!state.isMultiSelectMode && _isMultiSelectMode) {
+              setState(() {
+                _isMultiSelectMode = false;
+                _isFabVisible = true;
+              });
+              _fabAnimationController.reverse();
+            }
           }
         },
         child: BlocBuilder<TagsBloc, TagsState>(
@@ -116,6 +167,29 @@ class TagsPage extends StatelessWidget {
           },
         ),
       ),
+      floatingActionButton: _isMultiSelectMode
+          ? null
+          : AnimatedBuilder(
+              animation: _fabAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _fabAnimation.value,
+                  child: Opacity(
+                    opacity: _fabAnimation.value,
+                    child: FloatingActionButton.extended(
+                      onPressed: () {
+                        _showAddTagDialog(context);
+                      },
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      elevation: 4,
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Add Tag'),
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 
@@ -130,8 +204,20 @@ class TagsPage extends StatelessWidget {
     return Column(
       children: [
         // Multi-select action bar (only show if in multi-select mode)
-        if (state.isMultiSelectMode)
-          TagsMultiSelectActionBar(selectedTags: state.selectedTags),
+        if (state.isMultiSelectMode) ...[
+          Builder(
+            builder: (context) {
+              final isAllSelected =
+                  state.tags.isNotEmpty &&
+                  state.selectedTags.length == state.tags.length;
+              return TagsMultiSelectActionBar(
+                selectedTags: state.selectedTags,
+                isAllSelected: isAllSelected,
+                allTags: state.tags,
+              );
+            },
+          ),
+        ],
         // Tags list
         Expanded(
           child: RefreshIndicator(
@@ -139,7 +225,8 @@ class TagsPage extends StatelessWidget {
               context.read<TagsBloc>().add(RefreshTags());
             },
             child: ListView.builder(
-              padding: const EdgeInsets.all(8),
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: state.tags.length,
               itemBuilder: (context, index) {
                 final tag = state.tags[index];
@@ -167,6 +254,7 @@ class TagsPage extends StatelessWidget {
         context.read<TagsBloc>().add(RefreshTags());
       },
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.all(8),
         itemCount: tags.length,
         itemBuilder: (context, index) {
@@ -271,45 +359,7 @@ class TagsPage extends StatelessWidget {
   }
 
   void _showAddTagDialog(BuildContext context) {
-    showDialog(context: context, builder: (context) => const AddTagDialog());
-  }
-
-  void _exportAllTags(BuildContext context) {
-    // Get current tags from the bloc state
-    final tagsBloc = context.read<TagsBloc>();
-    final state = tagsBloc.state;
-
-    List<Tag> tagsToExport = [];
-
-    if (state is TagsLoaded) {
-      tagsToExport = state.tags;
-    } else if (state is TagsWithSelection) {
-      tagsToExport = state.tags;
-    }
-
-    if (tagsToExport.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No tags to export'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    _showExportDialog(context, tagsToExport, 'all_tags');
-  }
-
-  void _showExportDialog(BuildContext context, List<Tag> tags, String type) {
-    showDialog(
-      context: context,
-      builder: (context) => ExportTagsDialog(tags: tags),
-    ).then((result) {
-      if (result != null && result is Map<String, dynamic>) {
-        final format = result['format'] as String;
-        context.read<TagsBloc>().add(ExportAllTags(format: format));
-      }
-    });
+    showDialog(context: context, builder: (context) => const CreateTagDialog());
   }
 
   Widget _buildExportingState(BuildContext context, TagsExporting state) {

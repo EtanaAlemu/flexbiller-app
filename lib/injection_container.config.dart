@@ -355,6 +355,7 @@ import 'features/tag_definitions/domain/usecases/get_tag_definitions_usecase.dar
     as _i235;
 import 'features/tag_definitions/presentation/bloc/tag_definitions_bloc.dart'
     as _i65;
+import 'features/tags/data/datasources/tags_local_data_source.dart' as _i818;
 import 'features/tags/data/datasources/tags_remote_data_source.dart' as _i376;
 import 'features/tags/data/repositories/tags_repository_impl.dart' as _i990;
 import 'features/tags/domain/repositories/tags_repository.dart' as _i734;
@@ -419,9 +420,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i376.TagsRemoteDataSource>(
     () => _i376.TagsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
-  gh.factory<_i734.TagsRepository>(
-    () => _i990.TagsRepositoryImpl(gh<_i376.TagsRemoteDataSource>()),
-  );
   gh.singleton<_i924.CrashAnalyticsErrorHandler>(
     () => analyticsModule.crashAnalyticsErrorHandler(
       gh<_i924.CrashAnalyticsService>(),
@@ -459,12 +457,6 @@ _i174.GetIt $initGetIt(
     () => _i448.DashboardRepositoryImpl(
       localDataSource: gh<_i336.DashboardLocalDataSource>(),
     ),
-  );
-  gh.factory<_i335.SearchTagsUseCase>(
-    () => _i335.SearchTagsUseCase(gh<_i734.TagsRepository>()),
-  );
-  gh.factory<_i348.GetAllTagsUseCase>(
-    () => _i348.GetAllTagsUseCase(gh<_i734.TagsRepository>()),
   );
   gh.factory<_i1063.AccountBlockingStatesRemoteDataSource>(
     () =>
@@ -531,6 +523,9 @@ _i174.GetIt $initGetIt(
       gh<_i140.UserSessionService>(),
       gh<_i974.Logger>(),
     ),
+  );
+  gh.factory<_i818.TagsLocalDataSource>(
+    () => _i818.TagsLocalDataSourceImpl(gh<_i916.DatabaseService>()),
   );
   gh.lazySingleton<_i167.SubscriptionsLocalDataSource>(
     () => _i167.SubscriptionsLocalDataSourceImpl(
@@ -669,6 +664,13 @@ _i174.GetIt $initGetIt(
       gh<_i140.UserSessionService>(),
     ),
   );
+  gh.factory<_i734.TagsRepository>(
+    () => _i990.TagsRepositoryImpl(
+      gh<_i376.TagsRemoteDataSource>(),
+      gh<_i818.TagsLocalDataSource>(),
+      gh<_i75.NetworkInfo>(),
+    ),
+  );
   gh.factory<_i229.ProductsLocalDataSource>(
     () => _i229.ProductsLocalDataSourceImpl(
       gh<_i916.DatabaseService>(),
@@ -716,13 +718,6 @@ _i174.GetIt $initGetIt(
     () => _i254.UserLocalDataSourceImpl(
       gh<_i916.DatabaseService>(),
       gh<_i140.UserSessionService>(),
-    ),
-  );
-  gh.factory<_i844.TagsBloc>(
-    () => _i844.TagsBloc(
-      gh<_i348.GetAllTagsUseCase>(),
-      gh<_i335.SearchTagsUseCase>(),
-      gh<_i580.ExportService>(),
     ),
   );
   gh.factory<_i460.GetPlans>(() => _i460.GetPlans(gh<_i692.PlansRepository>()));
@@ -786,6 +781,12 @@ _i174.GetIt $initGetIt(
       gh<_i75.NetworkInfo>(),
       gh<_i974.Logger>(),
     ),
+  );
+  gh.factory<_i335.SearchTagsUseCase>(
+    () => _i335.SearchTagsUseCase(gh<_i734.TagsRepository>()),
+  );
+  gh.factory<_i348.GetAllTagsUseCase>(
+    () => _i348.GetAllTagsUseCase(gh<_i734.TagsRepository>()),
   );
   gh.factory<_i915.UserPersistenceService>(
     () => _i915.UserPersistenceService(gh<_i254.UserLocalDataSource>()),
@@ -1079,6 +1080,14 @@ _i174.GetIt $initGetIt(
   gh.factory<_i234.CreateMultipleAccountCustomFieldsUseCase>(
     () => _i234.CreateMultipleAccountCustomFieldsUseCase(
       gh<_i221.AccountCustomFieldsRepository>(),
+    ),
+  );
+  gh.factory<_i844.TagsBloc>(
+    () => _i844.TagsBloc(
+      gh<_i348.GetAllTagsUseCase>(),
+      gh<_i335.SearchTagsUseCase>(),
+      gh<_i580.ExportService>(),
+      gh<_i818.TagsLocalDataSource>(),
     ),
   );
   gh.factory<_i65.TagDefinitionsBloc>(

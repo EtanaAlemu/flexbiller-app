@@ -3,13 +3,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/tag.dart';
 import '../bloc/tags_bloc.dart';
 import '../bloc/tags_event.dart';
-import '../bloc/tags_state.dart';
 import 'export_tags_dialog.dart';
 
 class TagsMultiSelectActionBar extends StatelessWidget {
   final List<Tag> selectedTags;
+  final bool isAllSelected;
+  final List<Tag> allTags;
 
-  const TagsMultiSelectActionBar({super.key, required this.selectedTags});
+  const TagsMultiSelectActionBar({
+    super.key,
+    required this.selectedTags,
+    this.isAllSelected = false,
+    this.allTags = const [],
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +25,18 @@ class TagsMultiSelectActionBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary,
+        color: theme.colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outline.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: theme.colorScheme.onSurface.withOpacity(0.1),
             blurRadius: 4,
-            offset: const Offset(0, -2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -35,67 +47,66 @@ class TagsMultiSelectActionBar extends StatelessWidget {
             onPressed: () {
               context.read<TagsBloc>().add(DisableMultiSelectMode());
             },
-            icon: const Icon(Icons.close, color: Colors.white),
-            tooltip: 'Exit selection mode',
+            icon: const Icon(Icons.close),
+            tooltip: 'Exit multi-select',
+            style: IconButton.styleFrom(
+              foregroundColor: theme.colorScheme.onSurface,
+            ),
           ),
+
           const SizedBox(width: 8),
+
           // Selection count
           Text(
             '$selectedCount selected',
             style: theme.textTheme.titleMedium?.copyWith(
-              color: Colors.white,
               fontWeight: FontWeight.w600,
             ),
           ),
+
           const Spacer(),
-          // Action buttons
-          if (selectedCount > 0) ...[
-            // Select All button
-            TextButton.icon(
-              onPressed: () => _selectAllTags(context),
-              icon: const Icon(Icons.select_all, color: Colors.white),
-              label: const Text(
-                'Select All',
-                style: TextStyle(color: Colors.white),
-              ),
+
+          // Select all / Deselect all button
+          IconButton(
+            onPressed: isAllSelected
+                ? () => context.read<TagsBloc>().add(DeselectAllTags())
+                : () => _selectAllTags(context),
+            icon: Icon(
+              isAllSelected ? Icons.check_box : Icons.check_box_outline_blank,
             ),
-            const SizedBox(width: 8),
-            // Deselect All button
-            TextButton.icon(
-              onPressed: () {
-                context.read<TagsBloc>().add(DeselectAllTags());
-              },
-              icon: const Icon(Icons.clear_all, color: Colors.white),
-              label: const Text(
-                'Deselect All',
-                style: TextStyle(color: Colors.white),
-              ),
+            tooltip: isAllSelected ? 'Deselect all' : 'Select all',
+            style: IconButton.styleFrom(
+              foregroundColor: isAllSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface,
             ),
-            const SizedBox(width: 8),
-            // Export button
-            TextButton.icon(
-              onPressed: () {
-                _exportSelectedTags(context);
-              },
-              icon: const Icon(Icons.download, color: Colors.white),
-              label: const Text(
-                'Export',
-                style: TextStyle(color: Colors.white),
-              ),
+          ),
+
+          // Export button
+          IconButton(
+            onPressed: selectedTags.isNotEmpty
+                ? () => _exportSelectedTags(context)
+                : null,
+            icon: const Icon(Icons.download),
+            tooltip: 'Export selected',
+            style: IconButton.styleFrom(
+              foregroundColor: selectedTags.isNotEmpty
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface.withOpacity(0.4),
             ),
-            const SizedBox(width: 8),
-            // Delete button
-            TextButton.icon(
-              onPressed: () {
-                _showDeleteConfirmation(context);
-              },
-              icon: const Icon(Icons.delete, color: Colors.white),
-              label: const Text(
-                'Delete',
-                style: TextStyle(color: Colors.white),
-              ),
+          ),
+
+          // Delete button
+          IconButton(
+            onPressed: selectedTags.isNotEmpty
+                ? () => _showDeleteConfirmation(context)
+                : null,
+            icon: const Icon(Icons.delete),
+            tooltip: 'Delete selected',
+            style: IconButton.styleFrom(
+              foregroundColor: theme.colorScheme.error,
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -112,40 +123,48 @@ class TagsMultiSelectActionBar extends StatelessWidget {
       return;
     }
 
-    _showExportDialog(context, selectedTags);
+    _showExportDialog(context);
   }
 
-  void _showExportDialog(BuildContext context, List<Tag> tags) {
+  void _showExportDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => ExportTagsDialog(tags: tags),
-    ).then((result) {
-      if (result != null && result is Map<String, dynamic>) {
-        final format = result['format'] as String;
-        context.read<TagsBloc>().add(
-          ExportSelectedTags(tags: tags, format: format),
-        );
+      builder: (context) => ExportTagsDialog(tags: selectedTags),
+    ).then((result) async {
+      if (result != null) {
+        final selectedFormat = result['format'] as String;
+        await _performExport(context, selectedFormat);
       }
     });
   }
 
+  Future<void> _performExport(BuildContext context, String format) async {
+    // Dispatch export event to BLoC - the BLoC will handle the export and emit states
+    context.read<TagsBloc>().add(
+      ExportSelectedTags(tags: selectedTags, format: format),
+    );
+  }
+
   void _showDeleteConfirmation(BuildContext context) {
+    // Capture the original context that has access to TagsBloc
+    final originalContext = context;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Tags'),
         content: Text(
           'Are you sure you want to delete ${selectedTags.length} selected tags? This action cannot be undone.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              _deleteSelectedTags(context);
+              Navigator.of(dialogContext).pop();
+              _deleteSelectedTags(originalContext);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -173,16 +192,6 @@ class TagsMultiSelectActionBar extends StatelessWidget {
   }
 
   void _selectAllTags(BuildContext context) {
-    // Get all tags from the current state
-    final tagsBloc = context.read<TagsBloc>();
-    final state = tagsBloc.state;
-
-    List<Tag> allTags = [];
-
-    if (state is TagsWithSelection) {
-      allTags = state.tags;
-    }
-
     if (allTags.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

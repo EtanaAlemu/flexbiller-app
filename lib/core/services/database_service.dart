@@ -16,6 +16,7 @@ import '../dao/account_payment_dao.dart';
 import '../dao/account_invoices_dao.dart';
 import '../dao/product_dao.dart';
 import '../dao/plan_dao.dart';
+import '../dao/tags_dao.dart';
 import 'package:logger/logger.dart';
 
 @injectable
@@ -75,6 +76,9 @@ class DatabaseService {
 
     // Ensure plans table exists after database initialization
     await _ensurePlansTableExists();
+
+    // Ensure tags table exists after database initialization
+    await _ensureTagsTableExists();
 
     return _database!;
   }
@@ -1135,6 +1139,26 @@ class DatabaseService {
       }
     } catch (e) {
       _logger.e('Error ensuring plans table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Ensure tags table exists
+  Future<void> _ensureTagsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'tags'],
+      );
+
+      if (tables.isEmpty) {
+        await db.execute(TagsDao.createTableSQL);
+        _logger.d('Tags table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring tags table exists: $e');
       rethrow;
     }
   }
