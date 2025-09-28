@@ -6,6 +6,8 @@ import '../../../../injection_container.dart';
 import '../../../accounts/presentation/pages/accounts_page.dart';
 import '../../../accounts/presentation/bloc/accounts_list_bloc.dart';
 import '../../../subscriptions/presentation/pages/subscriptions_demo_page.dart';
+import '../../../products/presentation/pages/products_page.dart';
+import '../../../products/presentation/bloc/products_list_bloc.dart';
 import '../../../tags/presentation/bloc/tags_bloc.dart';
 import '../../../tags/presentation/pages/tags_page.dart';
 import '../widgets/mobile_dashboard_layout.dart';
@@ -33,6 +35,7 @@ class _DashboardPageState extends State<DashboardPage> {
     const DashboardDemoPage(),
     AccountsPage(accountsViewKey: _accountsViewKey),
     const SubscriptionsDemoPage(),
+    const ProductsPage(),
     const _InvoicesPage(),
     const _PaymentsPage(),
     const _ReportsPage(),
@@ -69,6 +72,7 @@ class _DashboardPageState extends State<DashboardPage> {
         BlocProvider(create: (context) => getIt<TagsBloc>()),
         BlocProvider(create: (context) => getIt<AccountsListBloc>()),
         BlocProvider(create: (context) => getIt<AccountsOrchestratorBloc>()),
+        BlocProvider(create: (context) => getIt<ProductsListBloc>()),
       ],
       child: DashboardNavigationHandler(
         currentIndex: _currentIndex,

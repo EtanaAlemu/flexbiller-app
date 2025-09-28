@@ -14,6 +14,7 @@ import '../dao/account_invoice_payment_dao.dart';
 import '../dao/account_payment_method_dao.dart';
 import '../dao/account_payment_dao.dart';
 import '../dao/account_invoices_dao.dart';
+import '../dao/product_dao.dart';
 import 'package:logger/logger.dart';
 
 @injectable
@@ -67,6 +68,9 @@ class DatabaseService {
 
     // Ensure sync_metadata table exists after database initialization
     await _ensureSyncMetadataTableExists();
+
+    // Ensure products table exists after database initialization
+    await _ensureProductsTableExists();
 
     return _database!;
   }
@@ -1087,6 +1091,26 @@ class DatabaseService {
       }
     } catch (e) {
       _logger.e('Error ensuring sync_metadata table exists: $e');
+      rethrow;
+    }
+  }
+
+  // Ensure products table exists
+  Future<void> _ensureProductsTableExists() async {
+    try {
+      final db = await database;
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'products'],
+      );
+
+      if (tables.isEmpty) {
+        await ProductDao.createTable(db);
+        _logger.d('Products table created successfully');
+      }
+    } catch (e) {
+      _logger.e('Error ensuring products table exists: $e');
       rethrow;
     }
   }

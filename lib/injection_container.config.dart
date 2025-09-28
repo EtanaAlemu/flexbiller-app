@@ -270,6 +270,23 @@ import 'features/dashboard/domain/repositories/dashboard_repository.dart'
     as _i557;
 import 'features/dashboard/domain/usecases/get_dashboard_data.dart' as _i983;
 import 'features/dashboard/presentation/bloc/dashboard_bloc.dart' as _i521;
+import 'features/products/data/datasources/local/products_local_data_source.dart'
+    as _i229;
+import 'features/products/data/datasources/remote/products_remote_data_source.dart'
+    as _i579;
+import 'features/products/data/repositories/products_repository_impl.dart'
+    as _i531;
+import 'features/products/domain/repositories/products_repository.dart'
+    as _i508;
+import 'features/products/domain/usecases/create_product_usecase.dart' as _i872;
+import 'features/products/domain/usecases/delete_product_usecase.dart' as _i70;
+import 'features/products/domain/usecases/get_product_by_id_usecase.dart'
+    as _i272;
+import 'features/products/domain/usecases/get_products_usecase.dart' as _i320;
+import 'features/products/domain/usecases/search_products_usecase.dart'
+    as _i132;
+import 'features/products/domain/usecases/update_product_usecase.dart' as _i819;
+import 'features/products/presentation/bloc/products_list_bloc.dart' as _i516;
 import 'features/subscriptions/data/datasources/subscriptions_local_data_source.dart'
     as _i167;
 import 'features/subscriptions/data/datasources/subscriptions_remote_data_source.dart'
@@ -452,6 +469,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i225.AccountInvoicesRemoteDataSource>(
     () => _i225.AccountInvoicesRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
+  gh.factory<_i579.ProductsRemoteDataSource>(
+    () => _i579.ProductsRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
   gh.factory<_i1042.AccountTagsRemoteDataSource>(
     () => _i1042.AccountTagsRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
@@ -623,6 +643,12 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i273.AccountAuditLogsLocalDataSource>(
     () => _i273.AccountAuditLogsLocalDataSourceImpl(
+      gh<_i916.DatabaseService>(),
+      gh<_i140.UserSessionService>(),
+    ),
+  );
+  gh.factory<_i229.ProductsLocalDataSource>(
+    () => _i229.ProductsLocalDataSourceImpl(
       gh<_i916.DatabaseService>(),
       gh<_i140.UserSessionService>(),
     ),
@@ -881,6 +907,14 @@ _i174.GetIt $initGetIt(
       gh<_i363.AccountTagsRepository>(),
     ),
   );
+  gh.lazySingleton<_i508.ProductsRepository>(
+    () => _i531.ProductsRepositoryImpl(
+      remoteDataSource: gh<_i579.ProductsRemoteDataSource>(),
+      localDataSource: gh<_i229.ProductsLocalDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
+      syncService: gh<_i443.SyncService>(),
+    ),
+  );
   gh.factory<_i280.AuthGuardService>(
     () => _i280.AuthGuardService(
       gh<_i493.SecureStorageService>(),
@@ -1065,6 +1099,24 @@ _i174.GetIt $initGetIt(
       deleteAccountUseCase: gh<_i823.DeleteAccountUseCase>(),
     ),
   );
+  gh.factory<_i70.DeleteProductUseCase>(
+    () => _i70.DeleteProductUseCase(gh<_i508.ProductsRepository>()),
+  );
+  gh.factory<_i132.SearchProductsUseCase>(
+    () => _i132.SearchProductsUseCase(gh<_i508.ProductsRepository>()),
+  );
+  gh.factory<_i320.GetProductsUseCase>(
+    () => _i320.GetProductsUseCase(gh<_i508.ProductsRepository>()),
+  );
+  gh.factory<_i272.GetProductByIdUseCase>(
+    () => _i272.GetProductByIdUseCase(gh<_i508.ProductsRepository>()),
+  );
+  gh.factory<_i819.UpdateProductUseCase>(
+    () => _i819.UpdateProductUseCase(gh<_i508.ProductsRepository>()),
+  );
+  gh.factory<_i872.CreateProductUseCase>(
+    () => _i872.CreateProductUseCase(gh<_i508.ProductsRepository>()),
+  );
   gh.factory<_i890.ChangePasswordUseCase>(
     () => _i890.ChangePasswordUseCase(gh<_i1015.AuthRepository>()),
   );
@@ -1151,6 +1203,13 @@ _i174.GetIt $initGetIt(
       changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
       resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
       updateUserUseCase: gh<_i457.UpdateUserUseCase>(),
+    ),
+  );
+  gh.factory<_i516.ProductsListBloc>(
+    () => _i516.ProductsListBloc(
+      getProductsUseCase: gh<_i320.GetProductsUseCase>(),
+      searchProductsUseCase: gh<_i132.SearchProductsUseCase>(),
+      productsRepository: gh<_i508.ProductsRepository>(),
     ),
   );
   gh.factory<_i421.AccountsOrchestratorBloc>(
