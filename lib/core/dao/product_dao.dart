@@ -153,10 +153,10 @@ class ProductDao {
     List<dynamic> whereArgs = [];
 
     if (userId != null) {
-      whereClause = 'WHERE $columnUserId = ? AND (';
+      whereClause = '$columnUserId = ? AND (';
       whereArgs.add(userId);
     } else {
-      whereClause = 'WHERE (';
+      whereClause = '(';
     }
 
     whereClause +=

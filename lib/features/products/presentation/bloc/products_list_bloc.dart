@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import '../../../../core/errors/error_handler.dart';
 import '../../domain/entities/products_query_params.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/products_repository.dart';
@@ -38,6 +39,10 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
     on<LoadMoreProducts>(_onLoadMoreProducts);
     on<FilterProductsByTenant>(_onFilterProductsByTenant);
     on<ClearFilters>(_onClearFilters);
+    on<GetProductById>(_onGetProductById);
+    on<CreateProduct>(_onCreateProduct);
+    on<UpdateProduct>(_onUpdateProduct);
+    on<DeleteProduct>(_onDeleteProduct);
 
     // Initialize stream subscriptions for reactive updates
     _initializeStreamSubscriptions();
@@ -48,33 +53,17 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
     _productsStreamSubscription = _productsRepository.productsStream.listen(
       (response) {
         if (response.isSuccess) {
-          emit(
-            ProductsListSuccess(
-              products: response.data ?? [],
-              hasMore: _hasMoreProducts(response.data?.length ?? 0),
-            ),
-          );
+          add(LoadProducts(params: _currentQueryParams));
         } else if (response.hasError) {
-          emit(
-            ProductsListError(
-              message: response.errorMessage,
-              cachedProducts: state is ProductsListSuccess
-                  ? (state as ProductsListSuccess).products
-                  : null,
-            ),
-          );
+          _logger.e('Error in products stream: ${response.errorMessage}');
+          // Don't emit error state from stream subscription
+          // Let the individual operations handle their own errors
         }
       },
       onError: (error) {
         _logger.e('Error in products stream: $error');
-        emit(
-          ProductsListError(
-            message: 'Failed to load products: $error',
-            cachedProducts: state is ProductsListSuccess
-                ? (state as ProductsListSuccess).products
-                : null,
-          ),
-        );
+        // Don't emit error state from stream subscription
+        // Let the individual operations handle their own errors
       },
     );
   }
@@ -104,7 +93,17 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
       }
     } catch (e) {
       _logger.e('Error loading products: $e');
-      emit(ProductsListError(message: 'Failed to load products: $e'));
+
+      final appError = ErrorHandler.handleException(
+        e,
+        context: 'products',
+        metadata: {
+          'action': 'load_products',
+          'params': event.params.toString(),
+        },
+      );
+
+      emit(ProductsListError(message: appError.message));
     }
   }
 
@@ -157,7 +156,14 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
       }
     } catch (e) {
       _logger.e('Error searching products: $e');
-      emit(ProductsListError(message: 'Failed to search products: $e'));
+
+      final appError = ErrorHandler.handleException(
+        e,
+        context: 'search',
+        metadata: {'action': 'search_products', 'searchKey': event.searchKey},
+      );
+
+      emit(ProductsListError(message: appError.message));
     }
   }
 
@@ -192,7 +198,17 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
       }
     } catch (e) {
       _logger.e('Error refreshing products: $e');
-      emit(ProductsListError(message: 'Failed to refresh products: $e'));
+
+      final appError = ErrorHandler.handleException(
+        e,
+        context: 'products',
+        metadata: {
+          'action': 'refresh_products',
+          'params': event.params.toString(),
+        },
+      );
+
+      emit(ProductsListError(message: appError.message));
     }
   }
 
@@ -227,7 +243,10 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
       }
     } catch (e) {
       _logger.e('Error loading more products: $e');
-      emit(ProductsListError(message: 'Failed to load more products: $e'));
+
+      // For pagination errors, we don't want to show a full error state
+      // Just log the error and keep the current state
+      // The user can try again by scrolling
     }
   }
 
@@ -255,6 +274,109 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
 
   /// Get current query parameters
   ProductsQueryParams get currentQueryParams => _currentQueryParams;
+
+  /// Handle GetProductById event
+  Future<void> _onGetProductById(
+    GetProductById event,
+    Emitter<ProductsListState> emit,
+  ) async {
+    try {
+      _logger.d('Getting product by ID: ${event.productId}');
+      emit(const ProductsListLoading());
+
+      final product = await _productsRepository.getProductById(event.productId);
+      emit(ProductDetailLoaded(product: product));
+    } catch (e) {
+      _logger.e('Error getting product by ID: $e');
+
+      final appError = ErrorHandler.handleException(
+        e,
+        context: 'product',
+        metadata: {'action': 'get_product_by_id', 'productId': event.productId},
+      );
+
+      emit(ProductsListError(message: appError.message));
+    }
+  }
+
+  /// Handle CreateProduct event
+  Future<void> _onCreateProduct(
+    CreateProduct event,
+    Emitter<ProductsListState> emit,
+  ) async {
+    try {
+      _logger.d('Creating product: ${event.product.productName}');
+      emit(const ProductsListLoading());
+
+      final createdProduct = await _productsRepository.createProduct(
+        event.product,
+      );
+      emit(ProductCreated(product: createdProduct));
+    } catch (e) {
+      _logger.e('Error creating product: $e');
+
+      final appError = ErrorHandler.handleException(
+        e,
+        context: 'product',
+        metadata: {
+          'action': 'create_product',
+          'productName': event.product.productName,
+        },
+      );
+
+      emit(ProductsListError(message: appError.message));
+    }
+  }
+
+  /// Handle UpdateProduct event
+  Future<void> _onUpdateProduct(
+    UpdateProduct event,
+    Emitter<ProductsListState> emit,
+  ) async {
+    try {
+      _logger.d('Updating product: ${event.product.productName}');
+      emit(const ProductsListLoading());
+
+      final updatedProduct = await _productsRepository.updateProduct(
+        event.product,
+      );
+      emit(ProductUpdated(product: updatedProduct));
+    } catch (e) {
+      _logger.e('Error updating product: $e');
+
+      final appError = ErrorHandler.handleException(
+        e,
+        context: 'product',
+        metadata: {'action': 'update_product', 'productId': event.product.id},
+      );
+
+      emit(ProductsListError(message: appError.message));
+    }
+  }
+
+  /// Handle DeleteProduct event
+  Future<void> _onDeleteProduct(
+    DeleteProduct event,
+    Emitter<ProductsListState> emit,
+  ) async {
+    try {
+      _logger.d('Deleting product: ${event.productId}');
+      emit(const ProductsListLoading());
+
+      await _productsRepository.deleteProduct(event.productId);
+      emit(ProductDeleted(productId: event.productId));
+    } catch (e) {
+      _logger.e('Error deleting product: $e');
+
+      final appError = ErrorHandler.handleException(
+        e,
+        context: 'delete',
+        metadata: {'action': 'delete_product', 'productId': event.productId},
+      );
+
+      emit(ProductsListError(message: appError.message));
+    }
+  }
 
   @override
   Future<void> close() {

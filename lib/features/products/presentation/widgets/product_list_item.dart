@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/product.dart';
+import '../bloc/product_multiselect_bloc.dart';
+import '../bloc/events/product_multiselect_events.dart';
 
 class ProductListItem extends StatelessWidget {
   final Product product;
@@ -20,81 +24,95 @@ class ProductListItem extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: 2,
-      child: ListTile(
+      child: GestureDetector(
         onTap: onTap,
-        title: Text(
-          product.productName,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              product.productDescription,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.business,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
+        onLongPress: () {
+          // Enable multi-select mode and select this product
+          context.read<ProductMultiSelectBloc>().add(
+            EnableMultiSelectModeAndSelect(product),
+          );
+          // Provide haptic feedback
+          HapticFeedback.mediumImpact();
+        },
+        child: ListTile(
+          title: Text(
+            product.productName,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 4),
+              Text(
+                product.productDescription,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  'Tenant: ${product.tenantId.substring(0, 8)}...',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.business,
+                    size: 16,
                     color: Theme.of(context).colorScheme.primary,
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  _formatDate(product.createdAt),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  const SizedBox(width: 4),
+                  Text(
+                    'Tenant: ${product.tenantId.substring(0, 8)}...',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (value) {
-            switch (value) {
-              case 'edit':
-                onEdit?.call();
-                break;
-              case 'delete':
-                onDelete?.call();
-                break;
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(
-                children: [Icon(Icons.edit), SizedBox(width: 8), Text('Edit')],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('Delete', style: TextStyle(color: Colors.red)),
+                  const Spacer(),
+                  Text(
+                    _formatDate(product.createdAt),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
+          trailing: PopupMenuButton<String>(
+            onSelected: (value) {
+              switch (value) {
+                case 'edit':
+                  onEdit?.call();
+                  break;
+                case 'delete':
+                  onDelete?.call();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit),
+                    SizedBox(width: 8),
+                    Text('Edit'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Delete', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

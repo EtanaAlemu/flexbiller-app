@@ -286,6 +286,8 @@ import 'features/products/domain/usecases/get_products_usecase.dart' as _i320;
 import 'features/products/domain/usecases/search_products_usecase.dart'
     as _i132;
 import 'features/products/domain/usecases/update_product_usecase.dart' as _i819;
+import 'features/products/presentation/bloc/product_multiselect_bloc.dart'
+    as _i756;
 import 'features/products/presentation/bloc/products_list_bloc.dart' as _i516;
 import 'features/subscriptions/data/datasources/subscriptions_local_data_source.dart'
     as _i167;
@@ -1203,6 +1205,11 @@ _i174.GetIt $initGetIt(
       changePasswordUseCase: gh<_i890.ChangePasswordUseCase>(),
       resetPasswordUseCase: gh<_i1070.ResetPasswordUseCase>(),
       updateUserUseCase: gh<_i457.UpdateUserUseCase>(),
+    ),
+  );
+  gh.factory<_i756.ProductMultiSelectBloc>(
+    () => _i756.ProductMultiSelectBloc(
+      deleteProductUseCase: gh<_i70.DeleteProductUseCase>(),
     ),
   );
   gh.factory<_i516.ProductsListBloc>(

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import '../pages/create_product_page.dart';
+import '../../domain/entities/product.dart';
 
 class ProductFab extends StatelessWidget {
-  const ProductFab({super.key});
+  final Function(Product)? onCreateProduct;
+
+  const ProductFab({super.key, this.onCreateProduct});
 
   @override
   Widget build(BuildContext context) {
@@ -13,11 +17,11 @@ class ProductFab extends StatelessWidget {
   }
 
   void _onCreateProduct(BuildContext context) {
-    // TODO: Navigate to create product page
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Create new product'),
-        duration: Duration(seconds: 2),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            CreateProductPage(onCreateProduct: onCreateProduct),
       ),
     );
   }

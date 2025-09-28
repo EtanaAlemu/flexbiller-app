@@ -61,3 +61,39 @@ class ProductsListEmpty extends ProductsListState {
   @override
   List<Object?> get props => [message];
 }
+
+class ProductDetailLoaded extends ProductsListState {
+  final Product product;
+
+  const ProductDetailLoaded({required this.product});
+
+  @override
+  List<Object?> get props => [product];
+}
+
+class ProductCreated extends ProductsListState {
+  final Product product;
+
+  const ProductCreated({required this.product});
+
+  @override
+  List<Object?> get props => [product];
+}
+
+class ProductUpdated extends ProductsListState {
+  final Product product;
+
+  const ProductUpdated({required this.product});
+
+  @override
+  List<Object?> get props => [product];
+}
+
+class ProductDeleted extends ProductsListState {
+  final String productId;
+
+  const ProductDeleted({required this.productId});
+
+  @override
+  List<Object?> get props => [productId];
+}

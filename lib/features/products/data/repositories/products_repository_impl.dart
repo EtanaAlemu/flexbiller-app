@@ -315,6 +315,9 @@ class ProductsRepositoryImpl implements ProductsRepository {
           _logger.d('Syncing product deletion: $productId');
         });
       }
+
+      // Refresh the products list after deletion
+      await _refreshProductsList();
     } catch (e) {
       _logger.e('Error deleting product: $e');
       rethrow;
@@ -442,6 +445,36 @@ class ProductsRepositoryImpl implements ProductsRepository {
       _logger.e('Background sync failed for product $productId: $e');
     } finally {
       _processingProducts.remove(productId);
+    }
+  }
+
+  /// Refresh the products list and emit to stream
+  Future<void> _refreshProductsList() async {
+    try {
+      _logger.d('Refreshing products list after deletion');
+
+      // Get current query parameters (use default if none)
+      final params = ProductsQueryParams();
+
+      // Get updated products from local cache
+      final products = await _localDataSource.getCachedProductsByQuery(params);
+
+      // Emit the updated products list to the stream
+      _productsStreamController.add(
+        RepositoryResponse.success(
+          products.map((model) => model.toEntity()).toList(),
+        ),
+      );
+
+      _logger.d('Products list refreshed with ${products.length} products');
+    } catch (e) {
+      _logger.e('Error refreshing products list: $e');
+      // Emit error state
+      _productsStreamController.add(
+        RepositoryResponse.error(
+          message: 'Failed to refresh products list: $e',
+        ),
+      );
     }
   }
 
