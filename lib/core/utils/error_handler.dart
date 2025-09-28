@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:injectable/injectable.dart';
 import 'package:get_it/get_it.dart';
 import '../services/crash_analytics_service.dart';
 
@@ -131,18 +130,31 @@ class ErrorHandler {
   /// Handles unknown Dio errors
   static String _handleUnknownDioError(DioException error, String? context) {
     final message = error.message?.toLowerCase() ?? '';
+    final errorString = error.error?.toString().toLowerCase() ?? '';
 
+    // Check both message and error string for connection issues
     if (message.contains('socketexception') ||
         message.contains('networkexception') ||
-        message.contains('connection')) {
-      return 'Network error. Please check your internet connection and try again.';
+        message.contains('connection') ||
+        errorString.contains(
+          'connection closed before full header was received',
+        ) ||
+        errorString.contains('httpexception') ||
+        errorString.contains('socketexception') ||
+        errorString.contains('networkexception') ||
+        errorString.contains('connection refused') ||
+        errorString.contains('connection reset')) {
+      return 'Connection failed. Please check your internet connection and try again.';
     }
 
-    if (message.contains('timeout')) {
+    if (message.contains('timeout') || errorString.contains('timeout')) {
       return 'Request timed out. Please try again.';
     }
 
-    if (message.contains('certificate') || message.contains('ssl')) {
+    if (message.contains('certificate') ||
+        message.contains('ssl') ||
+        errorString.contains('certificate') ||
+        errorString.contains('ssl')) {
       return 'Security certificate error. Please contact support if this persists.';
     }
 
@@ -184,12 +196,18 @@ class ErrorHandler {
 
     // Handle connection errors
     if (lowerError.contains('connection_error') ||
-        lowerError.contains('failed to communicate with server')) {
+        lowerError.contains('failed to communicate with server') ||
+        lowerError.contains(
+          'connection closed before full header was received',
+        ) ||
+        lowerError.contains('httpexception')) {
       return 'Unable to connect to the server. Please check your internet connection and try again.';
     }
 
     if (lowerError.contains('socketexception') ||
-        lowerError.contains('networkexception')) {
+        lowerError.contains('networkexception') ||
+        lowerError.contains('connection refused') ||
+        lowerError.contains('connection reset')) {
       return 'Network error. Please check your internet connection and try again.';
     }
 

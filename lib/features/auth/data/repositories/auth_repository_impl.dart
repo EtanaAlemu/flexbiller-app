@@ -231,11 +231,8 @@ class AuthRepositoryImpl implements AuthRepository {
         );
         throw ServerException(userFriendlyMessage, e.statusCode);
       } else if (e is NetworkException) {
-        final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-          e.message,
-          context: 'login',
-        );
-        throw NetworkException(userFriendlyMessage);
+        // NetworkException already has user-friendly messages, just rethrow
+        rethrow;
       } else if (e is AuthException) {
         // Don't modify AuthException messages as they might be business logic specific
         rethrow;

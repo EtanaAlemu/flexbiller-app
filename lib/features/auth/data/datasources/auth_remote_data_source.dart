@@ -7,7 +7,6 @@ import '../../../../core/models/api_response.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/dao/auth_dao.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/dio_client.dart';
 
 abstract class AuthRemoteDataSource {
@@ -91,9 +90,35 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       } else if (e.response?.statusCode == 400) {
         throw ValidationException('Invalid request data');
       } else if (e.type == DioExceptionType.connectionTimeout) {
-        throw NetworkException('Connection timeout');
+        throw NetworkException(
+          'Connection timeout. Please check your internet connection and try again.',
+        );
       } else if (e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Request timeout');
+        throw NetworkException(
+          'Request timeout. The server is taking too long to respond. Please try again.',
+        );
+      } else if (e.type == DioExceptionType.unknown) {
+        // Handle unknown DioException types, often caused by network issues
+        final errorMessage =
+            e.error?.toString() ?? e.message ?? 'Unknown network error';
+        if (errorMessage.contains(
+              'Connection closed before full header was received',
+            ) ||
+            errorMessage.contains('HttpException') ||
+            errorMessage.contains('SocketException') ||
+            errorMessage.contains('NetworkException')) {
+          throw NetworkException(
+            'Connection failed. Please check your internet connection and try again.',
+          );
+        } else {
+          throw NetworkException('Network error: $errorMessage');
+        }
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException(
+          'Unable to connect to the server. Please check your internet connection.',
+        );
+      } else if (e.type == DioExceptionType.sendTimeout) {
+        throw NetworkException('Request timeout. Please try again.');
       } else {
         throw ServerException(
           e.message ?? 'Network error occurred',

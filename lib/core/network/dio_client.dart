@@ -5,7 +5,6 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:logger/logger.dart';
 import '../constants/app_constants.dart';
 import '../constants/api_endpoints.dart';
-import '../errors/exceptions.dart';
 import '../config/build_config.dart';
 
 @singleton
@@ -36,6 +35,30 @@ class DioClient {
   }
 
   Dio get dio => _dio;
+
+  /// Determines if a connection error should be retried
+  bool _shouldRetryConnectionError(DioException error) {
+    // Only retry for connection-related errors
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.unknown) {
+      final errorMessage = error.error?.toString() ?? error.message ?? '';
+
+      // Retry for specific connection issues
+      if (errorMessage.contains(
+            'Connection closed before full header was received',
+          ) ||
+          errorMessage.contains('HttpException') ||
+          errorMessage.contains('SocketException') ||
+          errorMessage.contains('NetworkException') ||
+          errorMessage.contains('Connection refused') ||
+          errorMessage.contains('Connection reset')) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   void _setupInterceptors() {
     _dio.interceptors.add(
@@ -117,6 +140,37 @@ class DioClient {
             _logger.e('🔗 URL: ${error.requestOptions.uri}');
             _logger.e('📊 Status: ${error.response?.statusCode}');
             _logger.e('📥 Response Data: ${error.response?.data}');
+          }
+
+          // Handle connection errors with retry logic
+          if (_shouldRetryConnectionError(error)) {
+            final requestKey =
+                '${error.requestOptions.method}_${error.requestOptions.uri}';
+            final retryCount = _retryAttempts[requestKey] ?? 0;
+
+            if (retryCount < 2) {
+              // Max 2 retries for connection errors
+              _retryAttempts[requestKey] = retryCount + 1;
+              _logger.d(
+                '🔄 Retrying connection error for $requestKey (attempt ${retryCount + 1})',
+              );
+
+              // Wait before retry with exponential backoff
+              await Future.delayed(
+                Duration(milliseconds: 1000 * (retryCount + 1)),
+              );
+
+              try {
+                final retryResponse = await _dio.fetch(error.requestOptions);
+                _retryAttempts.remove(requestKey);
+                return handler.resolve(retryResponse);
+              } catch (retryError) {
+                _logger.e('❌ Retry failed: $retryError');
+                // Continue to normal error handling
+              }
+            } else {
+              _retryAttempts.remove(requestKey);
+            }
           }
 
           if (error.response?.statusCode == 401) {
