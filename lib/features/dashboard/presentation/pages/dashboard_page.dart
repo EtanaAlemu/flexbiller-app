@@ -10,6 +10,7 @@ import '../../../products/presentation/pages/products_page.dart';
 import '../../../products/presentation/bloc/products_list_bloc.dart';
 import '../../../plans/presentation/pages/plans_page.dart';
 import '../../../plans/presentation/bloc/plans_bloc.dart';
+import '../../../plans/presentation/bloc/plans_multiselect_bloc.dart';
 import '../../../tags/presentation/bloc/tags_bloc.dart';
 import '../../../tags/presentation/pages/tags_page.dart';
 import '../widgets/mobile_dashboard_layout.dart';
@@ -79,6 +80,7 @@ class _DashboardPageState extends State<DashboardPage> {
         BlocProvider(create: (context) => getIt<AccountsOrchestratorBloc>()),
         BlocProvider(create: (context) => getIt<ProductsListBloc>()),
         BlocProvider(create: (context) => getIt<PlansBloc>()),
+        BlocProvider(create: (context) => getIt<PlansMultiSelectBloc>()),
       ],
       child: DashboardNavigationHandler(
         currentIndex: _currentIndex,

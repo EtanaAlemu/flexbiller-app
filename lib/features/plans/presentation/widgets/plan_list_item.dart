@@ -9,8 +9,18 @@ import '../pages/plan_detail_page.dart';
 class PlanListItem extends StatelessWidget {
   final Plan plan;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final bool isMultiSelectMode;
+  final bool isSelected;
 
-  const PlanListItem({super.key, required this.plan, this.onTap});
+  const PlanListItem({
+    super.key,
+    required this.plan,
+    this.onTap,
+    this.onLongPress,
+    this.isMultiSelectMode = false,
+    this.isSelected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +29,16 @@ class PlanListItem extends StatelessWidget {
       elevation: 2,
       child: GestureDetector(
         onTap: onTap ?? () => _onPlanTap(context),
+        onLongPress: onLongPress,
         child: ListTile(
+          leading: isMultiSelectMode
+              ? Checkbox(
+                  value: isSelected,
+                  onChanged: (value) {
+                    onTap?.call();
+                  },
+                )
+              : null,
           title: Text(
             plan.name,
             style: Theme.of(
@@ -90,11 +109,13 @@ class PlanListItem extends StatelessWidget {
               ),
             ],
           ),
-          trailing: Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          trailing: isMultiSelectMode
+              ? null
+              : Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
         ),
       ),
     );

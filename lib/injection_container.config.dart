@@ -279,6 +279,7 @@ import 'features/plans/domain/repositories/plans_repository.dart' as _i692;
 import 'features/plans/domain/usecases/get_plan_by_id.dart' as _i868;
 import 'features/plans/domain/usecases/get_plans.dart' as _i460;
 import 'features/plans/presentation/bloc/plans_bloc.dart' as _i451;
+import 'features/plans/presentation/bloc/plans_multiselect_bloc.dart' as _i402;
 import 'features/products/data/datasources/local/products_local_data_source.dart'
     as _i229;
 import 'features/products/data/datasources/remote/products_remote_data_source.dart'
@@ -376,6 +377,7 @@ _i174.GetIt $initGetIt(
   gh.factory<_i842.JwtService>(() => _i842.JwtService());
   gh.factory<_i580.ExportServiceImpl>(() => _i580.ExportServiceImpl());
   gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
+  gh.factory<_i402.PlansMultiSelectBloc>(() => _i402.PlansMultiSelectBloc());
   gh.singleton<_i974.Logger>(() => injectionModule.logger);
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
