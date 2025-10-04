@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 
 class SidebarMenu extends StatefulWidget {
   final int selectedIndex;
@@ -433,39 +434,7 @@ class _SidebarMenuState extends State<SidebarMenu>
   }
 
   void _showComingSoonSnackBar(BuildContext context, String feature) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.info_outline_rounded, color: Colors.white, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                '$feature - Coming Soon!',
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: isDark
-            ? const Color(0xFF1E3A8A)
-            : const Color(0xFF3B82F6),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'Dismiss',
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
-      ),
-    );
+    CustomSnackBar.showComingSoon(context, feature: feature);
   }
 
   void _showLogoutDialog(BuildContext context) {

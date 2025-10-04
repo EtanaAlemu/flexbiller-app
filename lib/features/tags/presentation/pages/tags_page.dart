@@ -403,12 +403,7 @@ class _TagsPageState extends State<TagsPage> with TickerProviderStateMixin {
           XFile(filePath),
         ], text: 'Exported tags: $fileName');
       } catch (shareError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to open file: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        CustomSnackBar.showError(context, message: 'Failed to open file: $e');
       }
     }
   }
@@ -567,14 +562,10 @@ class _AddTagDialogState extends State<AddTagDialog> {
 
         Navigator.of(context).pop();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
+        CustomSnackBar.showSuccess(
+          context,
+          message:
               'Tag "${_tagDefinitionNameController.text}" created successfully!',
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
         );
 
         // Refresh tags list

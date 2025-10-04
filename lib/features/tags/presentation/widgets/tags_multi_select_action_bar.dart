@@ -4,6 +4,7 @@ import '../../domain/entities/tag.dart';
 import '../bloc/tags_bloc.dart';
 import '../bloc/tags_event.dart';
 import 'export_tags_dialog.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 
 class TagsMultiSelectActionBar extends StatelessWidget {
   final List<Tag> selectedTags;
@@ -114,11 +115,9 @@ class TagsMultiSelectActionBar extends StatelessWidget {
 
   void _exportSelectedTags(BuildContext context) {
     if (selectedTags.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No tags selected for export'),
-          backgroundColor: Colors.orange,
-        ),
+      CustomSnackBar.showWarning(
+        context,
+        message: 'No tags selected for export',
       );
       return;
     }
@@ -179,11 +178,9 @@ class TagsMultiSelectActionBar extends StatelessWidget {
 
   void _deleteSelectedTags(BuildContext context) {
     if (selectedTags.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No tags selected for deletion'),
-          backgroundColor: Colors.orange,
-        ),
+      CustomSnackBar.showWarning(
+        context,
+        message: 'No tags selected for deletion',
       );
       return;
     }
@@ -193,11 +190,9 @@ class TagsMultiSelectActionBar extends StatelessWidget {
 
   void _selectAllTags(BuildContext context) {
     if (allTags.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No tags available to select'),
-          backgroundColor: Colors.orange,
-        ),
+      CustomSnackBar.showWarning(
+        context,
+        message: 'No tags available to select',
       );
       return;
     }

@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:open_file/open_file.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import '../../domain/entities/account.dart';
 import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
@@ -38,22 +39,15 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
       listener: (context, state) {
         print('🔍 MultiSelectActionBar: Received state: ${state.runtimeType}');
         if (state is BulkAccountsExportSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
+          CustomSnackBar.showSuccess(
+            context,
+            message:
                 'Successfully exported ${state.exportedCount} accounts to ${state.fileName}',
-              ),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 3),
-            ),
           );
         } else if (state is BulkAccountsExportFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Export failed: ${state.message}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
+          CustomSnackBar.showError(
+            context,
+            message: 'Export failed: ${state.message}',
           );
         } else if (state is BulkAccountsDeleting) {
           print(
@@ -62,28 +56,9 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
           setState(() {
             _isDeleting = true;
           });
-          scaffoldMessengerKey.currentState?.showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Deleting ${state.accountsToDelete.length} accounts...',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.orange,
-              // No duration - will be dismissed manually when deletion completes
-            ),
+          CustomSnackBar.showLoading(
+            context,
+            message: 'Deleting ${state.accountsToDelete.length} accounts...',
           );
         } else if (state is BulkAccountsDeleted) {
           print(
@@ -92,42 +67,19 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
           setState(() {
             _isDeleting = false;
           });
-          // Use global key to dismiss progress SnackBar and show success message
-          scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
-          // Add a small delay to ensure the progress SnackBar is dismissed
-          Future.delayed(const Duration(milliseconds: 100), () {
-            print(
-              '🔍 MultiSelectActionBar: Showing success SnackBar using global key',
-            );
-            scaffoldMessengerKey.currentState?.showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Successfully deleted ${state.deletedAccountIds.length} accounts',
-                ),
-                backgroundColor: Colors.green,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          });
+          CustomSnackBar.showSuccess(
+            context,
+            message:
+                'Successfully deleted ${state.deletedAccountIds.length} accounts',
+          );
         } else if (state is BulkAccountsDeletionFailure) {
           setState(() {
             _isDeleting = false;
           });
-          // Use global key to dismiss progress SnackBar and show failure message
-          scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
-          // Add a small delay to ensure the progress SnackBar is dismissed
-          Future.delayed(const Duration(milliseconds: 100), () {
-            print(
-              '🔍 MultiSelectActionBar: Showing failure SnackBar using global key',
-            );
-            scaffoldMessengerKey.currentState?.showSnackBar(
-              SnackBar(
-                content: Text('Delete failed: ${state.message}'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 4),
-              ),
-            );
-          });
+          CustomSnackBar.showError(
+            context,
+            message: 'Delete failed: ${state.message}',
+          );
         }
       },
       child: Container(
@@ -321,20 +273,14 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
                     await Share.shareXFiles([
                       XFile(filePath),
                     ], text: 'Exported accounts data');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('File shared successfully!'),
-                        backgroundColor: Colors.green,
-                        duration: Duration(seconds: 2),
-                      ),
+                    CustomSnackBar.showSuccess(
+                      context,
+                      message: 'File shared successfully!',
                     );
                   } catch (shareError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Could not share file: $shareError'),
-                        backgroundColor: Colors.red,
-                        duration: const Duration(seconds: 3),
-                      ),
+                    CustomSnackBar.showError(
+                      context,
+                      message: 'Could not share file: $shareError',
                     );
                   }
                 },
@@ -352,12 +298,7 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
         },
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Export failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      CustomSnackBar.showError(context, message: 'Export failed: $e');
     }
   }
 
@@ -378,14 +319,10 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
 
       if (!fileExists) {
         // File doesn't exist at the specified path, try to find it
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
+        CustomSnackBar.showWarning(
+          context,
+          message:
               'File not found at expected location.\n\nFile: $fileName\nExpected: $filePath\n\nTrying to locate file...',
-            ),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 4),
-          ),
         );
 
         // Try to find the file in common locations
@@ -413,14 +350,10 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
           await OpenFile.open(foundPath);
         } else {
           // File not found anywhere
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
+          CustomSnackBar.showError(
+            context,
+            message:
                 'File not found in any common location.\n\nFile: $fileName\n\nYou can find it manually in your file manager.',
-              ),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-            ),
           );
         }
         return;
@@ -431,69 +364,45 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
 
       if (result.type == ResultType.done) {
         // Success
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('File opened successfully: $fileName'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
+        CustomSnackBar.showSuccess(
+          context,
+          message: 'File opened successfully: $fileName',
         );
       } else if (result.type == ResultType.noAppToOpen) {
         // No app to open this file type
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
+        CustomSnackBar.showWarning(
+          context,
+          message:
               'No app found to open this file type.\n\nFile saved to:\n$filePath\n\nYou can open it manually with a compatible app.',
-            ),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 5),
-          ),
         );
       } else if (result.type == ResultType.fileNotFound) {
         // File not found
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'File not found: $fileName\n\nExpected location: $filePath',
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
+        CustomSnackBar.showError(
+          context,
+          message: 'File not found: $fileName\n\nExpected location: $filePath',
         );
       } else if (result.type == ResultType.permissionDenied) {
         // Permission denied
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
+        CustomSnackBar.showWarning(
+          context,
+          message:
               'Permission denied to open file.\n\nFile saved to:\n$filePath\n\nYou may need to grant file access permissions.',
-            ),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 5),
-          ),
         );
       } else {
         // Other error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
+        CustomSnackBar.showWarning(
+          context,
+          message:
               'Could not open file: ${result.message}\n\nFile saved to:\n$filePath',
-            ),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 5),
-          ),
         );
       }
     } catch (e) {
       // If OpenFile fails completely, show file location
       print('Error opening file: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+      CustomSnackBar.showInfo(
+        context,
+        message:
             'File saved successfully!\n\nFile: $fileName\nLocation: $filePath\n\nYou can find it in your file manager and open it manually.',
-          ),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 6),
-        ),
       );
     }
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/plan.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import '../bloc/plans_bloc.dart';
 import '../bloc/plans_multiselect_bloc.dart';
 import '../bloc/states/plans_multiselect_states.dart';
@@ -34,22 +35,15 @@ class _PlansPageState extends State<PlansPage> {
             BlocListener<PlansMultiSelectBloc, PlansMultiSelectState>(
               listener: (context, state) {
                 if (state is BulkExportCompleted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
+                  CustomSnackBar.showSuccess(
+                    context,
+                    message:
                         'Plans exported successfully to: ${state.filePath}',
-                      ),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      duration: const Duration(seconds: 2),
-                    ),
                   );
                 } else if (state is BulkExportFailed) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Export failed: ${state.error}'),
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                      duration: const Duration(seconds: 3),
-                    ),
+                  CustomSnackBar.showError(
+                    context,
+                    message: 'Export failed: ${state.error}',
                   );
                 }
               },

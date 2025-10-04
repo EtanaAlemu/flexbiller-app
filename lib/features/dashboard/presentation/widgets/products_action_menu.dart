@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import '../../../products/presentation/bloc/products_list_bloc.dart';
 import '../../../products/presentation/bloc/events/products_list_events.dart';
 import '../../../products/presentation/bloc/states/products_list_states.dart';
@@ -381,22 +382,10 @@ class ProductsActionMenu extends StatelessWidget {
   }
 
   void _showSuccessMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    CustomSnackBar.showSuccess(context, message: message);
   }
 
   void _showErrorMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    CustomSnackBar.showError(context, message: message);
   }
 }

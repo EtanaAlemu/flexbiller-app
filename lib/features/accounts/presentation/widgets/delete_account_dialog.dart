@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
@@ -20,21 +21,17 @@ class DeleteAccountDialog extends StatelessWidget {
     return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
         if (state is AccountDeleted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Account "${account.name}" deleted successfully!'),
-              backgroundColor: Colors.green,
-            ),
+          CustomSnackBar.showSuccess(
+            context,
+            message: 'Account "${account.name}" deleted successfully!',
           );
           Navigator.of(context).pop();
           // Call the callback if provided (for navigation back to accounts page)
           onAccountDeleted?.call();
         } else if (state is AccountDeletionFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to delete account: ${state.message}'),
-              backgroundColor: Colors.red,
-            ),
+          CustomSnackBar.showError(
+            context,
+            message: 'Failed to delete account: ${state.message}',
           );
         }
       },

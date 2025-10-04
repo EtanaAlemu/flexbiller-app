@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/localization/app_strings.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import '../../../../core/config/build_config.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/services/jwt_service.dart';
@@ -90,14 +91,7 @@ class _LoginFormState extends State<LoginForm> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is LoginSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppStrings.successLogin),
-              backgroundColor: AppTheme.getSuccessColor(
-                Theme.of(context).brightness,
-              ),
-            ),
-          );
+          CustomSnackBar.showSuccess(context, message: AppStrings.successLogin);
           // Call the success callback if provided, otherwise navigate
           if (widget.onLoginSuccess != null) {
             widget.onLoginSuccess!();
@@ -105,43 +99,15 @@ class _LoginFormState extends State<LoginForm> {
             Navigator.pushReplacementNamed(context, '/dashboard');
           }
         } else if (state is LoginFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    state.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(state.message),
-                  if (state.isWebOnlyUser) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.web, color: Colors.blue),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Please use the web version for EASYBILL_ADMIN access',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-              backgroundColor: state.isWebOnlyUser
-                  ? Colors.orange.withOpacity(0.1)
-                  : Theme.of(context).colorScheme.errorContainer,
-              duration: const Duration(seconds: 8),
-            ),
+          CustomSnackBar.showError(
+            context,
+            message: '${state.title}: ${state.message}',
+            actionLabel: state.isWebOnlyUser ? 'Use Web Version' : null,
+            onActionPressed: state.isWebOnlyUser
+                ? () {
+                    // Handle web version redirect
+                  }
+                : null,
           );
         }
       },

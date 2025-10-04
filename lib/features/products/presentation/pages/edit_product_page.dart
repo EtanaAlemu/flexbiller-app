@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/product.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import '../bloc/products_list_bloc.dart';
 import '../bloc/events/products_list_events.dart';
 import '../bloc/states/products_list_states.dart';
@@ -82,21 +83,17 @@ class _EditProductViewState extends State<EditProductView> {
             setState(() {
               _isLoading = false;
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: ${state.message}'),
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
+            CustomSnackBar.showError(
+              context,
+              message: 'Error: ${state.message}',
             );
           } else if (state is ProductUpdated) {
             setState(() {
               _isLoading = false;
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Product updated successfully!'),
-                backgroundColor: Colors.green,
-              ),
+            CustomSnackBar.showSuccess(
+              context,
+              message: 'Product updated successfully!',
             );
             widget.onProductUpdated?.call();
             Navigator.of(context).pop();

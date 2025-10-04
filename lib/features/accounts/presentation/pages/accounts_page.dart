@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/accounts_list_bloc.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import '../bloc/account_detail_bloc.dart';
 import '../bloc/events/accounts_list_events.dart';
 import '../bloc/states/accounts_list_states.dart' as list_states;
@@ -30,20 +31,14 @@ class AccountsPage extends StatelessWidget {
     return BlocListener<AccountsListBloc, list_states.AccountsListState>(
       listener: (context, state) {
         if (state is list_states.AllAccountsLoaded) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Successfully loaded ${state.totalCount} accounts'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 2),
-            ),
+          CustomSnackBar.showSuccess(
+            context,
+            message: 'Successfully loaded ${state.totalCount} accounts',
           );
         } else if (state is list_states.AllAccountsRefreshing) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Refreshing all accounts...'),
-              backgroundColor: Colors.blue,
-              duration: Duration(seconds: 1),
-            ),
+          CustomSnackBar.showInfo(
+            context,
+            message: 'Refreshing all accounts...',
           );
         }
       },

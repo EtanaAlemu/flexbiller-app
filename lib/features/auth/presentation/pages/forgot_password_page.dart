@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import '../pages/reset_password_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
@@ -43,23 +44,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is ForgotPasswordSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppTheme.getSuccessColor(
-                  Theme.of(context).brightness,
-                ),
-              ),
-            );
+            CustomSnackBar.showSuccess(context, message: state.message);
             // Navigate back to login page after successful password reset request
             Navigator.of(context).pop();
           } else if (state is ForgotPasswordFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: colorScheme.error,
-              ),
-            );
+            CustomSnackBar.showError(context, message: state.message);
           }
         },
         builder: (context, state) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/product.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import '../pages/product_detail_page.dart';
 import '../pages/edit_product_page.dart';
 import '../bloc/product_multiselect_bloc.dart';
@@ -157,10 +158,9 @@ class SelectableProductCardWidget extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).pop();
                 // TODO: Implement delete functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Delete functionality not implemented yet'),
-                  ),
+                CustomSnackBar.showInfo(
+                  context,
+                  message: 'Delete functionality not implemented yet',
                 );
               },
               style: TextButton.styleFrom(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/product.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 
 class CreateProductPage extends StatelessWidget {
   final Function(Product)? onCreateProduct;
@@ -234,11 +235,9 @@ class _CreateProductViewState extends State<CreateProductView> {
         }
       } catch (e) {
         // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error creating product: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+        CustomSnackBar.showError(
+          context,
+          message: 'Error creating product: $e',
         );
       } finally {
         setState(() {

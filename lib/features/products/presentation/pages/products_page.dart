@@ -2,6 +2,7 @@ import 'package:flexbiller_app/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/product.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import '../bloc/products_list_bloc.dart';
 import '../bloc/events/products_list_events.dart';
 import '../bloc/states/products_list_states.dart';
@@ -141,29 +142,23 @@ class ProductsViewState extends State<ProductsView> {
                       _cachedProducts = state.products;
                     } else if (state is ProductCreated) {
                       // Show success message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Product created successfully!'),
-                          backgroundColor: Colors.green,
-                        ),
+                      CustomSnackBar.showSuccess(
+                        context,
+                        message: 'Product created successfully!',
                       );
                       // Refresh the products list to show the new product
                       context.read<ProductsListBloc>().add(
                         const RefreshAllProducts(),
                       );
                     } else if (state is ProductDeleted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Product deleted successfully!'),
-                          backgroundColor: Colors.green,
-                        ),
+                      CustomSnackBar.showSuccess(
+                        context,
+                        message: 'Product deleted successfully!',
                       );
                     } else if (state is ProductsListError) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: ${state.message}'),
-                          backgroundColor: Theme.of(context).colorScheme.error,
-                        ),
+                      CustomSnackBar.showError(
+                        context,
+                        message: 'Error: ${state.message}',
                       );
                     }
                   },
@@ -196,41 +191,16 @@ class ProductsViewState extends State<ProductsView> {
                           _selectedProducts = [];
                         });
                       } else if (state is BulkDeleteInProgress) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Text(
-                                    'Deleting ${state.selectedProducts.length} products...',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            backgroundColor: Colors.blue,
-                            duration: const Duration(seconds: 3),
-                          ),
+                        CustomSnackBar.showLoading(
+                          context,
+                          message:
+                              'Deleting ${state.selectedProducts.length} products...',
                         );
                       } else if (state is BulkDeleteCompleted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
+                        CustomSnackBar.showSuccess(
+                          context,
+                          message:
                               '${state.deletedCount} products deleted successfully!',
-                            ),
-                            backgroundColor: Colors.green,
-                          ),
                         );
                         // Disable multi-select mode after successful deletion
                         context.read<ProductMultiSelectBloc>().add(
@@ -241,61 +211,29 @@ class ProductsViewState extends State<ProductsView> {
                           const RefreshAllProducts(),
                         );
                       } else if (state is BulkDeleteFailed) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Delete failed: ${state.error}'),
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.error,
-                          ),
+                        CustomSnackBar.showError(
+                          context,
+                          message: 'Delete failed: ${state.error}',
                         );
                       } else if (state is BulkExportInProgress) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Text(
-                                    'Exporting ${state.selectedProducts.length} products...',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            backgroundColor: Colors.blue,
-                            duration: const Duration(seconds: 3),
-                          ),
+                        CustomSnackBar.showLoading(
+                          context,
+                          message:
+                              'Exporting ${state.selectedProducts.length} products...',
                         );
                       } else if (state is BulkExportCompleted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Products exported successfully!'),
-                            backgroundColor: Colors.green,
-                          ),
+                        CustomSnackBar.showSuccess(
+                          context,
+                          message: 'Products exported successfully!',
                         );
                         // Disable multi-select mode after successful export
                         context.read<ProductMultiSelectBloc>().add(
                           const DisableMultiSelectMode(),
                         );
                       } else if (state is BulkExportFailed) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Export failed: ${state.error}'),
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.error,
-                          ),
+                        CustomSnackBar.showError(
+                          context,
+                          message: 'Export failed: ${state.error}',
                         );
                       }
                     },

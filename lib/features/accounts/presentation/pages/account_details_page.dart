@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/account.dart';
+import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
 import '../bloc/accounts_orchestrator_bloc.dart';
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
@@ -157,14 +158,9 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                   state is AccountPaymentMethodsLoaded ||
                   state is AccountPaymentsLoaded) {
                 // Show success message for additional details loaded
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Additional account details loaded successfully',
-                    ),
-                    backgroundColor: Colors.green,
-                    duration: const Duration(seconds: 2),
-                  ),
+                CustomSnackBar.showSuccess(
+                  context,
+                  message: 'Additional account details loaded successfully',
                 );
               } else if (state is AccountTimelineFailure ||
                   state is AccountTagsFailure ||
@@ -176,50 +172,44 @@ class _AccountDetailsViewState extends State<AccountDetailsView>
                   state is AccountPaymentMethodsFailure ||
                   state is AccountPaymentsFailure) {
                 // Show error message for failed requests
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
+                CustomSnackBar.showWarning(
+                  context,
+                  message:
                       'Some account details failed to load. You can retry using the button above.',
-                    ),
-                    backgroundColor: Colors.orange,
-                    duration: const Duration(seconds: 3),
-                    action: SnackBarAction(
-                      label: 'Retry',
-                      onPressed: () {
-                        // Retry loading additional details
-                        context.read<AccountsOrchestratorBloc>().add(
-                          LoadAccountTimeline(widget.accountId),
-                        );
-                        context.read<AccountsOrchestratorBloc>().add(
-                          LoadAccountTags(widget.accountId),
-                        );
-                        context.read<AccountsOrchestratorBloc>().add(
-                          LoadAllTagsForAccount(widget.accountId),
-                        );
-                        context.read<AccountsOrchestratorBloc>().add(
-                          LoadAccountCustomFields(widget.accountId),
-                        );
-                        context.read<AccountsOrchestratorBloc>().add(
-                          LoadAccountEmails(widget.accountId),
-                        );
-                        context.read<AccountsOrchestratorBloc>().add(
-                          LoadAccountBlockingStates(widget.accountId),
-                        );
-                        context.read<AccountsOrchestratorBloc>().add(
-                          LoadAccountInvoicePayments(widget.accountId),
-                        );
-                        context.read<AccountsOrchestratorBloc>().add(
-                          LoadAccountAuditLogs(widget.accountId),
-                        );
-                        context.read<AccountsOrchestratorBloc>().add(
-                          LoadAccountPaymentMethods(widget.accountId),
-                        );
-                        context.read<AccountsOrchestratorBloc>().add(
-                          LoadAccountPayments(widget.accountId),
-                        );
-                      },
-                    ),
-                  ),
+                  actionLabel: 'Retry',
+                  onActionPressed: () {
+                    // Retry loading additional details
+                    context.read<AccountsOrchestratorBloc>().add(
+                      LoadAccountTimeline(widget.accountId),
+                    );
+                    context.read<AccountsOrchestratorBloc>().add(
+                      LoadAccountTags(widget.accountId),
+                    );
+                    context.read<AccountsOrchestratorBloc>().add(
+                      LoadAllTagsForAccount(widget.accountId),
+                    );
+                    context.read<AccountsOrchestratorBloc>().add(
+                      LoadAccountCustomFields(widget.accountId),
+                    );
+                    context.read<AccountsOrchestratorBloc>().add(
+                      LoadAccountEmails(widget.accountId),
+                    );
+                    context.read<AccountsOrchestratorBloc>().add(
+                      LoadAccountBlockingStates(widget.accountId),
+                    );
+                    context.read<AccountsOrchestratorBloc>().add(
+                      LoadAccountInvoicePayments(widget.accountId),
+                    );
+                    context.read<AccountsOrchestratorBloc>().add(
+                      LoadAccountAuditLogs(widget.accountId),
+                    );
+                    context.read<AccountsOrchestratorBloc>().add(
+                      LoadAccountPaymentMethods(widget.accountId),
+                    );
+                    context.read<AccountsOrchestratorBloc>().add(
+                      LoadAccountPayments(widget.accountId),
+                    );
+                  },
                 );
               }
             },
