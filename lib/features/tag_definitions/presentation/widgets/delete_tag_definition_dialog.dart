@@ -31,21 +31,21 @@ class DeleteTagDefinitionDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Are you sure you want to delete this tag definition?',
+            'Are you sure you want to delete "${tagDefinition.name}"?',
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.errorContainer.withValues(
-                alpha: 0.1,
-              ),
+              color: Theme.of(
+                context,
+              ).colorScheme.errorContainer.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: Theme.of(context).colorScheme.error.withValues(
-                  alpha: 0.3,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.error.withValues(alpha: 0.3),
               ),
             ),
             child: Column(
@@ -61,8 +61,14 @@ class DeleteTagDefinitionDialog extends StatelessWidget {
                 const SizedBox(height: 8),
                 _buildDetailRow('Name', tagDefinition.name),
                 _buildDetailRow('Description', tagDefinition.description),
-                _buildDetailRow('Type', tagDefinition.isControlTag ? 'Control Tag' : 'Custom Tag'),
-                _buildDetailRow('Object Types', tagDefinition.applicableObjectTypes.join(', ')),
+                _buildDetailRow(
+                  'Type',
+                  tagDefinition.isControlTag ? 'Control Tag' : 'Custom Tag',
+                ),
+                _buildDetailRow(
+                  'Object Types',
+                  tagDefinition.applicableObjectTypes.join(', '),
+                ),
               ],
             ),
           ),
@@ -70,14 +76,14 @@ class DeleteTagDefinitionDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondaryContainer.withValues(
-                alpha: 0.1,
-              ),
+              color: Theme.of(
+                context,
+              ).colorScheme.secondaryContainer.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: Theme.of(context).colorScheme.secondary.withValues(
-                  alpha: 0.3,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.secondary.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -131,10 +137,7 @@ class DeleteTagDefinitionDialog extends StatelessWidget {
             width: 80,
             child: Text(
               '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
             ),
           ),
           Expanded(

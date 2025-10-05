@@ -101,10 +101,18 @@ class _SidebarMenuState extends State<SidebarMenu>
       badge: null,
     ),
     SidebarMenuItem(
+      icon: Icons.category_outlined,
+      activeIcon: Icons.category,
+      title: 'Tag Definitions',
+      index: 9,
+      isAvailable: true,
+      badge: null,
+    ),
+    SidebarMenuItem(
       icon: Icons.settings_outlined,
       activeIcon: Icons.settings,
       title: 'Settings',
-      index: 9,
+      index: 10,
       isAvailable: true,
       badge: null,
     ),
@@ -113,7 +121,7 @@ class _SidebarMenuState extends State<SidebarMenu>
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
       title: 'Profile',
-      index: 10,
+      index: 11,
       isAvailable: true,
       badge: null,
       isSpecial: false, // Changed to false so it navigates normally
@@ -122,7 +130,7 @@ class _SidebarMenuState extends State<SidebarMenu>
       icon: Icons.logout_outlined,
       activeIcon: Icons.logout_rounded,
       title: 'Logout',
-      index: 11,
+      index: 12,
       isAvailable: true,
       badge: null,
       isSpecial: true, // Special styling for profile/logout

@@ -13,6 +13,8 @@ import '../../../plans/presentation/bloc/plans_bloc.dart';
 import '../../../plans/presentation/bloc/plans_multiselect_bloc.dart';
 import '../../../tags/presentation/bloc/tags_bloc.dart';
 import '../../../tags/presentation/pages/tags_page.dart';
+import '../../../tag_definitions/presentation/bloc/tag_definitions_bloc.dart';
+import '../../../tag_definitions/presentation/pages/tag_definitions_page.dart';
 import '../widgets/mobile_dashboard_layout.dart';
 import '../widgets/desktop_dashboard_layout.dart';
 import '../widgets/page_title_helper.dart';
@@ -35,6 +37,8 @@ class _DashboardPageState extends State<DashboardPage> {
       GlobalKey<AccountsViewState>();
   final GlobalKey<ProductsViewState> _productsViewKey =
       GlobalKey<ProductsViewState>();
+  final GlobalKey<TagDefinitionsViewState> _tagDefinitionsViewKey =
+      GlobalKey<TagDefinitionsViewState>();
 
   List<Widget> get _pages => [
     const DashboardDemoPage(),
@@ -46,6 +50,7 @@ class _DashboardPageState extends State<DashboardPage> {
     const _PaymentsPage(),
     const _ReportsPage(),
     const TagsPage(),
+    TagDefinitionsPage(tagDefinitionsViewKey: _tagDefinitionsViewKey),
     const SettingsPage(),
     const ProfilePage(),
   ];
@@ -76,6 +81,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => getIt<TagsBloc>()),
+        BlocProvider(create: (context) => getIt<TagDefinitionsBloc>()),
         BlocProvider(create: (context) => getIt<AccountsListBloc>()),
         BlocProvider(create: (context) => getIt<AccountsOrchestratorBloc>()),
         BlocProvider(create: (context) => getIt<ProductsListBloc>()),
@@ -98,6 +104,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     onLogout: _handleLogout,
                     accountsViewKey: _accountsViewKey,
                     productsViewKey: _productsViewKey,
+                    tagDefinitionsViewKey: _tagDefinitionsViewKey,
                   )
                 : DesktopDashboardLayout(
                     isSidebarVisible: _isSidebarVisible,
@@ -109,6 +116,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     onLogout: _handleLogout,
                     accountsViewKey: _accountsViewKey,
                     productsViewKey: _productsViewKey,
+                    tagDefinitionsViewKey: _tagDefinitionsViewKey,
                   ),
           ),
         ),

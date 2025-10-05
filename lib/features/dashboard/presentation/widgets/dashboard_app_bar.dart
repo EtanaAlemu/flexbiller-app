@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'accounts_action_menu.dart';
 import 'products_action_menu.dart';
+import 'tag_definitions_action_menu.dart';
+import '../../../tag_definitions/presentation/pages/tag_definitions_page.dart';
 
 class DashboardAppBar extends StatelessWidget {
   final bool isSidebarVisible;
@@ -9,6 +11,7 @@ class DashboardAppBar extends StatelessWidget {
   final int currentPageIndex;
   final GlobalKey? accountsViewKey;
   final GlobalKey? productsViewKey;
+  final GlobalKey<TagDefinitionsViewState>? tagDefinitionsViewKey;
 
   const DashboardAppBar({
     Key? key,
@@ -18,6 +21,7 @@ class DashboardAppBar extends StatelessWidget {
     required this.currentPageIndex,
     this.accountsViewKey,
     this.productsViewKey,
+    this.tagDefinitionsViewKey,
   }) : super(key: key);
 
   @override
@@ -72,6 +76,20 @@ class DashboardAppBar extends StatelessWidget {
                 ProductsActionMenu(productsViewKey: productsViewKey),
               ],
             ),
+          // Tag Definitions-specific actions
+          if (currentPageIndex == 9) // Tag Definitions page
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () => _toggleTagDefinitionsSearchBar(),
+                  icon: const Icon(Icons.search_rounded),
+                  tooltip: 'Search Tag Definitions',
+                ),
+                TagDefinitionsActionMenu(
+                  tagDefinitionsViewKey: tagDefinitionsViewKey,
+                ),
+              ],
+            ),
           const SizedBox(width: 16),
         ],
       ),
@@ -87,6 +105,13 @@ class DashboardAppBar extends StatelessWidget {
   void _toggleProductsSearchBar() {
     if (productsViewKey?.currentState != null) {
       (productsViewKey!.currentState as dynamic).toggleSearchBar();
+    }
+  }
+
+  void _toggleTagDefinitionsSearchBar() {
+    if (tagDefinitionsViewKey?.currentState != null) {
+      (tagDefinitionsViewKey!.currentState as TagDefinitionsViewState)
+          .toggleSearchBar();
     }
   }
 }

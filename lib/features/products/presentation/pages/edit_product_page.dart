@@ -61,7 +61,7 @@ class _EditProductViewState extends State<EditProductView> {
 
   @override
   void dispose() {
-    _productNameController.dispose();
+    _productNameController.dispose(); 
     _productDescriptionController.dispose();
     _scrollController.dispose();
     _productNameFocusNode.dispose();

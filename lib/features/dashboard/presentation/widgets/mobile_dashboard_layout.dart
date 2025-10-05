@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'sidebar_menu.dart';
 import 'dashboard_app_bar.dart';
+import '../../../tag_definitions/presentation/pages/tag_definitions_page.dart';
 
 class MobileDashboardLayout extends StatelessWidget {
   final bool isSidebarVisible;
@@ -13,6 +14,7 @@ class MobileDashboardLayout extends StatelessWidget {
   final VoidCallback onLogout;
   final GlobalKey? accountsViewKey;
   final GlobalKey? productsViewKey;
+  final GlobalKey<TagDefinitionsViewState>? tagDefinitionsViewKey;
 
   const MobileDashboardLayout({
     Key? key,
@@ -25,6 +27,7 @@ class MobileDashboardLayout extends StatelessWidget {
     required this.onLogout,
     this.accountsViewKey,
     this.productsViewKey,
+    this.tagDefinitionsViewKey,
   }) : super(key: key);
 
   @override
@@ -43,6 +46,7 @@ class MobileDashboardLayout extends StatelessWidget {
               currentPageIndex: currentPageIndex,
               accountsViewKey: accountsViewKey,
               productsViewKey: productsViewKey,
+              tagDefinitionsViewKey: tagDefinitionsViewKey,
             ),
             Expanded(child: SafeArea(child: content)),
           ],

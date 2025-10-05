@@ -114,3 +114,83 @@ class DeleteTagDefinitionError extends TagDefinitionsState {
   @override
   List<Object?> get props => [message, id];
 }
+
+// Multi-select states
+class TagDefinitionsWithSelection extends TagDefinitionsState {
+  final List<TagDefinition> tagDefinitions;
+  final List<TagDefinition> selectedTagDefinitions;
+  final bool isMultiSelectMode;
+
+  const TagDefinitionsWithSelection({
+    required this.tagDefinitions,
+    required this.selectedTagDefinitions,
+    required this.isMultiSelectMode,
+  });
+
+  @override
+  List<Object?> get props => [
+    tagDefinitions,
+    selectedTagDefinitions,
+    isMultiSelectMode,
+  ];
+}
+
+class ExportTagDefinitionsLoading extends TagDefinitionsState {}
+
+class ExportTagDefinitionsSuccess extends TagDefinitionsState {
+  final String message;
+
+  const ExportTagDefinitionsSuccess(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class ExportTagDefinitionsError extends TagDefinitionsState {
+  final String message;
+
+  const ExportTagDefinitionsError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class DeleteSelectedTagDefinitionsLoading extends TagDefinitionsState {}
+
+class DeleteSelectedTagDefinitionsSuccess extends TagDefinitionsState {
+  final String message;
+  final int deletedCount;
+
+  const DeleteSelectedTagDefinitionsSuccess(this.message, this.deletedCount);
+
+  @override
+  List<Object?> get props => [message, deletedCount];
+}
+
+class DeleteSelectedTagDefinitionsError extends TagDefinitionsState {
+  final String message;
+
+  const DeleteSelectedTagDefinitionsError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class TagDefinitionsSearching extends TagDefinitionsState {
+  final String searchQuery;
+
+  const TagDefinitionsSearching(this.searchQuery);
+
+  @override
+  List<Object?> get props => [searchQuery];
+}
+
+class TagDefinitionsSearchResults extends TagDefinitionsState {
+  final List<TagDefinition> searchResults;
+  final String searchQuery;
+
+  const TagDefinitionsSearchResults(this.searchResults, this.searchQuery);
+
+  @override
+  List<Object?> get props => [searchResults, searchQuery];
+}

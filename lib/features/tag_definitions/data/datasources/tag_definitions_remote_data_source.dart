@@ -4,6 +4,7 @@ import '../models/tag_definition_model.dart';
 import '../models/create_tag_definition_request_model.dart';
 import '../models/tag_definition_audit_log_model.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/errors/exceptions.dart';
 
 abstract class TagDefinitionsRemoteDataSource {
   Future<List<TagDefinitionModel>> getTagDefinitions();
@@ -11,7 +12,9 @@ abstract class TagDefinitionsRemoteDataSource {
     CreateTagDefinitionRequestModel request,
   );
   Future<TagDefinitionModel> getTagDefinitionById(String id);
-  Future<List<TagDefinitionAuditLogModel>> getTagDefinitionAuditLogsWithHistory(String id);
+  Future<List<TagDefinitionAuditLogModel>> getTagDefinitionAuditLogsWithHistory(
+    String id,
+  );
   Future<void> deleteTagDefinition(String id);
 }
 
@@ -50,7 +53,23 @@ class TagDefinitionsRemoteDataSourceImpl
 
       if (response.statusCode == 201) {
         final data = response.data['data'] as Map<String, dynamic>;
-        return TagDefinitionModel.fromJson(data);
+
+        // The server response doesn't include id, auditLogs, etc.
+        // We need to create a model with the available data and defaults
+        final tagDefinitionData = {
+          'id': DateTime.now().millisecondsSinceEpoch
+              .toString(), // Generate temporary ID
+          'name': data['name'],
+          'description': data['description'],
+          'isControlTag': data['isControlTag'],
+          'applicableObjectTypes': data['applicableObjectTypes'],
+          'auditLogs':
+              <Map<String, dynamic>>[], // Empty audit logs for new creation
+          'createdAt': DateTime.now().toIso8601String(),
+          'updatedAt': DateTime.now().toIso8601String(),
+        };
+
+        return TagDefinitionModel.fromJson(tagDefinitionData);
       } else {
         throw Exception('Failed to create tag definition');
       }
@@ -78,7 +97,9 @@ class TagDefinitionsRemoteDataSourceImpl
   }
 
   @override
-  Future<List<TagDefinitionAuditLogModel>> getTagDefinitionAuditLogsWithHistory(String id) async {
+  Future<List<TagDefinitionAuditLogModel>> getTagDefinitionAuditLogsWithHistory(
+    String id,
+  ) async {
     try {
       final response = await _dio.get(
         '${ApiEndpoints.getTagDefinitionAuditLogsWithHistory}/$id/auditLogsWithHistory',
@@ -86,7 +107,9 @@ class TagDefinitionsRemoteDataSourceImpl
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List;
-        return data.map((json) => TagDefinitionAuditLogModel.fromJson(json)).toList();
+        return data
+            .map((json) => TagDefinitionAuditLogModel.fromJson(json))
+            .toList();
       } else {
         throw Exception('Failed to load tag definition audit logs');
       }
@@ -103,9 +126,42 @@ class TagDefinitionsRemoteDataSourceImpl
       );
 
       if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Failed to delete tag definition');
+        // Extract error message from server response
+        String errorMessage = 'Failed to delete tag definition';
+        if (response.data is Map<String, dynamic>) {
+          final data = response.data as Map<String, dynamic>;
+          if (data.containsKey('message')) {
+            errorMessage = data['message'] as String;
+          } else if (data.containsKey('error')) {
+            errorMessage = data['error'] as String;
+          }
+        }
+        throw ServerException(errorMessage, response.statusCode);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        // Handle server error responses
+        final response = e.response!;
+        String errorMessage = 'Failed to delete tag definition';
+
+        if (response.data is Map<String, dynamic>) {
+          final data = response.data as Map<String, dynamic>;
+          if (data.containsKey('message')) {
+            errorMessage = data['message'] as String;
+          } else if (data.containsKey('error')) {
+            errorMessage = data['error'] as String;
+          }
+        }
+
+        throw ServerException(errorMessage, response.statusCode);
+      } else {
+        // Handle network errors
+        throw NetworkException(e.message ?? 'Network error occurred');
       }
     } catch (e) {
+      if (e is ServerException || e is NetworkException) {
+        rethrow;
+      }
       throw Exception('Failed to delete tag definition: $e');
     }
   }

@@ -18,6 +18,8 @@ TagDefinitionModel _$TagDefinitionModelFromJson(Map<String, dynamic> json) =>
       auditLogs: (json['auditLogs'] as List<dynamic>)
           .map((e) => e as Map<String, dynamic>)
           .toList(),
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
     );
 
 Map<String, dynamic> _$TagDefinitionModelToJson(TagDefinitionModel instance) =>
@@ -28,4 +30,6 @@ Map<String, dynamic> _$TagDefinitionModelToJson(TagDefinitionModel instance) =>
       'description': instance.description,
       'applicableObjectTypes': instance.applicableObjectTypes,
       'auditLogs': instance.auditLogs,
+      'createdAt': instance.createdAt,
+      'updatedAt': instance.updatedAt,
     };

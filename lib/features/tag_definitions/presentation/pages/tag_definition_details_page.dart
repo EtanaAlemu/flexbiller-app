@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../injection_container.dart';
 import '../bloc/tag_definitions_bloc.dart';
 import '../bloc/tag_definitions_event.dart';
 import '../bloc/tag_definitions_state.dart';
@@ -7,16 +8,14 @@ import '../bloc/tag_definitions_state.dart';
 class TagDefinitionDetailsPage extends StatelessWidget {
   final String tagDefinitionId;
 
-  const TagDefinitionDetailsPage({
-    super.key,
-    required this.tagDefinitionId,
-  });
+  const TagDefinitionDetailsPage({super.key, required this.tagDefinitionId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => context.read<TagDefinitionsBloc>()
-        ..add(GetTagDefinitionById(tagDefinitionId)),
+      create: (context) =>
+          getIt<TagDefinitionsBloc>()
+            ..add(GetTagDefinitionById(tagDefinitionId)),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Tag Definition Details'),
@@ -48,7 +47,10 @@ class TagDefinitionDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTagDefinitionDetails(BuildContext context, dynamic tagDefinition) {
+  Widget _buildTagDefinitionDetails(
+    BuildContext context,
+    dynamic tagDefinition,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -106,18 +108,18 @@ class TagDefinitionDetailsPage extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               tagDefinition.name,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             if (tagDefinition.description.isNotEmpty)
               Text(
                 tagDefinition.description,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(
-                    alpha: 0.7,
-                  ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
           ],
@@ -151,10 +153,18 @@ class TagDefinitionDetailsPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildDetailRow('ID', tagDefinition.id, Icons.fingerprint),
-            _buildDetailRow('Type', tagDefinition.isControlTag ? 'Control Tag' : 'Custom Tag', Icons.category),
+            _buildDetailRow(
+              'Type',
+              tagDefinition.isControlTag ? 'Control Tag' : 'Custom Tag',
+              Icons.category,
+            ),
             _buildDetailRow('Name', tagDefinition.name, Icons.label),
             if (tagDefinition.description.isNotEmpty)
-              _buildDetailRow('Description', tagDefinition.description, Icons.description),
+              _buildDetailRow(
+                'Description',
+                tagDefinition.description,
+                Icons.description,
+              ),
           ],
         ),
       ),
@@ -188,7 +198,10 @@ class TagDefinitionDetailsPage extends StatelessWidget {
             if (tagDefinition.applicableObjectTypes.isEmpty)
               _buildEmptyObjectTypes(context)
             else
-              _buildObjectTypesList(context, tagDefinition.applicableObjectTypes),
+              _buildObjectTypesList(
+                context,
+                tagDefinition.applicableObjectTypes,
+              ),
           ],
         ),
       ),
@@ -199,14 +212,12 @@ class TagDefinitionDetailsPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.3,
-        ),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(
-            alpha: 0.3,
-          ),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -214,26 +225,24 @@ class TagDefinitionDetailsPage extends StatelessWidget {
           Icon(
             Icons.link_off,
             size: 48,
-            color: Theme.of(context).colorScheme.outline.withValues(
-              alpha: 0.6,
-            ),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.6),
           ),
           const SizedBox(height: 8),
           Text(
             'No Object Types',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline.withValues(
-                alpha: 0.8,
-              ),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.8),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'This tag definition is not applicable to any object types',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline.withValues(
-                alpha: 0.6,
-              ),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.6),
             ),
             textAlign: TextAlign.center,
           ),
@@ -246,7 +255,9 @@ class TagDefinitionDetailsPage extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: objectTypes.map((type) => _buildObjectTypeChip(context, type)).toList(),
+      children: objectTypes
+          .map((type) => _buildObjectTypeChip(context, type))
+          .toList(),
     );
   }
 
@@ -257,9 +268,7 @@ class TagDefinitionDetailsPage extends StatelessWidget {
         color: _getObjectTypeColor(objectType),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _getObjectTypeColor(objectType).withValues(
-            alpha: 0.3,
-          ),
+          color: _getObjectTypeColor(objectType).withValues(alpha: 0.3),
         ),
       ),
       child: Text(
@@ -311,14 +320,12 @@ class TagDefinitionDetailsPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.3,
-        ),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(
-            alpha: 0.3,
-          ),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -326,26 +333,24 @@ class TagDefinitionDetailsPage extends StatelessWidget {
           Icon(
             Icons.history_toggle_off,
             size: 48,
-            color: Theme.of(context).colorScheme.outline.withValues(
-              alpha: 0.6,
-            ),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.6),
           ),
           const SizedBox(height: 8),
           Text(
             'No Audit Logs',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline.withValues(
-                alpha: 0.8,
-              ),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.8),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'No audit history available for this tag definition',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline.withValues(
-                alpha: 0.6,
-              ),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.6),
             ),
             textAlign: TextAlign.center,
           ),
@@ -363,14 +368,14 @@ class TagDefinitionDetailsPage extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(
-              alpha: 0.3,
-            ),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withValues(
-                alpha: 0.2,
-              ),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -394,10 +399,7 @@ class TagDefinitionDetailsPage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(
-                log.toString(),
-                style: const TextStyle(fontSize: 11),
-              ),
+              Text(log.toString(), style: const TextStyle(fontSize: 11)),
             ],
           ),
         );
@@ -410,29 +412,19 @@ class TagDefinitionDetailsPage extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 16,
-            color: Colors.grey.shade600,
-          ),
+          Icon(icon, size: 16, color: Colors.grey.shade600),
           const SizedBox(width: 8),
           SizedBox(
             width: 80,
             child: Text(
               '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 12,
-                fontFamily: 'monospace',
-              ),
+              style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
@@ -465,9 +457,9 @@ class TagDefinitionDetailsPage extends StatelessWidget {
             child: Text(
               'Failed to load tag definition with ID: $id',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.error.withValues(
-                  alpha: 0.8,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.error.withValues(alpha: 0.8),
               ),
               textAlign: TextAlign.center,
             ),
@@ -476,18 +468,14 @@ class TagDefinitionDetailsPage extends StatelessWidget {
           Text(
             message,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.error.withValues(
-                alpha: 0.7,
-              ),
+              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: () {
-              context.read<TagDefinitionsBloc>().add(
-                GetTagDefinitionById(id),
-              );
+              context.read<TagDefinitionsBloc>().add(GetTagDefinitionById(id));
             },
             icon: const Icon(Icons.refresh),
             label: const Text('Retry'),

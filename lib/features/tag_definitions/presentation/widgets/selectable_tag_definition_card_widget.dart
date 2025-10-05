@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/tag_definition.dart';
-import '../pages/tag_definition_details_page.dart';
 import '../bloc/tag_definitions_bloc.dart';
 import '../bloc/tag_definitions_event.dart';
+import '../pages/tag_definition_details_page.dart';
 
-class TagDefinitionCardWidget extends StatelessWidget {
-  final TagDefinition tagDefinition;
+class SelectableTagDefinitionCardWidget extends StatelessWidget {
+  final dynamic tagDefinition;
+  final bool isSelected;
+  final bool isMultiSelectMode;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
 
-  const TagDefinitionCardWidget({
+  const SelectableTagDefinitionCardWidget({
     super.key,
     required this.tagDefinition,
+    this.isSelected = false,
+    this.isMultiSelectMode = false,
     this.onTap,
     this.onDelete,
   });
@@ -25,14 +28,29 @@ class TagDefinitionCardWidget extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: GestureDetector(
-        onLongPress: () => _enableMultiSelectMode(context),
-        child: InkWell(
-          onTap: onTap ?? () => _navigateToDetails(context),
-          borderRadius: BorderRadius.circular(8),
+        onTap: isMultiSelectMode
+            ? () => _toggleSelection(context)
+            : (onTap ?? () => _navigateToDetails(context)),
+        onLongPress: () => _enableMultiSelectModeAndSelect(context),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: isSelected && isMultiSelectMode
+                ? Border.all(color: theme.colorScheme.primary, width: 2)
+                : null,
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
+                if (isMultiSelectMode) ...[
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => _toggleSelection(context),
+                    activeColor: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -63,8 +81,12 @@ class TagDefinitionCardWidget extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (onDelete != null) ...[
-                  const SizedBox(width: 8),
+                if (!isMultiSelectMode) ...[
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    size: 16,
+                  ),
                   PopupMenuButton<String>(
                     onSelected: (value) {
                       if (value == 'delete') {
@@ -108,6 +130,31 @@ class TagDefinitionCardWidget extends StatelessWidget {
     );
   }
 
+  void _enableMultiSelectModeAndSelect(BuildContext context) {
+    print('🔍 Widget: Long press detected for tag: ${tagDefinition.name}');
+    HapticFeedback.mediumImpact();
+    context.read<TagDefinitionsBloc>().add(
+      EnableMultiSelectModeAndSelect(tagDefinition),
+    );
+  }
+
+  void _toggleSelection(BuildContext context) {
+    print(
+      '🔍 Widget: Toggle selection for tag: ${tagDefinition.name}, isSelected: $isSelected',
+    );
+    if (isSelected) {
+      print('🔍 Widget: Deselecting tag');
+      context.read<TagDefinitionsBloc>().add(
+        DeselectTagDefinition(tagDefinition),
+      );
+    } else {
+      print('🔍 Widget: Selecting tag');
+      context.read<TagDefinitionsBloc>().add(
+        SelectTagDefinition(tagDefinition),
+      );
+    }
+  }
+
   void _navigateToDetails(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -117,56 +164,55 @@ class TagDefinitionCardWidget extends StatelessWidget {
     );
   }
 
-  void _enableMultiSelectMode(BuildContext context) {
-    HapticFeedback.mediumImpact();
-    context.read<TagDefinitionsBloc>().add(
-      EnableMultiSelectModeAndSelect(tagDefinition),
-    );
-  }
-
   void _showDeleteDialog(BuildContext context) {
     final bloc = context.read<TagDefinitionsBloc>();
-
     showDialog(
       context: context,
-      barrierDismissible: false,
-      useRootNavigator: true,
-      builder: (context) => AlertDialog(
-        icon: Icon(
-          Icons.warning_amber_rounded,
-          color: Theme.of(context).colorScheme.error,
-          size: 48,
-        ),
-        title: Text(
-          'Delete Tag Definition',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: Theme.of(context).colorScheme.error,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to delete "${tagDefinition.name}"?',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Close dialog AND trigger delete in one action
-              Navigator.of(context).pop();
-              bloc.add(DeleteTagDefinition(tagDefinition.id));
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
+      builder: (dialogContext) => DeleteTagDefinitionDialog(
+        tagDefinition: tagDefinition,
+        onConfirm: () {
+          bloc.add(DeleteTagDefinition(tagDefinition.id));
+        },
       ),
+    );
+  }
+}
+
+class DeleteTagDefinitionDialog extends StatelessWidget {
+  final dynamic tagDefinition;
+  final VoidCallback? onConfirm;
+
+  const DeleteTagDefinitionDialog({
+    super.key,
+    required this.tagDefinition,
+    this.onConfirm,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AlertDialog(
+      title: const Text('Delete Tag Definition'),
+      content: Text(
+        'Are you sure you want to delete "${tagDefinition.name}"? This action cannot be undone.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            onConfirm?.call();
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.error,
+          ),
+          child: const Text('Delete'),
+        ),
+      ],
     );
   }
 }

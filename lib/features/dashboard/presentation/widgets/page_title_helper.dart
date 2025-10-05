@@ -20,8 +20,10 @@ class PageTitleHelper {
       case 8:
         return 'Tags';
       case 9:
-        return 'Settings';
+        return 'Tag Definitions';
       case 10:
+        return 'Settings';
+      case 11:
         return 'Profile';
       default:
         return 'Dashboard';

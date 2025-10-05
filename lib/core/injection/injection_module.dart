@@ -11,6 +11,8 @@ import '../services/export_service.dart';
 import '../services/crash_analytics_service.dart';
 import '../services/crash_analytics_initializer.dart';
 import '../network/network_info.dart';
+import '../services/database_service.dart';
+import '../../features/tag_definitions/data/datasources/tag_definitions_local_data_source.dart';
 import 'analytics_module.dart';
 
 @module
@@ -51,4 +53,10 @@ abstract class InjectionModule {
 
   @singleton
   FirebaseCrashlytics get firebaseCrashlytics => FirebaseCrashlytics.instance;
+
+  @singleton
+  TagDefinitionsLocalDataSource tagDefinitionsLocalDataSource(
+    DatabaseService databaseService,
+  ) =>
+      TagDefinitionsLocalDataSourceImpl(databaseService);
 }

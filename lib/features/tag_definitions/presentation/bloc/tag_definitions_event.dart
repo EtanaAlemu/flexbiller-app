@@ -25,7 +25,12 @@ class CreateTagDefinition extends TagDefinitionsEvent {
   });
 
   @override
-  List<Object?> get props => [name, description, isControlTag, applicableObjectTypes];
+  List<Object?> get props => [
+    name,
+    description,
+    isControlTag,
+    applicableObjectTypes,
+  ];
 }
 
 class GetTagDefinitionById extends TagDefinitionsEvent {
@@ -53,4 +58,54 @@ class DeleteTagDefinition extends TagDefinitionsEvent {
 
   @override
   List<Object?> get props => [id];
+}
+
+// Multi-select events
+class EnableMultiSelectMode extends TagDefinitionsEvent {}
+
+class DisableMultiSelectMode extends TagDefinitionsEvent {}
+
+class EnableMultiSelectModeAndSelect extends TagDefinitionsEvent {
+  final dynamic tagDefinition;
+  const EnableMultiSelectModeAndSelect(this.tagDefinition);
+  @override
+  List<Object?> get props => [tagDefinition];
+}
+
+class SelectTagDefinition extends TagDefinitionsEvent {
+  final dynamic tagDefinition;
+  const SelectTagDefinition(this.tagDefinition);
+  @override
+  List<Object?> get props => [tagDefinition];
+}
+
+class DeselectTagDefinition extends TagDefinitionsEvent {
+  final dynamic tagDefinition;
+  const DeselectTagDefinition(this.tagDefinition);
+  @override
+  List<Object?> get props => [tagDefinition];
+}
+
+class SelectAllTagDefinitions extends TagDefinitionsEvent {}
+
+class DeselectAllTagDefinitions extends TagDefinitionsEvent {}
+
+class ExportSelectedTagDefinitions extends TagDefinitionsEvent {
+  final String format;
+
+  const ExportSelectedTagDefinitions(this.format);
+
+  @override
+  List<Object?> get props => [format];
+}
+
+class DeleteSelectedTagDefinitions extends TagDefinitionsEvent {}
+
+class SearchTagDefinitions extends TagDefinitionsEvent {
+  final String searchQuery;
+
+  const SearchTagDefinitions(this.searchQuery);
+
+  @override
+  List<Object?> get props => [searchQuery];
 }

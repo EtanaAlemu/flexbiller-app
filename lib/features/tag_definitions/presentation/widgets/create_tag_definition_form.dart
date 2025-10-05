@@ -11,7 +11,8 @@ class CreateTagDefinitionForm extends StatefulWidget {
   });
 
   @override
-  State<CreateTagDefinitionForm> createState() => _CreateTagDefinitionFormState();
+  State<CreateTagDefinitionForm> createState() =>
+      _CreateTagDefinitionFormState();
 }
 
 class _CreateTagDefinitionFormState extends State<CreateTagDefinitionForm> {
@@ -27,7 +28,6 @@ class _CreateTagDefinitionFormState extends State<CreateTagDefinitionForm> {
     'INVOICE',
     'BUNDLE',
     'PAYMENT',
-    'USER',
   ];
 
   @override
@@ -117,17 +117,17 @@ class _CreateTagDefinitionFormState extends State<CreateTagDefinitionForm> {
                       children: [
                         Text(
                           'Control Tag',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         Text(
                           'System-managed tag with special behavior',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.outline.withValues(
-                              alpha: 0.7,
-                            ),
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outline.withValues(alpha: 0.7),
+                              ),
                         ),
                       ],
                     ),
@@ -137,15 +137,17 @@ class _CreateTagDefinitionFormState extends State<CreateTagDefinitionForm> {
               const SizedBox(height: 16),
               Text(
                 'Applicable Object Types',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: _availableObjectTypes.map((type) => _buildObjectTypeChip(type)).toList(),
+                children: _availableObjectTypes
+                    .map((type) => _buildObjectTypeChip(type))
+                    .toList(),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -159,7 +161,9 @@ class _CreateTagDefinitionFormState extends State<CreateTagDefinitionForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.add),
-                  label: Text(widget.isLoading ? 'Creating...' : 'Create Tag Definition'),
+                  label: Text(
+                    widget.isLoading ? 'Creating...' : 'Create Tag Definition',
+                  ),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -169,14 +173,14 @@ class _CreateTagDefinitionFormState extends State<CreateTagDefinitionForm> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withValues(
-                    alpha: 0.1,
-                  ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withValues(
-                      alpha: 0.3,
-                    ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(
@@ -192,10 +196,11 @@ class _CreateTagDefinitionFormState extends State<CreateTagDefinitionForm> {
                         const SizedBox(width: 8),
                         Text(
                           'Form Guidelines:',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                         ),
                       ],
                     ),
@@ -219,22 +224,45 @@ class _CreateTagDefinitionFormState extends State<CreateTagDefinitionForm> {
 
   Widget _buildObjectTypeChip(String objectType) {
     final isSelected = _selectedObjectTypes.contains(objectType);
-    
+    final theme = Theme.of(context);
+
     return FilterChip(
-      label: Text(objectType),
+      label: Text(
+        objectType,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          color: isSelected
+              ? theme.colorScheme.onPrimary
+              : theme.colorScheme.onSurface,
+        ),
+      ),
       selected: isSelected,
-      onSelected: (selected) {
-        setState(() {
-          if (selected) {
-            _selectedObjectTypes.add(objectType);
-          } else {
-            _selectedObjectTypes.remove(objectType);
-          }
-        });
-      },
-      selectedColor: Theme.of(context).colorScheme.primaryContainer,
-      checkmarkColor: Theme.of(context).colorScheme.primary,
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      onSelected: widget.isLoading
+          ? null
+          : (selected) {
+              setState(() {
+                if (selected) {
+                  _selectedObjectTypes.add(objectType);
+                } else {
+                  _selectedObjectTypes.remove(objectType);
+                }
+              });
+            },
+      selectedColor: theme.colorScheme.primary,
+      checkmarkColor: theme.colorScheme.onPrimary,
+      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+      disabledColor: theme.colorScheme.surfaceContainerHighest.withValues(
+        alpha: 0.5,
+      ),
+      side: BorderSide(
+        color: isSelected
+            ? theme.colorScheme.primary
+            : theme.colorScheme.outline.withValues(alpha: 0.3),
+        width: 1,
+      ),
+      elevation: isSelected ? 2 : 0,
+      pressElevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
   }
 
@@ -252,7 +280,7 @@ class _CreateTagDefinitionFormState extends State<CreateTagDefinitionForm> {
 
       final name = _nameController.text.trim();
       final description = _descriptionController.text.trim();
-      
+
       widget.onCreate(name, description, _isControlTag, _selectedObjectTypes);
     }
   }

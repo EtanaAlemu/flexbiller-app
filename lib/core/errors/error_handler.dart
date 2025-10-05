@@ -120,7 +120,17 @@ class ErrorHandler {
         userMessage = 'Too many requests. Please wait a moment and try again.';
         break;
       case 500:
-        userMessage = 'Server error. Please try again later.';
+        // Check if this is a conflict error (item in use)
+        if (context == 'delete_tag_definition' &&
+            exception.message.toLowerCase().contains('in use')) {
+          userMessage = _getConflictMessage(context);
+        } else if (context == 'delete_tag_definition' &&
+            exception.message.toLowerCase().contains('does not exist')) {
+          userMessage =
+              'The tag definition you are trying to delete no longer exists. It may have been deleted by another user.';
+        } else {
+          userMessage = 'Server error. Please try again later.';
+        }
         break;
       case 502:
       case 503:
@@ -267,6 +277,8 @@ class ErrorHandler {
         return 'A product with this name already exists. Please choose a different name.';
       case 'delete':
         return 'Cannot delete this item. It may be in use by other records.';
+      case 'delete_tag_definition':
+        return 'Cannot delete this tag definition. It is currently being used by other records. Please remove it from all records first.';
       default:
         return 'This action conflicts with existing data. Please try again.';
     }

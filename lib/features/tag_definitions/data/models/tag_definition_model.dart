@@ -23,6 +23,12 @@ class TagDefinitionModel {
   @JsonKey(name: 'auditLogs')
   final List<Map<String, dynamic>> auditLogs;
 
+  @JsonKey(name: 'createdAt')
+  final String? createdAt;
+
+  @JsonKey(name: 'updatedAt')
+  final String? updatedAt;
+
   const TagDefinitionModel({
     required this.id,
     required this.isControlTag,
@@ -30,6 +36,8 @@ class TagDefinitionModel {
     required this.description,
     required this.applicableObjectTypes,
     required this.auditLogs,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory TagDefinitionModel.fromJson(Map<String, dynamic> json) =>
@@ -45,6 +53,19 @@ class TagDefinitionModel {
       description: description,
       applicableObjectTypes: applicableObjectTypes,
       auditLogs: auditLogs,
+    );
+  }
+
+  factory TagDefinitionModel.fromEntity(TagDefinition entity) {
+    return TagDefinitionModel(
+      id: entity.id,
+      isControlTag: entity.isControlTag,
+      name: entity.name,
+      description: entity.description,
+      applicableObjectTypes: entity.applicableObjectTypes,
+      auditLogs: entity.auditLogs,
+      createdAt: DateTime.now().toIso8601String(),
+      updatedAt: DateTime.now().toIso8601String(),
     );
   }
 }

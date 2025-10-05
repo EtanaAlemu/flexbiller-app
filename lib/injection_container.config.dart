@@ -337,6 +337,8 @@ import 'features/subscriptions/domain/usecases/update_subscription_usecase.dart'
     as _i676;
 import 'features/subscriptions/presentation/bloc/subscriptions_bloc.dart'
     as _i675;
+import 'features/tag_definitions/data/datasources/tag_definitions_local_data_source.dart'
+    as _i400;
 import 'features/tag_definitions/data/datasources/tag_definitions_remote_data_source.dart'
     as _i692;
 import 'features/tag_definitions/data/repositories/tag_definitions_repository_impl.dart'
@@ -374,11 +376,11 @@ _i174.GetIt $initGetIt(
   final gh = _i526.GetItHelper(getIt, environment, environmentFilter);
   final injectionModule = _$InjectionModule();
   final analyticsModule = _$AnalyticsModule();
+  gh.factory<_i402.PlansMultiSelectBloc>(() => _i402.PlansMultiSelectBloc());
   gh.factory<_i203.AccountExportBloc>(() => _i203.AccountExportBloc());
   gh.factory<_i842.JwtService>(() => _i842.JwtService());
   gh.factory<_i580.ExportServiceImpl>(() => _i580.ExportServiceImpl());
   gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
-  gh.factory<_i402.PlansMultiSelectBloc>(() => _i402.PlansMultiSelectBloc());
   gh.singleton<_i974.Logger>(() => injectionModule.logger);
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
@@ -392,6 +394,11 @@ _i174.GetIt $initGetIt(
   );
   gh.singleton<_i45.DioClient>(
     () => _i45.DioClient(gh<_i361.Dio>(), gh<_i558.FlutterSecureStorage>()),
+  );
+  gh.singleton<_i400.TagDefinitionsLocalDataSource>(
+    () => injectionModule.tagDefinitionsLocalDataSource(
+      gh<_i916.DatabaseService>(),
+    ),
   );
   gh.factory<_i626.BiometricAuthService>(
     () => _i626.BiometricAuthService(gh<_i152.LocalAuthentication>()),
@@ -573,6 +580,8 @@ _i174.GetIt $initGetIt(
   gh.factory<_i866.TagDefinitionsRepository>(
     () => _i17.TagDefinitionsRepositoryImpl(
       gh<_i692.TagDefinitionsRemoteDataSource>(),
+      gh<_i400.TagDefinitionsLocalDataSource>(),
+      gh<_i75.NetworkInfo>(),
     ),
   );
   gh.factory<_i895.ChildAccountLocalDataSource>(
@@ -915,6 +924,16 @@ _i174.GetIt $initGetIt(
       gh<_i140.UserSessionService>(),
     ),
   );
+  gh.factory<_i65.TagDefinitionsBloc>(
+    () => _i65.TagDefinitionsBloc(
+      gh<_i235.GetTagDefinitionsUseCase>(),
+      gh<_i732.CreateTagDefinitionUseCase>(),
+      gh<_i448.GetTagDefinitionByIdUseCase>(),
+      gh<_i982.GetTagDefinitionAuditLogsWithHistoryUseCase>(),
+      gh<_i528.DeleteTagDefinitionUseCase>(),
+      gh<_i400.TagDefinitionsLocalDataSource>(),
+    ),
+  );
   gh.lazySingleton<_i271.AccountAuditLogsRepository>(
     () => _i510.AccountAuditLogsRepositoryImpl(
       remoteDataSource: gh<_i172.AccountAuditLogsRemoteDataSource>(),
@@ -1088,15 +1107,6 @@ _i174.GetIt $initGetIt(
       gh<_i335.SearchTagsUseCase>(),
       gh<_i580.ExportService>(),
       gh<_i818.TagsLocalDataSource>(),
-    ),
-  );
-  gh.factory<_i65.TagDefinitionsBloc>(
-    () => _i65.TagDefinitionsBloc(
-      gh<_i235.GetTagDefinitionsUseCase>(),
-      gh<_i732.CreateTagDefinitionUseCase>(),
-      gh<_i448.GetTagDefinitionByIdUseCase>(),
-      gh<_i982.GetTagDefinitionAuditLogsWithHistoryUseCase>(),
-      gh<_i528.DeleteTagDefinitionUseCase>(),
     ),
   );
   gh.factory<_i729.GetAccountBlockingStatesUseCase>(
