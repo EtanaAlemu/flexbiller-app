@@ -5,7 +5,11 @@ import '../../../../core/widgets/back_button_handler_widget.dart';
 import '../../../../injection_container.dart';
 import '../../../accounts/presentation/pages/accounts_page.dart';
 import '../../../accounts/presentation/bloc/accounts_list_bloc.dart';
-import '../../../subscriptions/presentation/pages/subscriptions_demo_page.dart';
+import '../../../subscriptions/presentation/pages/subscriptions_page.dart';
+import '../../../subscriptions/presentation/bloc/subscriptions_bloc.dart';
+import '../../../bundles/presentation/pages/bundles_page.dart';
+import '../../../bundles/presentation/bloc/bundles_bloc.dart';
+import '../../../bundles/presentation/bloc/bundle_multiselect_bloc.dart';
 import '../../../products/presentation/pages/products_page.dart';
 import '../../../products/presentation/bloc/products_list_bloc.dart';
 import '../../../plans/presentation/pages/plans_page.dart';
@@ -47,11 +51,14 @@ class _DashboardPageState extends State<DashboardPage> {
       GlobalKey<InvoicesViewState>();
   final GlobalKey<TagDefinitionsViewState> _tagDefinitionsViewKey =
       GlobalKey<TagDefinitionsViewState>();
+  final GlobalKey _subscriptionsViewKey = GlobalKey();
+  final GlobalKey _bundlesViewKey = GlobalKey();
 
   List<Widget> get _pages => [
     const DashboardDemoPage(),
     AccountsPage(accountsViewKey: _accountsViewKey),
-    const SubscriptionsDemoPage(),
+    SubscriptionsPage(key: _subscriptionsViewKey),
+    BundlesPage(key: _bundlesViewKey),
     ProductsPage(productsViewKey: _productsViewKey),
     const PlansPage(),
     InvoicesView(key: _invoicesViewKey),
@@ -77,6 +84,9 @@ class _DashboardPageState extends State<DashboardPage> {
         BlocProvider(create: (context) => getIt<TagDefinitionsBloc>()),
         BlocProvider(create: (context) => getIt<AccountsListBloc>()),
         BlocProvider(create: (context) => getIt<AccountsOrchestratorBloc>()),
+        BlocProvider(create: (context) => getIt<BundlesBloc>()),
+        BlocProvider(create: (context) => getIt<BundleMultiSelectBloc>()),
+        BlocProvider(create: (context) => getIt<SubscriptionsBloc>()),
         BlocProvider(create: (context) => getIt<ProductsListBloc>()),
         BlocProvider(create: (context) => getIt<PlansBloc>()),
         BlocProvider(create: (context) => getIt<PlansMultiSelectBloc>()),
@@ -103,6 +113,8 @@ class _DashboardPageState extends State<DashboardPage> {
               paymentsViewKey: _paymentsViewKey,
               invoicesViewKey: _invoicesViewKey,
               tagDefinitionsViewKey: _tagDefinitionsViewKey,
+              subscriptionsViewKey: _subscriptionsViewKey,
+              bundlesViewKey: _bundlesViewKey,
             ),
           ),
         ),

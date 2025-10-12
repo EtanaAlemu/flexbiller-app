@@ -22,6 +22,13 @@ class _CreateSubscriptionFormState extends State<CreateSubscriptionForm> {
   final _formKey = GlobalKey<FormState>();
   final _accountIdController = TextEditingController();
   final _planNameController = TextEditingController();
+  final _productNameController = TextEditingController();
+  final _billingPeriodController = TextEditingController();
+  final _priceController = TextEditingController();
+
+  String _selectedBillingPeriod = 'MONTHLY';
+  String _selectedProductCategory = 'BASE';
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -29,12 +36,18 @@ class _CreateSubscriptionFormState extends State<CreateSubscriptionForm> {
     if (widget.initialAccountId != null) {
       _accountIdController.text = widget.initialAccountId!;
     }
+    _planNameController.text = 'Premium Plan';
+    _productNameController.text = 'Premium Product';
+    _priceController.text = '29.99';
   }
 
   @override
   void dispose() {
     _accountIdController.dispose();
     _planNameController.dispose();
+    _productNameController.dispose();
+    _billingPeriodController.dispose();
+    _priceController.dispose();
     super.dispose();
   }
 

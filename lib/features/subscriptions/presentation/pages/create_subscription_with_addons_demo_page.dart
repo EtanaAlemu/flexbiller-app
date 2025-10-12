@@ -34,10 +34,18 @@ class _CreateSubscriptionWithAddOnsDemoPageState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocProvider(
       create: (context) => GetIt.instance<SubscriptionsBloc>(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Create Subscription with Add-ons Demo')),
+        appBar: AppBar(
+          title: const Text('Create with Add-ons'),
+          backgroundColor: theme.colorScheme.surface,
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -98,7 +106,7 @@ class _CreateSubscriptionWithAddOnsDemoPageState
       children: _addonControllers.asMap().entries.map((entry) {
         final index = entry.key;
         final controllers = entry.value;
-        
+
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
           child: Padding(
@@ -133,7 +141,8 @@ class _CreateSubscriptionWithAddOnsDemoPageState
                         decoration: const InputDecoration(
                           labelText: 'Account ID',
                           border: OutlineInputBorder(),
-                          hintText: 'e.g., 358b75e3-24d2-40a3-b7d4-cbd70887e954',
+                          hintText:
+                              'e.g., 358b75e3-24d2-40a3-b7d4-cbd70887e954',
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -226,7 +235,9 @@ class _CreateSubscriptionWithAddOnsDemoPageState
   void _addAddonProduct() {
     setState(() {
       _addonControllers.add({
-        'accountId': TextEditingController(text: '358b75e3-24d2-40a3-b7d4-cbd70887e954'),
+        'accountId': TextEditingController(
+          text: '358b75e3-24d2-40a3-b7d4-cbd70887e954',
+        ),
         'productName': TextEditingController(text: 'Premium'),
         'productCategory': TextEditingController(text: 'BASE'),
         'billingPeriod': TextEditingController(text: 'MONTHLY'),
@@ -260,11 +271,14 @@ class _CreateSubscriptionWithAddOnsDemoPageState
         };
       }).toList();
 
-      context.read<SubscriptionsBloc>().add(CreateSubscriptionWithAddOns(
-        addonProducts: addonProducts,
-      ));
+      context.read<SubscriptionsBloc>().add(
+        CreateSubscriptionWithAddOns(addonProducts: addonProducts),
+      );
 
-      _showResultDialog('Create Subscription with Add-ons', 'Creating subscription...');
+      _showResultDialog(
+        'Create Subscription with Add-ons',
+        'Creating subscription...',
+      );
     }
   }
 

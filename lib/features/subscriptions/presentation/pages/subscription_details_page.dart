@@ -9,7 +9,7 @@ import '../../domain/entities/subscription.dart';
 import '../../domain/entities/subscription_event.dart';
 import '../widgets/cancel_subscription_dialog.dart';
 import '../../../../core/widgets/error_display_widget.dart';
-
+import '../../../../core/widgets/custom_snackbar.dart';
 import 'update_subscription_page.dart';
 
 class SubscriptionDetailsPage extends StatelessWidget {
@@ -27,8 +27,14 @@ class SubscriptionDetailsPage extends StatelessWidget {
         builder: (context, state) {
           if (state is SingleSubscriptionLoading) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Subscription Details')),
-              body: const LoadingWidget(
+              appBar: AppBar(
+                title: const Text('Subscription Details'),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+                elevation: 0,
+                scrolledUnderElevation: 1,
+              ),
+              body: const _LoadingWidget(
                 message: 'Loading subscription details...',
               ),
             );
@@ -36,7 +42,13 @@ class SubscriptionDetailsPage extends StatelessWidget {
             return _buildSubscriptionDetails(context, state.subscription);
           } else if (state is SingleSubscriptionError) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Subscription Details')),
+              appBar: AppBar(
+                title: const Text('Subscription Details'),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+                elevation: 0,
+                scrolledUnderElevation: 1,
+              ),
               body: ErrorDisplayWidget(
                 error: state.message,
                 context: 'subscription_details',
@@ -49,8 +61,14 @@ class SubscriptionDetailsPage extends StatelessWidget {
             );
           }
           return Scaffold(
-            appBar: AppBar(title: const Text('Subscription Details')),
-            body: const LoadingWidget(
+            appBar: AppBar(
+              title: const Text('Subscription Details'),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              foregroundColor: Theme.of(context).colorScheme.onSurface,
+              elevation: 0,
+              scrolledUnderElevation: 1,
+            ),
+            body: const _LoadingWidget(
               message: 'Loading subscription details...',
             ),
           );
@@ -63,59 +81,819 @@ class SubscriptionDetailsPage extends StatelessWidget {
     BuildContext context,
     Subscription subscription,
   ) {
-    final dateFormat = DateFormat('MMM dd, yyyy HH:mm');
+    final theme = Theme.of(context);
+    final dateFormat = DateFormat('MMM dd, yyyy');
+    final isCancelled = subscription.state.toUpperCase() == 'CANCELLED';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${subscription.productName} Details'),
+        title: Text(subscription.productName),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: 0,
+        scrolledUnderElevation: 1,
         actions: [
-          // Cancel button for non-cancelled subscriptions
-          if (subscription.state.toUpperCase() != 'CANCELLED')
+          if (!isCancelled)
             IconButton(
               icon: const Icon(Icons.cancel_outlined),
               onPressed: () => _showCancelDialog(context, subscription),
               tooltip: 'Cancel Subscription',
-              color: Theme.of(context).colorScheme.error,
             ),
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_rounded),
             onPressed: () => _editSubscription(context, subscription),
             tooltip: 'Edit Subscription',
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            onSelected: (value) =>
+                _handleMenuAction(context, subscription, value),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'refresh',
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh_rounded),
+                    SizedBox(width: 12),
+                    Text('Refresh'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'export',
+                child: Row(
+                  children: [
+                    Icon(Icons.download_rounded),
+                    SizedBox(width: 12),
+                    Text('Export Details'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Hero Header Section
+            _buildHeroSection(context, subscription),
+
+            // Main Content
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  // Quick Actions
+                  _buildQuickActionsCard(context, subscription),
+                  const SizedBox(height: 16),
+
+                  // Status and Progress
+                  _buildStatusProgressCard(context, subscription),
+                  const SizedBox(height: 16),
+
+                  // Basic Information
+                  _buildBasicInfoCard(context, subscription, dateFormat),
+                  const SizedBox(height: 16),
+
+                  // Billing Information
+                  _buildBillingInfoCard(context, subscription, dateFormat),
+                  const SizedBox(height: 16),
+
+                  // Pricing Details
+                  if (subscription.prices.isNotEmpty) ...[
+                    _buildPricingCard(context, subscription),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Events History
+                  _buildEventsCard(context, subscription, dateFormat),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroSection(BuildContext context, Subscription subscription) {
+    final theme = Theme.of(context);
+    final stateColor = _getStateColor(subscription.state, theme);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primaryContainer,
+            theme.colorScheme.primaryContainer.withOpacity(0.7),
+          ],
+        ),
+      ),
+      child: Column(
+        children: [
+          // Product Icon
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.shadow.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.subscriptions_rounded,
+              size: 48,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Product Name
+          Text(
+            subscription.productName,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+
+          // Plan Name
+          Text(
+            subscription.planName,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+
+          // Status Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.shadow.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: stateColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  subscription.state,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: stateColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsCard(
+    BuildContext context,
+    Subscription subscription,
+  ) {
+    final theme = Theme.of(context);
+    final isCancelled = subscription.state.toUpperCase() == 'CANCELLED';
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Enhanced Status Card with Progress
-            _buildEnhancedStatusCard(context, subscription),
+            Row(
+              children: [
+                Icon(
+                  Icons.flash_on_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Quick Actions',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
-
-            // Subscription Progress Bar
-            _buildSubscriptionProgressCard(context, subscription),
-            const SizedBox(height: 16),
-
-            // Basic Information
-            _buildBasicInfoCard(context, subscription, dateFormat),
-            const SizedBox(height: 16),
-
-            // Billing Information
-            _buildBillingInfoCard(context, subscription, dateFormat),
-            const SizedBox(height: 16),
-
-            // Enhanced Events History Table
-            _buildEnhancedEventsCard(context, subscription, dateFormat),
-            const SizedBox(height: 16),
-
-            // Enhanced Pricing Details Table
-            if (subscription.prices.isNotEmpty) ...[
-              _buildEnhancedPricingCard(context, subscription),
-              const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _editSubscription(context, subscription),
+                    icon: const Icon(Icons.edit_rounded),
+                    label: const Text('Edit'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => _showCancelDialog(context, subscription),
+                    icon: const Icon(Icons.cancel_outlined),
+                    label: const Text('Cancel'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: theme.colorScheme.error,
+                      foregroundColor: theme.colorScheme.onError,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (!isCancelled) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () =>
+                          _handleMenuAction(context, subscription, 'export'),
+                      icon: const Icon(Icons.download_rounded),
+                      label: const Text('Export'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () =>
+                          _handleMenuAction(context, subscription, 'refresh'),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Refresh'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusProgressCard(
+    BuildContext context,
+    Subscription subscription,
+  ) {
+    final theme = Theme.of(context);
+    final progress = _calculateSubscriptionProgress(subscription);
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.timeline_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Subscription Progress',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Progress Bar
+            Row(
+              children: [
+                Expanded(
+                  child: LinearProgressIndicator(
+                    value: progress / 100,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.primary,
+                    ),
+                    minHeight: 8,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '${progress.toInt()}%',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Date Range
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  DateFormat('MMM dd').format(subscription.startDate),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                Text(
+                  subscription.billingEndDate != null
+                      ? DateFormat(
+                          'MMM dd',
+                        ).format(subscription.billingEndDate!)
+                      : 'Ongoing',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBasicInfoCard(
+    BuildContext context,
+    Subscription subscription,
+    DateFormat dateFormat,
+  ) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Basic Information',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            _buildInfoRow(
+              context,
+              'Subscription ID',
+              subscription.subscriptionId,
+              Icons.fingerprint_rounded,
+            ),
+            const SizedBox(height: 12),
+            _buildInfoRow(
+              context,
+              'Account ID',
+              subscription.accountId,
+              Icons.account_circle_rounded,
+            ),
+            const SizedBox(height: 12),
+            _buildInfoRow(
+              context,
+              'Quantity',
+              subscription.quantity.toString(),
+              Icons.numbers_rounded,
+            ),
+            const SizedBox(height: 12),
+            _buildInfoRow(
+              context,
+              'Billing Period',
+              subscription.billingPeriod,
+              Icons.calendar_today_rounded,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBillingInfoCard(
+    BuildContext context,
+    Subscription subscription,
+    DateFormat dateFormat,
+  ) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.payment_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Billing Information',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            _buildInfoRow(
+              context,
+              'Start Date',
+              dateFormat.format(subscription.startDate),
+              Icons.event_rounded,
+            ),
+            const SizedBox(height: 12),
+
+            if (subscription.billingEndDate != null) ...[
+              _buildInfoRow(
+                context,
+                'End Date',
+                dateFormat.format(subscription.billingEndDate!),
+                Icons.event_available_rounded,
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            if (subscription.cancelledDate != null) ...[
+              _buildInfoRow(
+                context,
+                'Cancelled Date',
+                dateFormat.format(subscription.cancelledDate!),
+                Icons.cancel_outlined,
+                valueColor: theme.colorScheme.error,
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            _buildInfoRow(
+              context,
+              'Charged Through Date',
+              subscription.chargedThroughDate,
+              Icons.schedule_rounded,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPricingCard(BuildContext context, Subscription subscription) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.attach_money_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Pricing Details',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Fixed Price',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'Free',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Recurring Price',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        '\$${_getRecurringPrice(subscription)}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEventsCard(
+    BuildContext context,
+    Subscription subscription,
+    DateFormat dateFormat,
+  ) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.history_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Event History',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            if (subscription.events.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.history_rounded,
+                        size: 48,
+                        color: theme.colorScheme.onSurfaceVariant.withOpacity(
+                          0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No events recorded',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: subscription.events.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final event = subscription.events[index];
+                  return _buildEventItem(context, event, dateFormat);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon, {
+    Color? valueColor,
+  }) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: valueColor ?? theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEventItem(
+    BuildContext context,
+    SubscriptionEvent event,
+    DateFormat dateFormat,
+  ) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.event_rounded,
+              size: 16,
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.eventType,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  dateFormat.format(event.effectiveDate),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -130,8 +908,11 @@ class SubscriptionDetailsPage extends StatelessWidget {
           subscriptionId: subscription.subscriptionId,
           subscriptionName: subscription.productName,
           onSuccess: () {
-            // Refresh the subscription details after cancellation
             subscriptionsBloc.add(GetSubscriptionById(subscriptionId));
+            CustomSnackBar.showSuccess(
+              context,
+              message: 'Subscription cancelled successfully',
+            );
           },
         ),
       ),
@@ -149,236 +930,55 @@ class SubscriptionDetailsPage extends StatelessWidget {
       ),
     );
 
-    // If subscription was updated successfully, refresh the details
-    if (result == true) {
-      if (context.mounted) {
-        context.read<SubscriptionsBloc>().add(
-          GetSubscriptionById(subscriptionId),
-        );
-      }
+    if (result == true && context.mounted) {
+      context.read<SubscriptionsBloc>().add(
+        GetSubscriptionById(subscriptionId),
+      );
+      CustomSnackBar.showSuccess(
+        context,
+        message: 'Subscription updated successfully',
+      );
     }
   }
 
-  Widget _buildEnhancedStatusCard(
+  void _handleMenuAction(
     BuildContext context,
     Subscription subscription,
+    String action,
   ) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.inventory_2_outlined,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Subscriptions',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildSubscriptionTable(context, subscription),
-          ],
-        ),
-      ),
-    );
+    switch (action) {
+      case 'refresh':
+        context.read<SubscriptionsBloc>().add(
+          GetSubscriptionById(subscriptionId),
+        );
+        CustomSnackBar.showInfo(
+          context,
+          message: 'Subscription details refreshed',
+        );
+        break;
+      case 'export':
+        CustomSnackBar.showComingSoon(
+          context,
+          feature: 'Export Subscription Details',
+        );
+        break;
+    }
   }
 
-  Widget _buildSubscriptionTable(
-    BuildContext context,
-    Subscription subscription,
-  ) {
-    final theme = Theme.of(context);
-    final dateFormat = DateFormat('MMM dd, yyyy');
+  double _calculateSubscriptionProgress(Subscription subscription) {
+    if (subscription.billingEndDate == null) return 0.0;
 
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with product name and status
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    subscription.productName,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                _buildStatusChip(subscription.state),
-              ],
-            ),
-            const SizedBox(height: 8),
+    final now = DateTime.now();
+    final start = subscription.startDate;
+    final end = subscription.billingEndDate!;
 
-            // Plan information
-            Row(
-              children: [
-                Icon(
-                  Icons.description,
-                  size: 16,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    subscription.planName,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+    if (now.isBefore(start)) return 0.0;
+    if (now.isAfter(end)) return 100.0;
 
-            // Date information
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 16,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Started: ${dateFormat.format(subscription.startDate)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-                if (subscription.billingEndDate != null) ...[
-                  const SizedBox(width: 16),
-                  Text(
-                    'Ends: ${dateFormat.format(subscription.billingEndDate!)}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 8),
+    final totalDuration = end.difference(start).inMilliseconds;
+    final elapsedDuration = now.difference(start).inMilliseconds;
 
-            // Billing and quantity information
-            Row(
-              children: [
-                Icon(
-                  Icons.payment,
-                  size: 16,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${subscription.billingPeriod} • Qty: ${subscription.quantity}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Pricing information
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Fixed Price:',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        'Free',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Recurring Price:',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        '\$${_getRecurringPrice(subscription)}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Action buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: () =>
-                      _showSubscriptionActions(context, subscription),
-                  tooltip: 'More Actions',
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusChip(String status) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: _getStateColor(status).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _getStateColor(status)),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: _getStateColor(status),
-          fontWeight: FontWeight.w500,
-          fontSize: 11,
-        ),
-      ),
-    );
+    return (elapsedDuration / totalDuration) * 100;
   }
 
   String _getRecurringPrice(Subscription subscription) {
@@ -391,799 +991,43 @@ class SubscriptionDetailsPage extends StatelessWidget {
     return '0.00';
   }
 
-  void _showSubscriptionActions(
-    BuildContext context,
-    Subscription subscription,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Edit Subscription'),
-              onTap: () {
-                Navigator.pop(context);
-                _editSubscription(context, subscription);
-              },
-            ),
-            if (subscription.state.toUpperCase() != 'CANCELLED')
-              ListTile(
-                leading: const Icon(Icons.cancel, color: Colors.red),
-                title: const Text('Cancel Subscription'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showCancelDialog(context, subscription);
-                },
-              ),
-            ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('View Details'),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubscriptionProgressCard(
-    BuildContext context,
-    Subscription subscription,
-  ) {
-    final theme = Theme.of(context);
-
-    // Calculate progress percentage (simplified calculation)
-    final progress = _calculateSubscriptionProgress(subscription);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Subscription Progress',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: LinearProgressIndicator(
-                    value: progress / 100,
-                    backgroundColor: theme.colorScheme.surfaceVariant,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      theme.colorScheme.primary,
-                    ),
-                    minHeight: 8,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '${progress.toInt()}%',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  DateFormat('MMM dd').format(subscription.startDate),
-                  style: theme.textTheme.bodySmall,
-                ),
-                Text(
-                  subscription.billingEndDate != null
-                      ? DateFormat(
-                          'MMM dd',
-                        ).format(subscription.billingEndDate!)
-                      : 'Ongoing',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  double _calculateSubscriptionProgress(Subscription subscription) {
-    // Simplified progress calculation
-    // In a real app, this would be more sophisticated
-    if (subscription.billingEndDate == null) return 0.0;
-
-    final now = DateTime.now();
-    final start = subscription.startDate;
-    final end = subscription.billingEndDate!;
-
-    if (now.isBefore(start)) return 0.0;
-    if (now.isAfter(end)) return 100.0;
-
-    final totalDuration = end.difference(start).inDays;
-    final elapsedDuration = now.difference(start).inDays;
-
-    return (elapsedDuration / totalDuration) * 100;
-  }
-
-  Widget _buildBasicInfoCard(
-    BuildContext context,
-    Subscription subscription,
-    DateFormat dateFormat,
-  ) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Basic Information',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildInfoRow('Product Name', subscription.productName),
-            _buildInfoRow('Plan Name', subscription.planName),
-            _buildInfoRow('Product Category', subscription.productCategory),
-            _buildInfoRow('Billing Period', subscription.billingPeriod),
-            _buildInfoRow('Phase Type', subscription.phaseType),
-            _buildInfoRow('Source Type', subscription.sourceType),
-            _buildInfoRow('Quantity', subscription.quantity.toString()),
-            _buildInfoRow(
-              'Start Date',
-              dateFormat.format(subscription.startDate),
-            ),
-            if (subscription.cancelledDate != null)
-              _buildInfoRow(
-                'Cancelled Date',
-                dateFormat.format(subscription.cancelledDate!),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBillingInfoCard(
-    BuildContext context,
-    Subscription subscription,
-    DateFormat dateFormat,
-  ) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Billing Information',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildInfoRow(
-              'Billing Start Date',
-              dateFormat.format(subscription.billingStartDate),
-            ),
-            if (subscription.billingEndDate != null)
-              _buildInfoRow(
-                'Billing End Date',
-                dateFormat.format(subscription.billingEndDate!),
-              ),
-            _buildInfoRow(
-              'Bill Cycle Day',
-              subscription.billCycleDayLocal.toString(),
-            ),
-            _buildInfoRow('Charged Through', subscription.chargedThroughDate),
-            _buildInfoRow('Price List', subscription.priceList),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEnhancedEventsCard(
-    BuildContext context,
-    Subscription subscription,
-    DateFormat dateFormat,
-  ) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Events History',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (subscription.events.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Text(
-                    'No events found',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.textTheme.bodyMedium?.color?.withValues(
-                        alpha: 0.6,
-                      ),
-                    ),
-                  ),
-                ),
-              )
-            else
-              _buildEventsTable(context, subscription, dateFormat),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEventsTable(
-    BuildContext context,
-    Subscription subscription,
-    DateFormat dateFormat,
-  ) {
-    final theme = Theme.of(context);
-
-    return Column(
-      children: subscription.events.map((event) {
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          elevation: 2,
-          child: InkWell(
-            onTap: () => _showEventDetailsDialog(context, event, dateFormat),
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header row with event type and status
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          event.eventType,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      _buildEventStatusChip(event.eventType),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.chevron_right,
-                        color: theme.colorScheme.primary.withOpacity(0.6),
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Service information
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.business,
-                        size: 16,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          event.serviceName,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.8),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Date information
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.schedule,
-                        size: 16,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        dateFormat.format(event.effectiveDate),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Status indicators
-                  Row(
-                    children: [
-                      if (event.isBlockedBilling ||
-                          event.isBlockedEntitlement) ...[
-                        _buildBlockedStatusChip(
-                          event.isBlockedBilling || event.isBlockedEntitlement,
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      if (event.phase.isNotEmpty) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: theme.colorScheme.primary.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Text(
-                            event.phase,
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildEventStatusChip(String eventType) {
-    Color color;
-    String status;
-
-    switch (eventType.toUpperCase()) {
-      case 'START_ENTITLEMENT':
-        color = Colors.purple;
-        status = 'ENT_STARTED';
-        break;
-      case 'START_BILLING':
-        color = Colors.blue;
-        status = 'START_BILLING';
-        break;
-      default:
-        color = Colors.grey;
-        status = eventType;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w500,
-          fontSize: 11,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBlockedStatusChip(bool isBlocked) {
-    final color = isBlocked ? Colors.red : Colors.green;
-    final status = isBlocked ? 'Blocked' : 'Active';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w500,
-          fontSize: 11,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEnhancedPricingCard(
-    BuildContext context,
-    Subscription subscription,
-  ) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Pricing Details',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (subscription.prices.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Text(
-                    'No pricing information available',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.textTheme.bodyMedium?.color?.withValues(
-                        alpha: 0.6,
-                      ),
-                    ),
-                  ),
-                ),
-              )
-            else
-              _buildPricingTable(context, subscription),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPricingTable(BuildContext context, Subscription subscription) {
-    final theme = Theme.of(context);
-
-    return Column(
-      children: subscription.prices.map((price) {
-        if (price is Map<String, dynamic>) {
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header with phase name and type
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          price['phaseName'] ?? 'Unknown Phase',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      _buildPhaseTypeChip(price['phaseType'] ?? ''),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Pricing information
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Fixed Price:',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              price['fixedPrice'] != null
-                                  ? '\$${price['fixedPrice'].toStringAsFixed(2)}'
-                                  : 'Free',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Recurring Price:',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              price['recurringPrice'] != null
-                                  ? '\$${price['recurringPrice'].toStringAsFixed(2)}/mo'
-                                  : 'N/A',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        return const SizedBox.shrink();
-      }).toList(),
-    );
-  }
-
-  Widget _buildPhaseTypeChip(String phaseType) {
-    Color color;
-
-    switch (phaseType.toUpperCase()) {
-      case 'EVERGREEN':
-        color = Colors.green;
-        break;
-      case 'TRIAL':
-        color = Colors.blue;
-        break;
-      case 'DISCOUNT':
-        color = Colors.orange;
-        break;
-      default:
-        color = Colors.grey;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color),
-      ),
-      child: Text(
-        phaseType,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w500,
-          fontSize: 11,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w400),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getStateColor(String state) {
+  Color _getStateColor(String state, ThemeData theme) {
     switch (state.toUpperCase()) {
       case 'ACTIVE':
-        return Colors.green;
+        return theme.colorScheme.primary;
       case 'BLOCKED':
-        return Colors.red;
+        return theme.colorScheme.error;
       case 'CANCELLED':
-        return Colors.orange;
+        return theme.colorScheme.outline;
       case 'PAUSED':
-        return Colors.yellow.shade700;
+        return theme.colorScheme.tertiary;
       case 'PENDING':
-        return Colors.blue;
+        return theme.colorScheme.secondary;
       default:
-        return Colors.grey;
+        return theme.colorScheme.outline;
     }
   }
+}
 
-  void _showEventDetailsDialog(
-    BuildContext context,
-    SubscriptionEvent event,
-    DateFormat dateFormat,
-  ) {
+class _LoadingWidget extends StatelessWidget {
+  final String message;
+
+  const _LoadingWidget({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(
-                Icons.event_note,
-                color: theme.colorScheme.primary,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Event Details',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildEventDetailSection('Event Information', [
-                  _buildEventDetailRow('Event Type', event.eventType),
-                  _buildEventDetailRow('Service Name', event.serviceName),
-                  _buildEventDetailRow('Service State', event.serviceStateName),
-                  _buildEventDetailRow('Phase', event.phase),
-                  _buildEventDetailRow('Plan', event.plan),
-                  _buildEventDetailRow('Product', event.product),
-                ]),
-                const SizedBox(height: 16),
-                _buildEventDetailSection('Timing', [
-                  _buildEventDetailRow(
-                    'Effective Date',
-                    dateFormat.format(event.effectiveDate),
-                  ),
-                  _buildEventDetailRow(
-                    'Catalog Effective Date',
-                    dateFormat.format(event.catalogEffectiveDate),
-                  ),
-                ]),
-                const SizedBox(height: 16),
-                _buildEventDetailSection('Billing Information', [
-                  _buildEventDetailRow('Billing Period', event.billingPeriod),
-                  _buildEventDetailRow('Price List', event.priceList),
-                ]),
-                const SizedBox(height: 16),
-                _buildEventDetailSection('Status', [
-                  _buildEventDetailRow(
-                    'Blocked Billing',
-                    event.isBlockedBilling ? 'Yes' : 'No',
-                    valueColor: event.isBlockedBilling
-                        ? Colors.red
-                        : Colors.green,
-                  ),
-                  _buildEventDetailRow(
-                    'Blocked Entitlement',
-                    event.isBlockedEntitlement ? 'Yes' : 'No',
-                    valueColor: event.isBlockedEntitlement
-                        ? Colors.red
-                        : Colors.green,
-                  ),
-                ]),
-                if (event.auditLogs != null && event.auditLogs!.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _buildEventDetailSection(
-                    'Audit Logs',
-                    event.auditLogs!.map((log) {
-                      return _buildEventDetailRow(
-                        'Log Entry',
-                        '${log['action'] ?? 'Unknown'} - ${log['comment'] ?? 'No comment'}',
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildEventDetailSection(String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: Column(children: children),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEventDetailRow(String label, String value, {Color? valueColor}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: valueColor ?? Colors.black87,
-                fontWeight: FontWeight.w400,
-              ),
+          CircularProgressIndicator(color: theme.colorScheme.primary),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],

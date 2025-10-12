@@ -47,4 +47,10 @@ class ApiEndpoints {
   static String getInvoiceAuditLogsWithHistory(String invoiceId) =>
       '/invoices/$invoiceId/auditLogsWithHistory';
   static String adjustInvoiceItem(String invoiceId) => '/invoices/$invoiceId';
+
+  // Bundles endpoints
+  static const String bundles = '/bundles';
+  static String getBundleById(String bundleId) => '/bundles/$bundleId';
+  static String getBundlesForAccount(String accountId) =>
+      '/bundles?accountId=$accountId';
 }

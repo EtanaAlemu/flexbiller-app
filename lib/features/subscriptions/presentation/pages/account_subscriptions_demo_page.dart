@@ -29,8 +29,16 @@ class _AccountSubscriptionsDemoPageState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Account Subscriptions Demo')),
+      appBar: AppBar(
+        title: const Text('Account Subscriptions'),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(

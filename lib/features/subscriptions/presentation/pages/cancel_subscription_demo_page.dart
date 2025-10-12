@@ -33,10 +33,18 @@ class _CancelSubscriptionDemoPageState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocProvider(
       create: (context) => GetIt.instance<SubscriptionsBloc>(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Cancel Subscription Demo')),
+        appBar: AppBar(
+          title: const Text('Cancel Subscription'),
+          backgroundColor: theme.colorScheme.surface,
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -101,14 +109,14 @@ class _CancelSubscriptionDemoPageState
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.errorContainer.withValues(
-                      alpha: 0.1,
-                    ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.errorContainer.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.error.withValues(
-                        alpha: 0.3,
-                      ),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.error.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Column(
@@ -124,10 +132,11 @@ class _CancelSubscriptionDemoPageState
                           const SizedBox(width: 8),
                           Text(
                             'Important Notes:',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.error,
-                            ),
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
                           ),
                         ],
                       ),
@@ -183,7 +192,7 @@ class _CancelSubscriptionDemoPageState
   void _showCancelDialog() {
     if (_formKey.currentState!.validate()) {
       final subscriptionId = _subscriptionIdController.text.trim();
-      
+
       showDialog(
         context: context,
         builder: (context) => BlocProvider(

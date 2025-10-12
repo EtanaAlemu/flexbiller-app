@@ -15,16 +15,20 @@ class UpdateSubscriptionBcdDemoPage extends StatefulWidget {
 
 class _UpdateSubscriptionBcdDemoPageState
     extends State<UpdateSubscriptionBcdDemoPage> {
-  final TextEditingController _subscriptionIdController = TextEditingController();
+  final TextEditingController _subscriptionIdController =
+      TextEditingController();
   final TextEditingController _accountIdController = TextEditingController();
   final TextEditingController _bundleIdController = TextEditingController();
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _productNameController = TextEditingController();
-  final TextEditingController _productCategoryController = TextEditingController();
-  final TextEditingController _billingPeriodController = TextEditingController();
+  final TextEditingController _productCategoryController =
+      TextEditingController();
+  final TextEditingController _billingPeriodController =
+      TextEditingController();
   final TextEditingController _priceListController = TextEditingController();
   final TextEditingController _phaseTypeController = TextEditingController();
-  final TextEditingController _billCycleDayLocalController = TextEditingController();
+  final TextEditingController _billCycleDayLocalController =
+      TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -59,10 +63,18 @@ class _UpdateSubscriptionBcdDemoPageState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocProvider(
       create: (context) => GetIt.instance<SubscriptionsBloc>(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Update Subscription BCD Demo')),
+        appBar: AppBar(
+          title: const Text('Update BCD'),
+          backgroundColor: theme.colorScheme.surface,
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -99,7 +111,8 @@ class _UpdateSubscriptionBcdDemoPageState
                           decoration: const InputDecoration(
                             labelText: 'Account ID',
                             border: OutlineInputBorder(),
-                            hintText: 'e.g., 0f2ba9db-56c2-4a25-ac4e-11c12540852a',
+                            hintText:
+                                'e.g., 0f2ba9db-56c2-4a25-ac4e-11c12540852a',
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
@@ -116,7 +129,8 @@ class _UpdateSubscriptionBcdDemoPageState
                           decoration: const InputDecoration(
                             labelText: 'Bundle ID',
                             border: OutlineInputBorder(),
-                            hintText: 'e.g., 7fcc23c9-4237-460f-8039-f4a82ade8366',
+                            hintText:
+                                'e.g., 7fcc23c9-4237-460f-8039-f4a82ade8366',
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
@@ -296,15 +310,22 @@ class _UpdateSubscriptionBcdDemoPageState
         'billingPeriod': _billingPeriodController.text.trim(),
         'priceList': _priceListController.text.trim(),
         'phaseType': _phaseTypeController.text.trim(),
-        'billCycleDayLocal': int.parse(_billCycleDayLocalController.text.trim()),
+        'billCycleDayLocal': int.parse(
+          _billCycleDayLocalController.text.trim(),
+        ),
       };
 
-      context.read<SubscriptionsBloc>().add(UpdateSubscriptionBcd(
-        subscriptionId: _subscriptionIdController.text.trim(),
-        bcdData: bcdData,
-      ));
+      context.read<SubscriptionsBloc>().add(
+        UpdateSubscriptionBcd(
+          subscriptionId: _subscriptionIdController.text.trim(),
+          bcdData: bcdData,
+        ),
+      );
 
-      _showResultDialog('Update Subscription BCD', 'Updating subscription BCD...');
+      _showResultDialog(
+        'Update Subscription BCD',
+        'Updating subscription BCD...',
+      );
     }
   }
 
@@ -332,7 +353,9 @@ class _UpdateSubscriptionBcdDemoPageState
           } else if (state is UpdateSubscriptionBcdError) {
             return AlertDialog(
               title: const Text('Error'),
-              content: Text('Failed to update subscription BCD: ${state.message}'),
+              content: Text(
+                'Failed to update subscription BCD: ${state.message}',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
@@ -375,15 +398,21 @@ class _UpdateSubscriptionBcdDemoPageState
             const SizedBox(height: 8),
             Text('Account ID: ${result['data']['accountId'] ?? 'N/A'}'),
             Text('Bundle ID: ${result['data']['bundleId'] ?? 'N/A'}'),
-            Text('Subscription ID: ${result['data']['subscriptionId'] ?? 'N/A'}'),
+            Text(
+              'Subscription ID: ${result['data']['subscriptionId'] ?? 'N/A'}',
+            ),
             Text('Product Name: ${result['data']['productName'] ?? 'N/A'}'),
-            Text('Product Category: ${result['data']['productCategory'] ?? 'N/A'}'),
+            Text(
+              'Product Category: ${result['data']['productCategory'] ?? 'N/A'}',
+            ),
             Text('Billing Period: ${result['data']['billingPeriod'] ?? 'N/A'}'),
             Text('Phase Type: ${result['data']['phaseType'] ?? 'N/A'}'),
             Text('Price List: ${result['data']['priceList'] ?? 'N/A'}'),
             Text('Plan Name: ${result['data']['planName'] ?? 'N/A'}'),
             Text('State: ${result['data']['state'] ?? 'N/A'}'),
-            Text('Bill Cycle Day: ${result['data']['billCycleDayLocal'] ?? 'N/A'}'),
+            Text(
+              'Bill Cycle Day: ${result['data']['billCycleDayLocal'] ?? 'N/A'}',
+            ),
             Text('Quantity: ${result['data']['quantity'] ?? 'N/A'}'),
           ],
         ],

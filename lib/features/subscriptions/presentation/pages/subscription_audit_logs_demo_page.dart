@@ -16,7 +16,8 @@ class SubscriptionAuditLogsDemoPage extends StatefulWidget {
 
 class _SubscriptionAuditLogsDemoPageState
     extends State<SubscriptionAuditLogsDemoPage> {
-  final TextEditingController _subscriptionIdController = TextEditingController();
+  final TextEditingController _subscriptionIdController =
+      TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -33,10 +34,18 @@ class _SubscriptionAuditLogsDemoPageState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocProvider(
       create: (context) => GetIt.instance<SubscriptionsBloc>(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Subscription Audit Logs Demo')),
+        appBar: AppBar(
+          title: const Text('Audit Logs'),
+          backgroundColor: theme.colorScheme.surface,
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -44,17 +53,46 @@ class _SubscriptionAuditLogsDemoPageState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'This demo allows you to retrieve audit logs with history for a subscription.',
-                  style: TextStyle(fontSize: 16),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: theme.colorScheme.outline.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          color: theme.colorScheme.primary,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Retrieve audit logs with history for a subscription',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 TextFormField(
                   controller: _subscriptionIdController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Subscription ID',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     hintText: 'e.g., 41b74b4b-4a19-4a5c-9be7-20b805e08c14',
+                    prefixIcon: const Icon(Icons.fingerprint_rounded),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -64,49 +102,98 @@ class _SubscriptionAuditLogsDemoPageState
                   },
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton(
+                FilledButton.icon(
                   onPressed: _getSubscriptionAuditLogs,
-                  style: ElevatedButton.styleFrom(
+                  icon: const Icon(Icons.history_rounded),
+                  label: const Text('Get Audit Logs'),
+                  style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Get Subscription Audit Logs'),
                 ),
                 const SizedBox(height: 24),
                 Expanded(
                   child: BlocBuilder<SubscriptionsBloc, SubscriptionsState>(
                     builder: (context, state) {
                       if (state is GetSubscriptionAuditLogsWithHistoryLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (state is GetSubscriptionAuditLogsWithHistorySuccess) {
-                        return _buildAuditLogsList(state.auditLogs);
-                      } else if (state is GetSubscriptionAuditLogsWithHistoryError) {
                         return Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(
-                                Icons.error_outline,
-                                color: Colors.red,
+                              CircularProgressIndicator(
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Loading audit logs...',
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else if (state
+                          is GetSubscriptionAuditLogsWithHistorySuccess) {
+                        return _buildAuditLogsList(state.auditLogs);
+                      } else if (state
+                          is GetSubscriptionAuditLogsWithHistoryError) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline_rounded,
+                                color: theme.colorScheme.error,
                                 size: 64,
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'Error: ${state.message}',
-                                style: const TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 16,
+                                'Error loading audit logs',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                ),
+                                child: Text(
+                                  state.message,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.error,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ],
                           ),
                         );
                       }
-                      return const Center(
-                        child: Text(
-                          'Enter a subscription ID and click the button to retrieve audit logs.',
-                          style: TextStyle(fontSize: 16),
-                          textAlign: TextAlign.center,
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.history_rounded,
+                              size: 64,
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withOpacity(0.6),
+                            ),
+                            const SizedBox(height: 16),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                              ),
+                              child: Text(
+                                'Enter a subscription ID and click the button to retrieve audit logs',
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -123,9 +210,9 @@ class _SubscriptionAuditLogsDemoPageState
   void _getSubscriptionAuditLogs() {
     if (_formKey.currentState!.validate()) {
       final subscriptionId = _subscriptionIdController.text.trim();
-      context.read<SubscriptionsBloc>().add(GetSubscriptionAuditLogsWithHistory(
-        subscriptionId,
-      ));
+      context.read<SubscriptionsBloc>().add(
+        GetSubscriptionAuditLogsWithHistory(subscriptionId),
+      );
     }
   }
 
@@ -160,7 +247,10 @@ class _SubscriptionAuditLogsDemoPageState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildInfoRow('Change Type', auditLog.changeType),
-                    _buildInfoRow('Change Date', _formatDate(auditLog.changeDate)),
+                    _buildInfoRow(
+                      'Change Date',
+                      _formatDate(auditLog.changeDate),
+                    ),
                     _buildInfoRow('Object Type', auditLog.objectType),
                     _buildInfoRow('Object ID', auditLog.objectId),
                     _buildInfoRow('Changed By', auditLog.changedBy),
@@ -202,9 +292,7 @@ class _SubscriptionAuditLogsDemoPageState
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
-          Expanded(
-            child: Text(value ?? 'N/A'),
-          ),
+          Expanded(child: Text(value ?? 'N/A')),
         ],
       ),
     );
@@ -224,8 +312,14 @@ class _SubscriptionAuditLogsDemoPageState
         _buildInfoRow('External Key', history.externalKey),
         _buildInfoRow('Category', history.category),
         _buildInfoRow('Start Date', _formatDate(history.startDate)),
-        _buildInfoRow('Bundle Start Date', _formatDate(history.bundleStartDate)),
-        _buildInfoRow('Charged Through Date', _formatDate(history.chargedThroughDate)),
+        _buildInfoRow(
+          'Bundle Start Date',
+          _formatDate(history.bundleStartDate),
+        ),
+        _buildInfoRow(
+          'Charged Through Date',
+          _formatDate(history.chargedThroughDate),
+        ),
         _buildInfoRow('Migrated', history.migrated?.toString()),
         _buildInfoRow('Table Name', history.tableName),
         _buildInfoRow('History Table Name', history.historyTableName),

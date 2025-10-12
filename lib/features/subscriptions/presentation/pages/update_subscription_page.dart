@@ -12,10 +12,18 @@ class UpdateSubscriptionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocProvider(
       create: (context) => GetIt.instance<SubscriptionsBloc>(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Update Subscription')),
+        appBar: AppBar(
+          title: const Text('Update Subscription'),
+          backgroundColor: theme.colorScheme.surface,
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+        ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: UpdateSubscriptionForm(

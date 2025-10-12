@@ -21,6 +21,7 @@ import '../dao/subscription_dao.dart';
 import '../dao/sync_metadata_dao.dart';
 import '../dao/tag_definitions_dao.dart';
 import '../dao/invoice_dao.dart';
+import '../dao/bundles_dao.dart';
 import 'database_table_manager.dart';
 
 /// Registers all database tables with their configurations
@@ -135,6 +136,14 @@ class DatabaseTableConfig {
       TableConfig(
         tableName: 'subscriptions',
         createTableSQL: SubscriptionDao.createTableSQL,
+      ),
+    );
+
+    DatabaseTableRegistry.registerTable(
+      TableConfig(
+        tableName: 'bundles',
+        createTableSQL: BundlesDao.createTableSQL,
+        createIndexesSQL: BundlesDao.createIndexesSQL,
       ),
     );
 

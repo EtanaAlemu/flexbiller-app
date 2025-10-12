@@ -15,10 +15,12 @@ class BlockSubscriptionDemoPage extends StatefulWidget {
 }
 
 class _BlockSubscriptionDemoPageState extends State<BlockSubscriptionDemoPage> {
-  final TextEditingController _subscriptionIdController = TextEditingController();
+  final TextEditingController _subscriptionIdController =
+      TextEditingController();
   final TextEditingController _stateNameController = TextEditingController();
   final TextEditingController _serviceController = TextEditingController();
-  final TextEditingController _effectiveDateController = TextEditingController();
+  final TextEditingController _effectiveDateController =
+      TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   bool _isBlockChange = true;
@@ -45,10 +47,18 @@ class _BlockSubscriptionDemoPageState extends State<BlockSubscriptionDemoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocProvider(
       create: (context) => GetIt.instance<SubscriptionsBloc>(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Block Subscription Demo')),
+        appBar: AppBar(
+          title: const Text('Block Subscription'),
+          backgroundColor: theme.colorScheme.surface,
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -196,10 +206,12 @@ class _BlockSubscriptionDemoPageState extends State<BlockSubscriptionDemoPage> {
         'type': 'SUBSCRIPTION',
       };
 
-      context.read<SubscriptionsBloc>().add(BlockSubscription(
-        subscriptionId: subscriptionId,
-        blockingData: blockingData,
-      ));
+      context.read<SubscriptionsBloc>().add(
+        BlockSubscription(
+          subscriptionId: subscriptionId,
+          blockingData: blockingData,
+        ),
+      );
 
       _showResultDialog('Block Subscription', 'Blocking subscription...');
     }
@@ -266,7 +278,9 @@ class _BlockSubscriptionDemoPageState extends State<BlockSubscriptionDemoPage> {
         Text('Block Entitlement: ${blockingState.isBlockEntitlement ?? false}'),
         Text('Block Billing: ${blockingState.isBlockBilling ?? false}'),
         if (blockingState.effectiveDate != null)
-          Text('Effective Date: ${blockingState.effectiveDate!.toIso8601String()}'),
+          Text(
+            'Effective Date: ${blockingState.effectiveDate!.toIso8601String()}',
+          ),
       ],
     );
   }

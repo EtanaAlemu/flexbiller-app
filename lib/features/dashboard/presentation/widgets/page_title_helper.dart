@@ -8,22 +8,24 @@ class PageTitleHelper {
       case 2:
         return 'Subscriptions';
       case 3:
-        return 'Products';
+        return 'Bundles';
       case 4:
-        return 'Price Plans';
+        return 'Products';
       case 5:
-        return 'Invoices';
+        return 'Price Plans';
       case 6:
-        return 'Payments';
+        return 'Invoices';
       case 7:
-        return 'Reports';
+        return 'Payments';
       case 8:
-        return 'Tags';
+        return 'Reports';
       case 9:
-        return 'Tag Definitions';
+        return 'Tags';
       case 10:
-        return 'Settings';
+        return 'Tag Definitions';
       case 11:
+        return 'Settings';
+      case 12:
         return 'Profile';
       default:
         return 'Dashboard';

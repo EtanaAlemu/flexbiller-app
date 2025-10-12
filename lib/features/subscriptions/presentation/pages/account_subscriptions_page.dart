@@ -4,6 +4,9 @@ import '../bloc/subscriptions_bloc.dart';
 import '../bloc/subscriptions_event.dart';
 import '../bloc/subscriptions_state.dart';
 import '../widgets/subscription_card_widget.dart';
+import '../widgets/subscriptions_loading_widget.dart';
+import '../widgets/subscriptions_error_widget.dart';
+import '../widgets/subscriptions_empty_state.dart';
 import 'create_subscription_page.dart';
 
 class AccountSubscriptionsPage extends StatelessWidget {
@@ -18,6 +21,8 @@ class AccountSubscriptionsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocProvider(
       create: (context) =>
           context.read<SubscriptionsBloc>()
@@ -29,58 +34,41 @@ class AccountSubscriptionsPage extends StatelessWidget {
                 ? 'Subscriptions - $accountName'
                 : 'Account Subscriptions',
           ),
+          backgroundColor: theme.colorScheme.surface,
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
           actions: [
             IconButton(
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh_rounded),
               onPressed: () {
                 context.read<SubscriptionsBloc>().add(
                   GetSubscriptionsForAccount(accountId),
                 );
               },
+              tooltip: 'Refresh',
             ),
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _createNewSubscription(context),
-          icon: const Icon(Icons.add),
+          icon: const Icon(Icons.add_rounded),
           label: const Text('New Subscription'),
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
         ),
         body: BlocBuilder<SubscriptionsBloc, SubscriptionsState>(
           builder: (context, state) {
             if (state is AccountSubscriptionsLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const SubscriptionsLoadingWidget();
             } else if (state is AccountSubscriptionsLoaded) {
               if (state.subscriptions.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.subscriptions_outlined,
-                        size: 64,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No subscriptions found',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'This account doesn\'t have any active subscriptions',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () => _createNewSubscription(context),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Create First Subscription'),
-                      ),
-                    ],
-                  ),
+                return SubscriptionsEmptyState(
+                  onRefresh: () async {
+                    context.read<SubscriptionsBloc>().add(
+                      GetSubscriptionsForAccount(accountId),
+                    );
+                  },
                 );
               }
               return RefreshIndicator(
@@ -94,6 +82,7 @@ class AccountSubscriptionsPage extends StatelessWidget {
                     _buildAccountInfoHeader(context, state),
                     Expanded(
                       child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         itemCount: state.subscriptions.length,
                         itemBuilder: (context, index) {
                           final subscription = state.subscriptions[index];
@@ -107,40 +96,16 @@ class AccountSubscriptionsPage extends StatelessWidget {
                 ),
               );
             } else if (state is AccountSubscriptionsError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error loading subscriptions',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      state.message,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        context.read<SubscriptionsBloc>().add(
-                          GetSubscriptionsForAccount(accountId),
-                        );
-                      },
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
+              return SubscriptionsErrorWidget(
+                message: state.message,
+                onRetry: () {
+                  context.read<SubscriptionsBloc>().add(
+                    GetSubscriptionsForAccount(accountId),
+                  );
+                },
               );
             }
-            return const Center(child: Text('No subscriptions loaded'));
+            return const SubscriptionsEmptyState();
           },
         ),
       ),
@@ -175,34 +140,80 @@ class AccountSubscriptionsPage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
-        border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primaryContainer,
+            theme.colorScheme.primaryContainer.withOpacity(0.7),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outline.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.account_circle,
-                color: theme.colorScheme.primary,
-                size: 24,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.account_circle_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Account ID: $accountId',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      accountName ?? 'Account',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      accountId,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer.withOpacity(
+                          0.7,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${state.subscriptions.length}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${state.subscriptions.length} subscription${state.subscriptions.length == 1 ? '' : 's'} found',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-            ),
           ),
         ],
       ),

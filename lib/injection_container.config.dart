@@ -261,6 +261,25 @@ import 'features/auth/domain/usecases/logout_usecase.dart' as _i824;
 import 'features/auth/domain/usecases/reset_password_usecase.dart' as _i1070;
 import 'features/auth/domain/usecases/update_user_usecase.dart' as _i457;
 import 'features/auth/presentation/bloc/auth_bloc.dart' as _i363;
+import 'features/bundles/data/datasources/bundles_local_data_source.dart'
+    as _i452;
+import 'features/bundles/data/datasources/bundles_remote_data_source.dart'
+    as _i42;
+import 'features/bundles/data/repositories/bundles_repository_impl.dart'
+    as _i981;
+import 'features/bundles/domain/repositories/bundles_repository.dart' as _i950;
+import 'features/bundles/domain/usecases/get_all_bundles_usecase.dart' as _i118;
+import 'features/bundles/domain/usecases/get_bundle_by_id_usecase.dart'
+    as _i904;
+import 'features/bundles/domain/usecases/get_bundles_for_account_usecase.dart'
+    as _i417;
+import 'features/bundles/domain/usecases/get_cached_bundle_by_id_usecase.dart'
+    as _i41;
+import 'features/bundles/domain/usecases/get_cached_bundles_usecase.dart'
+    as _i777;
+import 'features/bundles/presentation/bloc/bundle_multiselect_bloc.dart'
+    as _i405;
+import 'features/bundles/presentation/bloc/bundles_bloc.dart' as _i531;
 import 'features/dashboard/data/datasources/dashboard_local_data_source.dart'
     as _i336;
 import 'features/dashboard/data/datasources/dashboard_mock_data_source.dart'
@@ -423,6 +442,7 @@ _i174.GetIt $initGetIt(
   gh.factory<_i181.InvoiceMultiSelectBloc>(
     () => _i181.InvoiceMultiSelectBloc(),
   );
+  gh.factory<_i405.BundleMultiSelectBloc>(() => _i405.BundleMultiSelectBloc());
   gh.singleton<_i974.Logger>(() => injectionModule.logger);
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
@@ -481,6 +501,9 @@ _i174.GetIt $initGetIt(
   gh.lazySingleton<_i563.CrashAnalyticsInitializer>(
     () => _i563.CrashAnalyticsInitializer(gh<_i974.Logger>()),
   );
+  gh.factory<_i42.BundlesRemoteDataSource>(
+    () => _i42.BundlesRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
   gh.factory<_i976.SubscriptionsRemoteDataSource>(
     () => _i976.SubscriptionsRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
@@ -498,6 +521,12 @@ _i174.GetIt $initGetIt(
   );
   gh.lazySingleton<_i277.InvoicesLocalDataSource>(
     () => _i277.InvoicesLocalDataSourceImpl(
+      gh<_i916.DatabaseService>(),
+      gh<_i974.Logger>(),
+    ),
+  );
+  gh.lazySingleton<_i452.BundlesLocalDataSource>(
+    () => _i452.BundlesLocalDataSourceImpl(
       gh<_i916.DatabaseService>(),
       gh<_i974.Logger>(),
     ),
@@ -686,11 +715,33 @@ _i174.GetIt $initGetIt(
   gh.factory<_i743.CreateChildAccountUseCase>(
     () => _i743.CreateChildAccountUseCase(gh<_i596.ChildAccountRepository>()),
   );
+  gh.lazySingleton<_i950.BundlesRepository>(
+    () => _i981.BundlesRepositoryImpl(
+      gh<_i42.BundlesRemoteDataSource>(),
+      gh<_i452.BundlesLocalDataSource>(),
+      gh<_i75.NetworkInfo>(),
+    ),
+  );
   gh.factory<_i201.AccountTagsLocalDataSource>(
     () => _i201.AccountTagsLocalDataSourceImpl(
       gh<_i916.DatabaseService>(),
       gh<_i140.UserSessionService>(),
     ),
+  );
+  gh.factory<_i904.GetBundleByIdUseCase>(
+    () => _i904.GetBundleByIdUseCase(gh<_i950.BundlesRepository>()),
+  );
+  gh.factory<_i118.GetAllBundlesUseCase>(
+    () => _i118.GetAllBundlesUseCase(gh<_i950.BundlesRepository>()),
+  );
+  gh.factory<_i417.GetBundlesForAccountUseCase>(
+    () => _i417.GetBundlesForAccountUseCase(gh<_i950.BundlesRepository>()),
+  );
+  gh.factory<_i777.GetCachedBundlesUseCase>(
+    () => _i777.GetCachedBundlesUseCase(gh<_i950.BundlesRepository>()),
+  );
+  gh.factory<_i41.GetCachedBundleByIdUseCase>(
+    () => _i41.GetCachedBundleByIdUseCase(gh<_i950.BundlesRepository>()),
   );
   gh.factory<_i983.GetDashboardData>(
     () => _i983.GetDashboardData(gh<_i557.DashboardRepository>()),
@@ -814,6 +865,15 @@ _i174.GetIt $initGetIt(
   gh.factory<_i706.SetDefaultPaymentMethodUseCase>(
     () => _i706.SetDefaultPaymentMethodUseCase(
       gh<_i845.AccountPaymentMethodsRepository>(),
+    ),
+  );
+  gh.factory<_i531.BundlesBloc>(
+    () => _i531.BundlesBloc(
+      gh<_i118.GetAllBundlesUseCase>(),
+      gh<_i904.GetBundleByIdUseCase>(),
+      gh<_i417.GetBundlesForAccountUseCase>(),
+      gh<_i777.GetCachedBundlesUseCase>(),
+      gh<_i41.GetCachedBundleByIdUseCase>(),
     ),
   );
   gh.factory<_i521.DashboardBloc>(

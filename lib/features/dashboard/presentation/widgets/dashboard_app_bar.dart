@@ -5,6 +5,8 @@ import 'payments_action_menu.dart';
 import 'invoices_action_menu.dart';
 import 'tag_definitions_action_menu.dart';
 import '../../../tag_definitions/presentation/pages/tag_definitions_page.dart';
+import '../../../subscriptions/presentation/widgets/subscriptions_action_menu.dart';
+import '../../../bundles/presentation/widgets/bundles_action_menu.dart';
 
 class DashboardAppBar extends StatelessWidget {
   final bool isSidebarVisible;
@@ -16,6 +18,8 @@ class DashboardAppBar extends StatelessWidget {
   final GlobalKey? paymentsViewKey;
   final GlobalKey? invoicesViewKey;
   final GlobalKey<TagDefinitionsViewState>? tagDefinitionsViewKey;
+  final GlobalKey? subscriptionsViewKey;
+  final GlobalKey? bundlesViewKey;
 
   const DashboardAppBar({
     Key? key,
@@ -28,6 +32,8 @@ class DashboardAppBar extends StatelessWidget {
     this.paymentsViewKey,
     this.invoicesViewKey,
     this.tagDefinitionsViewKey,
+    this.subscriptionsViewKey,
+    this.bundlesViewKey,
   }) : super(key: key);
 
   @override
@@ -70,8 +76,14 @@ class DashboardAppBar extends StatelessWidget {
                 AccountsActionMenu(accountsViewKey: accountsViewKey),
               ],
             ),
+          // Subscriptions-specific actions
+          if (currentPageIndex == 2) // Subscriptions page
+            SubscriptionsActionMenu(subscriptionsViewKey: subscriptionsViewKey),
+          // Bundles-specific actions
+          if (currentPageIndex == 3) // Bundles page
+            BundlesActionMenu(bundlesViewKey: bundlesViewKey),
           // Products-specific actions
-          if (currentPageIndex == 3) // Products page
+          if (currentPageIndex == 4) // Products page
             Row(
               children: [
                 IconButton(
@@ -83,7 +95,7 @@ class DashboardAppBar extends StatelessWidget {
               ],
             ),
           // Payments-specific actions
-          if (currentPageIndex == 6) // Payments page
+          if (currentPageIndex == 7) // Payments page
             Row(
               children: [
                 IconButton(
@@ -95,7 +107,7 @@ class DashboardAppBar extends StatelessWidget {
               ],
             ),
           // Invoices-specific actions
-          if (currentPageIndex == 5) // Invoices page
+          if (currentPageIndex == 6) // Invoices page
             Row(
               children: [
                 IconButton(
@@ -107,7 +119,7 @@ class DashboardAppBar extends StatelessWidget {
               ],
             ),
           // Tag Definitions-specific actions
-          if (currentPageIndex == 9) // Tag Definitions page
+          if (currentPageIndex == 10) // Tag Definitions page
             Row(
               children: [
                 IconButton(
