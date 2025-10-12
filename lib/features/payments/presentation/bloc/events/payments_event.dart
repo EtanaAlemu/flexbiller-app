@@ -1,4 +1,4 @@
-part of 'payments_bloc.dart';
+part of '../payments_bloc.dart';
 
 abstract class PaymentsEvent extends Equatable {
   const PaymentsEvent();
@@ -31,4 +31,13 @@ class GetPaymentsByAccountIdEvent extends PaymentsEvent {
 
 class RefreshPaymentsEvent extends PaymentsEvent {
   const RefreshPaymentsEvent();
+}
+
+class SearchPaymentsEvent extends PaymentsEvent {
+  final String searchKey;
+
+  const SearchPaymentsEvent(this.searchKey);
+
+  @override
+  List<Object?> get props => [searchKey];
 }

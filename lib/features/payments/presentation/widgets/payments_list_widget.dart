@@ -1,7 +1,13 @@
+import 'package:flexbiller_app/features/payments/presentation/bloc/states/payment_multiselect_states.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../domain/entities/payment.dart';
+import '../pages/payment_detail_page.dart';
+import '../bloc/payment_multiselect_bloc.dart';
+import '../bloc/events/payment_multiselect_events.dart';
 
 class PaymentsListWidget extends StatelessWidget {
   final List<Payment> payments;
@@ -65,62 +71,174 @@ class PaymentListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(symbol: payment.currency);
-    final dateFormat = DateFormat('MMM dd, yyyy');
+    return BlocBuilder<PaymentMultiSelectBloc, PaymentMultiSelectState>(
+      builder: (context, state) {
+        final multiSelectBloc = context.read<PaymentMultiSelectBloc>();
+        final isMultiSelectMode = multiSelectBloc.isMultiSelectMode;
+        final isSelected = multiSelectBloc.isPaymentSelected(payment);
 
-    // Get the latest transaction for display
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: isSelected
+                ? BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  )
+                : BorderSide(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withOpacity(0.1),
+                    width: 1,
+                  ),
+          ),
+          child: GestureDetector(
+            onTap: () {
+              if (isMultiSelectMode) {
+                _toggleSelection(context);
+              } else {
+                _navigateToPaymentDetail(context);
+              }
+            },
+            onLongPress: () {
+              if (!isMultiSelectMode) {
+                _enableMultiSelectModeAndSelect(context);
+              }
+              // Provide haptic feedback
+              HapticFeedback.mediumImpact();
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Status Icon with optional checkbox overlay
+                  Stack(
+                    children: [
+                      // Always show status icon
+                      _buildStatusIcon(context),
+
+                      // Show checkbox overlay when in multi-select mode and selected
+                      if (isMultiSelectMode && isSelected)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Theme.of(context).colorScheme.primary,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  // Payment Info
+                  Expanded(child: _buildPaymentInfo(context)),
+
+                  // Arrow Icon (only in normal mode)
+                  if (!isMultiSelectMode)
+                    Icon(
+                      Icons.chevron_right,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusIcon(BuildContext context) {
     final latestTransaction = payment.transactions.isNotEmpty
         ? payment.transactions.first
         : null;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getStatusColor(latestTransaction?.status),
-          child: Icon(
-            _getStatusIcon(latestTransaction?.status),
-            color: Colors.white,
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: _getStatusColor(latestTransaction?.status),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Icon(
+        _getStatusIcon(latestTransaction?.status),
+        color: Colors.white,
+        size: 24,
+      ),
+    );
+  }
+
+  Widget _buildPaymentInfo(BuildContext context) {
+    final currencyFormat = NumberFormat.currency(symbol: payment.currency);
+    final dateFormat = DateFormat('MMM dd, yyyy');
+    final latestTransaction = payment.transactions.isNotEmpty
+        ? payment.transactions.first
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Payment #${payment.paymentNumber}',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          currencyFormat.format(payment.purchasedAmount),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
-        title: Text(
-          'Payment #${payment.paymentNumber}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Amount: ${currencyFormat.format(payment.purchasedAmount)}'),
-            if (latestTransaction != null) ...[
-              Text('Status: ${latestTransaction.status}'),
-              Text(
-                'Date: ${dateFormat.format(latestTransaction.effectiveDate)}',
-              ),
-            ],
-            Text('Account: ${payment.accountId.substring(0, 8)}...'),
-          ],
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              currencyFormat.format(payment.purchasedAmount),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        const SizedBox(height: 2),
+        if (latestTransaction != null)
+          Text(
+            '${latestTransaction.status} • ${dateFormat.format(latestTransaction.effectiveDate)}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             ),
-            if (payment.refundedAmount > 0)
-              Text(
-                'Refunded: ${currencyFormat.format(payment.refundedAmount)}',
-                style: const TextStyle(color: Colors.red, fontSize: 12),
-              ),
-          ],
-        ),
-        onTap: () {
-          // TODO: Navigate to payment detail page
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Payment ${payment.paymentNumber} details')),
-          );
-        },
+          ),
+      ],
+    );
+  }
+
+  void _toggleSelection(BuildContext context) {
+    final multiSelectBloc = context.read<PaymentMultiSelectBloc>();
+    if (multiSelectBloc.isPaymentSelected(payment)) {
+      multiSelectBloc.add(DeselectPayment(payment));
+    } else {
+      multiSelectBloc.add(SelectPayment(payment));
+    }
+  }
+
+  void _enableMultiSelectModeAndSelect(BuildContext context) {
+    context.read<PaymentMultiSelectBloc>().add(
+      EnableMultiSelectModeAndSelect(payment),
+    );
+  }
+
+  void _navigateToPaymentDetail(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PaymentDetailPage(payment: payment),
       ),
     );
   }

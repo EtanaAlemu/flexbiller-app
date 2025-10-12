@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'sidebar_menu.dart';
 import 'dashboard_app_bar.dart';
+import '../../../tag_definitions/presentation/pages/tag_definitions_page.dart';
 
 class DashboardLayout extends StatelessWidget {
   final bool isSidebarVisible;
@@ -9,7 +10,12 @@ class DashboardLayout extends StatelessWidget {
   final String pageTitle;
   final int currentPageIndex;
   final Widget content;
-  final bool isMobile;
+  final Function(int) onNavigate;
+  final VoidCallback onLogout;
+  final GlobalKey? accountsViewKey;
+  final GlobalKey? productsViewKey;
+  final GlobalKey? paymentsViewKey;
+  final GlobalKey<TagDefinitionsViewState>? tagDefinitionsViewKey;
 
   const DashboardLayout({
     Key? key,
@@ -18,19 +24,16 @@ class DashboardLayout extends StatelessWidget {
     required this.pageTitle,
     required this.currentPageIndex,
     required this.content,
-    required this.isMobile,
+    required this.onNavigate,
+    required this.onLogout,
+    this.accountsViewKey,
+    this.productsViewKey,
+    this.paymentsViewKey,
+    this.tagDefinitionsViewKey,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    if (isMobile) {
-      return _buildMobileLayout(context);
-    } else {
-      return _buildDesktopLayout(context);
-    }
-  }
-
-  Widget _buildMobileLayout(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -43,6 +46,10 @@ class DashboardLayout extends StatelessWidget {
               onToggleSidebar: onToggleSidebar,
               pageTitle: pageTitle,
               currentPageIndex: currentPageIndex,
+              accountsViewKey: accountsViewKey,
+              productsViewKey: productsViewKey,
+              paymentsViewKey: paymentsViewKey,
+              tagDefinitionsViewKey: tagDefinitionsViewKey,
             ),
             Expanded(child: SafeArea(child: content)),
           ],
@@ -88,51 +95,15 @@ class DashboardLayout extends StatelessWidget {
               ),
               child: SidebarMenu(
                 selectedIndex: currentPageIndex,
-                onItemSelected: (index) {
-                  // Handle navigation - this will be handled by parent
-                },
-                onLogout: () {
-                  // Handle logout - this will be handled by parent
-                },
-                onClose: onToggleSidebar, // Close sidebar for special actions
+                onItemSelected:
+                    onNavigate, // Let dashboard page handle sidebar closing
+                onLogout: onLogout, // Let dashboard page handle sidebar closing
+                onClose:
+                    onToggleSidebar, // Close sidebar for special actions (Profile)
               ),
             ),
           ),
         ],
-      ],
-    );
-  }
-
-  Widget _buildDesktopLayout(BuildContext context) {
-    return Row(
-      children: [
-        if (isSidebarVisible)
-          Container(
-            width: 250,
-            color: Theme.of(context).colorScheme.surface,
-            child: SidebarMenu(
-              selectedIndex: currentPageIndex,
-              onItemSelected: (index) {
-                // Handle navigation
-              },
-              onLogout: () {
-                // Handle logout
-              },
-            ),
-          ),
-        Expanded(
-          child: Column(
-            children: [
-              DashboardAppBar(
-                isSidebarVisible: isSidebarVisible,
-                onToggleSidebar: onToggleSidebar,
-                pageTitle: pageTitle,
-                currentPageIndex: currentPageIndex,
-              ),
-              Expanded(child: SafeArea(child: content)),
-            ],
-          ),
-        ),
       ],
     );
   }

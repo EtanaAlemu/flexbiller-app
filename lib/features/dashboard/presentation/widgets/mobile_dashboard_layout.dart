@@ -4,7 +4,7 @@ import 'sidebar_menu.dart';
 import 'dashboard_app_bar.dart';
 import '../../../tag_definitions/presentation/pages/tag_definitions_page.dart';
 
-class MobileDashboardLayout extends StatelessWidget {
+class DashboardLayout extends StatelessWidget {
   final bool isSidebarVisible;
   final VoidCallback onToggleSidebar;
   final String pageTitle;
@@ -14,9 +14,10 @@ class MobileDashboardLayout extends StatelessWidget {
   final VoidCallback onLogout;
   final GlobalKey? accountsViewKey;
   final GlobalKey? productsViewKey;
+  final GlobalKey? paymentsViewKey;
   final GlobalKey<TagDefinitionsViewState>? tagDefinitionsViewKey;
 
-  const MobileDashboardLayout({
+  const DashboardLayout({
     Key? key,
     required this.isSidebarVisible,
     required this.onToggleSidebar,
@@ -27,6 +28,7 @@ class MobileDashboardLayout extends StatelessWidget {
     required this.onLogout,
     this.accountsViewKey,
     this.productsViewKey,
+    this.paymentsViewKey,
     this.tagDefinitionsViewKey,
   }) : super(key: key);
 
@@ -46,6 +48,7 @@ class MobileDashboardLayout extends StatelessWidget {
               currentPageIndex: currentPageIndex,
               accountsViewKey: accountsViewKey,
               productsViewKey: productsViewKey,
+              paymentsViewKey: paymentsViewKey,
               tagDefinitionsViewKey: tagDefinitionsViewKey,
             ),
             Expanded(child: SafeArea(child: content)),

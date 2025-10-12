@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 
 import '../../../../../core/errors/failures.dart';
 import '../../../../../core/network/network_info.dart';
@@ -13,56 +14,104 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
   final PaymentsRemoteDataSource _remoteDataSource;
   final PaymentsLocalDataSource _localDataSource;
   final NetworkInfo _networkInfo;
+  final Logger _logger;
 
   PaymentsRepositoryImpl({
     required PaymentsRemoteDataSource remoteDataSource,
     required PaymentsLocalDataSource localDataSource,
     required NetworkInfo networkInfo,
+    required Logger logger,
   }) : _remoteDataSource = remoteDataSource,
        _localDataSource = localDataSource,
-       _networkInfo = networkInfo;
+       _networkInfo = networkInfo,
+       _logger = logger;
 
   @override
   Future<Either<Failure, List<Payment>>> getPayments() async {
     try {
+      _logger.d('PaymentsRepository: Starting getPayments()');
+
       // First, try to get cached payments immediately (local-first approach)
+      _logger.d('PaymentsRepository: Attempting to get cached payments');
       final cachedPayments = await _localDataSource.getCachedPayments();
+      _logger.d(
+        'PaymentsRepository: Retrieved ${cachedPayments.length} cached payments',
+      );
+
       if (cachedPayments.isNotEmpty) {
+        _logger.d(
+          'PaymentsRepository: Found cached payments, returning immediately',
+        );
         // Return cached data immediately
         final payments = cachedPayments
             .map((model) => model.toEntity())
             .toList();
 
         // Then sync with remote in background if online
+        _logger.d(
+          'PaymentsRepository: Checking network connectivity for background sync',
+        );
         if (await _networkInfo.isConnected) {
+          _logger.d(
+            'PaymentsRepository: Network connected, starting background sync',
+          );
           _syncPaymentsInBackground();
+        } else {
+          _logger.d(
+            'PaymentsRepository: No network connection, skipping background sync',
+          );
         }
 
+        _logger.d(
+          'PaymentsRepository: Returning ${payments.length} cached payments',
+        );
         return Right(payments);
       }
 
+      _logger.d(
+        'PaymentsRepository: No cached payments found, attempting remote fetch',
+      );
       // If no cached data, try to fetch from remote
       if (await _networkInfo.isConnected) {
+        _logger.d(
+          'PaymentsRepository: Network connected, fetching from remote',
+        );
         try {
           final remotePayments = await _remoteDataSource.getPayments();
+          _logger.d(
+            'PaymentsRepository: Retrieved ${remotePayments.length} payments from remote',
+          );
 
           // Cache the remote data
+          _logger.d('PaymentsRepository: Caching remote payments');
           await _localDataSource.cachePayments(remotePayments);
 
           // Return the data
           final payments = remotePayments
               .map((model) => model.toEntity())
               .toList();
+          _logger.d(
+            'PaymentsRepository: Returning ${payments.length} remote payments',
+          );
           return Right(payments);
-        } catch (e) {
+        } catch (e, stackTrace) {
+          _logger.e(
+            'PaymentsRepository: Error fetching payments from remote: $e',
+          );
+          _logger.e('PaymentsRepository: Stack trace: $stackTrace');
           return Left(ServerFailure('Failed to fetch payments: $e'));
         }
       } else {
+        _logger.w(
+          'PaymentsRepository: No internet connection and no cached data',
+        );
         return Left(
           NetworkFailure('No internet connection and no cached data'),
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      _logger.e('PaymentsRepository: Unexpected error in getPayments: $e');
+      _logger.e('PaymentsRepository: Stack trace: $stackTrace');
       return Left(CacheFailure('Error accessing local storage: $e'));
     }
   }
@@ -193,6 +242,33 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
   }
 
   @override
+  Future<Either<Failure, List<Payment>>> searchPayments(
+    String searchKey,
+  ) async {
+    try {
+      _logger.d(
+        'PaymentsRepository: Starting searchPayments with key: $searchKey',
+      );
+
+      // Only search in local cache - no remote calls for search
+      final cachedResults = await _localDataSource.searchCachedPayments(
+        searchKey,
+      );
+
+      _logger.d(
+        'PaymentsRepository: Found ${cachedResults.length} cached search results',
+      );
+
+      final payments = cachedResults.map((model) => model.toEntity()).toList();
+      return Right(payments);
+    } catch (e, stackTrace) {
+      _logger.e('PaymentsRepository: Error searching payments: $e');
+      _logger.e('PaymentsRepository: Stack trace: $stackTrace');
+      return Left(CacheFailure('Error searching payments: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<Payment>>> getCachedPaymentsByAccountId(
     String accountId,
   ) async {
@@ -211,12 +287,17 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
   /// Sync payments with remote server in background
   Future<void> _syncPaymentsInBackground() async {
     try {
+      _logger.d('PaymentsRepository: Starting background sync for payments');
       final remotePayments = await _remoteDataSource.getPayments();
+      _logger.d(
+        'PaymentsRepository: Retrieved ${remotePayments.length} payments for background sync',
+      );
       await _localDataSource.cachePayments(remotePayments);
-    } catch (e) {
+      _logger.d('PaymentsRepository: Background sync completed successfully');
+    } catch (e, stackTrace) {
       // Log error but don't throw - this is background sync
-      // In a real app, you might want to use a proper logging service
-      // print('Background sync failed: $e');
+      _logger.e('PaymentsRepository: Background sync failed: $e');
+      _logger.e('PaymentsRepository: Background sync stack trace: $stackTrace');
     }
   }
 

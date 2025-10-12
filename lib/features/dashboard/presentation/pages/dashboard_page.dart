@@ -13,12 +13,12 @@ import '../../../plans/presentation/bloc/plans_bloc.dart';
 import '../../../plans/presentation/bloc/plans_multiselect_bloc.dart';
 import '../../../payments/presentation/pages/payments_page.dart';
 import '../../../payments/presentation/bloc/payments_bloc.dart';
+import '../../../payments/presentation/bloc/payment_multiselect_bloc.dart';
 import '../../../tags/presentation/bloc/tags_bloc.dart';
 import '../../../tags/presentation/pages/tags_page.dart';
 import '../../../tag_definitions/presentation/bloc/tag_definitions_bloc.dart';
 import '../../../tag_definitions/presentation/pages/tag_definitions_page.dart';
-import '../widgets/mobile_dashboard_layout.dart';
-import '../widgets/desktop_dashboard_layout.dart';
+import '../widgets/dashboard_layout.dart';
 import '../widgets/page_title_helper.dart';
 import 'dashboard_demo_page.dart';
 import 'profile_page.dart';
@@ -33,12 +33,13 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int _currentIndex = 0;
-  bool _isSidebarVisible = true;
-  bool _isMobile = false;
+  bool _isSidebarVisible = false; // Always start with sidebar hidden on mobile
   final GlobalKey<AccountsViewState> _accountsViewKey =
       GlobalKey<AccountsViewState>();
   final GlobalKey<ProductsViewState> _productsViewKey =
       GlobalKey<ProductsViewState>();
+  final GlobalKey<PaymentsViewState> _paymentsViewKey =
+      GlobalKey<PaymentsViewState>();
   final GlobalKey<TagDefinitionsViewState> _tagDefinitionsViewKey =
       GlobalKey<TagDefinitionsViewState>();
 
@@ -49,7 +50,7 @@ class _DashboardPageState extends State<DashboardPage> {
     ProductsPage(productsViewKey: _productsViewKey),
     const PlansPage(),
     const _InvoicesPage(),
-    const PaymentsPage(),
+    PaymentsPage(paymentsViewKey: _paymentsViewKey),
     const _ReportsPage(),
     const TagsPage(),
     TagDefinitionsPage(tagDefinitionsViewKey: _tagDefinitionsViewKey),
@@ -57,25 +58,10 @@ class _DashboardPageState extends State<DashboardPage> {
     const ProfilePage(),
   ];
 
-  void _switchTab(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  }
-
   void _toggleSidebar() {
     setState(() {
       _isSidebarVisible = !_isSidebarVisible;
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _isMobile = MediaQuery.of(context).size.width < 768;
-    if (_isMobile) {
-      _isSidebarVisible = false;
-    }
   }
 
   @override
@@ -90,37 +76,26 @@ class _DashboardPageState extends State<DashboardPage> {
         BlocProvider(create: (context) => getIt<PlansBloc>()),
         BlocProvider(create: (context) => getIt<PlansMultiSelectBloc>()),
         BlocProvider(create: (context) => getIt<PaymentsBloc>()),
+        BlocProvider(create: (context) => getIt<PaymentMultiSelectBloc>()),
       ],
       child: DashboardNavigationHandler(
         currentIndex: _currentIndex,
         onNavigate: _navigateToPage,
         child: Scaffold(
           body: SafeArea(
-            child: _isMobile
-                ? MobileDashboardLayout(
-                    isSidebarVisible: _isSidebarVisible,
-                    onToggleSidebar: _toggleSidebar,
-                    pageTitle: PageTitleHelper.getPageTitle(_currentIndex),
-                    currentPageIndex: _currentIndex,
-                    content: _pages[_currentIndex],
-                    onNavigate: _navigateToPage,
-                    onLogout: _handleLogout,
-                    accountsViewKey: _accountsViewKey,
-                    productsViewKey: _productsViewKey,
-                    tagDefinitionsViewKey: _tagDefinitionsViewKey,
-                  )
-                : DesktopDashboardLayout(
-                    isSidebarVisible: _isSidebarVisible,
-                    onToggleSidebar: _toggleSidebar,
-                    pageTitle: PageTitleHelper.getPageTitle(_currentIndex),
-                    currentPageIndex: _currentIndex,
-                    content: _pages[_currentIndex],
-                    onNavigate: _navigateToPage,
-                    onLogout: _handleLogout,
-                    accountsViewKey: _accountsViewKey,
-                    productsViewKey: _productsViewKey,
-                    tagDefinitionsViewKey: _tagDefinitionsViewKey,
-                  ),
+            child: DashboardLayout(
+              isSidebarVisible: _isSidebarVisible,
+              onToggleSidebar: _toggleSidebar,
+              pageTitle: PageTitleHelper.getPageTitle(_currentIndex),
+              currentPageIndex: _currentIndex,
+              content: _pages[_currentIndex],
+              onNavigate: _navigateToPage,
+              onLogout: _handleLogout,
+              accountsViewKey: _accountsViewKey,
+              productsViewKey: _productsViewKey,
+              paymentsViewKey: _paymentsViewKey,
+              tagDefinitionsViewKey: _tagDefinitionsViewKey,
+            ),
           ),
         ),
       ),
@@ -130,18 +105,15 @@ class _DashboardPageState extends State<DashboardPage> {
   void _navigateToPage(int index) {
     setState(() {
       _currentIndex = index;
-      if (_isMobile) {
-        _isSidebarVisible = false;
-      }
+      _isSidebarVisible =
+          false; // Always hide sidebar after navigation on mobile
     });
   }
 
   void _handleLogout() {
     // Handle logout - this will be handled by the auth bloc
     setState(() {
-      if (_isMobile) {
-        _isSidebarVisible = false;
-      }
+      _isSidebarVisible = false; // Always hide sidebar after logout on mobile
     });
   }
 }

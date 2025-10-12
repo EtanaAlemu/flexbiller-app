@@ -17,6 +17,10 @@ abstract class PaymentsRepository {
     String accountId,
   );
 
+  /// Search payments by search key
+  /// Searches only in local cache - no remote calls
+  Future<Either<Failure, List<Payment>>> searchPayments(String searchKey);
+
   /// Get cached payments from local storage
   Future<Either<Failure, List<Payment>>> getCachedPayments();
 

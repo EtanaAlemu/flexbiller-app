@@ -1,4 +1,4 @@
-part of 'payments_bloc.dart';
+part of '../payments_bloc.dart';
 
 abstract class PaymentsState extends Equatable {
   const PaymentsState();
@@ -33,6 +33,15 @@ class PaymentsError extends PaymentsState {
   final String message;
 
   const PaymentsError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class PaymentsEmpty extends PaymentsState {
+  final String message;
+
+  const PaymentsEmpty(this.message);
 
   @override
   List<Object?> get props => [message];
