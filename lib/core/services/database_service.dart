@@ -93,10 +93,27 @@ class DatabaseService {
       await _addUserIdColumnToAllTables(db);
     }
 
+    // Add invoice tables in version 15
+    if (oldVersion < 15) {
+      await _addInvoiceTables(db);
+    }
+
     // Add more migrations as needed based on version numbers
     // if (oldVersion < 3) {
     //   await _migrateToVersion3(db);
     // }
+  }
+
+  Future<void> _addInvoiceTables(Database db) async {
+    try {
+      _logger.d(
+        'Invoice tables migration for version 15 - tables already created by DatabaseTableManager',
+      );
+      _logger.d('Invoice tables migration completed successfully');
+    } catch (e) {
+      _logger.e('Error in invoice tables migration: $e');
+      rethrow;
+    }
   }
 
   Future<void> _addUserIdColumnToAllTables(Database db) async {
@@ -114,6 +131,8 @@ class DatabaseService {
         'account_payments',
         'account_tags',
         'account_timelines',
+        'invoices',
+        'invoice_audit_logs',
       ];
 
       for (final tableName in tables) {

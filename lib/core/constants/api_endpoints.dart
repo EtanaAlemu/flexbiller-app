@@ -38,4 +38,13 @@ class ApiEndpoints {
 
   // Payments endpoints
   static const String payments = '/payments';
+
+  // Invoices endpoints
+  static const String invoices = '/invoices';
+  static String getAccountInvoices(String accountId) =>
+      '/invoices/$accountId/account';
+  static String getInvoiceById(String invoiceId) => '/invoices/$invoiceId';
+  static String getInvoiceAuditLogsWithHistory(String invoiceId) =>
+      '/invoices/$invoiceId/auditLogsWithHistory';
+  static String adjustInvoiceItem(String invoiceId) => '/invoices/$invoiceId';
 }

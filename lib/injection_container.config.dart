@@ -271,6 +271,24 @@ import 'features/dashboard/domain/repositories/dashboard_repository.dart'
     as _i557;
 import 'features/dashboard/domain/usecases/get_dashboard_data.dart' as _i983;
 import 'features/dashboard/presentation/bloc/dashboard_bloc.dart' as _i521;
+import 'features/invoices/data/datasources/local/invoices_local_data_source.dart'
+    as _i277;
+import 'features/invoices/data/datasources/remote/invoices_remote_data_source.dart'
+    as _i656;
+import 'features/invoices/data/repositories/invoices_repository_impl.dart'
+    as _i941;
+import 'features/invoices/domain/repositories/invoices_repository.dart'
+    as _i164;
+import 'features/invoices/domain/usecases/adjust_invoice_item.dart' as _i1019;
+import 'features/invoices/domain/usecases/get_account_invoices.dart' as _i648;
+import 'features/invoices/domain/usecases/get_invoice_audit_logs_with_history.dart'
+    as _i1072;
+import 'features/invoices/domain/usecases/get_invoice_by_id.dart' as _i458;
+import 'features/invoices/domain/usecases/get_invoices.dart' as _i857;
+import 'features/invoices/domain/usecases/search_invoices.dart' as _i982;
+import 'features/invoices/presentation/bloc/invoice_multiselect_bloc.dart'
+    as _i181;
+import 'features/invoices/presentation/bloc/invoices_bloc.dart' as _i834;
 import 'features/payments/data/datasources/local/payments_local_data_source.dart'
     as _i770;
 import 'features/payments/data/datasources/remote/payments_remote_data_source.dart'
@@ -402,6 +420,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i720.PaymentMultiSelectBloc>(
     () => _i720.PaymentMultiSelectBloc(),
   );
+  gh.factory<_i181.InvoiceMultiSelectBloc>(
+    () => _i181.InvoiceMultiSelectBloc(),
+  );
   gh.singleton<_i974.Logger>(() => injectionModule.logger);
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
@@ -469,8 +490,17 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
+  gh.lazySingleton<_i656.InvoicesRemoteDataSource>(
+    () => _i656.InvoicesRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
   gh.factory<_i421.AccountBundlesRemoteDataSource>(
     () => _i421.AccountBundlesRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
+  gh.lazySingleton<_i277.InvoicesLocalDataSource>(
+    () => _i277.InvoicesLocalDataSourceImpl(
+      gh<_i916.DatabaseService>(),
+      gh<_i974.Logger>(),
+    ),
   );
   gh.factory<_i975.AccountPaymentMethodsRemoteDataSource>(
     () => _i975.AccountPaymentMethodsRemoteDataSourceImpl(gh<_i45.DioClient>()),
@@ -732,6 +762,14 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
+  gh.lazySingleton<_i164.InvoicesRepository>(
+    () => _i941.InvoicesRepositoryImpl(
+      remoteDataSource: gh<_i656.InvoicesRemoteDataSource>(),
+      localDataSource: gh<_i277.InvoicesLocalDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
+      logger: gh<_i974.Logger>(),
+    ),
+  );
   gh.lazySingleton<_i692.PlansRepository>(
     () => _i14.PlansRepositoryImpl(
       remoteDataSource: gh<_i393.PlansRemoteDataSource>(),
@@ -911,6 +949,9 @@ _i174.GetIt $initGetIt(
       gh<_i493.SecureStorageService>(),
     ),
   );
+  gh.factory<_i982.SearchInvoices>(
+    () => _i982.SearchInvoices(gh<_i164.InvoicesRepository>()),
+  );
   gh.factory<_i400.GetAccountByIdUseCase>(
     () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
   );
@@ -954,6 +995,9 @@ _i174.GetIt $initGetIt(
       gh<_i254.UserLocalDataSource>(),
       gh<_i140.UserSessionService>(),
     ),
+  );
+  gh.factory<_i857.GetInvoices>(
+    () => _i857.GetInvoices(gh<_i164.InvoicesRepository>()),
   );
   gh.factory<_i65.TagDefinitionsBloc>(
     () => _i65.TagDefinitionsBloc(
@@ -1052,6 +1096,37 @@ _i174.GetIt $initGetIt(
   gh.factory<_i781.RefundAccountPaymentUseCase>(
     () => _i781.RefundAccountPaymentUseCase(
       gh<_i1054.AccountPaymentsRepository>(),
+    ),
+  );
+  gh.factory<_i834.InvoicesBloc>(
+    () => _i834.InvoicesBloc(
+      getInvoices: gh<_i857.GetInvoices>(),
+      searchInvoices: gh<_i982.SearchInvoices>(),
+      logger: gh<_i974.Logger>(),
+    ),
+  );
+  gh.factory<_i648.GetAccountInvoices>(
+    () => _i648.GetAccountInvoices(
+      gh<_i164.InvoicesRepository>(),
+      gh<_i974.Logger>(),
+    ),
+  );
+  gh.factory<_i458.GetInvoiceById>(
+    () => _i458.GetInvoiceById(
+      gh<_i164.InvoicesRepository>(),
+      gh<_i974.Logger>(),
+    ),
+  );
+  gh.factory<_i1072.GetInvoiceAuditLogsWithHistory>(
+    () => _i1072.GetInvoiceAuditLogsWithHistory(
+      gh<_i164.InvoicesRepository>(),
+      gh<_i974.Logger>(),
+    ),
+  );
+  gh.factory<_i1019.AdjustInvoiceItem>(
+    () => _i1019.AdjustInvoiceItem(
+      gh<_i164.InvoicesRepository>(),
+      gh<_i974.Logger>(),
     ),
   );
   gh.factory<_i939.GetSubscriptionCustomFieldsUseCase>(

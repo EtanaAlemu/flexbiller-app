@@ -15,6 +15,7 @@ class DashboardLayout extends StatelessWidget {
   final GlobalKey? accountsViewKey;
   final GlobalKey? productsViewKey;
   final GlobalKey? paymentsViewKey;
+  final GlobalKey? invoicesViewKey;
   final GlobalKey<TagDefinitionsViewState>? tagDefinitionsViewKey;
 
   const DashboardLayout({
@@ -29,6 +30,7 @@ class DashboardLayout extends StatelessWidget {
     this.accountsViewKey,
     this.productsViewKey,
     this.paymentsViewKey,
+    this.invoicesViewKey,
     this.tagDefinitionsViewKey,
   }) : super(key: key);
 
@@ -49,6 +51,7 @@ class DashboardLayout extends StatelessWidget {
               accountsViewKey: accountsViewKey,
               productsViewKey: productsViewKey,
               paymentsViewKey: paymentsViewKey,
+              invoicesViewKey: invoicesViewKey,
               tagDefinitionsViewKey: tagDefinitionsViewKey,
             ),
             Expanded(child: SafeArea(child: content)),

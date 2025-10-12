@@ -73,8 +73,8 @@ class _SidebarMenuState extends State<SidebarMenu>
       activeIcon: Icons.receipt_long,
       title: 'Invoices',
       index: 5,
-      isAvailable: false,
-      badge: 'Soon',
+      isAvailable: true,
+      badge: null,
     ),
     SidebarMenuItem(
       icon: Icons.payment_outlined,

@@ -14,6 +14,9 @@ import '../../../plans/presentation/bloc/plans_multiselect_bloc.dart';
 import '../../../payments/presentation/pages/payments_page.dart';
 import '../../../payments/presentation/bloc/payments_bloc.dart';
 import '../../../payments/presentation/bloc/payment_multiselect_bloc.dart';
+import '../../../invoices/presentation/pages/invoices_page.dart';
+import '../../../invoices/presentation/bloc/invoices_bloc.dart';
+import '../../../invoices/presentation/bloc/invoice_multiselect_bloc.dart';
 import '../../../tags/presentation/bloc/tags_bloc.dart';
 import '../../../tags/presentation/pages/tags_page.dart';
 import '../../../tag_definitions/presentation/bloc/tag_definitions_bloc.dart';
@@ -40,6 +43,8 @@ class _DashboardPageState extends State<DashboardPage> {
       GlobalKey<ProductsViewState>();
   final GlobalKey<PaymentsViewState> _paymentsViewKey =
       GlobalKey<PaymentsViewState>();
+  final GlobalKey<InvoicesViewState> _invoicesViewKey =
+      GlobalKey<InvoicesViewState>();
   final GlobalKey<TagDefinitionsViewState> _tagDefinitionsViewKey =
       GlobalKey<TagDefinitionsViewState>();
 
@@ -49,7 +54,7 @@ class _DashboardPageState extends State<DashboardPage> {
     const SubscriptionsDemoPage(),
     ProductsPage(productsViewKey: _productsViewKey),
     const PlansPage(),
-    const _InvoicesPage(),
+    InvoicesView(key: _invoicesViewKey),
     PaymentsPage(paymentsViewKey: _paymentsViewKey),
     const _ReportsPage(),
     const TagsPage(),
@@ -77,6 +82,8 @@ class _DashboardPageState extends State<DashboardPage> {
         BlocProvider(create: (context) => getIt<PlansMultiSelectBloc>()),
         BlocProvider(create: (context) => getIt<PaymentsBloc>()),
         BlocProvider(create: (context) => getIt<PaymentMultiSelectBloc>()),
+        BlocProvider(create: (context) => getIt<InvoicesBloc>()),
+        BlocProvider(create: (context) => getIt<InvoiceMultiSelectBloc>()),
       ],
       child: DashboardNavigationHandler(
         currentIndex: _currentIndex,
@@ -94,6 +101,7 @@ class _DashboardPageState extends State<DashboardPage> {
               accountsViewKey: _accountsViewKey,
               productsViewKey: _productsViewKey,
               paymentsViewKey: _paymentsViewKey,
+              invoicesViewKey: _invoicesViewKey,
               tagDefinitionsViewKey: _tagDefinitionsViewKey,
             ),
           ),
@@ -115,37 +123,6 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       _isSidebarVisible = false; // Always hide sidebar after logout on mobile
     });
-  }
-}
-
-class _InvoicesPage extends StatelessWidget {
-  const _InvoicesPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.receipt_long, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Invoices Coming Soon',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Invoice management features\nwill be available soon.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
   }
 }
 

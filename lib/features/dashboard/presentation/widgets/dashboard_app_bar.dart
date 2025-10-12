@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'accounts_action_menu.dart';
 import 'products_action_menu.dart';
 import 'payments_action_menu.dart';
+import 'invoices_action_menu.dart';
 import 'tag_definitions_action_menu.dart';
 import '../../../tag_definitions/presentation/pages/tag_definitions_page.dart';
 
@@ -13,6 +14,7 @@ class DashboardAppBar extends StatelessWidget {
   final GlobalKey? accountsViewKey;
   final GlobalKey? productsViewKey;
   final GlobalKey? paymentsViewKey;
+  final GlobalKey? invoicesViewKey;
   final GlobalKey<TagDefinitionsViewState>? tagDefinitionsViewKey;
 
   const DashboardAppBar({
@@ -24,6 +26,7 @@ class DashboardAppBar extends StatelessWidget {
     this.accountsViewKey,
     this.productsViewKey,
     this.paymentsViewKey,
+    this.invoicesViewKey,
     this.tagDefinitionsViewKey,
   }) : super(key: key);
 
@@ -91,6 +94,18 @@ class DashboardAppBar extends StatelessWidget {
                 PaymentsActionMenu(paymentsViewKey: paymentsViewKey),
               ],
             ),
+          // Invoices-specific actions
+          if (currentPageIndex == 5) // Invoices page
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () => _toggleInvoicesSearchBar(),
+                  icon: const Icon(Icons.search_rounded),
+                  tooltip: 'Search Invoices',
+                ),
+                InvoicesActionMenu(invoicesViewKey: invoicesViewKey),
+              ],
+            ),
           // Tag Definitions-specific actions
           if (currentPageIndex == 9) // Tag Definitions page
             Row(
@@ -126,6 +141,12 @@ class DashboardAppBar extends StatelessWidget {
   void _togglePaymentsSearchBar() {
     if (paymentsViewKey?.currentState != null) {
       (paymentsViewKey!.currentState as dynamic).toggleSearchBar();
+    }
+  }
+
+  void _toggleInvoicesSearchBar() {
+    if (invoicesViewKey?.currentState != null) {
+      (invoicesViewKey!.currentState as dynamic).toggleSearchBar();
     }
   }
 
