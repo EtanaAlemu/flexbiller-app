@@ -130,10 +130,8 @@ class AccountPaymentsLocalDataSourceImpl
           return;
         }
       }
-      // If we have a user ID, proceed even if hasActiveUser is false
-      if (currentUserId != null) {
-        _logger.d('Using restored user ID: $currentUserId');
-      }
+      // Log the user ID we're using
+      _logger.d('Using user ID: $currentUserId');
 
       final db = await _databaseService.database;
       await AccountPaymentDao.insertMultiple(db, payments);
@@ -187,10 +185,8 @@ class AccountPaymentsLocalDataSourceImpl
           return [];
         }
       }
-      // If we have a user ID, proceed even if hasActiveUser is false
-      if (currentUserId != null) {
-        _logger.d('Using restored user ID: $currentUserId');
-      }
+      // Log the user ID we're using
+      _logger.d('Using user ID: $currentUserId');
 
       print('🔍 AccountPaymentsLocalDataSource: Getting database instance');
       final db = await _databaseService.database;

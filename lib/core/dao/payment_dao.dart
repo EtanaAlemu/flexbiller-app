@@ -28,7 +28,8 @@ class PaymentDao {
   static const String columnTransactionId = 'transaction_id';
   static const String columnTransactionExternalKey = 'transaction_external_key';
   static const String columnTransactionPaymentId = 'payment_id';
-  static const String columnTransactionPaymentExternalKey = 'payment_external_key';
+  static const String columnTransactionPaymentExternalKey =
+      'payment_external_key';
   static const String columnTransactionType = 'transaction_type';
   static const String columnAmount = 'amount';
   static const String columnTransactionCurrency = 'currency';
@@ -38,8 +39,10 @@ class PaymentDao {
   static const String columnStatus = 'status';
   static const String columnGatewayErrorCode = 'gateway_error_code';
   static const String columnGatewayErrorMsg = 'gateway_error_msg';
-  static const String columnFirstPaymentReferenceId = 'first_payment_reference_id';
-  static const String columnSecondPaymentReferenceId = 'second_payment_reference_id';
+  static const String columnFirstPaymentReferenceId =
+      'first_payment_reference_id';
+  static const String columnSecondPaymentReferenceId =
+      'second_payment_reference_id';
   static const String columnProperties = 'properties';
   static const String columnTransactionAuditLogs = 'audit_logs';
 
@@ -208,8 +211,7 @@ class PaymentDao {
             transactionData[columnEffectiveDate] as String,
           ),
           processedAmount: transactionData[columnProcessedAmount] as double,
-          processedCurrency:
-              transactionData[columnProcessedCurrency] as String,
+          processedCurrency: transactionData[columnProcessedCurrency] as String,
           status: transactionData[columnStatus] as String,
           gatewayErrorCode: transactionData[columnGatewayErrorCode] as String?,
           gatewayErrorMsg: transactionData[columnGatewayErrorMsg] as String?,
@@ -422,11 +424,15 @@ class PaymentDao {
   }
 
   /// Search payments by payment number or external key
-  static Future<List<PaymentModel>> search(Database db, String searchQuery) async {
+  static Future<List<PaymentModel>> search(
+    Database db,
+    String searchQuery,
+  ) async {
     try {
       final results = await db.query(
         tableName,
-        where: '$columnPaymentNumber LIKE ? OR $columnPaymentExternalKey LIKE ?',
+        where:
+            '$columnPaymentNumber LIKE ? OR $columnPaymentExternalKey LIKE ?',
         whereArgs: ['%$searchQuery%', '%$searchQuery%'],
         orderBy: '$columnCreatedAt DESC',
       );
@@ -497,9 +503,7 @@ class PaymentDao {
         payments.add(payment);
       }
 
-      _logger.d(
-        'Found ${payments.length} payments matching "$searchQuery"',
-      );
+      _logger.d('Found ${payments.length} payments matching "$searchQuery"');
       return payments;
     } catch (e) {
       _logger.e('Error searching payments: $e');
@@ -586,7 +590,9 @@ class PaymentDao {
         payments.add(payment);
       }
 
-      _logger.d('Retrieved ${payments.length} payments for currency: $currency');
+      _logger.d(
+        'Retrieved ${payments.length} payments for currency: $currency',
+      );
       return payments;
     } catch (e) {
       _logger.e('Error retrieving payments by currency: $e');
@@ -605,7 +611,11 @@ class PaymentDao {
       );
 
       // Delete payment
-      await db.delete(tableName, where: '$columnPaymentId = ?', whereArgs: [paymentId]);
+      await db.delete(
+        tableName,
+        where: '$columnPaymentId = ?',
+        whereArgs: [paymentId],
+      );
 
       _logger.d('Payment deleted successfully: $paymentId');
     } catch (e) {

@@ -35,7 +35,8 @@ class SubscriptionDao {
   static const String columnCreatedAt = 'created_at';
   static const String columnUpdatedAt = 'updated_at';
 
-  static const String createTableSQL = '''
+  static const String createTableSQL =
+      '''
     CREATE TABLE $tableName (
       $columnSubscriptionId TEXT PRIMARY KEY,
       $columnAccountId TEXT NOT NULL,
@@ -93,7 +94,10 @@ class SubscriptionDao {
         columnBillingEndDate: subscription.billingEndDate,
         columnBillCycleDayLocal: subscription.billCycleDayLocal,
         columnQuantity: subscription.quantity,
-        columnEvents: subscription.events.map((e) => e.toJson()).toList().toString(),
+        columnEvents: subscription.events
+            .map((e) => e.toJson())
+            .toList()
+            .toString(),
         columnPriceOverrides: subscription.priceOverrides?.toString(),
         columnPrices: subscription.prices.toString(),
         columnAuditLogs: subscription.auditLogs?.toString(),
@@ -107,7 +111,9 @@ class SubscriptionDao {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      _logger.d('Subscription inserted/updated successfully: ${subscription.subscriptionId}');
+      _logger.d(
+        'Subscription inserted/updated successfully: ${subscription.subscriptionId}',
+      );
     } catch (e) {
       _logger.e('Error inserting subscription: $e');
       rethrow;
@@ -153,7 +159,7 @@ class SubscriptionDao {
       }
 
       final subscriptionData = results.first;
-      
+
       // Parse events from JSON string
       List<SubscriptionEventModel> events = [];
       try {
@@ -181,7 +187,8 @@ class SubscriptionDao {
         state: subscriptionData[columnState] as String,
         sourceType: subscriptionData[columnSourceType] as String,
         cancelledDate: subscriptionData[columnCancelledDate] as String?,
-        chargedThroughDate: subscriptionData[columnChargedThroughDate] as String,
+        chargedThroughDate:
+            subscriptionData[columnChargedThroughDate] as String,
         billingStartDate: subscriptionData[columnBillingStartDate] as String,
         billingEndDate: subscriptionData[columnBillingEndDate] as String?,
         billCycleDayLocal: subscriptionData[columnBillCycleDayLocal] as int,
@@ -189,7 +196,7 @@ class SubscriptionDao {
         events: events,
         priceOverrides: subscriptionData[columnPriceOverrides],
         prices: [], // Simplified - would need proper parsing
-        auditLogs: subscriptionData[columnAuditLogs] != null 
+        auditLogs: subscriptionData[columnAuditLogs] != null
             ? [] // Simplified - would need proper parsing
             : null,
       );
@@ -205,7 +212,10 @@ class SubscriptionDao {
   /// Get all subscriptions
   static Future<List<SubscriptionModel>> getAll(Database db) async {
     try {
-      final results = await db.query(tableName, orderBy: '$columnCreatedAt DESC');
+      final results = await db.query(
+        tableName,
+        orderBy: '$columnCreatedAt DESC',
+      );
       final subscriptions = <SubscriptionModel>[];
 
       for (final subscriptionData in results) {
@@ -222,7 +232,8 @@ class SubscriptionDao {
         final subscription = SubscriptionModel(
           accountId: subscriptionData[columnAccountId] as String,
           bundleId: subscriptionData[columnBundleId] as String,
-          bundleExternalKey: subscriptionData[columnBundleExternalKey] as String,
+          bundleExternalKey:
+              subscriptionData[columnBundleExternalKey] as String,
           subscriptionId: subscriptionData[columnSubscriptionId] as String,
           externalKey: subscriptionData[columnExternalKey] as String,
           startDate: subscriptionData[columnStartDate] as String,
@@ -235,7 +246,8 @@ class SubscriptionDao {
           state: subscriptionData[columnState] as String,
           sourceType: subscriptionData[columnSourceType] as String,
           cancelledDate: subscriptionData[columnCancelledDate] as String?,
-          chargedThroughDate: subscriptionData[columnChargedThroughDate] as String,
+          chargedThroughDate:
+              subscriptionData[columnChargedThroughDate] as String,
           billingStartDate: subscriptionData[columnBillingStartDate] as String,
           billingEndDate: subscriptionData[columnBillingEndDate] as String?,
           billCycleDayLocal: subscriptionData[columnBillCycleDayLocal] as int,
@@ -243,7 +255,7 @@ class SubscriptionDao {
           events: events,
           priceOverrides: subscriptionData[columnPriceOverrides],
           prices: [], // Simplified - would need proper parsing
-          auditLogs: subscriptionData[columnAuditLogs] != null 
+          auditLogs: subscriptionData[columnAuditLogs] != null
               ? [] // Simplified - would need proper parsing
               : null,
         );
@@ -271,7 +283,7 @@ class SubscriptionDao {
         whereArgs: [accountId],
         orderBy: '$columnCreatedAt DESC',
       );
-      
+
       final subscriptions = <SubscriptionModel>[];
 
       for (final subscriptionData in results) {
@@ -288,7 +300,8 @@ class SubscriptionDao {
         final subscription = SubscriptionModel(
           accountId: subscriptionData[columnAccountId] as String,
           bundleId: subscriptionData[columnBundleId] as String,
-          bundleExternalKey: subscriptionData[columnBundleExternalKey] as String,
+          bundleExternalKey:
+              subscriptionData[columnBundleExternalKey] as String,
           subscriptionId: subscriptionData[columnSubscriptionId] as String,
           externalKey: subscriptionData[columnExternalKey] as String,
           startDate: subscriptionData[columnStartDate] as String,
@@ -301,7 +314,8 @@ class SubscriptionDao {
           state: subscriptionData[columnState] as String,
           sourceType: subscriptionData[columnSourceType] as String,
           cancelledDate: subscriptionData[columnCancelledDate] as String?,
-          chargedThroughDate: subscriptionData[columnChargedThroughDate] as String,
+          chargedThroughDate:
+              subscriptionData[columnChargedThroughDate] as String,
           billingStartDate: subscriptionData[columnBillingStartDate] as String,
           billingEndDate: subscriptionData[columnBillingEndDate] as String?,
           billCycleDayLocal: subscriptionData[columnBillCycleDayLocal] as int,
@@ -309,7 +323,7 @@ class SubscriptionDao {
           events: events,
           priceOverrides: subscriptionData[columnPriceOverrides],
           prices: [], // Simplified - would need proper parsing
-          auditLogs: subscriptionData[columnAuditLogs] != null 
+          auditLogs: subscriptionData[columnAuditLogs] != null
               ? [] // Simplified - would need proper parsing
               : null,
         );
@@ -317,7 +331,9 @@ class SubscriptionDao {
         subscriptions.add(subscription);
       }
 
-      _logger.d('Retrieved ${subscriptions.length} subscriptions for account: $accountId');
+      _logger.d(
+        'Retrieved ${subscriptions.length} subscriptions for account: $accountId',
+      );
       return subscriptions;
     } catch (e) {
       _logger.e('Error retrieving subscriptions by account ID: $e');
@@ -337,7 +353,7 @@ class SubscriptionDao {
         whereArgs: ['%$searchQuery%', '%$searchQuery%'],
         orderBy: '$columnCreatedAt DESC',
       );
-      
+
       final subscriptions = <SubscriptionModel>[];
 
       for (final subscriptionData in results) {
@@ -354,7 +370,8 @@ class SubscriptionDao {
         final subscription = SubscriptionModel(
           accountId: subscriptionData[columnAccountId] as String,
           bundleId: subscriptionData[columnBundleId] as String,
-          bundleExternalKey: subscriptionData[columnBundleExternalKey] as String,
+          bundleExternalKey:
+              subscriptionData[columnBundleExternalKey] as String,
           subscriptionId: subscriptionData[columnSubscriptionId] as String,
           externalKey: subscriptionData[columnExternalKey] as String,
           startDate: subscriptionData[columnStartDate] as String,
@@ -367,7 +384,8 @@ class SubscriptionDao {
           state: subscriptionData[columnState] as String,
           sourceType: subscriptionData[columnSourceType] as String,
           cancelledDate: subscriptionData[columnCancelledDate] as String?,
-          chargedThroughDate: subscriptionData[columnChargedThroughDate] as String,
+          chargedThroughDate:
+              subscriptionData[columnChargedThroughDate] as String,
           billingStartDate: subscriptionData[columnBillingStartDate] as String,
           billingEndDate: subscriptionData[columnBillingEndDate] as String?,
           billCycleDayLocal: subscriptionData[columnBillCycleDayLocal] as int,
@@ -375,7 +393,7 @@ class SubscriptionDao {
           events: events,
           priceOverrides: subscriptionData[columnPriceOverrides],
           prices: [], // Simplified - would need proper parsing
-          auditLogs: subscriptionData[columnAuditLogs] != null 
+          auditLogs: subscriptionData[columnAuditLogs] != null
               ? [] // Simplified - would need proper parsing
               : null,
         );
@@ -383,7 +401,9 @@ class SubscriptionDao {
         subscriptions.add(subscription);
       }
 
-      _logger.d('Found ${subscriptions.length} subscriptions matching "$searchQuery"');
+      _logger.d(
+        'Found ${subscriptions.length} subscriptions matching "$searchQuery"',
+      );
       return subscriptions;
     } catch (e) {
       _logger.e('Error searching subscriptions: $e');
@@ -421,7 +441,9 @@ class SubscriptionDao {
   /// Get subscription count
   static Future<int> getCount(Database db) async {
     try {
-      final result = await db.rawQuery('SELECT COUNT(*) as count FROM $tableName');
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM $tableName',
+      );
       final count = result.first['count'] as int;
       _logger.d('Subscription count: $count');
       return count;

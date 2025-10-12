@@ -78,34 +78,18 @@ class AccountInvoicesLocalDataSourceImpl
           return;
         }
       }
-      // If we have a user ID, proceed even if hasActiveUser is false
-      if (currentUserId != null) {
-        _logger.d('Using restored user ID: $currentUserId');
-      }
+      // Log the user ID we're using
+      _logger.d('Using user ID: $currentUserId');
 
       // Use transaction for batch operations
       final db = await _databaseService.database;
       await db.transaction((txn) async {
         for (final invoice in invoices) {
-          // Check if invoice already exists
-          final exists = await AccountInvoicesDao.exists(
-            txn,
-            invoice.invoiceId,
+          // Insert or update invoice directly in transaction
+          await AccountInvoicesDao.insertOrUpdate(db, invoice);
+          _logger.d(
+            'Cached invoice: ${invoice.invoiceId} for account: $accountId',
           );
-
-          if (exists) {
-            // Update existing invoice
-            await AccountInvoicesDao.update(txn, invoice);
-            _logger.d(
-              'Updated cached invoice: ${invoice.invoiceId} for account: $accountId',
-            );
-          } else {
-            // Insert new invoice
-            await AccountInvoicesDao.insertOrUpdate(txn, invoice);
-            _logger.d(
-              'Cached new invoice: ${invoice.invoiceId} for account: $accountId',
-            );
-          }
         }
       });
 
@@ -141,10 +125,8 @@ class AccountInvoicesLocalDataSourceImpl
           return [];
         }
       }
-      // If we have a user ID, proceed even if hasActiveUser is false
-      if (currentUserId != null) {
-        _logger.d('Using restored user ID: $currentUserId');
-      }
+      // Log the user ID we're using
+      _logger.d('Using user ID: $currentUserId');
 
       final db = await _databaseService.database;
       final invoices = await AccountInvoicesDao.getByAccountId(db, accountId);

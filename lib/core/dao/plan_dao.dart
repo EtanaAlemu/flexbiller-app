@@ -26,7 +26,8 @@ class PlanDao {
   static const String columnFeatureValue = 'feature_value';
   static const String columnFeatureCreatedAt = 'created_at';
 
-  static const String createTableSQL = '''
+  static const String createTableSQL =
+      '''
     CREATE TABLE $tableName (
       $columnId TEXT PRIMARY KEY,
       $columnName TEXT NOT NULL,
@@ -40,7 +41,8 @@ class PlanDao {
     )
   ''';
 
-  static const String createPlanFeaturesTableSQL = '''
+  static const String createPlanFeaturesTableSQL =
+      '''
     CREATE TABLE $featuresTableName (
       $columnFeatureId TEXT PRIMARY KEY,
       $columnPlanId TEXT NOT NULL,
@@ -52,10 +54,7 @@ class PlanDao {
   ''';
 
   /// Insert or update a plan
-  static Future<void> insertOrUpdate(
-    Database db,
-    PlanModel plan,
-  ) async {
+  static Future<void> insertOrUpdate(Database db, PlanModel plan) async {
     try {
       // Insert/update plan
       final planData = {
@@ -122,10 +121,7 @@ class PlanDao {
   }
 
   /// Get plan by ID
-  static Future<PlanModel?> getById(
-    Database db,
-    String planId,
-  ) async {
+  static Future<PlanModel?> getById(Database db, String planId) async {
     try {
       final results = await db.query(
         tableName,
@@ -139,7 +135,7 @@ class PlanDao {
       }
 
       final planData = results.first;
-      
+
       // Get plan features
       final featuresResults = await db.query(
         featuresTableName,
@@ -153,7 +149,9 @@ class PlanDao {
           planId: planId,
           featureName: featureData[columnFeatureName] as String,
           featureValue: featureData[columnFeatureValue] as String,
-          createdAt: DateTime.parse(featureData[columnFeatureCreatedAt] as String),
+          createdAt: DateTime.parse(
+            featureData[columnFeatureCreatedAt] as String,
+          ),
         );
       }).toList();
 
@@ -186,7 +184,7 @@ class PlanDao {
 
       for (final planData in results) {
         final planId = planData[columnId] as String;
-        
+
         // Get plan features for each plan
         final featuresResults = await db.query(
           featuresTableName,
@@ -200,7 +198,9 @@ class PlanDao {
             planId: planId,
             featureName: featureData[columnFeatureName] as String,
             featureValue: featureData[columnFeatureValue] as String,
-            createdAt: DateTime.parse(featureData[columnFeatureCreatedAt] as String),
+            createdAt: DateTime.parse(
+              featureData[columnFeatureCreatedAt] as String,
+            ),
           );
         }).toList();
 
@@ -237,12 +237,12 @@ class PlanDao {
         whereArgs: [1],
         orderBy: '$columnName ASC',
       );
-      
+
       final plans = <PlanModel>[];
 
       for (final planData in results) {
         final planId = planData[columnId] as String;
-        
+
         // Get plan features for each plan
         final featuresResults = await db.query(
           featuresTableName,
@@ -256,7 +256,9 @@ class PlanDao {
             planId: planId,
             featureName: featureData[columnFeatureName] as String,
             featureValue: featureData[columnFeatureValue] as String,
-            createdAt: DateTime.parse(featureData[columnFeatureCreatedAt] as String),
+            createdAt: DateTime.parse(
+              featureData[columnFeatureCreatedAt] as String,
+            ),
           );
         }).toList();
 
@@ -285,10 +287,7 @@ class PlanDao {
   }
 
   /// Search plans by name or description
-  static Future<List<PlanModel>> search(
-    Database db,
-    String searchQuery,
-  ) async {
+  static Future<List<PlanModel>> search(Database db, String searchQuery) async {
     try {
       final results = await db.query(
         tableName,
@@ -296,12 +295,12 @@ class PlanDao {
         whereArgs: ['%$searchQuery%', '%$searchQuery%'],
         orderBy: '$columnName ASC',
       );
-      
+
       final plans = <PlanModel>[];
 
       for (final planData in results) {
         final planId = planData[columnId] as String;
-        
+
         // Get plan features for each plan
         final featuresResults = await db.query(
           featuresTableName,
@@ -315,7 +314,9 @@ class PlanDao {
             planId: planId,
             featureName: featureData[columnFeatureName] as String,
             featureValue: featureData[columnFeatureValue] as String,
-            createdAt: DateTime.parse(featureData[columnFeatureCreatedAt] as String),
+            createdAt: DateTime.parse(
+              featureData[columnFeatureCreatedAt] as String,
+            ),
           );
         }).toList();
 
@@ -354,11 +355,7 @@ class PlanDao {
       );
 
       // Delete plan
-      await db.delete(
-        tableName,
-        where: '$columnId = ?',
-        whereArgs: [planId],
-      );
+      await db.delete(tableName, where: '$columnId = ?', whereArgs: [planId]);
 
       _logger.d('Plan deleted successfully: $planId');
     } catch (e) {
@@ -372,10 +369,10 @@ class PlanDao {
     try {
       // Delete all plan features first
       await db.delete(featuresTableName);
-      
+
       // Delete all plans
       await db.delete(tableName);
-      
+
       _logger.d('All plans deleted successfully');
     } catch (e) {
       _logger.e('Error deleting all plans: $e');
@@ -386,7 +383,9 @@ class PlanDao {
   /// Get plan count
   static Future<int> getCount(Database db) async {
     try {
-      final result = await db.rawQuery('SELECT COUNT(*) as count FROM $tableName');
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM $tableName',
+      );
       final count = result.first['count'] as int;
       _logger.d('Plan count: $count');
       return count;
