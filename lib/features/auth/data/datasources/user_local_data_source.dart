@@ -1,6 +1,8 @@
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../core/services/database_service.dart';
+import '../../../../core/dao/user_dao.dart';
+import '../../../../core/dao/auth_token_dao.dart';
 import '../../../../core/services/user_session_service.dart';
 import '../../domain/entities/user.dart';
 
@@ -65,7 +67,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
         'updated_at': user.updatedAt.toIso8601String(),
       };
 
-      await _databaseService.insertUser(userData);
+      final db = await _databaseService.database;
+      await UserDao.insertOrUpdate(db, userData);
 
       // Set the current user context after saving
       await _userSessionService.setCurrentUser(user);
@@ -103,7 +106,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      await _databaseService.updateUser(user.id, userData);
+      final db = await _databaseService.database;
+      await UserDao.update(db, user.id, userData);
       _logger.d('User updated successfully in local database: ${user.email}');
     } catch (e) {
       _logger.e('Error updating user in local database: $e');
@@ -116,7 +120,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
     try {
       _logger.d('Retrieving user from local database by ID: $userId');
 
-      final userData = await _databaseService.getUserById(userId);
+      final db = await _databaseService.database;
+      final userData = await UserDao.getById(db, userId);
       if (userData == null) {
         _logger.d('User not found in local database: $userId');
         return null;
@@ -138,7 +143,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
     try {
       _logger.d('Retrieving user from local database by email: $email');
 
-      final userData = await _databaseService.getUserByEmail(email);
+      final db = await _databaseService.database;
+      final userData = await UserDao.getByEmail(db, email);
       if (userData == null) {
         _logger.d('User not found in local database: $email');
         return null;
@@ -160,7 +166,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
     try {
       _logger.d('Retrieving all users from local database');
 
-      final usersData = await _databaseService.getAllUsers();
+      final db = await _databaseService.database;
+      final usersData = await UserDao.getAll(db);
       final users = usersData.map(_mapDatabaseRowToUser).toList();
 
       _logger.d('Retrieved ${users.length} users from local database');
@@ -176,7 +183,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
     try {
       _logger.d('Deleting user from local database: $userId');
 
-      await _databaseService.deleteUser(userId);
+      final db = await _databaseService.database;
+      await UserDao.deleteById(db, userId);
       _logger.d('User deleted successfully from local database: $userId');
     } catch (e) {
       _logger.e('Error deleting user from local database: $e');
@@ -187,9 +195,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
   @override
   Future<void> deleteAllUsers() async {
     try {
-      _logger.d('Deleting all users from local database');
-
-      await _databaseService.deleteAllUsers();
+      final db = await _databaseService.database;
+      await UserDao.deleteAll(db);
       _logger.d('All users deleted successfully from local database');
     } catch (e) {
       _logger.e('Error deleting all users from local database: $e');
@@ -215,7 +222,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
         'created_at': DateTime.now().toIso8601String(),
       };
 
-      await _databaseService.insertAuthToken(tokenData);
+      final db = await _databaseService.database;
+      await AuthTokenDao.insertOrUpdate(db, tokenData);
       _logger.d(
         'Auth token saved successfully to local database for user: $userId',
       );
@@ -241,7 +249,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
         'expires_at': expiresAt.toIso8601String(),
       };
 
-      await _databaseService.updateAuthToken(userId, tokenData);
+      final db = await _databaseService.database;
+      await AuthTokenDao.update(db, userId, tokenData);
       _logger.d(
         'Auth token updated successfully in local database for user: $userId',
       );
@@ -256,7 +265,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
     try {
       _logger.d('Retrieving auth token from local database for user: $userId');
 
-      final tokenData = await _databaseService.getAuthTokenByUserId(userId);
+      final db = await _databaseService.database;
+      final tokenData = await AuthTokenDao.getByUserId(db, userId);
       if (tokenData == null) {
         _logger.d('Auth token not found in local database for user: $userId');
         return null;
@@ -277,7 +287,8 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
     try {
       _logger.d('Deleting auth token from local database for user: $userId');
 
-      await _databaseService.deleteAuthToken(userId);
+      final db = await _databaseService.database;
+      await AuthTokenDao.deleteByUserId(db, userId);
       _logger.d(
         'Auth token deleted successfully from local database for user: $userId',
       );
@@ -292,8 +303,9 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
     try {
       _logger.d('Clearing all data from local database');
 
-      await _databaseService.deleteAllUsers();
-      await _databaseService.deleteAllAuthTokens();
+      final db = await _databaseService.database;
+      await UserDao.deleteAll(db);
+      await AuthTokenDao.deleteAll(db);
 
       // Clear the current user session
       await _userSessionService.clearCurrentUser();

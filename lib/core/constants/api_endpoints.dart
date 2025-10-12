@@ -35,4 +35,7 @@ class ApiEndpoints {
 
   // Plans endpoints
   static const String plans = '/plans';
+
+  // Payments endpoints
+  static const String payments = '/payments';
 }

@@ -15,36 +15,29 @@ class ProductDao {
   static const String columnCreatedBy = 'created_by';
   static const String columnUpdatedBy = 'updated_by';
 
-  static Future<void> createTable(Database db) async {
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS $tableName (
-        $columnId TEXT PRIMARY KEY,
-        $columnUserId TEXT NOT NULL,
-        $columnProductName TEXT NOT NULL,
-        $columnProductDescription TEXT NOT NULL,
-        $columnTenantId TEXT NOT NULL,
-        $columnCreatedAt TEXT NOT NULL,
-        $columnUpdatedAt TEXT NOT NULL,
-        $columnCreatedBy TEXT NOT NULL,
-        $columnUpdatedBy TEXT NOT NULL,
-        FOREIGN KEY ($columnUserId) REFERENCES users (id) ON DELETE CASCADE
-      )
-    ''');
+  static const String createTableSQL =
+      '''
+    CREATE TABLE IF NOT EXISTS $tableName (
+      $columnId TEXT PRIMARY KEY,
+      $columnUserId TEXT NOT NULL,
+      $columnProductName TEXT NOT NULL,
+      $columnProductDescription TEXT NOT NULL,
+      $columnTenantId TEXT NOT NULL,
+      $columnCreatedAt TEXT NOT NULL,
+      $columnUpdatedAt TEXT NOT NULL,
+      $columnCreatedBy TEXT NOT NULL,
+      $columnUpdatedBy TEXT NOT NULL,
+      FOREIGN KEY ($columnUserId) REFERENCES users (id) ON DELETE CASCADE
+    )
+  ''';
 
-    // Create indexes for better performance
-    await db.execute('''
-      CREATE INDEX IF NOT EXISTS idx_products_user_id ON $tableName ($columnUserId)
-    ''');
-    await db.execute('''
-      CREATE INDEX IF NOT EXISTS idx_products_tenant_id ON $tableName ($columnTenantId)
-    ''');
-    await db.execute('''
-      CREATE INDEX IF NOT EXISTS idx_products_product_name ON $tableName ($columnProductName)
-    ''');
-    await db.execute('''
-      CREATE INDEX IF NOT EXISTS idx_products_created_at ON $tableName ($columnCreatedAt)
-    ''');
-  }
+  static const String createIndexesSQL =
+      '''
+    CREATE INDEX IF NOT EXISTS idx_products_user_id ON $tableName ($columnUserId);
+    CREATE INDEX IF NOT EXISTS idx_products_tenant_id ON $tableName ($columnTenantId);
+    CREATE INDEX IF NOT EXISTS idx_products_product_name ON $tableName ($columnProductName);
+    CREATE INDEX IF NOT EXISTS idx_products_created_at ON $tableName ($columnCreatedAt)
+  ''';
 
   static Future<void> insertOrUpdate(
     Database db,

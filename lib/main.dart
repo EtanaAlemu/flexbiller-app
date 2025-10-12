@@ -18,6 +18,7 @@ import 'core/localization/app_localizations.dart';
 import 'core/localization/localization_service.dart';
 import 'core/localization/app_strings.dart';
 import 'core/widgets/crash_analytics_error_boundary.dart';
+import 'core/utils/build_info.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +35,11 @@ void main() async {
 
 Future<void> _initializeApp() async {
   final logger = Logger();
+
+  // Initialize build info
+  await BuildInfo.init();
+  logger.i('Build Info initialized: ${BuildInfo.displayVersion}');
+
   // Initialize crash analytics first
   try {
     final crashAnalyticsInitializer = CrashAnalyticsInitializer(logger);

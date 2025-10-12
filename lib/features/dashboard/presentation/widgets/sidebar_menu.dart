@@ -81,8 +81,8 @@ class _SidebarMenuState extends State<SidebarMenu>
       activeIcon: Icons.payment,
       title: 'Payments',
       index: 6,
-      isAvailable: false,
-      badge: 'Soon',
+      isAvailable: true,
+      badge: null,
     ),
     SidebarMenuItem(
       icon: Icons.analytics_outlined,

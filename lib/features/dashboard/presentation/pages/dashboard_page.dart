@@ -11,6 +11,8 @@ import '../../../products/presentation/bloc/products_list_bloc.dart';
 import '../../../plans/presentation/pages/plans_page.dart';
 import '../../../plans/presentation/bloc/plans_bloc.dart';
 import '../../../plans/presentation/bloc/plans_multiselect_bloc.dart';
+import '../../../payments/presentation/pages/payments_page.dart';
+import '../../../payments/presentation/bloc/payments_bloc.dart';
 import '../../../tags/presentation/bloc/tags_bloc.dart';
 import '../../../tags/presentation/pages/tags_page.dart';
 import '../../../tag_definitions/presentation/bloc/tag_definitions_bloc.dart';
@@ -47,7 +49,7 @@ class _DashboardPageState extends State<DashboardPage> {
     ProductsPage(productsViewKey: _productsViewKey),
     const PlansPage(),
     const _InvoicesPage(),
-    const _PaymentsPage(),
+    const PaymentsPage(),
     const _ReportsPage(),
     const TagsPage(),
     TagDefinitionsPage(tagDefinitionsViewKey: _tagDefinitionsViewKey),
@@ -87,6 +89,7 @@ class _DashboardPageState extends State<DashboardPage> {
         BlocProvider(create: (context) => getIt<ProductsListBloc>()),
         BlocProvider(create: (context) => getIt<PlansBloc>()),
         BlocProvider(create: (context) => getIt<PlansMultiSelectBloc>()),
+        BlocProvider(create: (context) => getIt<PaymentsBloc>()),
       ],
       child: DashboardNavigationHandler(
         currentIndex: _currentIndex,
@@ -165,37 +168,6 @@ class _InvoicesPage extends StatelessWidget {
           SizedBox(height: 8),
           Text(
             'Invoice management features\nwill be available soon.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PaymentsPage extends StatelessWidget {
-  const _PaymentsPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.payment, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Payments Coming Soon',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Payment processing features\nwill be available soon.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16, color: Colors.grey),
           ),

@@ -30,6 +30,7 @@ import 'core/services/crash_analytics_config.dart' as _i1059;
 import 'core/services/crash_analytics_initializer.dart' as _i563;
 import 'core/services/crash_analytics_service.dart' as _i924;
 import 'core/services/database_service.dart' as _i916;
+import 'core/services/database_service_backup.dart' as _i683;
 import 'core/services/export_service.dart' as _i580;
 import 'core/services/jwt_service.dart' as _i842;
 import 'core/services/mock_crash_analytics_service.dart' as _i579;
@@ -270,6 +271,19 @@ import 'features/dashboard/domain/repositories/dashboard_repository.dart'
     as _i557;
 import 'features/dashboard/domain/usecases/get_dashboard_data.dart' as _i983;
 import 'features/dashboard/presentation/bloc/dashboard_bloc.dart' as _i521;
+import 'features/payments/data/datasources/local/payments_local_data_source.dart'
+    as _i770;
+import 'features/payments/data/datasources/remote/payments_remote_data_source.dart'
+    as _i20;
+import 'features/payments/data/repositories/payments_repository_impl.dart'
+    as _i54;
+import 'features/payments/domain/repositories/payments_repository.dart'
+    as _i891;
+import 'features/payments/domain/usecases/get_payment_by_id.dart' as _i391;
+import 'features/payments/domain/usecases/get_payments.dart' as _i973;
+import 'features/payments/domain/usecases/get_payments_by_account_id.dart'
+    as _i564;
+import 'features/payments/presentation/bloc/payments_bloc.dart' as _i854;
 import 'features/plans/data/datasources/local/plans_local_data_source.dart'
     as _i52;
 import 'features/plans/data/datasources/remote/plans_remote_data_source.dart'
@@ -381,6 +395,7 @@ _i174.GetIt $initGetIt(
   gh.factory<_i842.JwtService>(() => _i842.JwtService());
   gh.factory<_i580.ExportServiceImpl>(() => _i580.ExportServiceImpl());
   gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
+  gh.factory<_i683.DatabaseService>(() => _i683.DatabaseService());
   gh.singleton<_i974.Logger>(() => injectionModule.logger);
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
@@ -487,11 +502,20 @@ _i174.GetIt $initGetIt(
   gh.factory<_i579.ProductsRemoteDataSource>(
     () => _i579.ProductsRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
+  gh.lazySingleton<_i770.PaymentsLocalDataSource>(
+    () => _i770.PaymentsLocalDataSourceImpl(
+      gh<_i916.DatabaseService>(),
+      gh<_i974.Logger>(),
+    ),
+  );
   gh.factory<_i1042.AccountTagsRemoteDataSource>(
     () => _i1042.AccountTagsRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
   gh.factory<_i913.AccountPaymentsRemoteDataSource>(
     () => _i913.AccountPaymentsRemoteDataSourceImpl(gh<_i45.DioClient>()),
+  );
+  gh.lazySingleton<_i20.PaymentsRemoteDataSource>(
+    () => _i20.PaymentsRemoteDataSourceImpl(gh<_i45.DioClient>()),
   );
   gh.factory<_i505.AccountOverdueStateRemoteDataSource>(
     () => _i505.AccountOverdueStateRemoteDataSourceImpl(gh<_i45.DioClient>()),
@@ -584,6 +608,13 @@ _i174.GetIt $initGetIt(
       gh<_i75.NetworkInfo>(),
     ),
   );
+  gh.lazySingleton<_i891.PaymentsRepository>(
+    () => _i54.PaymentsRepositoryImpl(
+      remoteDataSource: gh<_i20.PaymentsRemoteDataSource>(),
+      localDataSource: gh<_i770.PaymentsLocalDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
+    ),
+  );
   gh.factory<_i895.ChildAccountLocalDataSource>(
     () => _i895.ChildAccountLocalDataSourceImpl(
       gh<_i916.DatabaseService>(),
@@ -600,6 +631,15 @@ _i174.GetIt $initGetIt(
       gh<_i916.DatabaseService>(),
       gh<_i140.UserSessionService>(),
     ),
+  );
+  gh.factory<_i391.GetPaymentById>(
+    () => _i391.GetPaymentById(gh<_i891.PaymentsRepository>()),
+  );
+  gh.factory<_i564.GetPaymentsByAccountId>(
+    () => _i564.GetPaymentsByAccountId(gh<_i891.PaymentsRepository>()),
+  );
+  gh.factory<_i973.GetPayments>(
+    () => _i973.GetPayments(gh<_i891.PaymentsRepository>()),
   );
   gh.factory<_i632.AccountCustomFieldsLocalDataSource>(
     () => _i632.AccountCustomFieldsLocalDataSourceImpl(
@@ -814,13 +854,6 @@ _i174.GetIt $initGetIt(
       getPlanById: gh<_i868.GetPlanById>(),
     ),
   );
-  gh.factory<_i824.LogoutUseCase>(
-    () => _i824.LogoutUseCase(
-      gh<_i751.AuthenticationStateService>(),
-      gh<_i443.SyncService>(),
-      gh<_i916.DatabaseService>(),
-    ),
-  );
   gh.factory<_i116.AccountInvoicesBloc>(
     () => _i116.AccountInvoicesBloc(
       getInvoicesUseCase: gh<_i747.GetInvoicesUseCase>(),
@@ -897,6 +930,13 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i968.CreateAccountUseCase>(
     () => _i968.CreateAccountUseCase(gh<_i42.AccountsRepository>()),
+  );
+  gh.factory<_i854.PaymentsBloc>(
+    () => _i854.PaymentsBloc(
+      getPayments: gh<_i973.GetPayments>(),
+      getPaymentById: gh<_i391.GetPaymentById>(),
+      getPaymentsByAccountId: gh<_i564.GetPaymentsByAccountId>(),
+    ),
   );
   gh.factory<_i350.CreateInvoicePaymentUseCase>(
     () => _i350.CreateInvoicePaymentUseCase(
@@ -987,6 +1027,13 @@ _i174.GetIt $initGetIt(
   gh.factory<_i84.RebalanceCbaUseCase>(
     () =>
         _i84.RebalanceCbaUseCase(gh<_i1067.AccountCbaRebalancingRepository>()),
+  );
+  gh.factory<_i824.LogoutUseCase>(
+    () => _i824.LogoutUseCase(
+      gh<_i751.AuthenticationStateService>(),
+      gh<_i443.SyncService>(),
+      gh<_i254.UserLocalDataSource>(),
+    ),
   );
   gh.factory<_i1047.CreateGlobalPaymentUseCase>(
     () => _i1047.CreateGlobalPaymentUseCase(

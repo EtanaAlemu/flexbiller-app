@@ -8,6 +8,10 @@
 .build/
 .buildlog/
 .history
+
+# Keystore files (sensitive information)
+android/keystore.properties
+android/keystores/*.keystore
 .svn/
 .swiftpm/
 migrate_working_dir/
@@ -43,3 +47,4 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+*.hprof
