@@ -1,16 +1,16 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/errors/failures.dart';
-import '../entities/dashboard_data.dart';
+import '../entities/dashboard_kpi.dart';
 import '../repositories/dashboard_repository.dart';
 
 @injectable
-class GetDashboardData {
+class GetDashboardKPIs {
   final DashboardRepository repository;
 
-  GetDashboardData(this.repository);
+  GetDashboardKPIs(this.repository);
 
-  Future<Either<Failure, DashboardData>> call() async {
-    return await repository.getDashboardData();
+  Future<Either<Failure, DashboardKPI>> call() async {
+    return await repository.getDashboardKPIs();
   }
 }

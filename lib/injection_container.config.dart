@@ -280,15 +280,27 @@ import 'features/bundles/domain/usecases/get_cached_bundles_usecase.dart'
 import 'features/bundles/presentation/bloc/bundle_multiselect_bloc.dart'
     as _i405;
 import 'features/bundles/presentation/bloc/bundles_bloc.dart' as _i531;
-import 'features/dashboard/data/datasources/dashboard_local_data_source.dart'
-    as _i336;
-import 'features/dashboard/data/datasources/dashboard_mock_data_source.dart'
-    as _i500;
+import 'features/dashboard/data/datasources/dashboard_kpis_local_data_source.dart'
+    as _i556;
+import 'features/dashboard/data/datasources/dashboard_kpis_remote_data_source.dart'
+    as _i889;
+import 'features/dashboard/data/datasources/payment_status_overview_local_data_source.dart'
+    as _i1067;
+import 'features/dashboard/data/datasources/payment_status_overview_remote_data_source.dart'
+    as _i462;
+import 'features/dashboard/data/datasources/subscription_trends_local_data_source.dart'
+    as _i111;
+import 'features/dashboard/data/datasources/subscription_trends_remote_data_source.dart'
+    as _i842;
 import 'features/dashboard/data/repositories/dashboard_repository_impl.dart'
     as _i448;
 import 'features/dashboard/domain/repositories/dashboard_repository.dart'
     as _i557;
-import 'features/dashboard/domain/usecases/get_dashboard_data.dart' as _i983;
+import 'features/dashboard/domain/usecases/get_dashboard_kpis.dart' as _i454;
+import 'features/dashboard/domain/usecases/get_payment_status_overview.dart'
+    as _i656;
+import 'features/dashboard/domain/usecases/get_subscription_trends.dart'
+    as _i888;
 import 'features/dashboard/presentation/bloc/dashboard_bloc.dart' as _i521;
 import 'features/invoices/data/datasources/local/invoices_local_data_source.dart'
     as _i277;
@@ -431,18 +443,18 @@ _i174.GetIt $initGetIt(
   final injectionModule = _$InjectionModule();
   final analyticsModule = _$AnalyticsModule();
   gh.factory<_i402.PlansMultiSelectBloc>(() => _i402.PlansMultiSelectBloc());
-  gh.factory<_i203.AccountExportBloc>(() => _i203.AccountExportBloc());
-  gh.factory<_i842.JwtService>(() => _i842.JwtService());
-  gh.factory<_i580.ExportServiceImpl>(() => _i580.ExportServiceImpl());
-  gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
-  gh.factory<_i683.DatabaseService>(() => _i683.DatabaseService());
   gh.factory<_i720.PaymentMultiSelectBloc>(
     () => _i720.PaymentMultiSelectBloc(),
   );
+  gh.factory<_i203.AccountExportBloc>(() => _i203.AccountExportBloc());
   gh.factory<_i181.InvoiceMultiSelectBloc>(
     () => _i181.InvoiceMultiSelectBloc(),
   );
   gh.factory<_i405.BundleMultiSelectBloc>(() => _i405.BundleMultiSelectBloc());
+  gh.factory<_i842.JwtService>(() => _i842.JwtService());
+  gh.factory<_i683.DatabaseService>(() => _i683.DatabaseService());
+  gh.factory<_i580.ExportServiceImpl>(() => _i580.ExportServiceImpl());
+  gh.factory<_i916.DatabaseService>(() => _i916.DatabaseService());
   gh.singleton<_i974.Logger>(() => injectionModule.logger);
   gh.singleton<_i558.FlutterSecureStorage>(() => injectionModule.secureStorage);
   gh.singleton<_i361.Dio>(() => injectionModule.dio);
@@ -454,8 +466,17 @@ _i174.GetIt $initGetIt(
   gh.singleton<_i1059.CrashAnalyticsConfig>(
     () => analyticsModule.crashAnalyticsConfig(),
   );
+  gh.factory<_i889.DashboardKPIsRemoteDataSource>(
+    () => _i889.DashboardKPIsRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
+  gh.factory<_i842.SubscriptionTrendsRemoteDataSource>(
+    () => _i842.SubscriptionTrendsRemoteDataSourceImpl(gh<_i361.Dio>()),
+  );
   gh.singleton<_i45.DioClient>(
     () => _i45.DioClient(gh<_i361.Dio>(), gh<_i558.FlutterSecureStorage>()),
+  );
+  gh.factory<_i462.PaymentStatusOverviewRemoteDataSource>(
+    () => _i462.PaymentStatusOverviewRemoteDataSourceImpl(gh<_i361.Dio>()),
   );
   gh.singleton<_i400.TagDefinitionsLocalDataSource>(
     () => injectionModule.tagDefinitionsLocalDataSource(
@@ -494,9 +515,6 @@ _i174.GetIt $initGetIt(
       gh<_i924.CrashAnalyticsService>(),
       gh<_i974.Logger>(),
     ),
-  );
-  gh.lazySingleton<_i336.DashboardLocalDataSource>(
-    () => _i500.DashboardMockDataSource(),
   );
   gh.lazySingleton<_i563.CrashAnalyticsInitializer>(
     () => _i563.CrashAnalyticsInitializer(gh<_i974.Logger>()),
@@ -539,11 +557,6 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i1058.ChildAccountRemoteDataSource>(
     () => _i1058.ChildAccountRemoteDataSourceImpl(gh<_i45.DioClient>()),
-  );
-  gh.lazySingleton<_i557.DashboardRepository>(
-    () => _i448.DashboardRepositoryImpl(
-      localDataSource: gh<_i336.DashboardLocalDataSource>(),
-    ),
   );
   gh.factory<_i1063.AccountBlockingStatesRemoteDataSource>(
     () =>
@@ -657,14 +670,27 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
+  gh.lazySingleton<_i1067.PaymentStatusOverviewLocalDataSource>(
+    () => _i1067.PaymentStatusOverviewLocalDataSourceImpl(
+      gh<_i916.DatabaseService>(),
+    ),
+  );
   gh.factory<_i455.AccountOverdueStateRepository>(
     () => _i681.AccountOverdueStateRepositoryImpl(
       gh<_i505.AccountOverdueStateRemoteDataSource>(),
     ),
   );
+  gh.lazySingleton<_i111.SubscriptionTrendsLocalDataSource>(
+    () => _i111.SubscriptionTrendsLocalDataSourceImpl(
+      gh<_i916.DatabaseService>(),
+    ),
+  );
   gh.factory<_i512.GetOverdueStateUseCase>(
     () =>
         _i512.GetOverdueStateUseCase(gh<_i455.AccountOverdueStateRepository>()),
+  );
+  gh.lazySingleton<_i556.DashboardKPIsLocalDataSource>(
+    () => _i556.DashboardKPIsLocalDataSourceImpl(gh<_i916.DatabaseService>()),
   );
   gh.factory<_i866.TagDefinitionsRepository>(
     () => _i17.TagDefinitionsRepositoryImpl(
@@ -734,17 +760,14 @@ _i174.GetIt $initGetIt(
   gh.factory<_i118.GetAllBundlesUseCase>(
     () => _i118.GetAllBundlesUseCase(gh<_i950.BundlesRepository>()),
   );
+  gh.factory<_i41.GetCachedBundleByIdUseCase>(
+    () => _i41.GetCachedBundleByIdUseCase(gh<_i950.BundlesRepository>()),
+  );
   gh.factory<_i417.GetBundlesForAccountUseCase>(
     () => _i417.GetBundlesForAccountUseCase(gh<_i950.BundlesRepository>()),
   );
   gh.factory<_i777.GetCachedBundlesUseCase>(
     () => _i777.GetCachedBundlesUseCase(gh<_i950.BundlesRepository>()),
-  );
-  gh.factory<_i41.GetCachedBundleByIdUseCase>(
-    () => _i41.GetCachedBundleByIdUseCase(gh<_i950.BundlesRepository>()),
-  );
-  gh.factory<_i983.GetDashboardData>(
-    () => _i983.GetDashboardData(gh<_i557.DashboardRepository>()),
   );
   gh.factory<_i521.AccountInvoicesRepository>(
     () => _i309.AccountInvoicesRepositoryImpl(
@@ -875,9 +898,6 @@ _i174.GetIt $initGetIt(
       gh<_i777.GetCachedBundlesUseCase>(),
       gh<_i41.GetCachedBundleByIdUseCase>(),
     ),
-  );
-  gh.factory<_i521.DashboardBloc>(
-    () => _i521.DashboardBloc(getDashboardData: gh<_i983.GetDashboardData>()),
   );
   gh.factory<_i1067.AccountCbaRebalancingRepository>(
     () => _i761.AccountCbaRebalancingRepositoryImpl(
@@ -1012,6 +1032,21 @@ _i174.GetIt $initGetIt(
   gh.factory<_i982.SearchInvoices>(
     () => _i982.SearchInvoices(gh<_i164.InvoicesRepository>()),
   );
+  gh.lazySingleton<_i557.DashboardRepository>(
+    () => _i448.DashboardRepositoryImpl(
+      dashboardKPIsLocalDataSource: gh<_i556.DashboardKPIsLocalDataSource>(),
+      dashboardKPIsRemoteDataSource: gh<_i889.DashboardKPIsRemoteDataSource>(),
+      subscriptionTrendsLocalDataSource:
+          gh<_i111.SubscriptionTrendsLocalDataSource>(),
+      subscriptionTrendsRemoteDataSource:
+          gh<_i842.SubscriptionTrendsRemoteDataSource>(),
+      paymentStatusOverviewLocalDataSource:
+          gh<_i1067.PaymentStatusOverviewLocalDataSource>(),
+      paymentStatusOverviewRemoteDataSource:
+          gh<_i462.PaymentStatusOverviewRemoteDataSource>(),
+      networkInfo: gh<_i75.NetworkInfo>(),
+    ),
+  );
   gh.factory<_i400.GetAccountByIdUseCase>(
     () => _i400.GetAccountByIdUseCase(gh<_i42.AccountsRepository>()),
   );
@@ -1139,6 +1174,15 @@ _i174.GetIt $initGetIt(
       gh<_i254.UserLocalDataSource>(),
     ),
   );
+  gh.factory<_i454.GetDashboardKPIs>(
+    () => _i454.GetDashboardKPIs(gh<_i557.DashboardRepository>()),
+  );
+  gh.factory<_i888.GetSubscriptionTrends>(
+    () => _i888.GetSubscriptionTrends(gh<_i557.DashboardRepository>()),
+  );
+  gh.factory<_i656.GetPaymentStatusOverview>(
+    () => _i656.GetPaymentStatusOverview(gh<_i557.DashboardRepository>()),
+  );
   gh.factory<_i1047.CreateGlobalPaymentUseCase>(
     () => _i1047.CreateGlobalPaymentUseCase(
       gh<_i1054.AccountPaymentsRepository>(),
@@ -1171,6 +1215,12 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
+  gh.factory<_i1019.AdjustInvoiceItem>(
+    () => _i1019.AdjustInvoiceItem(
+      gh<_i164.InvoicesRepository>(),
+      gh<_i974.Logger>(),
+    ),
+  );
   gh.factory<_i458.GetInvoiceById>(
     () => _i458.GetInvoiceById(
       gh<_i164.InvoicesRepository>(),
@@ -1183,10 +1233,11 @@ _i174.GetIt $initGetIt(
       gh<_i974.Logger>(),
     ),
   );
-  gh.factory<_i1019.AdjustInvoiceItem>(
-    () => _i1019.AdjustInvoiceItem(
-      gh<_i164.InvoicesRepository>(),
-      gh<_i974.Logger>(),
+  gh.factory<_i521.DashboardBloc>(
+    () => _i521.DashboardBloc(
+      getDashboardKPIs: gh<_i454.GetDashboardKPIs>(),
+      getSubscriptionTrends: gh<_i888.GetSubscriptionTrends>(),
+      getPaymentStatusOverview: gh<_i656.GetPaymentStatusOverview>(),
     ),
   );
   gh.factory<_i939.GetSubscriptionCustomFieldsUseCase>(

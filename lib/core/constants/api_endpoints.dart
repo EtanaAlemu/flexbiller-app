@@ -9,6 +9,13 @@ class ApiEndpoints {
   static const String resetPassword = '/auth/reset-password';
   static const String updateUser = '/users';
 
+  // Analytics endpoints
+  static const String dashboardKPIs = '/analytics/dashboard-kpis';
+  static String subscriptionTrends(int year) =>
+      '/analytics/subscription-trends?year=$year';
+  static String paymentStatusOverview(int year) =>
+      '/analytics/payment-status-overview?year=$year';
+
   // Subscriptions endpoints
   static const String recentSubscriptions = '/analytics/recent-subscriptions';
   static const String getSubscriptionById = '/subscriptions';

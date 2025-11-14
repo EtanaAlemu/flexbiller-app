@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../services/crash_analytics_service.dart';
 import '../errors/app_error.dart';
+import '../config/build_config.dart';
 import 'package:logger/logger.dart';
 
 /// Error boundary widget that catches and reports errors to crash analytics
@@ -162,13 +163,26 @@ class _CrashAnalyticsErrorBoundaryState
       );
 
       if (crashAnalytics != null) {
+        // Always log the error locally
+        _logger.e('❌ Error caught by CrashAnalyticsErrorBoundary');
+        _logger.e('📚 Error: $error');
+        _logger.e('📚 Stack trace: $stackTrace');
+        _logger.e('📊 Feature: ${widget.feature ?? 'unknown'}');
+        _logger.e('📊 Widget: ${widget.runtimeType}');
+
         // Add small delay to ensure proper initialization
         await Future.delayed(Duration(milliseconds: 100));
 
-        // Force a log message first to verify connectivity
+        // Log message (will only send to Firebase in production)
         await crashAnalytics.log('Starting error report...');
 
-        _logger.d('📤 Reporting error to Firebase Crashlytics...');
+        // Record error (will only send to Firebase in production)
+        _logger.d(
+          BuildConfig.isProduction
+              ? '📤 Reporting error to Firebase Crashlytics (PRODUCTION)...'
+              : '📝 Logging error locally only (DEBUG/DEVELOPMENT)',
+        );
+
         await crashAnalytics.recordError(
           error,
           stackTrace,
@@ -179,14 +193,19 @@ class _CrashAnalyticsErrorBoundaryState
             'error_boundary': true,
             'timestamp': DateTime.now().toIso8601String(),
           },
-          fatal:
-              true, // ← Change to TRUE for better Firebase Console visibility
+          fatal: true,
         );
 
-        // Force send any pending reports
-        await FirebaseCrashlytics.instance.sendUnsentReports();
-
-        _logger.d('✅ Error reported successfully (fatal: true)');
+        // Only send to Firebase in production
+        if (BuildConfig.isProduction) {
+          // Force send any pending reports
+          await FirebaseCrashlytics.instance.sendUnsentReports();
+          _logger.d('✅ Error reported to Firebase Crashlytics successfully');
+        } else {
+          _logger.d(
+            '✅ Error logged locally (not sent to Firebase in debug mode)',
+          );
+        }
       } else {
         _logger.d('❌ CrashAnalytics service not available');
       }

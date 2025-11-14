@@ -27,7 +27,7 @@ import '../../../tag_definitions/presentation/bloc/tag_definitions_bloc.dart';
 import '../../../tag_definitions/presentation/pages/tag_definitions_page.dart';
 import '../widgets/dashboard_layout.dart';
 import '../widgets/page_title_helper.dart';
-import 'dashboard_demo_page.dart';
+import 'dashboard_home_page.dart';
 import 'profile_page.dart';
 import 'settings_page.dart';
 
@@ -55,7 +55,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey _bundlesViewKey = GlobalKey();
 
   List<Widget> get _pages => [
-    const DashboardDemoPage(),
+    const DashboardHomePage(),
     AccountsPage(accountsViewKey: _accountsViewKey),
     SubscriptionsPage(key: _subscriptionsViewKey),
     BundlesPage(key: _bundlesViewKey),

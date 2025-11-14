@@ -7,13 +7,9 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../constants/app_constants.dart';
 import '../services/sync_service.dart';
-import '../services/export_service.dart';
-import '../services/crash_analytics_service.dart';
-import '../services/crash_analytics_initializer.dart';
 import '../network/network_info.dart';
 import '../services/database_service.dart';
 import '../../features/tag_definitions/data/datasources/tag_definitions_local_data_source.dart';
-import 'analytics_module.dart';
 
 @module
 abstract class InjectionModule {

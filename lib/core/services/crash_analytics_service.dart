@@ -81,16 +81,25 @@ class CrashAnalyticsServiceImpl implements CrashAnalyticsService {
   @override
   Future<void> initialize() async {
     try {
-      // Enable collection based on configuration
-      await _crashlytics.setCrashlyticsCollectionEnabled(
-        _config.enableCrashReports &&
-            (_config.enableInDebug || !BuildConfig.isProduction),
-      );
+      // Only enable Firebase Crashlytics collection in production/release builds
+      final shouldEnable =
+          _config.enableCrashReports && BuildConfig.isProduction;
+
+      await _crashlytics.setCrashlyticsCollectionEnabled(shouldEnable);
+
+      if (shouldEnable) {
+        _logger.i(
+          '✅ Crash analytics initialized - Firebase Crashlytics enabled (PRODUCTION)',
+        );
+      } else {
+        _logger.i(
+          'ℹ️ Crash analytics initialized - Firebase Crashlytics disabled (DEBUG/DEVELOPMENT)',
+        );
+        _logger.d('📝 Errors will be logged locally but not sent to Firebase');
+      }
 
       // Note: Error handling is now managed by CrashAnalyticsErrorBoundary
       // to avoid setState() during build issues
-
-      _logger.i('Crash analytics initialized successfully');
     } catch (e) {
       _logger.e('Failed to initialize crash analytics: $e');
     }
@@ -109,22 +118,31 @@ class CrashAnalyticsServiceImpl implements CrashAnalyticsService {
       return;
     }
 
-    try {
-      // Ensure we have a valid stack trace
-      final effectiveStackTrace = stackTrace ?? StackTrace.current;
+    // Always log errors locally for debugging
+    final effectiveStackTrace = stackTrace ?? StackTrace.current;
+    final detailedError = error is Exception
+        ? error
+        : Exception(error.toString());
 
-      // Create a more detailed error object
-      final detailedError = error is Exception
-          ? error
-          : Exception(error.toString());
+    _logger.e('❌ Error occurred: $detailedError');
+    _logger.e('📚 Reason: $reason');
+    _logger.e('🔴 Fatal: $fatal');
+    _logger.e('📊 Custom keys: $customKeys');
+    _logger.e('📚 Stack trace: $effectiveStackTrace');
 
+    // Only send to Firebase Crashlytics in production/release builds
+    if (!BuildConfig.isProduction) {
       _logger.d(
-        '🎯 Recording ${fatal ? 'FATAL' : 'NON-FATAL'} error to Firebase Crashlytics',
+        '🚫 Not sending to Firebase Crashlytics (DEBUG/DEVELOPMENT build)',
       );
-      _logger.d('🎯 Error: $detailedError');
-      _logger.d('🎯 Reason: $reason');
-      _logger.d('🎯 Fatal: $fatal');
-      _logger.d('🎯 Custom keys: $customKeys');
+      _logger.d('📝 Error logged locally only');
+      return;
+    }
+
+    try {
+      _logger.d(
+        '🎯 Recording ${fatal ? 'FATAL' : 'NON-FATAL'} error to Firebase Crashlytics (PRODUCTION)',
+      );
 
       // Set custom keys first
       final allCustomKeys = {
@@ -159,13 +177,15 @@ class CrashAnalyticsServiceImpl implements CrashAnalyticsService {
         );
       }
 
-      _logger.i('✅ Error recorded successfully (fatal: $fatal)');
+      _logger.i(
+        '✅ Error recorded to Firebase Crashlytics successfully (fatal: $fatal)',
+      );
 
       // Force send any pending reports for immediate visibility
       await _crashlytics.sendUnsentReports();
       _logger.d('📤 Pending reports sent to Firebase');
     } catch (e) {
-      _logger.e('❌ Failed to record error: $e');
+      _logger.e('❌ Failed to record error to Firebase: $e');
       _logger.e('❌ Error details: ${e.toString()}');
     }
   }
@@ -219,11 +239,18 @@ class CrashAnalyticsServiceImpl implements CrashAnalyticsService {
   Future<void> setCustomKey(String key, dynamic value) async {
     if (!_isEnabled) return;
 
+    // Always log locally
+    _logger.d('Custom key set: $key = $value');
+
+    // Only send to Firebase in production
+    if (!BuildConfig.isProduction) {
+      return;
+    }
+
     try {
       await _crashlytics.setCustomKey(key, value);
-      _logger.d('Custom key set: $key = $value');
     } catch (e) {
-      _logger.e('Failed to set custom key: $e');
+      _logger.e('Failed to set custom key in Firebase: $e');
     }
   }
 
@@ -239,11 +266,18 @@ class CrashAnalyticsServiceImpl implements CrashAnalyticsService {
   Future<void> log(String message) async {
     if (!_isEnabled) return;
 
+    // Always log locally
+    _logger.d('Crash log: $message');
+
+    // Only send to Firebase in production
+    if (!BuildConfig.isProduction) {
+      return;
+    }
+
     try {
       await _crashlytics.log(message);
-      _logger.d('Crash log: $message');
     } catch (e) {
-      _logger.e('Failed to log message: $e');
+      _logger.e('Failed to log message to Firebase: $e');
     }
   }
 
@@ -274,8 +308,13 @@ class CrashAnalyticsServiceImpl implements CrashAnalyticsService {
         );
       }
 
-      await _crashlytics.log('Breadcrumb: $message');
+      // Always log locally
       _logger.d('Breadcrumb added: $message');
+
+      // Only send to Firebase in production
+      if (BuildConfig.isProduction) {
+        await _crashlytics.log('Breadcrumb: $message');
+      }
     } catch (e) {
       _logger.e('Failed to add breadcrumb: $e');
     }

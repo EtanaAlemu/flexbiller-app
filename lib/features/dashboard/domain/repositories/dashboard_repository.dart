@@ -1,13 +1,13 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
-import '../entities/dashboard_data.dart';
+import '../entities/dashboard_kpi.dart';
+import '../entities/subscription_trend.dart';
+import '../entities/payment_status_overview.dart';
 
 abstract class DashboardRepository {
-  Future<Either<Failure, DashboardData>> getDashboardData();
-  Future<Either<Failure, List<AccountChartData>>> getAccountChartData();
-  Future<Either<Failure, List<SubscriptionChartData>>>
-  getSubscriptionChartData();
-  Future<Either<Failure, List<RevenueChartData>>> getRevenueChartData();
+  Future<Either<Failure, DashboardKPI>> getDashboardKPIs();
+  Future<Either<Failure, SubscriptionTrends>> getSubscriptionTrends(int year);
+  Future<Either<Failure, PaymentStatusOverviews>> getPaymentStatusOverview(
+    int year,
+  );
 }
-
-
