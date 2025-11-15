@@ -27,7 +27,16 @@ class _SidebarMenuState extends State<SidebarMenu>
   late AnimationController _expandController;
   late AnimationController _fadeController;
 
-  final List<SidebarMenuItem> _menuItems = [
+  // Track which categories are expanded
+  final Map<String, bool> _categoryExpanded = {
+    'Catalog': false,
+    'Billing': false,
+    'CRM': false,
+    'User Management': false,
+  };
+
+  // Top-level menu items (not in categories)
+  final List<SidebarMenuItem> _topLevelItems = [
     SidebarMenuItem(
       icon: Icons.dashboard_outlined,
       activeIcon: Icons.dashboard,
@@ -37,26 +46,38 @@ class _SidebarMenuState extends State<SidebarMenu>
       badge: null,
     ),
     SidebarMenuItem(
+      icon: Icons.analytics_outlined,
+      activeIcon: Icons.analytics,
+      title: 'Reports',
+      index: 8,
+      isAvailable: true,
+      badge: null,
+    ),
+    SidebarMenuItem(
+      icon: Icons.category_outlined,
+      activeIcon: Icons.category,
+      title: 'Tag Definitions',
+      index: 10,
+      isAvailable: true,
+      badge: null,
+    ),
+    SidebarMenuItem(
+      icon: Icons.settings_outlined,
+      activeIcon: Icons.settings,
+      title: 'Settings',
+      index: 11,
+      isAvailable: true,
+      badge: null,
+    ),
+  ];
+
+  // Catalog category items
+  final List<SidebarMenuItem> _catalogItems = [
+    SidebarMenuItem(
       icon: Icons.account_balance_outlined,
       activeIcon: Icons.account_balance,
       title: 'Accounts',
       index: 1,
-      isAvailable: true,
-      badge: null,
-    ),
-    SidebarMenuItem(
-      icon: Icons.subscriptions_outlined,
-      activeIcon: Icons.subscriptions,
-      title: 'Subscriptions',
-      index: 2,
-      isAvailable: true,
-      badge: null,
-    ),
-    SidebarMenuItem(
-      icon: Icons.inventory_2_outlined,
-      activeIcon: Icons.inventory_2,
-      title: 'Bundles',
-      index: 3,
       isAvailable: true,
       badge: null,
     ),
@@ -77,13 +98,17 @@ class _SidebarMenuState extends State<SidebarMenu>
       badge: null,
     ),
     SidebarMenuItem(
-      icon: Icons.receipt_long_outlined,
-      activeIcon: Icons.receipt_long,
-      title: 'Invoices',
-      index: 6,
+      icon: Icons.label_outlined,
+      activeIcon: Icons.label,
+      title: 'Tags',
+      index: 9,
       isAvailable: true,
       badge: null,
     ),
+  ];
+
+  // Billing category items
+  final List<SidebarMenuItem> _billingItems = [
     SidebarMenuItem(
       icon: Icons.payment_outlined,
       activeIcon: Icons.payment,
@@ -93,38 +118,89 @@ class _SidebarMenuState extends State<SidebarMenu>
       badge: null,
     ),
     SidebarMenuItem(
-      icon: Icons.analytics_outlined,
-      activeIcon: Icons.analytics,
-      title: 'Reports',
-      index: 8,
+      icon: Icons.receipt_long_outlined,
+      activeIcon: Icons.receipt_long,
+      title: 'Invoices',
+      index: 6,
       isAvailable: true,
       badge: null,
     ),
     SidebarMenuItem(
-      icon: Icons.label_outlined,
-      activeIcon: Icons.label,
-      title: 'Tags',
-      index: 9,
+      icon: Icons.subscriptions_outlined,
+      activeIcon: Icons.subscriptions,
+      title: 'Subscriptions',
+      index: 2,
       isAvailable: true,
       badge: null,
     ),
     SidebarMenuItem(
-      icon: Icons.category_outlined,
-      activeIcon: Icons.category,
-      title: 'Tag Definitions',
-      index: 10,
+      icon: Icons.inventory_2_outlined,
+      activeIcon: Icons.inventory_2,
+      title: 'Bundles',
+      index: 3,
       isAvailable: true,
+      badge: null,
+    ),
+  ];
+
+  // CRM category items
+  final List<SidebarMenuItem> _crmItems = [
+    SidebarMenuItem(
+      icon: Icons.contacts_outlined,
+      activeIcon: Icons.contacts,
+      title: 'Contacts',
+      index: 14,
+      isAvailable: false, // Placeholder - will create page later
       badge: null,
     ),
     SidebarMenuItem(
-      icon: Icons.settings_outlined,
-      activeIcon: Icons.settings,
-      title: 'Settings',
-      index: 11,
-      isAvailable: true,
+      icon: Icons.trending_up_outlined,
+      activeIcon: Icons.trending_up,
+      title: 'Opportunities',
+      index: 15,
+      isAvailable: false, // Placeholder - will create page later
       badge: null,
     ),
-    // Profile and Logout items
+    SidebarMenuItem(
+      icon: Icons.event_note_outlined,
+      activeIcon: Icons.event_note,
+      title: 'Activities',
+      index: 16,
+      isAvailable: false, // Placeholder - will create page later
+      badge: null,
+    ),
+  ];
+
+  // User Management category items
+  final List<SidebarMenuItem> _userManagementItems = [
+    SidebarMenuItem(
+      icon: Icons.people_outlined,
+      activeIcon: Icons.people,
+      title: 'Users',
+      index: 17,
+      isAvailable: false, // Placeholder - will create page later
+      badge: null,
+    ),
+    SidebarMenuItem(
+      icon: Icons.admin_panel_settings_outlined,
+      activeIcon: Icons.admin_panel_settings,
+      title: 'Roles',
+      index: 18,
+      isAvailable: false, // Placeholder - will create page later
+      badge: null,
+    ),
+    SidebarMenuItem(
+      icon: Icons.security_outlined,
+      activeIcon: Icons.security,
+      title: 'Permissions',
+      index: 19,
+      isAvailable: false, // Placeholder - will create page later
+      badge: null,
+    ),
+  ];
+
+  // Profile and Logout items
+  final List<SidebarMenuItem> _bottomItems = [
     SidebarMenuItem(
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
@@ -132,7 +208,7 @@ class _SidebarMenuState extends State<SidebarMenu>
       index: 12,
       isAvailable: true,
       badge: null,
-      isSpecial: false, // Changed to false so it navigates normally
+      isSpecial: false,
     ),
     SidebarMenuItem(
       icon: Icons.logout_outlined,
@@ -141,7 +217,7 @@ class _SidebarMenuState extends State<SidebarMenu>
       index: 13,
       isAvailable: true,
       badge: null,
-      isSpecial: true, // Special styling for profile/logout
+      isSpecial: true,
     ),
   ];
 
@@ -288,17 +364,158 @@ class _SidebarMenuState extends State<SidebarMenu>
   }
 
   Widget _buildMenuItems(BuildContext context) {
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      itemCount: _menuItems.length,
-      itemBuilder: (context, index) {
-        final item = _menuItems[index];
-        return _buildMenuItem(context, item);
-      },
+      children: [
+        // Top-level items
+        ..._topLevelItems.map((item) => _buildMenuItem(context, item)),
+
+        const SizedBox(height: 8),
+
+        // Catalog category
+        _buildCategory(
+          context,
+          'Catalog',
+          Icons.inventory_2_outlined,
+          _catalogItems,
+        ),
+
+        // Billing category
+        _buildCategory(
+          context,
+          'Billing',
+          Icons.payment_outlined,
+          _billingItems,
+        ),
+
+        // CRM category
+        _buildCategory(
+          context,
+          'CRM',
+          Icons.business_center_outlined,
+          _crmItems,
+        ),
+
+        // User Management category
+        _buildCategory(
+          context,
+          'User Management',
+          Icons.people_outline,
+          _userManagementItems,
+        ),
+
+        const SizedBox(height: 8),
+
+        // Bottom items (Profile and Logout)
+        ..._bottomItems.map((item) => _buildMenuItem(context, item)),
+      ],
     );
   }
 
-  Widget _buildMenuItem(BuildContext context, SidebarMenuItem item) {
+  Widget _buildCategory(
+    BuildContext context,
+    String categoryName,
+    IconData categoryIcon,
+    List<SidebarMenuItem> items,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isExpanded = _categoryExpanded[categoryName] ?? true;
+    final hasSelectedItem = items.any(
+      (item) => widget.selectedIndex == item.index,
+    );
+
+    return Column(
+      children: [
+        // Category header
+        InkWell(
+          onTap: () {
+            setState(() {
+              _categoryExpanded[categoryName] = !isExpanded;
+            });
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: hasSelectedItem
+                  ? (isDark
+                        ? const Color(0xFF1E3A8A).withOpacity(0.15)
+                        : const Color(0xFF3B82F6).withOpacity(0.08))
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  categoryIcon,
+                  size: 20,
+                  color: hasSelectedItem
+                      ? (isDark
+                            ? const Color(0xFF60A5FA)
+                            : const Color(0xFF3B82F6))
+                      : (isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF6B7280)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    categoryName,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: hasSelectedItem
+                          ? (isDark
+                                ? const Color(0xFF60A5FA)
+                                : const Color(0xFF3B82F6))
+                          : (isDark
+                                ? const Color(0xFF9CA3AF)
+                                : const Color(0xFF6B7280)),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.expand_more,
+                    size: 20,
+                    color: isDark
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Category items (expandable)
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: isExpanded
+              ? Column(
+                  children: items.map((item) {
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 20),
+                      child: _buildMenuItem(context, item, isSubItem: true),
+                    );
+                  }).toList(),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMenuItem(
+    BuildContext context,
+    SidebarMenuItem item, {
+    bool isSubItem = false,
+  }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isSelected = widget.selectedIndex == item.index;
@@ -306,7 +523,7 @@ class _SidebarMenuState extends State<SidebarMenu>
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      margin: EdgeInsets.symmetric(horizontal: isSubItem ? 8 : 8, vertical: 3),
       decoration: BoxDecoration(
         color: isSelected
             ? (isDark
@@ -349,15 +566,35 @@ class _SidebarMenuState extends State<SidebarMenu>
               ? Colors.white.withOpacity(0.05)
               : theme.colorScheme.primary.withOpacity(0.05),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: EdgeInsets.symmetric(
+              horizontal: isSubItem ? 12 : 16,
+              vertical: 14,
+            ),
             child: Row(
               children: [
+                if (isSubItem) ...[
+                  Container(
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? (isDark
+                                ? const Color(0xFF60A5FA)
+                                : const Color(0xFF3B82F6))
+                          : (isDark
+                                ? const Color(0xFF4B5563)
+                                : const Color(0xFF9CA3AF)),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   child: Icon(
                     isSelected ? item.activeIcon : item.icon,
                     key: ValueKey('${item.index}_${isSelected}'),
-                    size: 22,
+                    size: isSubItem ? 20 : 22,
                     color: item.isSpecial
                         ? (isDark
                               ? const Color(0xFFEF4444)
@@ -401,7 +638,7 @@ class _SidebarMenuState extends State<SidebarMenu>
                             fontWeight: isSelected
                                 ? FontWeight.w600
                                 : FontWeight.w500,
-                            fontSize: 14,
+                            fontSize: isSubItem ? 13 : 14,
                             letterSpacing: 0.1,
                           ),
                         ),

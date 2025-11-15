@@ -27,6 +27,18 @@ class PageTitleHelper {
         return 'Settings';
       case 12:
         return 'Profile';
+      case 14:
+        return 'Contacts';
+      case 15:
+        return 'Opportunities';
+      case 16:
+        return 'Activities';
+      case 17:
+        return 'Users';
+      case 18:
+        return 'Roles';
+      case 19:
+        return 'Permissions';
       default:
         return 'Dashboard';
     }

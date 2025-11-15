@@ -109,11 +109,14 @@ class _DashboardHomePageState extends State<DashboardHomePage> {
                     // const DashboardWelcomeSection(),
                     // Main Content
                     Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0,
+                        vertical: 8.0,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
 
                           // KPI Cards - Real Data from API
                           BlocBuilder<DashboardBloc, DashboardState>(
@@ -194,7 +197,7 @@ class _DashboardHomePageState extends State<DashboardHomePage> {
                               }
                             },
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
 
                           // Subscription Trends Chart
                           BlocBuilder<DashboardBloc, DashboardState>(
@@ -238,7 +241,7 @@ class _DashboardHomePageState extends State<DashboardHomePage> {
                                   '❌ [Dashboard Page] Subscription Trends Error State: ${state.message}',
                                 );
                                 return Card(
-                                  elevation: 4,
+                                  elevation: 0.2,
                                   child: Padding(
                                     padding: const EdgeInsets.all(16.0),
                                     child: Center(
@@ -280,7 +283,7 @@ class _DashboardHomePageState extends State<DashboardHomePage> {
                               }
                             },
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
 
                           // Payment Status Overview Chart
                           BlocBuilder<DashboardBloc, DashboardState>(
@@ -321,7 +324,7 @@ class _DashboardHomePageState extends State<DashboardHomePage> {
                                   '❌ [Dashboard Page] Payment Status Overview Error State: ${state.message}',
                                 );
                                 return Card(
-                                  elevation: 4,
+                                  elevation: 0.2,
                                   child: Padding(
                                     padding: const EdgeInsets.all(16.0),
                                     child: Center(
@@ -366,7 +369,7 @@ class _DashboardHomePageState extends State<DashboardHomePage> {
                               }
                             },
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),

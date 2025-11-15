@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
-import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:logger/logger.dart';
 import '../../../../core/services/database_service.dart';
+import '../../../../core/dao/subscription_trends_dao.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../models/subscription_trend_model.dart';
 
@@ -33,7 +33,7 @@ class SubscriptionTrendsLocalDataSourceImpl
       final db = await _databaseService.database;
 
       // Check if subscription_trends table exists
-      final tableExists = await _tableExists(db, 'subscription_trends');
+      final tableExists = await SubscriptionTrendsDao.tableExists(db);
       if (!tableExists) {
         _logger.w(
           '⚠️ [Subscription Trends Local] subscription_trends table does not exist, returning defaults',
@@ -44,12 +44,7 @@ class SubscriptionTrendsLocalDataSourceImpl
       _logger.d(
         '✅ [Subscription Trends Local] subscription_trends table exists',
       );
-      final result = await db.query(
-        'subscription_trends',
-        where: 'year = ?',
-        whereArgs: [year],
-        orderBy: 'month ASC',
-      );
+      final result = await SubscriptionTrendsDao.getByYear(db, year);
 
       if (result.isEmpty) {
         _logger.w(
@@ -64,10 +59,15 @@ class SubscriptionTrendsLocalDataSourceImpl
 
       final trends = result.map((row) {
         return SubscriptionTrendModel.fromMap({
-          'month': row['month'] as String,
-          'newSubscriptions': row['new_subscriptions'] as int? ?? 0,
-          'churnedSubscriptions': row['churned_subscriptions'] as int? ?? 0,
-          'revenue': (row['revenue'] as num?)?.toDouble() ?? 0.0,
+          'month': row[SubscriptionTrendsDao.columnMonth] as String,
+          'newSubscriptions':
+              row[SubscriptionTrendsDao.columnNewSubscriptions] as int? ?? 0,
+          'churnedSubscriptions':
+              row[SubscriptionTrendsDao.columnChurnedSubscriptions] as int? ??
+              0,
+          'revenue':
+              (row[SubscriptionTrendsDao.columnRevenue] as num?)?.toDouble() ??
+              0.0,
         });
       }).toList();
 
@@ -107,33 +107,30 @@ class SubscriptionTrendsLocalDataSourceImpl
       _logger.d(
         '🔧 [Subscription Trends Local] Ensuring subscription_trends table exists',
       );
-      await _ensureSubscriptionTrendsTableExists(db);
+      await db.execute(SubscriptionTrendsDao.createTableSQL);
 
-      // Delete old cached data for this year
-      _logger.d(
-        '🗑️ [Subscription Trends Local] Deleting old cached trends for year ${trends.year}',
-      );
-      await db.delete(
-        'subscription_trends',
-        where: 'year = ?',
-        whereArgs: [trends.year],
-      );
-
-      // Insert new trends data
-      for (final trend in trends.trends) {
-        final trendData = {
-          'year': trends.year,
-          'month': trend.month,
-          'new_subscriptions': trend.newSubscriptions,
-          'churned_subscriptions': trend.churnedSubscriptions,
-          'revenue': trend.revenue,
-          'updated_at': DateTime.now().toIso8601String(),
+      // Prepare trends data for DAO
+      final trendsData = trends.trends.map((trend) {
+        return {
+          SubscriptionTrendsDao.columnYear: trends.year,
+          SubscriptionTrendsDao.columnMonth: trend.month,
+          SubscriptionTrendsDao.columnNewSubscriptions: trend.newSubscriptions,
+          SubscriptionTrendsDao.columnChurnedSubscriptions:
+              trend.churnedSubscriptions,
+          SubscriptionTrendsDao.columnRevenue: trend.revenue,
+          SubscriptionTrendsDao.columnUpdatedAt: DateTime.now()
+              .toIso8601String(),
         };
-        _logger.d(
-          '💾 [Subscription Trends Local] Inserting trend data: $trendData',
-        );
-        await db.insert('subscription_trends', trendData);
-      }
+      }).toList();
+
+      _logger.d(
+        '💾 [Subscription Trends Local] Inserting ${trendsData.length} trends via DAO',
+      );
+      await SubscriptionTrendsDao.insertOrReplaceForYear(
+        db,
+        trends.year,
+        trendsData,
+      );
       _logger.i(
         '✅ [Subscription Trends Local] Successfully cached subscription trends',
       );
@@ -163,29 +160,6 @@ class SubscriptionTrendsLocalDataSourceImpl
           StreamController<SubscriptionTrendsModel>.broadcast();
     }
     return _trendsStreamControllers[year]!;
-  }
-
-  Future<void> _ensureSubscriptionTrendsTableExists(Database db) async {
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS subscription_trends (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        year INTEGER NOT NULL,
-        month TEXT NOT NULL,
-        new_subscriptions INTEGER NOT NULL DEFAULT 0,
-        churned_subscriptions INTEGER NOT NULL DEFAULT 0,
-        revenue REAL NOT NULL DEFAULT 0.0,
-        updated_at TEXT NOT NULL,
-        UNIQUE(year, month)
-      )
-    ''');
-  }
-
-  Future<bool> _tableExists(Database db, String tableName) async {
-    final result = await db.rawQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-      [tableName],
-    );
-    return result.isNotEmpty;
   }
 
   SubscriptionTrendsModel _getDefaultTrends(int year) {

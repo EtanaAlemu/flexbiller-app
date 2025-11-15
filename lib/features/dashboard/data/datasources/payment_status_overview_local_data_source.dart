@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
-import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:logger/logger.dart';
 import '../../../../core/services/database_service.dart';
+import '../../../../core/dao/payment_status_overview_dao.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../models/payment_status_overview_model.dart';
 
@@ -35,7 +35,7 @@ class PaymentStatusOverviewLocalDataSourceImpl
       final db = await _databaseService.database;
 
       // Check if payment_status_overview table exists
-      final tableExists = await _tableExists(db, 'payment_status_overview');
+      final tableExists = await PaymentStatusOverviewDao.tableExists(db);
       if (!tableExists) {
         _logger.w(
           '⚠️ [Payment Status Overview Local] payment_status_overview table does not exist, returning defaults',
@@ -46,12 +46,7 @@ class PaymentStatusOverviewLocalDataSourceImpl
       _logger.d(
         '✅ [Payment Status Overview Local] payment_status_overview table exists',
       );
-      final result = await db.query(
-        'payment_status_overview',
-        where: 'year = ?',
-        whereArgs: [year],
-        orderBy: 'month ASC',
-      );
+      final result = await PaymentStatusOverviewDao.getByYear(db, year);
 
       if (result.isEmpty) {
         _logger.w(
@@ -66,9 +61,11 @@ class PaymentStatusOverviewLocalDataSourceImpl
 
       final overviews = result.map((row) {
         return PaymentStatusOverviewModel.fromMap({
-          'month': row['month'] as String,
-          'paidInvoices': row['paid_invoices'] as int? ?? 0,
-          'unpaidInvoices': row['unpaid_invoices'] as int? ?? 0,
+          'month': row[PaymentStatusOverviewDao.columnMonth] as String,
+          'paidInvoices':
+              row[PaymentStatusOverviewDao.columnPaidInvoices] as int? ?? 0,
+          'unpaidInvoices':
+              row[PaymentStatusOverviewDao.columnUnpaidInvoices] as int? ?? 0,
         });
       }).toList();
 
@@ -113,32 +110,30 @@ class PaymentStatusOverviewLocalDataSourceImpl
       _logger.d(
         '🔧 [Payment Status Overview Local] Ensuring payment_status_overview table exists',
       );
-      await _ensurePaymentStatusOverviewTableExists(db);
+      await db.execute(PaymentStatusOverviewDao.createTableSQL);
 
-      // Delete old cached data for this year
-      _logger.d(
-        '🗑️ [Payment Status Overview Local] Deleting old cached overview for year ${overview.year}',
-      );
-      await db.delete(
-        'payment_status_overview',
-        where: 'year = ?',
-        whereArgs: [overview.year],
-      );
-
-      // Insert new overview data
-      for (final overviewItem in overview.overviews) {
-        final overviewData = {
-          'year': overview.year,
-          'month': overviewItem.month,
-          'paid_invoices': overviewItem.paidInvoices,
-          'unpaid_invoices': overviewItem.unpaidInvoices,
-          'updated_at': DateTime.now().toIso8601String(),
+      // Prepare overview data for DAO
+      final overviewsData = overview.overviews.map((overviewItem) {
+        return {
+          PaymentStatusOverviewDao.columnYear: overview.year,
+          PaymentStatusOverviewDao.columnMonth: overviewItem.month,
+          PaymentStatusOverviewDao.columnPaidInvoices:
+              overviewItem.paidInvoices,
+          PaymentStatusOverviewDao.columnUnpaidInvoices:
+              overviewItem.unpaidInvoices,
+          PaymentStatusOverviewDao.columnUpdatedAt: DateTime.now()
+              .toIso8601String(),
         };
-        _logger.d(
-          '💾 [Payment Status Overview Local] Inserting overview data: $overviewData',
-        );
-        await db.insert('payment_status_overview', overviewData);
-      }
+      }).toList();
+
+      _logger.d(
+        '💾 [Payment Status Overview Local] Inserting ${overviewsData.length} overview items via DAO',
+      );
+      await PaymentStatusOverviewDao.insertOrReplaceForYear(
+        db,
+        overview.year,
+        overviewsData,
+      );
       _logger.i(
         '✅ [Payment Status Overview Local] Successfully cached payment status overview',
       );
@@ -168,28 +163,6 @@ class PaymentStatusOverviewLocalDataSourceImpl
           StreamController<PaymentStatusOverviewsModel>.broadcast();
     }
     return _overviewStreamControllers[year]!;
-  }
-
-  Future<void> _ensurePaymentStatusOverviewTableExists(Database db) async {
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS payment_status_overview (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        year INTEGER NOT NULL,
-        month TEXT NOT NULL,
-        paid_invoices INTEGER NOT NULL DEFAULT 0,
-        unpaid_invoices INTEGER NOT NULL DEFAULT 0,
-        updated_at TEXT NOT NULL,
-        UNIQUE(year, month)
-      )
-    ''');
-  }
-
-  Future<bool> _tableExists(Database db, String tableName) async {
-    final result = await db.rawQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-      [tableName],
-    );
-    return result.isNotEmpty;
   }
 
   PaymentStatusOverviewsModel _getDefaultOverview(int year) {

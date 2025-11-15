@@ -20,7 +20,7 @@ class DashboardKPICardsSkeleton extends StatelessWidget {
 
   Widget _buildSkeletonCard(BuildContext context) {
     return Card(
-      elevation: 2,
+      elevation: 0.2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),

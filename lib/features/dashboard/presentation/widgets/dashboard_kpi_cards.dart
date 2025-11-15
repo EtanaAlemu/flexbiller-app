@@ -69,7 +69,7 @@ class DashboardKPICards extends StatelessWidget {
     final arrowIcon = isPositive ? Icons.arrow_upward : Icons.arrow_downward;
 
     return Card(
-      elevation: 2,
+      elevation: 0.2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),

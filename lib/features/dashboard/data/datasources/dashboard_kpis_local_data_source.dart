@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
-import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:logger/logger.dart';
 import '../../../../core/services/database_service.dart';
+import '../../../../core/dao/dashboard_kpis_dao.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../models/dashboard_kpi_model.dart';
 
@@ -30,7 +30,7 @@ class DashboardKPIsLocalDataSourceImpl implements DashboardKPIsLocalDataSource {
       final db = await _databaseService.database;
 
       // Check if dashboard_kpis table exists, if not return default values
-      final tableExists = await _tableExists(db, 'dashboard_kpis');
+      final tableExists = await DashboardKPIsDao.tableExists(db);
       if (!tableExists) {
         _logger.w(
           '⚠️ [Dashboard Local] dashboard_kpis table does not exist, returning defaults',
@@ -40,50 +40,70 @@ class DashboardKPIsLocalDataSourceImpl implements DashboardKPIsLocalDataSource {
       }
 
       _logger.d('✅ [Dashboard Local] dashboard_kpis table exists');
-      final result = await db.query(
-        'dashboard_kpis',
-        orderBy: 'updated_at DESC',
-        limit: 1,
-      );
+      final kpiData = await DashboardKPIsDao.getLatest(db);
 
-      if (result.isEmpty) {
+      if (kpiData == null) {
         _logger.w(
           '⚠️ [Dashboard Local] No cached KPIs found, returning defaults',
         );
         return _getDefaultKPIs();
       }
 
-      _logger.d(
-        '✅ [Dashboard Local] Found cached KPIs: ${result.length} record(s)',
-      );
-      final kpiData = result.first;
+      _logger.d('✅ [Dashboard Local] Found cached KPIs');
       _logger.d('📊 [Dashboard Local] Cached KPI data: $kpiData');
       final kpiMap = {
         'activeSubscriptions': {
-          'value': kpiData['active_subscriptions_value'] as int? ?? 0,
-          'change': kpiData['active_subscriptions_change'] as String? ?? '0.00',
+          'value':
+              kpiData[DashboardKPIsDao.columnActiveSubscriptionsValue]
+                  as int? ??
+              0,
+          'change':
+              kpiData[DashboardKPIsDao.columnActiveSubscriptionsChange]
+                  as String? ??
+              '0.00',
           'changePercent':
-              kpiData['active_subscriptions_change_percent'] as String? ??
+              kpiData[DashboardKPIsDao.columnActiveSubscriptionsChangePercent]
+                  as String? ??
               '0.00',
         },
         'pendingInvoices': {
-          'value': kpiData['pending_invoices_value'] as int? ?? 0,
-          'change': kpiData['pending_invoices_change'] as String? ?? '0.00',
+          'value':
+              kpiData[DashboardKPIsDao.columnPendingInvoicesValue] as int? ?? 0,
+          'change':
+              kpiData[DashboardKPIsDao.columnPendingInvoicesChange]
+                  as String? ??
+              '0.00',
           'changePercent':
-              kpiData['pending_invoices_change_percent'] as String? ?? '0.00',
+              kpiData[DashboardKPIsDao.columnPendingInvoicesChangePercent]
+                  as String? ??
+              '0.00',
         },
         'failedPayments': {
-          'value': kpiData['failed_payments_value'] as int? ?? 0,
-          'change': kpiData['failed_payments_change'] as String? ?? '0.00',
+          'value':
+              kpiData[DashboardKPIsDao.columnFailedPaymentsValue] as int? ?? 0,
+          'change':
+              kpiData[DashboardKPIsDao.columnFailedPaymentsChange] as String? ??
+              '0.00',
           'changePercent':
-              kpiData['failed_payments_change_percent'] as String? ?? '0.00',
+              kpiData[DashboardKPIsDao.columnFailedPaymentsChangePercent]
+                  as String? ??
+              '0.00',
         },
         'monthlyRevenue': {
-          'value': kpiData['monthly_revenue_value'] as String? ?? '0.00',
-          'change': kpiData['monthly_revenue_change'] as String? ?? '0.00',
+          'value':
+              kpiData[DashboardKPIsDao.columnMonthlyRevenueValue] as String? ??
+              '0.00',
+          'change':
+              kpiData[DashboardKPIsDao.columnMonthlyRevenueChange] as String? ??
+              '0.00',
           'changePercent':
-              kpiData['monthly_revenue_change_percent'] as String? ?? '0.00',
-          'currency': kpiData['monthly_revenue_currency'] as String? ?? 'USD',
+              kpiData[DashboardKPIsDao.columnMonthlyRevenueChangePercent]
+                  as String? ??
+              '0.00',
+          'currency':
+              kpiData[DashboardKPIsDao.columnMonthlyRevenueCurrency]
+                  as String? ??
+              'USD',
         },
       };
 
@@ -109,32 +129,35 @@ class DashboardKPIsLocalDataSourceImpl implements DashboardKPIsLocalDataSource {
 
       // Ensure table exists
       _logger.d('🔧 [Dashboard Local] Ensuring dashboard_kpis table exists');
-      await _ensureDashboardKPIsTableExists(db);
+      await db.execute(DashboardKPIsDao.createTableSQL);
 
-      // Delete old cached data
-      _logger.d('🗑️ [Dashboard Local] Deleting old cached KPIs');
-      await db.delete('dashboard_kpis');
-
-      // Insert new KPI data
+      // Prepare KPI data for DAO
       final kpiData = {
-        'active_subscriptions_value': kpis.activeSubscriptions.value,
-        'active_subscriptions_change': kpis.activeSubscriptions.change,
-        'active_subscriptions_change_percent':
+        DashboardKPIsDao.columnActiveSubscriptionsValue:
+            kpis.activeSubscriptions.value,
+        DashboardKPIsDao.columnActiveSubscriptionsChange:
+            kpis.activeSubscriptions.change,
+        DashboardKPIsDao.columnActiveSubscriptionsChangePercent:
             kpis.activeSubscriptions.changePercent,
-        'pending_invoices_value': kpis.pendingInvoices.value,
-        'pending_invoices_change': kpis.pendingInvoices.change,
-        'pending_invoices_change_percent': kpis.pendingInvoices.changePercent,
-        'failed_payments_value': kpis.failedPayments.value,
-        'failed_payments_change': kpis.failedPayments.change,
-        'failed_payments_change_percent': kpis.failedPayments.changePercent,
-        'monthly_revenue_value': kpis.monthlyRevenue.value,
-        'monthly_revenue_change': kpis.monthlyRevenue.change,
-        'monthly_revenue_change_percent': kpis.monthlyRevenue.changePercent,
-        'monthly_revenue_currency': kpis.monthlyRevenue.currency,
-        'updated_at': DateTime.now().toIso8601String(),
+        DashboardKPIsDao.columnPendingInvoicesValue: kpis.pendingInvoices.value,
+        DashboardKPIsDao.columnPendingInvoicesChange:
+            kpis.pendingInvoices.change,
+        DashboardKPIsDao.columnPendingInvoicesChangePercent:
+            kpis.pendingInvoices.changePercent,
+        DashboardKPIsDao.columnFailedPaymentsValue: kpis.failedPayments.value,
+        DashboardKPIsDao.columnFailedPaymentsChange: kpis.failedPayments.change,
+        DashboardKPIsDao.columnFailedPaymentsChangePercent:
+            kpis.failedPayments.changePercent,
+        DashboardKPIsDao.columnMonthlyRevenueValue: kpis.monthlyRevenue.value,
+        DashboardKPIsDao.columnMonthlyRevenueChange: kpis.monthlyRevenue.change,
+        DashboardKPIsDao.columnMonthlyRevenueChangePercent:
+            kpis.monthlyRevenue.changePercent,
+        DashboardKPIsDao.columnMonthlyRevenueCurrency:
+            kpis.monthlyRevenue.currency,
+        DashboardKPIsDao.columnUpdatedAt: DateTime.now().toIso8601String(),
       };
-      _logger.d('💾 [Dashboard Local] Inserting KPI data: $kpiData');
-      await db.insert('dashboard_kpis', kpiData);
+      _logger.d('💾 [Dashboard Local] Inserting KPI data via DAO');
+      await DashboardKPIsDao.insertOrReplace(db, kpiData);
       _logger.i('✅ [Dashboard Local] Successfully cached dashboard KPIs');
 
       // Emit update to stream
@@ -150,36 +173,6 @@ class DashboardKPIsLocalDataSourceImpl implements DashboardKPIsLocalDataSource {
   @override
   Stream<DashboardKPIModel> watchDashboardKPIs() {
     return _kpisStreamController.stream;
-  }
-
-  Future<void> _ensureDashboardKPIsTableExists(Database db) async {
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS dashboard_kpis (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        active_subscriptions_value INTEGER NOT NULL DEFAULT 0,
-        active_subscriptions_change TEXT NOT NULL DEFAULT '0.00',
-        active_subscriptions_change_percent TEXT NOT NULL DEFAULT '0.00',
-        pending_invoices_value INTEGER NOT NULL DEFAULT 0,
-        pending_invoices_change TEXT NOT NULL DEFAULT '0.00',
-        pending_invoices_change_percent TEXT NOT NULL DEFAULT '0.00',
-        failed_payments_value INTEGER NOT NULL DEFAULT 0,
-        failed_payments_change TEXT NOT NULL DEFAULT '0.00',
-        failed_payments_change_percent TEXT NOT NULL DEFAULT '0.00',
-        monthly_revenue_value TEXT NOT NULL DEFAULT '0.00',
-        monthly_revenue_change TEXT NOT NULL DEFAULT '0.00',
-        monthly_revenue_change_percent TEXT NOT NULL DEFAULT '0.00',
-        monthly_revenue_currency TEXT NOT NULL DEFAULT 'USD',
-        updated_at TEXT NOT NULL
-      )
-    ''');
-  }
-
-  Future<bool> _tableExists(Database db, String tableName) async {
-    final result = await db.rawQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-      [tableName],
-    );
-    return result.isNotEmpty;
   }
 
   DashboardKPIModel _getDefaultKPIs() {

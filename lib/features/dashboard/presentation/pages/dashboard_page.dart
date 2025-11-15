@@ -30,6 +30,12 @@ import '../widgets/page_title_helper.dart';
 import 'dashboard_home_page.dart';
 import 'profile_page.dart';
 import 'settings_page.dart';
+import 'contacts_page.dart';
+import 'opportunities_page.dart';
+import 'activities_page.dart';
+import 'users_page.dart';
+import 'roles_page.dart';
+import 'permissions_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -68,6 +74,13 @@ class _DashboardPageState extends State<DashboardPage> {
     TagDefinitionsPage(tagDefinitionsViewKey: _tagDefinitionsViewKey),
     const SettingsPage(),
     const ProfilePage(),
+    // Placeholder pages for new menu items
+    const ContactsPage(),
+    const OpportunitiesPage(),
+    const ActivitiesPage(),
+    const UsersPage(),
+    const RolesPage(),
+    const PermissionsPage(),
   ];
 
   void _toggleSidebar() {
