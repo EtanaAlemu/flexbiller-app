@@ -115,17 +115,16 @@ class _PlansMultiSelectActionBarState extends State<PlansMultiSelectActionBar> {
     );
   }
 
-  void _showExportDialog() {
+  Future<void> _showExportDialog() async {
     // Show export dialog for better user experience
-    showDialog(
+    final result = await showDialog(
       context: context,
       builder: (context) => ExportPlansDialog(plans: widget.selectedPlans),
-    ).then((result) async {
-      if (result != null) {
-        final selectedFormat = result['format'] as String;
-        await _performExport(context, widget.selectedPlans, selectedFormat);
-      }
-    });
+    );
+    if (result != null) {
+      final selectedFormat = result['format'] as String;
+      await _performExport(context, widget.selectedPlans, selectedFormat);
+    }
   }
 
   Future<void> _performExport(

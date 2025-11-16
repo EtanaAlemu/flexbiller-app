@@ -603,7 +603,13 @@ class AccountAuditLogsRepositoryImpl implements AccountAuditLogsRepository {
 
   // Cleanup method to dispose of stream controllers
   void dispose() {
-    _auditLogsStreamController.close();
-    _auditLogsPaginatedStreamController.close();
+    _logger.d('🛑 [Account Audit Logs Repository] Disposing resources...');
+    if (!_auditLogsStreamController.isClosed) {
+      _auditLogsStreamController.close();
+    }
+    if (!_auditLogsPaginatedStreamController.isClosed) {
+      _auditLogsPaginatedStreamController.close();
+    }
+    _logger.i('✅ [Account Audit Logs Repository] All StreamControllers closed');
   }
 }

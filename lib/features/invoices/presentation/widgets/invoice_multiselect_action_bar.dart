@@ -105,20 +105,19 @@ class InvoiceMultiSelectActionBar extends StatelessWidget {
     );
   }
 
-  void _showExportDialog(BuildContext context) {
+  Future<void> _showExportDialog(BuildContext context) async {
     final multiSelectBloc = context.read<InvoiceMultiSelectBloc>();
     final selectedInvoices = multiSelectBloc.selectedInvoices;
 
     // Show export dialog for better user experience
-    showDialog(
+    final result = await showDialog(
       context: context,
       builder: (context) => ExportInvoicesDialog(invoices: selectedInvoices),
-    ).then((result) async {
-      if (result != null) {
-        final selectedFormat = result['format'] as String;
-        await _performExport(context, selectedInvoices, selectedFormat);
-      }
-    });
+    );
+    if (result != null) {
+      final selectedFormat = result['format'] as String;
+      await _performExport(context, selectedInvoices, selectedFormat);
+    }
   }
 
   Future<void> _performExport(

@@ -372,7 +372,13 @@ class AccountTimelineRepositoryImpl implements AccountTimelineRepository {
 
   /// Dispose method to close stream controllers
   void dispose() {
-    _accountTimelineStreamController.close();
-    _accountTimelinePaginatedStreamController.close();
+    _logger.d('🛑 [Account Timeline Repository] Disposing resources...');
+    if (!_accountTimelineStreamController.isClosed) {
+      _accountTimelineStreamController.close();
+    }
+    if (!_accountTimelinePaginatedStreamController.isClosed) {
+      _accountTimelinePaginatedStreamController.close();
+    }
+    _logger.i('✅ [Account Timeline Repository] All StreamControllers closed');
   }
 }

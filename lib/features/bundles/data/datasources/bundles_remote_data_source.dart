@@ -7,6 +7,7 @@ abstract class BundlesRemoteDataSource {
   Future<List<BundleModel>> getAllBundles();
   Future<BundleModel> getBundleById(String bundleId);
   Future<List<BundleModel>> getBundlesForAccount(String accountId);
+  Future<void> deleteBundle(String bundleId);
 }
 
 @Injectable(as: BundlesRemoteDataSource)
@@ -62,6 +63,21 @@ class BundlesRemoteDataSourceImpl implements BundlesRemoteDataSource {
       }
     } catch (e) {
       throw Exception('Failed to load bundles for account: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteBundle(String bundleId) async {
+    try {
+      final response = await _dio.delete('${ApiEndpoints.bundles}/$bundleId');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return;
+      } else {
+        throw Exception('Failed to delete bundle: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to delete bundle: $e');
     }
   }
 }

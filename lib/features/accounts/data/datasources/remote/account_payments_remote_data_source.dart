@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
+import '../../../../../core/constants/api_endpoints.dart';
 import '../../../../../core/errors/exceptions.dart';
 import '../../../../../core/network/dio_client.dart';
 import '../../models/account_payment_model.dart';
@@ -62,41 +64,50 @@ abstract class AccountPaymentsRemoteDataSource {
     required DateTime effectiveDate,
     List<Map<String, dynamic>>? properties,
   });
+
+  /// Refund a payment for an account
+  Future<void> refundPayment({
+    required String accountId,
+    required String paymentId,
+    required double refundAmount,
+    required String reason,
+  });
 }
 
 @Injectable(as: AccountPaymentsRemoteDataSource)
 class AccountPaymentsRemoteDataSourceImpl
     implements AccountPaymentsRemoteDataSource {
   final DioClient _dioClient;
+  final Logger _logger = Logger();
 
   AccountPaymentsRemoteDataSourceImpl(this._dioClient);
 
   @override
   Future<List<AccountPaymentModel>> getAccountPayments(String accountId) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentsRemoteDataSource: getAccountPayments called for accountId: $accountId',
     );
     try {
-      print(
+      _logger.d(
         '🔍 AccountPaymentsRemoteDataSource: Making API call to /accounts/$accountId/payments',
       );
       final response = await _dioClient.dio.get(
         '/accounts/$accountId/payments',
       );
-      print(
+      _logger.d(
         '🔍 AccountPaymentsRemoteDataSource: API response status: ${response.statusCode}',
       );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-        print(
+        _logger.d(
           '🔍 AccountPaymentsRemoteDataSource: Response data keys: ${responseData.keys.toList()}',
         );
 
         // Handle new response format with payments array
         if (responseData['payments'] != null &&
             responseData['payments'] is List) {
-          print(
+          _logger.d(
             '🔍 AccountPaymentsRemoteDataSource: Found payments array with ${(responseData['payments'] as List).length} items',
           );
           final List<dynamic> paymentsData =
@@ -107,7 +118,7 @@ class AccountPaymentsRemoteDataSourceImpl
                     AccountPaymentModel.fromJson(item as Map<String, dynamic>),
               )
               .toList();
-          print(
+          _logger.d(
             '🔍 AccountPaymentsRemoteDataSource: Parsed ${result.length} payment models',
           );
           return result;
@@ -1049,6 +1060,70 @@ class AccountPaymentsRemoteDataSourceImpl
         throw ServerException('Failed to create global payment: ${e.message}');
       }
     } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<void> refundPayment({
+    required String accountId,
+    required String paymentId,
+    required double refundAmount,
+    required String reason,
+  }) async {
+    try {
+      _logger.d(
+        'Refunding payment: paymentId=$paymentId, accountId=$accountId, amount=$refundAmount',
+      );
+
+      final response = await _dioClient.dio.post(
+        '${ApiEndpoints.payments}/$paymentId/refund',
+        data: {
+          'accountId': accountId,
+          'refundAmount': refundAmount,
+          'reason': reason,
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        _logger.d('Payment refunded successfully: $paymentId');
+        return;
+      } else {
+        final responseData = response.data;
+        throw ServerException(
+          responseData['message'] ?? 'Failed to refund payment',
+          response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Unauthorized to refund payment');
+      } else if (e.response?.statusCode == 403) {
+        throw AuthException(
+          'Forbidden: Insufficient permissions to refund payment',
+        );
+      } else if (e.response?.statusCode == 404) {
+        throw ValidationException('Payment not found');
+      } else if (e.response?.statusCode == 400) {
+        final responseData = e.response?.data;
+        throw ValidationException(
+          responseData?['message'] ?? 'Invalid refund request',
+        );
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout while refunding payment');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('No internet connection');
+      } else {
+        throw ServerException('Failed to refund payment: ${e.message}');
+      }
+    } catch (e) {
+      if (e is AuthException ||
+          e is ValidationException ||
+          e is NetworkException ||
+          e is ServerException) {
+        rethrow;
+      }
       throw ServerException('Unexpected error: $e');
     }
   }

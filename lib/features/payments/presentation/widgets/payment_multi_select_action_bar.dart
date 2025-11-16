@@ -4,6 +4,8 @@ import '../../domain/entities/payment.dart';
 import '../bloc/payment_multiselect_bloc.dart';
 import '../bloc/events/payment_multiselect_events.dart';
 import '../bloc/states/payment_multiselect_states.dart';
+import '../../../../core/widgets/custom_snackbar.dart';
+import '../../../../core/widgets/delete_confirmation_dialog.dart';
 import 'export_payments_dialog.dart';
 
 class PaymentMultiSelectActionBar extends StatelessWidget {
@@ -105,20 +107,19 @@ class PaymentMultiSelectActionBar extends StatelessWidget {
     );
   }
 
-  void _showExportDialog(BuildContext context) {
+  Future<void> _showExportDialog(BuildContext context) async {
     final multiSelectBloc = context.read<PaymentMultiSelectBloc>();
     final selectedPayments = multiSelectBloc.selectedPayments;
 
     // Show export dialog for better user experience
-    showDialog(
+    final result = await showDialog(
       context: context,
       builder: (context) => ExportPaymentsDialog(payments: selectedPayments),
-    ).then((result) async {
-      if (result != null) {
-        final selectedFormat = result['format'] as String;
-        await _performExport(context, selectedPayments, selectedFormat);
-      }
-    });
+    );
+    if (result != null) {
+      final selectedFormat = result['format'] as String;
+      await _performExport(context, selectedPayments, selectedFormat);
+    }
   }
 
   Future<void> _performExport(
@@ -130,37 +131,39 @@ class PaymentMultiSelectActionBar extends StatelessWidget {
     context.read<PaymentMultiSelectBloc>().add(BulkExportPayments(format));
   }
 
-  void _showDeleteDialog(BuildContext context) {
+  Future<void> _showDeleteDialog(BuildContext context) async {
     final multiSelectBloc = context.read<PaymentMultiSelectBloc>();
     final selectedCount = multiSelectBloc.selectedCount;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Payments'),
-        content: Text(
-          'Are you sure you want to delete $selectedCount selected payment(s)? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement bulk delete functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Delete functionality not yet implemented'),
-                ),
-              );
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await DeleteConfirmationDialog.show(
+      context,
+      title: 'Delete Payments',
+      itemName: 'payment(s)',
+      count: selectedCount,
     );
+
+    if (confirmed) {
+      _performDelete(context);
+    }
+  }
+
+  void _performDelete(BuildContext context) {
+    // Dispatch delete event to BLoC
+    context.read<PaymentMultiSelectBloc>().add(const BulkDeletePayments());
+
+    // Listen for delete completion
+    context.read<PaymentMultiSelectBloc>().stream.listen((state) {
+      if (state is BulkDeleteCompleted) {
+        CustomSnackBar.showSuccess(
+          context,
+          message: 'Deleted ${state.count} payments successfully',
+        );
+      } else if (state is BulkDeleteFailed) {
+        CustomSnackBar.showError(
+          context,
+          message: 'Delete failed: ${state.error}',
+        );
+      }
+    });
   }
 }

@@ -13,9 +13,11 @@ class RefundAccountPaymentUseCase {
     required double refundAmount,
     required String reason,
   }) async {
-    // For now, this is a placeholder implementation
-    // The actual refund logic would be implemented in the repository
-    throw UnimplementedError('Refund functionality not yet implemented');
+    return await _paymentsRepository.refundPayment(
+      accountId: accountId,
+      paymentId: paymentId,
+      refundAmount: refundAmount,
+      reason: reason,
+    );
   }
 }
-

@@ -266,12 +266,16 @@ class TagDefinitionsLocalDataSourceImpl
 
   void dispose() {
     for (final controller in _streamControllers.values) {
-      controller.close();
-    }
-    for (final controller in _singleStreamControllers.values) {
-      controller.close();
+      if (!controller.isClosed) {
+        controller.close();
+      }
     }
     _streamControllers.clear();
+    for (final controller in _singleStreamControllers.values) {
+      if (!controller.isClosed) {
+        controller.close();
+      }
+    }
     _singleStreamControllers.clear();
   }
 }

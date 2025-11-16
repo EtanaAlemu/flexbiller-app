@@ -12,6 +12,7 @@ abstract class PaymentsLocalDataSource {
   Future<PaymentModel?> getCachedPaymentById(String paymentId);
   Future<List<PaymentModel>> getCachedPaymentsByAccountId(String accountId);
   Future<List<PaymentModel>> searchCachedPayments(String searchKey);
+  Future<void> deleteCachedPayment(String paymentId);
   Future<void> clearCachedPayments();
 }
 
@@ -165,6 +166,26 @@ class PaymentsLocalDataSourceImpl implements PaymentsLocalDataSource {
       return payments;
     } catch (e, stackTrace) {
       _logger.e('PaymentsLocalDataSource: Error searching cached payments: $e');
+      _logger.e('PaymentsLocalDataSource: Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteCachedPayment(String paymentId) async {
+    try {
+      _logger.d('PaymentsLocalDataSource: Deleting cached payment: $paymentId');
+
+      final db = await _databaseService.database;
+      await PaymentDao.deleteById(db, paymentId);
+
+      _logger.d(
+        'PaymentsLocalDataSource: Successfully deleted cached payment: $paymentId',
+      );
+    } catch (e, stackTrace) {
+      _logger.e(
+        'PaymentsLocalDataSource: Error deleting cached payment $paymentId: $e',
+      );
       _logger.e('PaymentsLocalDataSource: Stack trace: $stackTrace');
       rethrow;
     }

@@ -4,19 +4,24 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../domain/entities/payment.dart';
+import '../../domain/usecases/delete_payment_usecase.dart';
 import '../bloc/events/payment_multiselect_events.dart';
 import '../bloc/states/payment_multiselect_states.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 
 /// BLoC for handling multi-select operations
 @injectable
 class PaymentMultiSelectBloc
-    extends Bloc<PaymentMultiSelectEvent, PaymentMultiSelectState> {
+    extends Bloc<PaymentMultiSelectEvent, PaymentMultiSelectState>
+    with BlocErrorHandlerMixin {
   final Logger _logger = Logger();
+  final DeletePaymentUseCase _deletePaymentUseCase;
 
   final List<Payment> _selectedPayments = [];
   bool _isMultiSelectMode = false;
 
-  PaymentMultiSelectBloc() : super(const PaymentMultiSelectInitial()) {
+  PaymentMultiSelectBloc(this._deletePaymentUseCase)
+    : super(const PaymentMultiSelectInitial()) {
     // Register event handlers
     on<EnableMultiSelectMode>(_onEnableMultiSelectMode);
     on<EnableMultiSelectModeAndSelect>(_onEnableMultiSelectModeAndSelect);
@@ -27,6 +32,7 @@ class PaymentMultiSelectBloc
     on<SelectAllPayments>(_onSelectAllPayments);
     on<DeselectAllPayments>(_onDeselectAllPayments);
     on<BulkExportPayments>(_onBulkExportPayments);
+    on<BulkDeletePayments>(_onBulkDeletePayments);
   }
 
   /// Get the current list of selected payments
@@ -216,8 +222,8 @@ class PaymentMultiSelectBloc
         emit(const BulkExportFailed(error: 'Export cancelled by user'));
       }
     } catch (e) {
-      _logger.e('Bulk export failed: $e');
-      emit(BulkExportFailed(error: e.toString()));
+      final message = handleException(e, context: 'bulk_export_payments');
+      emit(BulkExportFailed(error: message));
     }
   }
 
@@ -253,5 +259,57 @@ class PaymentMultiSelectBloc
     // For now, generate CSV content as Excel files are complex
     // In a real implementation, you would use a library like 'excel' package
     return _generateCSVContent(payments);
+  }
+
+  void _onBulkDeletePayments(
+    BulkDeletePayments event,
+    Emitter<PaymentMultiSelectState> emit,
+  ) async {
+    _logger.d('Starting bulk delete of ${_selectedPayments.length} payments');
+    emit(const BulkDeleteInProgress());
+
+    try {
+      final paymentsToDelete = List<Payment>.from(_selectedPayments);
+      int deletedCount = 0;
+      final List<Payment> failedPayments = [];
+
+      for (final payment in paymentsToDelete) {
+        final result = await _deletePaymentUseCase(payment.paymentId);
+        final success = handleEitherResultWithEmit(result, (message) {
+          // Error already logged by mixin
+          failedPayments.add(payment);
+        }, context: 'delete_payment');
+
+        if (success) {
+          deletedCount++;
+          _logger.d('Successfully deleted payment: ${payment.paymentId}');
+        }
+      }
+
+      // Clear selected payments
+      _selectedPayments.clear();
+
+      if (failedPayments.isEmpty) {
+        // Disable multi-select mode after successful deletion
+        _isMultiSelectMode = false;
+        _logger.d(
+          'Bulk delete completed successfully: $deletedCount payments deleted, multi-select mode disabled',
+        );
+        emit(BulkDeleteCompleted(deletedCount));
+        emit(const MultiSelectModeDisabled()); // Emit to update UI
+      } else {
+        _logger.w(
+          'Bulk delete completed with failures: $deletedCount deleted, ${failedPayments.length} failed',
+        );
+        emit(
+          BulkDeleteFailed(
+            error: 'Failed to delete ${failedPayments.length} payments',
+          ),
+        );
+      }
+    } catch (e) {
+      final message = handleException(e, context: 'bulk_delete_payments');
+      emit(BulkDeleteFailed(error: message));
+    }
   }
 }

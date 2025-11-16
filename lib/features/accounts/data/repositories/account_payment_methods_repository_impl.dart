@@ -34,39 +34,39 @@ class AccountPaymentMethodsRepositoryImpl
   Future<List<AccountPaymentMethod>> getAccountPaymentMethods(
     String accountId,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsRepositoryImpl: getAccountPaymentMethods called for accountId: $accountId',
     );
     try {
       // LOCAL-FIRST: Always read from local cache first (single source of truth)
-      print(
+      _logger.d(
         '🔍 AccountPaymentMethodsRepositoryImpl: Getting cached payment methods from local data source',
       );
       final cachedMethods = await _localDataSource
           .getCachedAccountPaymentMethods(accountId);
-      print(
+      _logger.d(
         '🔍 AccountPaymentMethodsRepositoryImpl: Found ${cachedMethods.length} cached payment methods',
       );
 
       // Convert to entities and emit immediately for instant UI response
       final entities = cachedMethods.map((model) => model.toEntity()).toList();
 
-      print(
+      _logger.d(
         '🔍 AccountPaymentMethodsRepositoryImpl: Emitting cached data to stream immediately',
       );
       _accountPaymentMethodsController.add(entities);
 
       // Return local data immediately (local-first principle)
-      print(
+      _logger.d(
         '🔍 AccountPaymentMethodsRepositoryImpl: Returning ${entities.length} payment methods from local cache',
       );
 
       // BACKGROUND SYNC: Check if device is online for background synchronization
-      print(
+      _logger.d(
         '🔍 AccountPaymentMethodsRepositoryImpl: Checking network connectivity',
       );
       if (await _networkInfo.isConnected) {
-        print(
+        _logger.d(
           '🔍 AccountPaymentMethodsRepositoryImpl: Device is online, starting background sync',
         );
 
@@ -89,18 +89,20 @@ class AccountPaymentMethodsRepositoryImpl
   /// Performs background synchronization with remote server
   Future<void> _performBackgroundSync(String accountId) async {
     try {
-      print('🔍 AccountPaymentMethodsRepositoryImpl: Starting background sync');
+      _logger.d(
+        '🔍 AccountPaymentMethodsRepositoryImpl: Starting background sync',
+      );
 
       // Fetch fresh data from remote source
       final remoteMethods = await _remoteDataSource.getAccountPaymentMethods(
         accountId,
       );
-      print(
+      _logger.d(
         '🔍 AccountPaymentMethodsRepositoryImpl: Remote data source returned ${remoteMethods.length} payment methods',
       );
 
       // Cache the fresh data locally (this becomes the new source of truth)
-      print(
+      _logger.d(
         '🔍 AccountPaymentMethodsRepositoryImpl: Caching remote data locally',
       );
       await _localDataSource.cacheAccountPaymentMethods(
@@ -109,13 +111,13 @@ class AccountPaymentMethodsRepositoryImpl
       );
 
       // Emit updated data to stream (UI will reactively update)
-      print(
+      _logger.d(
         '🔍 AccountPaymentMethodsRepositoryImpl: Emitting updated data to stream',
       );
       final entities = remoteMethods.map((model) => model.toEntity()).toList();
       _accountPaymentMethodsController.add(entities);
 
-      print(
+      _logger.i(
         '🔍 AccountPaymentMethodsRepositoryImpl: Background sync completed for account: $accountId',
       );
       _logger.d('Background sync completed for account: $accountId');
@@ -680,6 +682,12 @@ class AccountPaymentMethodsRepositoryImpl
 
   /// Dispose of the stream controller
   void dispose() {
-    _accountPaymentMethodsController.close();
+    _logger.d('🛑 [Account Payment Methods Repository] Disposing resources...');
+    if (!_accountPaymentMethodsController.isClosed) {
+      _accountPaymentMethodsController.close();
+      _logger.i(
+        '✅ [Account Payment Methods Repository] StreamController closed',
+      );
+    }
   }
 }

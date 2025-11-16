@@ -404,7 +404,10 @@ class AccountEmailsRepositoryImpl implements AccountEmailsRepository {
 
   /// Dispose resources
   void dispose() {
-    _accountEmailsController.close();
-    _logger.d('AccountEmailsRepositoryImpl disposed');
+    _logger.d('🛑 [Account Emails Repository] Disposing resources...');
+    if (!_accountEmailsController.isClosed) {
+      _accountEmailsController.close();
+    }
+    _logger.i('✅ [Account Emails Repository] StreamController closed');
   }
 }

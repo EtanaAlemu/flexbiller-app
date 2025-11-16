@@ -83,3 +83,8 @@ class BulkExportPayments extends PaymentMultiSelectEvent {
   @override
   List<Object?> get props => [format];
 }
+
+/// Event to bulk delete selected payments
+class BulkDeletePayments extends PaymentMultiSelectEvent {
+  const BulkDeletePayments();
+}

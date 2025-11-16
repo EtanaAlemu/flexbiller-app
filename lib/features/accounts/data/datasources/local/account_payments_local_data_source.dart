@@ -160,12 +160,12 @@ class AccountPaymentsLocalDataSourceImpl
   Future<List<AccountPaymentModel>> getCachedAccountPayments(
     String accountId,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentsLocalDataSource: getCachedAccountPayments called for accountId: $accountId',
     );
     try {
       // Check for user context and restore if needed
-      print('🔍 AccountPaymentsLocalDataSource: Checking user context');
+      _logger.d('🔍 AccountPaymentsLocalDataSource: Checking user context');
       var currentUserId = _userSessionService.getCurrentUserIdOrNull();
       if (currentUserId == null) {
         _logger.w('No active user context, attempting to restore user context');
@@ -188,13 +188,13 @@ class AccountPaymentsLocalDataSourceImpl
       // Log the user ID we're using
       _logger.d('Using user ID: $currentUserId');
 
-      print('🔍 AccountPaymentsLocalDataSource: Getting database instance');
+      _logger.d('🔍 AccountPaymentsLocalDataSource: Getting database instance');
       final db = await _databaseService.database;
-      print(
+      _logger.d(
         '🔍 AccountPaymentsLocalDataSource: Querying AccountPaymentDao.getByAccountId',
       );
       final payments = await AccountPaymentDao.getByAccountId(db, accountId);
-      print(
+      _logger.d(
         '🔍 AccountPaymentsLocalDataSource: Retrieved ${payments.length} cached payments for account: $accountId',
       );
       _logger.d(

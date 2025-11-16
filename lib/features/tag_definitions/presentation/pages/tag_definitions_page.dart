@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../../../../core/widgets/custom_snackbar.dart';
 import '../bloc/tag_definitions_bloc.dart';
 import '../bloc/tag_definitions_event.dart';
@@ -21,6 +22,7 @@ class TagDefinitionsPage extends StatefulWidget {
 }
 
 class _TagDefinitionsPageState extends State<TagDefinitionsPage> {
+  final Logger _logger = Logger();
   late ScrollController _scrollController;
   bool _isFabVisible = true;
   double _lastScrollOffset = 0.0;
@@ -75,8 +77,8 @@ class _TagDefinitionsPageState extends State<TagDefinitionsPage> {
     return BlocListener<TagDefinitionsBloc, TagDefinitionsState>(
       listener: (context, state) {
         if (state is TagDefinitionsWithSelection) {
-          print('🔍 Page: Received TagDefinitionsWithSelection state');
-          print(
+          _logger.d('🔍 Page: Received TagDefinitionsWithSelection state');
+          _logger.d(
             '🔍 Page: Selected count: ${state.selectedTagDefinitions.length}',
           );
         } else if (state is ExportTagDefinitionsSuccess) {
@@ -175,6 +177,7 @@ class TagDefinitionsViewState extends State<TagDefinitionsView> {
   bool _showSearchBar = false;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
+  final Logger _logger = Logger();
 
   @override
   void dispose() {
@@ -267,9 +270,11 @@ class TagDefinitionsViewState extends State<TagDefinitionsView> {
       },
       child: BlocBuilder<TagDefinitionsBloc, TagDefinitionsState>(
         builder: (context, state) {
-          print('🔍 Page: BlocBuilder called with state: ${state.runtimeType}');
+          _logger.d(
+            '🔍 Page: BlocBuilder called with state: ${state.runtimeType}',
+          );
           if (state is TagDefinitionsWithSelection) {
-            print(
+            _logger.d(
               '🔍 Page: BlocBuilder - Selected count: ${state.selectedTagDefinitions.length}',
             );
           }
@@ -383,19 +388,16 @@ class TagDefinitionsViewState extends State<TagDefinitionsView> {
     );
   }
 
-  void _navigateToAddTagDefinition(BuildContext context) {
-    Navigator.of(context)
-        .push(
-          MaterialPageRoute(
-            builder: (context) => const CreateTagDefinitionPage(),
-          ),
-        )
-        .then((result) {
-          // Refresh the list if a tag definition was created successfully
-          if (result == true) {
-            context.read<TagDefinitionsBloc>().add(LoadTagDefinitions());
-          }
-        });
+  Future<void> _navigateToAddTagDefinition(BuildContext context) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const CreateTagDefinitionPage(),
+      ),
+    );
+    // Refresh the list if a tag definition was created successfully
+    if (result == true) {
+      context.read<TagDefinitionsBloc>().add(LoadTagDefinitions());
+    }
   }
 
   Widget _buildSearchBar(BuildContext context) {

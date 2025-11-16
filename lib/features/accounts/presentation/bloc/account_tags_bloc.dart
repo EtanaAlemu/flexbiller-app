@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/usecases/assign_multiple_tags_to_account_usecase.dart';
 import '../../domain/usecases/assign_tag_to_account_usecase.dart';
 import '../../domain/usecases/create_tag_usecase.dart';
@@ -17,7 +19,8 @@ import 'events/account_tags_events.dart';
 import 'states/account_tags_states.dart';
 
 @injectable
-class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
+class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState>
+    with BlocErrorHandlerMixin {
   final GetAccountTagsUseCase _getAccountTagsUseCase;
   final GetAllTagsForAccountUseCase _getAllTagsForAccountUseCase;
   final CreateTagUseCase _createTagUseCase;
@@ -30,6 +33,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
   _removeMultipleTagsFromAccountUseCase;
   final RefreshAccountTagsUseCase _refreshAccountTagsUseCase;
   final AccountTagsRepository _accountTagsRepository;
+  final Logger _logger = Logger();
 
   StreamSubscription<List<AccountTagAssignment>>? _accountTagsSubscription;
   String? _currentAccountId;
@@ -63,14 +67,14 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
 
   /// Initialize stream subscriptions for reactive updates from repository
   void _initializeStreamSubscriptions() {
-    print('🔍 AccountTagsBloc: Initializing stream subscriptions');
-    print(
+    _logger.d('🔍 AccountTagsBloc: Initializing stream subscriptions');
+    _logger.d(
       '🔍 AccountTagsBloc: Repository stream: ${_accountTagsRepository.accountTagsStream}',
     );
     // Listen to account tags updates from repository background sync
     _accountTagsSubscription = _accountTagsRepository.accountTagsStream.listen(
       (updatedTags) {
-        print(
+        _logger.d(
           '🔍 AccountTagsBloc: Stream update received with ${updatedTags.length} tags, currentAccountId: $_currentAccountId',
         );
 
@@ -81,13 +85,13 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
               .where((tag) => tag.accountId == _currentAccountId)
               .toList();
 
-          print(
+          _logger.d(
             '🔍 AccountTagsBloc: Filtered ${currentAccountTags.length} tags for current account',
           );
 
           // Update tags list with fresh data directly without triggering new events
           final currentState = state;
-          print(
+          _logger.d(
             '🔍 AccountTagsBloc: Current state: ${currentState.runtimeType}',
           );
 
@@ -99,7 +103,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
                 tags: currentAccountTags,
               ),
             );
-            print(
+            _logger.d(
               '🔍 AccountTagsBloc: Account tags updated from background sync: ${currentAccountTags.length} tags',
             );
           } else if (currentState is AccountTagsLoading) {
@@ -110,22 +114,22 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
                 tags: currentAccountTags,
               ),
             );
-            print(
+            _logger.d(
               '🔍 AccountTagsBloc: Account tags loaded from background sync: ${currentAccountTags.length} tags',
             );
           } else {
-            print(
+            _logger.d(
               '🔍 AccountTagsBloc: Ignoring stream update - current state is not loaded or loading: ${currentState.runtimeType}',
             );
           }
         } else {
-          print(
+          _logger.d(
             '🔍 AccountTagsBloc: Ignoring stream update - no current account ID set',
           );
         }
       },
       onError: (error) {
-        print('🔍 AccountTagsBloc: Stream error: $error');
+        _logger.e('🔍 AccountTagsBloc: Stream error: $error');
         if (_currentAccountId != null) {
           emit(
             AccountTagsFailure(
@@ -136,14 +140,14 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
         }
       },
     );
-    print('🔍 AccountTagsBloc: Stream subscription created successfully');
+    _logger.d('🔍 AccountTagsBloc: Stream subscription created successfully');
   }
 
   Future<void> _onLoadAccountTags(
     LoadAccountTags event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: LoadAccountTags called for accountId: ${event.accountId}',
     );
 
@@ -159,7 +163,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     try {
       // LOCAL-FIRST: This will return local data immediately
       final tags = await _getAccountTagsUseCase(event.accountId);
-      print(
+      _logger.d(
         '🔍 AccountTagsBloc: LoadAccountTags succeeded with ${tags.length} tags from local cache',
       );
       emit(AccountTagsLoaded(accountId: event.accountId, tags: tags));
@@ -167,7 +171,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
       // The repository will handle background sync and emit updates via stream
       // The UI will reactively update when new data arrives
     } catch (e) {
-      print('🔍 AccountTagsBloc: LoadAccountTags exception: $e');
+      _logger.e('🔍 AccountTagsBloc: LoadAccountTags exception: $e');
       emit(
         AccountTagsFailure(
           accountId: event.accountId,
@@ -181,7 +185,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     RefreshAccountTags event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: RefreshAccountTags called for accountId: ${event.accountId}',
     );
 
@@ -197,7 +201,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     try {
       // LOCAL-FIRST: This will return local data immediately and trigger background sync
       final tags = await _refreshAccountTagsUseCase(event.accountId);
-      print(
+      _logger.d(
         '🔍 AccountTagsBloc: RefreshAccountTags succeeded with ${tags.length} tags from local cache',
       );
       emit(AccountTagsLoaded(accountId: event.accountId, tags: tags));
@@ -205,7 +209,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
       // The repository will handle background sync and emit updates via stream
       // The UI will reactively update when fresh data arrives
     } catch (e) {
-      print('🔍 AccountTagsBloc: RefreshAccountTags exception: $e');
+      _logger.e('🔍 AccountTagsBloc: RefreshAccountTags exception: $e');
       emit(
         AccountTagsFailure(
           accountId: event.accountId,
@@ -219,7 +223,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     LoadAllTagsForAccount event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: LoadAllTagsForAccount called for accountId: ${event.accountId}',
     );
 
@@ -227,14 +231,14 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
 
     try {
       final allTags = await _getAllTagsForAccountUseCase(event.accountId);
-      print(
+      _logger.d(
         '🔍 AccountTagsBloc: LoadAllTagsForAccount succeeded with ${allTags.length} tags',
       );
       emit(
         AllTagsForAccountLoaded(accountId: event.accountId, allTags: allTags),
       );
     } catch (e) {
-      print('🔍 AccountTagsBloc: LoadAllTagsForAccount exception: $e');
+      _logger.e('🔍 AccountTagsBloc: LoadAllTagsForAccount exception: $e');
       emit(
         AllTagsForAccountFailure(
           accountId: event.accountId,
@@ -248,7 +252,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     CreateTag event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: CreateTag called for accountId: ${event.accountId}',
     );
 
@@ -262,11 +266,11 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
         icon: event.icon,
       );
 
-      print('🔍 AccountTagsBloc: CreateTag succeeded');
+      _logger.i('🔍 AccountTagsBloc: CreateTag succeeded');
       emit(TagCreated(accountId: event.accountId, tag: tag));
       add(LoadAccountTags(event.accountId)); // Reload to update UI
     } catch (e) {
-      print('🔍 AccountTagsBloc: CreateTag exception: $e');
+      _logger.e('🔍 AccountTagsBloc: CreateTag exception: $e');
       emit(
         TagCreationFailure(
           accountId: event.accountId,
@@ -280,7 +284,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     UpdateTag event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: UpdateTag called for accountId: ${event.accountId}, tagId: ${event.tagId}',
     );
 
@@ -295,11 +299,11 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
         icon: event.icon,
       );
 
-      print('🔍 AccountTagsBloc: UpdateTag succeeded');
+      _logger.i('🔍 AccountTagsBloc: UpdateTag succeeded');
       emit(TagUpdated(accountId: event.accountId, tag: tag));
       add(LoadAccountTags(event.accountId)); // Reload to update UI
     } catch (e) {
-      print('🔍 AccountTagsBloc: UpdateTag exception: $e');
+      _logger.e('🔍 AccountTagsBloc: UpdateTag exception: $e');
       emit(
         TagUpdateFailure(
           accountId: event.accountId,
@@ -314,7 +318,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     DeleteTag event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: DeleteTag called for accountId: ${event.accountId}, tagId: ${event.tagId}',
     );
 
@@ -323,11 +327,11 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     try {
       await _deleteTagUseCase(event.tagId);
 
-      print('🔍 AccountTagsBloc: DeleteTag succeeded');
+      _logger.i('🔍 AccountTagsBloc: DeleteTag succeeded');
       emit(TagDeleted(accountId: event.accountId, tagId: event.tagId));
       add(LoadAccountTags(event.accountId)); // Reload to update UI
     } catch (e) {
-      print('🔍 AccountTagsBloc: DeleteTag exception: $e');
+      _logger.e('🔍 AccountTagsBloc: DeleteTag exception: $e');
       emit(
         TagDeletionFailure(
           accountId: event.accountId,
@@ -342,7 +346,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     AssignTagToAccount event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: AssignTagToAccount called for accountId: ${event.accountId}, tagId: ${event.tagId}',
     );
 
@@ -354,13 +358,13 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
         tagId: event.tagId,
       );
 
-      print('🔍 AccountTagsBloc: AssignTagToAccount succeeded');
+      _logger.i('🔍 AccountTagsBloc: AssignTagToAccount succeeded');
       emit(
         TagAssigned(accountId: event.accountId, tagAssignment: tagAssignment),
       );
       add(LoadAccountTags(event.accountId)); // Reload to update UI
     } catch (e) {
-      print('🔍 AccountTagsBloc: AssignTagToAccount exception: $e');
+      _logger.e('🔍 AccountTagsBloc: AssignTagToAccount exception: $e');
       emit(
         TagAssignmentFailure(
           accountId: event.accountId,
@@ -375,7 +379,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     AssignMultipleTagsToAccount event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: AssignMultipleTagsToAccount called for accountId: ${event.accountId}',
     );
 
@@ -389,7 +393,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
         event.tagIds,
       );
 
-      print('🔍 AccountTagsBloc: AssignMultipleTagsToAccount succeeded');
+      _logger.i('🔍 AccountTagsBloc: AssignMultipleTagsToAccount succeeded');
       emit(
         MultipleTagsAssigned(
           accountId: event.accountId,
@@ -398,7 +402,9 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
       );
       add(LoadAccountTags(event.accountId)); // Reload to update UI
     } catch (e) {
-      print('🔍 AccountTagsBloc: AssignMultipleTagsToAccount exception: $e');
+      _logger.e(
+        '🔍 AccountTagsBloc: AssignMultipleTagsToAccount exception: $e',
+      );
       emit(
         MultipleTagsAssignmentFailure(
           accountId: event.accountId,
@@ -413,7 +419,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     RemoveTagFromAccount event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: RemoveTagFromAccount called for accountId: ${event.accountId}, tagId: ${event.tagId}',
     );
 
@@ -425,11 +431,11 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
         tagId: event.tagId,
       );
 
-      print('🔍 AccountTagsBloc: RemoveTagFromAccount succeeded');
+      _logger.i('🔍 AccountTagsBloc: RemoveTagFromAccount succeeded');
       emit(TagRemoved(accountId: event.accountId, tagId: event.tagId));
       add(LoadAccountTags(event.accountId)); // Reload to update UI
     } catch (e) {
-      print('🔍 AccountTagsBloc: RemoveTagFromAccount exception: $e');
+      _logger.e('🔍 AccountTagsBloc: RemoveTagFromAccount exception: $e');
       emit(
         TagRemovalFailure(
           accountId: event.accountId,
@@ -444,7 +450,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     RemoveMultipleTagsFromAccount event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: RemoveMultipleTagsFromAccount called for accountId: ${event.accountId}',
     );
 
@@ -458,13 +464,15 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
         event.tagIds,
       );
 
-      print('🔍 AccountTagsBloc: RemoveMultipleTagsFromAccount succeeded');
+      _logger.i('🔍 AccountTagsBloc: RemoveMultipleTagsFromAccount succeeded');
       emit(
         MultipleTagsRemoved(accountId: event.accountId, tagIds: event.tagIds),
       );
       add(LoadAccountTags(event.accountId)); // Reload to update UI
     } catch (e) {
-      print('🔍 AccountTagsBloc: RemoveMultipleTagsFromAccount exception: $e');
+      _logger.e(
+        '🔍 AccountTagsBloc: RemoveMultipleTagsFromAccount exception: $e',
+      );
       emit(
         MultipleTagsRemovalFailure(
           accountId: event.accountId,
@@ -479,7 +487,7 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
     SyncAccountTags event,
     Emitter<AccountTagsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountTagsBloc: SyncAccountTags called for accountId: ${event.accountId}',
     );
 
@@ -487,13 +495,13 @@ class AccountTagsBloc extends Bloc<AccountTagsEvent, AccountTagsState> {
 
     try {
       final tags = await _refreshAccountTagsUseCase(event.accountId);
-      print(
+      _logger.i(
         '🔍 AccountTagsBloc: SyncAccountTags succeeded with ${tags.length} tags',
       );
       emit(AccountTagsSynced(accountId: event.accountId, tags: tags));
       add(LoadAccountTags(event.accountId)); // Reload to update UI
     } catch (e) {
-      print('🔍 AccountTagsBloc: SyncAccountTags exception: $e');
+      _logger.e('🔍 AccountTagsBloc: SyncAccountTags exception: $e');
       emit(
         AccountTagsSyncFailure(
           accountId: event.accountId,

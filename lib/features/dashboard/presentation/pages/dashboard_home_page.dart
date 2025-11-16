@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import '../bloc/dashboard_bloc.dart';
-import '../widgets/dashboard_welcome_section.dart';
 import '../widgets/dashboard_kpi_cards.dart';
 import '../widgets/dashboard_kpi_cards_skeleton.dart';
 import '../widgets/subscription_trends_chart.dart';

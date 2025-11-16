@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -12,7 +13,6 @@ import "../bloc/accounts_orchestrator_bloc.dart";
 import '../bloc/events/accounts_event.dart';
 import '../bloc/states/accounts_state.dart';
 import 'export_accounts_dialog.dart';
-import 'package:flexbiller_app/main.dart';
 
 class MultiSelectActionBar extends StatefulWidget {
   final List<Account> selectedAccounts;
@@ -31,13 +31,16 @@ class MultiSelectActionBar extends StatefulWidget {
 }
 
 class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
+  final Logger _logger = Logger();
   bool _isDeleting = false;
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<AccountsOrchestratorBloc, AccountsState>(
       listener: (context, state) {
-        print('🔍 MultiSelectActionBar: Received state: ${state.runtimeType}');
+        _logger.d(
+          '🔍 MultiSelectActionBar: Received state: ${state.runtimeType}',
+        );
         if (state is BulkAccountsExportSuccess) {
           CustomSnackBar.showSuccess(
             context,
@@ -50,7 +53,7 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
             message: 'Export failed: ${state.message}',
           );
         } else if (state is BulkAccountsDeleting) {
-          print(
+          _logger.d(
             '🔍 MultiSelectActionBar: Handling BulkAccountsDeleting with ${state.accountsToDelete.length} accounts',
           );
           setState(() {
@@ -61,7 +64,7 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
             message: 'Deleting ${state.accountsToDelete.length} accounts...',
           );
         } else if (state is BulkAccountsDeleted) {
-          print(
+          _logger.d(
             '🔍 MultiSelectActionBar: Handling BulkAccountsDeleted with ${state.deletedAccountIds.length} accounts',
           );
           setState(() {
@@ -184,18 +187,17 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
     }
   }
 
-  void _showExportDialog(BuildContext context) {
+  Future<void> _showExportDialog(BuildContext context) async {
     // Show export dialog for better user experience
-    showDialog(
+    final result = await showDialog(
       context: context,
       builder: (context) =>
           ExportAccountsDialog(accounts: widget.selectedAccounts),
-    ).then((result) async {
-      if (result != null) {
-        final selectedFormat = result['format'] as String;
-        await _performExport(context, widget.selectedAccounts, selectedFormat);
-      }
-    });
+    );
+    if (result != null) {
+      final selectedFormat = result['format'] as String;
+      await _performExport(context, widget.selectedAccounts, selectedFormat);
+    }
   }
 
   Future<void> _performExport(
@@ -309,13 +311,13 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
     String fileName,
   ) async {
     try {
-      // Debug: Print the file path we're trying to open
-      print('Attempting to open file: $filePath');
+      // Debug: Log the file path we're trying to open
+      _logger.d('Attempting to open file: $filePath');
 
       // Check if file exists at the specified path
       final file = File(filePath);
       final fileExists = await file.exists();
-      print('File exists at path: $fileExists');
+      _logger.d('File exists at path: $fileExists');
 
       if (!fileExists) {
         // File doesn't exist at the specified path, try to find it
@@ -346,7 +348,7 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
         }
 
         if (foundPath != null) {
-          print('Found file at: $foundPath');
+          _logger.d('Found file at: $foundPath');
           await OpenFile.open(foundPath);
         } else {
           // File not found anywhere
@@ -398,7 +400,7 @@ class _MultiSelectActionBarState extends State<MultiSelectActionBar> {
       }
     } catch (e) {
       // If OpenFile fails completely, show file location
-      print('Error opening file: $e');
+      _logger.e('Error opening file: $e');
       CustomSnackBar.showInfo(
         context,
         message:

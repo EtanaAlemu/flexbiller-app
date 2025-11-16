@@ -9,6 +9,7 @@ abstract class PaymentsRemoteDataSource {
   Future<List<PaymentModel>> getPayments();
   Future<PaymentModel> getPaymentById(String paymentId);
   Future<List<PaymentModel>> getPaymentsByAccountId(String accountId);
+  Future<void> deletePayment(String paymentId);
 }
 
 @LazySingleton(as: PaymentsRemoteDataSource)
@@ -99,6 +100,26 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
         throw Exception(
           'Failed to fetch payments by account: HTTP ${response.statusCode}',
         );
+      }
+    } on DioException catch (e) {
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<void> deletePayment(String paymentId) async {
+    try {
+      final response = await _dioClient.dio.delete(
+        '${ApiEndpoints.payments}/$paymentId',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return;
+      } else {
+        final responseData = response.data;
+        throw Exception(responseData?['message'] ?? 'Failed to delete payment');
       }
     } on DioException catch (e) {
       throw Exception('Network error: ${e.message}');

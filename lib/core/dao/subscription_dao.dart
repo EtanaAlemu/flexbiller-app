@@ -67,6 +67,17 @@ class SubscriptionDao {
     )
   ''';
 
+  static const String createIndexesSQL =
+      '''
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_account_id ON $tableName ($columnAccountId);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_bundle_id ON $tableName ($columnBundleId);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_state ON $tableName ($columnState);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_product_name ON $tableName ($columnProductName);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_plan_name ON $tableName ($columnPlanName);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_created_at ON $tableName ($columnCreatedAt);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_external_key ON $tableName ($columnExternalKey);
+  ''';
+
   /// Insert or update a subscription
   static Future<void> insertOrUpdate(
     Database db,

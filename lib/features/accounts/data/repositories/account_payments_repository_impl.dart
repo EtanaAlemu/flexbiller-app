@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import '../../../../../core/network/network_info.dart';
+import '../../../../../core/services/sync_service.dart';
 import '../../domain/entities/account_payment.dart';
 import '../../domain/repositories/account_payments_repository.dart';
 import '../datasources/remote/account_payments_remote_data_source.dart';
@@ -13,6 +14,7 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   final AccountPaymentsRemoteDataSource _remoteDataSource;
   final AccountPaymentsLocalDataSource _localDataSource;
   final NetworkInfo _networkInfo;
+  final SyncService _syncService;
   final Logger _logger;
 
   final StreamController<List<AccountPayment>> _accountPaymentsController =
@@ -22,6 +24,7 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
     this._remoteDataSource,
     this._localDataSource,
     this._networkInfo,
+    this._syncService,
     this._logger,
   );
 
@@ -31,38 +34,40 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
 
   @override
   Future<List<AccountPayment>> getAccountPayments(String accountId) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentsRepositoryImpl: getAccountPayments called for accountId: $accountId',
     );
     try {
       // LOCAL-FIRST: Always read from local cache first (single source of truth)
-      print(
+      _logger.d(
         '🔍 AccountPaymentsRepositoryImpl: Getting cached payments from local data source',
       );
       final cachedPayments = await _localDataSource.getCachedAccountPayments(
         accountId,
       );
-      print(
+      _logger.d(
         '🔍 AccountPaymentsRepositoryImpl: Found ${cachedPayments.length} cached payments',
       );
 
       // Convert to entities and emit immediately for instant UI response
       final entities = cachedPayments.map((model) => model.toEntity()).toList();
 
-      print(
+      _logger.d(
         '🔍 AccountPaymentsRepositoryImpl: Emitting cached data to stream immediately',
       );
       _accountPaymentsController.add(entities);
 
       // Return local data immediately (local-first principle)
-      print(
+      _logger.d(
         '🔍 AccountPaymentsRepositoryImpl: Returning ${entities.length} payments from local cache',
       );
 
       // BACKGROUND SYNC: Check if device is online for background synchronization
-      print('🔍 AccountPaymentsRepositoryImpl: Checking network connectivity');
+      _logger.d(
+        '🔍 AccountPaymentsRepositoryImpl: Checking network connectivity',
+      );
       if (await _networkInfo.isConnected) {
-        print(
+        _logger.d(
           '🔍 AccountPaymentsRepositoryImpl: Device is online, starting background sync',
         );
 
@@ -85,28 +90,30 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
   /// Performs background synchronization with remote server
   Future<void> _performBackgroundSync(String accountId) async {
     try {
-      print('🔍 AccountPaymentsRepositoryImpl: Starting background sync');
+      _logger.d('🔍 AccountPaymentsRepositoryImpl: Starting background sync');
 
       // Fetch fresh data from remote source
       final remotePayments = await _remoteDataSource.getAccountPayments(
         accountId,
       );
-      print(
+      _logger.d(
         '🔍 AccountPaymentsRepositoryImpl: Remote data source returned ${remotePayments.length} payments',
       );
 
       // Cache the fresh data locally (this becomes the new source of truth)
-      print('🔍 AccountPaymentsRepositoryImpl: Caching remote data locally');
+      _logger.d(
+        '🔍 AccountPaymentsRepositoryImpl: Caching remote data locally',
+      );
       await _localDataSource.cacheAccountPayments(accountId, remotePayments);
 
       // Emit updated data to stream (UI will reactively update)
-      print(
+      _logger.d(
         '🔍 AccountPaymentsRepositoryImpl: Emitting updated data to stream',
       );
       final entities = remotePayments.map((model) => model.toEntity()).toList();
       _accountPaymentsController.add(entities);
 
-      print(
+      _logger.i(
         '🔍 AccountPaymentsRepositoryImpl: Background sync completed for account: $accountId',
       );
       _logger.d('Background sync completed for account: $accountId');
@@ -922,8 +929,96 @@ class AccountPaymentsRepositoryImpl implements AccountPaymentsRepository {
     }
   }
 
+  @override
+  Future<void> refundPayment({
+    required String accountId,
+    required String paymentId,
+    required double refundAmount,
+    required String reason,
+  }) async {
+    try {
+      _logger.d(
+        'Refunding payment: paymentId=$paymentId, accountId=$accountId, amount=$refundAmount',
+      );
+
+      // If online, refund on remote first
+      if (await _networkInfo.isConnected) {
+        try {
+          await _remoteDataSource.refundPayment(
+            accountId: accountId,
+            paymentId: paymentId,
+            refundAmount: refundAmount,
+            reason: reason,
+          );
+          _logger.d('Payment refunded on remote: $paymentId');
+
+          // Update local cache to mark payment as refunded
+          await _localDataSource.markCachedPaymentAsRefunded(
+            paymentId,
+            refundAmount,
+            DateTime.now(),
+            reason,
+          );
+
+          // Refresh payments list
+          final cachedPayments = await _localDataSource
+              .getCachedAccountPayments(accountId);
+          final entities = cachedPayments
+              .map((model) => model.toEntity())
+              .toList();
+          _accountPaymentsController.add(entities);
+
+          _logger.d('Payment refunded successfully: $paymentId');
+        } catch (e) {
+          _logger.e('Failed to refund payment on remote: $e');
+          // If remote refund fails, still mark locally for offline sync
+          await _localDataSource.markCachedPaymentAsRefunded(
+            paymentId,
+            refundAmount,
+            DateTime.now(),
+            reason,
+          );
+          rethrow;
+        }
+      } else {
+        // Offline: mark locally for later sync
+        _logger.d('Offline: marking payment as refunded locally for sync');
+        await _localDataSource.markCachedPaymentAsRefunded(
+          paymentId,
+          refundAmount,
+          DateTime.now(),
+          reason,
+        );
+
+        // Register for sync
+        _syncService.queueOperation(() async {
+          try {
+            _logger.d('🔄 Syncing payment refund: $paymentId');
+            await _remoteDataSource.refundPayment(
+              accountId: accountId,
+              paymentId: paymentId,
+              refundAmount: refundAmount,
+              reason: reason,
+            );
+            _logger.d('✅ Payment refund synced successfully: $paymentId');
+          } catch (e) {
+            _logger.e('❌ Failed to sync payment refund $paymentId: $e');
+            rethrow;
+          }
+        });
+      }
+    } catch (e) {
+      _logger.e('Error refunding payment: $e');
+      rethrow;
+    }
+  }
+
   /// Dispose of the stream controller
   void dispose() {
-    _accountPaymentsController.close();
+    _logger.d('🛑 [Account Payments Repository] Disposing resources...');
+    if (!_accountPaymentsController.isClosed) {
+      _accountPaymentsController.close();
+      _logger.i('✅ [Account Payments Repository] StreamController closed');
+    }
   }
 }

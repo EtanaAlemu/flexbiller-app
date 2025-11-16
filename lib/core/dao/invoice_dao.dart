@@ -85,6 +85,17 @@ class InvoiceDao {
     )
   ''';
 
+  static const String createIndexesSQL =
+      '''
+    CREATE INDEX IF NOT EXISTS idx_invoices_account_id ON $tableName ($columnAccountId);
+    CREATE INDEX IF NOT EXISTS idx_invoices_status ON $tableName ($columnStatus);
+    CREATE INDEX IF NOT EXISTS idx_invoices_invoice_number ON $tableName ($columnInvoiceNumber);
+    CREATE INDEX IF NOT EXISTS idx_invoices_created_at ON $tableName ($columnCreatedAt);
+    CREATE INDEX IF NOT EXISTS idx_invoices_invoice_date ON $tableName ($columnInvoiceDate);
+    CREATE INDEX IF NOT EXISTS idx_invoice_audit_logs_invoice_id ON $auditLogsTableName ($columnAuditLogInvoiceId);
+    CREATE INDEX IF NOT EXISTS idx_invoice_audit_logs_change_date ON $auditLogsTableName ($columnChangeDate);
+  ''';
+
   /// Insert or update an invoice
   static Future<void> insertOrUpdate(Database db, InvoiceModel invoice) async {
     try {
@@ -224,45 +235,68 @@ class InvoiceDao {
   /// Get all invoices
   static Future<List<InvoiceModel>> getAll(Database db) async {
     try {
+      // Fetch all invoices
       final results = await db.query(
         tableName,
         orderBy: '$columnCreatedAt DESC',
       );
-      final invoices = <InvoiceModel>[];
 
-      for (final invoiceData in results) {
+      if (results.isEmpty) {
+        _logger.d('No invoices found');
+        return [];
+      }
+
+      // Extract invoice IDs
+      final invoiceIds = results
+          .map((row) => row[columnInvoiceId] as String)
+          .toList();
+
+      // Fetch all audit logs for all invoices in a single query (optimized)
+      final auditLogsResults = invoiceIds.isEmpty
+          ? <Map<String, dynamic>>[]
+          : await db.query(
+              auditLogsTableName,
+              where:
+                  '$columnAuditLogInvoiceId IN (${List.filled(invoiceIds.length, '?').join(',')})',
+              whereArgs: invoiceIds,
+              orderBy: '$columnChangeDate DESC',
+            );
+
+      // Group audit logs by invoice ID
+      final auditLogsByInvoiceId = <String, List<InvoiceAuditLogModel>>{};
+      for (final auditLogData in auditLogsResults) {
+        final invoiceId = auditLogData[columnAuditLogInvoiceId] as String;
+        auditLogsByInvoiceId
+            .putIfAbsent(invoiceId, () => [])
+            .add(
+              InvoiceAuditLogModel(
+                changeType: auditLogData[columnChangeType] as String,
+                changeDate: auditLogData[columnChangeDate] as String,
+                objectType: auditLogData[columnObjectType] as String,
+                objectId: auditLogData[columnObjectId] as String,
+                changedBy: auditLogData[columnChangedBy] as String,
+                reasonCode: auditLogData[columnReasonCode] as String?,
+                comments: auditLogData[columnComments] as String?,
+                userToken: auditLogData[columnUserToken] as String,
+                history: auditLogData[columnHistory] != null
+                    ? {} // Simplified - would need proper parsing
+                    : null,
+              ),
+            );
+      }
+
+      // Build invoice models with their audit logs
+      final invoices = results.map((invoiceData) {
         final invoiceId = invoiceData[columnInvoiceId] as String;
+        final auditLogs = auditLogsByInvoiceId[invoiceId] ?? [];
 
-        // Get invoice audit logs for each invoice
-        final auditLogsResults = await db.query(
-          auditLogsTableName,
-          where: '$columnAuditLogInvoiceId = ?',
-          whereArgs: [invoiceId],
-        );
-
-        final auditLogs = auditLogsResults.map((auditLogData) {
-          return InvoiceAuditLogModel(
-            changeType: auditLogData[columnChangeType] as String,
-            changeDate: auditLogData[columnChangeDate] as String,
-            objectType: auditLogData[columnObjectType] as String,
-            objectId: auditLogData[columnObjectId] as String,
-            changedBy: auditLogData[columnChangedBy] as String,
-            reasonCode: auditLogData[columnReasonCode] as String?,
-            comments: auditLogData[columnComments] as String?,
-            userToken: auditLogData[columnUserToken] as String,
-            history: auditLogData[columnHistory] != null
-                ? {} // Simplified - would need proper parsing
-                : null,
-          );
-        }).toList();
-
-        final invoice = InvoiceModel(
+        return InvoiceModel(
           amount: invoiceData[columnAmount] as double,
           currency: invoiceData[columnCurrency] as String,
           status: invoiceData[columnStatus] as String,
           creditAdj: invoiceData[columnCreditAdj] as double,
           refundAdj: invoiceData[columnRefundAdj] as double,
-          invoiceId: invoiceData[columnInvoiceId] as String,
+          invoiceId: invoiceId,
           invoiceDate: invoiceData[columnInvoiceDate] as String,
           targetDate: invoiceData[columnTargetDate] as String,
           invoiceNumber: invoiceData[columnInvoiceNumber] as String,
@@ -283,9 +317,7 @@ class InvoiceDao {
           parentAccountId: invoiceData[columnParentAccountId] as String?,
           auditLogs: auditLogs,
         );
-
-        invoices.add(invoice);
-      }
+      }).toList();
 
       _logger.d('Retrieved ${invoices.length} invoices');
       return invoices;
@@ -301,6 +333,7 @@ class InvoiceDao {
     String accountId,
   ) async {
     try {
+      // Fetch invoices for the account
       final results = await db.query(
         tableName,
         where: '$columnAccountId = ?',
@@ -308,41 +341,62 @@ class InvoiceDao {
         orderBy: '$columnCreatedAt DESC',
       );
 
-      final invoices = <InvoiceModel>[];
+      if (results.isEmpty) {
+        _logger.d('No invoices found for account: $accountId');
+        return [];
+      }
 
-      for (final invoiceData in results) {
+      // Extract invoice IDs
+      final invoiceIds = results
+          .map((row) => row[columnInvoiceId] as String)
+          .toList();
+
+      // Fetch all audit logs for all invoices in a single query (optimized)
+      final auditLogsResults = invoiceIds.isEmpty
+          ? <Map<String, dynamic>>[]
+          : await db.query(
+              auditLogsTableName,
+              where:
+                  '$columnAuditLogInvoiceId IN (${List.filled(invoiceIds.length, '?').join(',')})',
+              whereArgs: invoiceIds,
+              orderBy: '$columnChangeDate DESC',
+            );
+
+      // Group audit logs by invoice ID
+      final auditLogsByInvoiceId = <String, List<InvoiceAuditLogModel>>{};
+      for (final auditLogData in auditLogsResults) {
+        final invoiceId = auditLogData[columnAuditLogInvoiceId] as String;
+        auditLogsByInvoiceId
+            .putIfAbsent(invoiceId, () => [])
+            .add(
+              InvoiceAuditLogModel(
+                changeType: auditLogData[columnChangeType] as String,
+                changeDate: auditLogData[columnChangeDate] as String,
+                objectType: auditLogData[columnObjectType] as String,
+                objectId: auditLogData[columnObjectId] as String,
+                changedBy: auditLogData[columnChangedBy] as String,
+                reasonCode: auditLogData[columnReasonCode] as String?,
+                comments: auditLogData[columnComments] as String?,
+                userToken: auditLogData[columnUserToken] as String,
+                history: auditLogData[columnHistory] != null
+                    ? {} // Simplified - would need proper parsing
+                    : null,
+              ),
+            );
+      }
+
+      // Build invoice models with their audit logs
+      final invoices = results.map((invoiceData) {
         final invoiceId = invoiceData[columnInvoiceId] as String;
+        final auditLogs = auditLogsByInvoiceId[invoiceId] ?? [];
 
-        // Get invoice audit logs for each invoice
-        final auditLogsResults = await db.query(
-          auditLogsTableName,
-          where: '$columnAuditLogInvoiceId = ?',
-          whereArgs: [invoiceId],
-        );
-
-        final auditLogs = auditLogsResults.map((auditLogData) {
-          return InvoiceAuditLogModel(
-            changeType: auditLogData[columnChangeType] as String,
-            changeDate: auditLogData[columnChangeDate] as String,
-            objectType: auditLogData[columnObjectType] as String,
-            objectId: auditLogData[columnObjectId] as String,
-            changedBy: auditLogData[columnChangedBy] as String,
-            reasonCode: auditLogData[columnReasonCode] as String?,
-            comments: auditLogData[columnComments] as String?,
-            userToken: auditLogData[columnUserToken] as String,
-            history: auditLogData[columnHistory] != null
-                ? {} // Simplified - would need proper parsing
-                : null,
-          );
-        }).toList();
-
-        final invoice = InvoiceModel(
+        return InvoiceModel(
           amount: invoiceData[columnAmount] as double,
           currency: invoiceData[columnCurrency] as String,
           status: invoiceData[columnStatus] as String,
           creditAdj: invoiceData[columnCreditAdj] as double,
           refundAdj: invoiceData[columnRefundAdj] as double,
-          invoiceId: invoiceData[columnInvoiceId] as String,
+          invoiceId: invoiceId,
           invoiceDate: invoiceData[columnInvoiceDate] as String,
           targetDate: invoiceData[columnTargetDate] as String,
           invoiceNumber: invoiceData[columnInvoiceNumber] as String,
@@ -363,9 +417,7 @@ class InvoiceDao {
           parentAccountId: invoiceData[columnParentAccountId] as String?,
           auditLogs: auditLogs,
         );
-
-        invoices.add(invoice);
-      }
+      }).toList();
 
       _logger.d(
         'Retrieved ${invoices.length} invoices for account: $accountId',
@@ -383,6 +435,7 @@ class InvoiceDao {
     String searchQuery,
   ) async {
     try {
+      // Fetch invoices matching search query
       final results = await db.query(
         tableName,
         where: '$columnInvoiceNumber LIKE ?',
@@ -390,41 +443,62 @@ class InvoiceDao {
         orderBy: '$columnCreatedAt DESC',
       );
 
-      final invoices = <InvoiceModel>[];
+      if (results.isEmpty) {
+        _logger.d('No invoices found matching "$searchQuery"');
+        return [];
+      }
 
-      for (final invoiceData in results) {
+      // Extract invoice IDs
+      final invoiceIds = results
+          .map((row) => row[columnInvoiceId] as String)
+          .toList();
+
+      // Fetch all audit logs for all invoices in a single query (optimized)
+      final auditLogsResults = invoiceIds.isEmpty
+          ? <Map<String, dynamic>>[]
+          : await db.query(
+              auditLogsTableName,
+              where:
+                  '$columnAuditLogInvoiceId IN (${List.filled(invoiceIds.length, '?').join(',')})',
+              whereArgs: invoiceIds,
+              orderBy: '$columnChangeDate DESC',
+            );
+
+      // Group audit logs by invoice ID
+      final auditLogsByInvoiceId = <String, List<InvoiceAuditLogModel>>{};
+      for (final auditLogData in auditLogsResults) {
+        final invoiceId = auditLogData[columnAuditLogInvoiceId] as String;
+        auditLogsByInvoiceId
+            .putIfAbsent(invoiceId, () => [])
+            .add(
+              InvoiceAuditLogModel(
+                changeType: auditLogData[columnChangeType] as String,
+                changeDate: auditLogData[columnChangeDate] as String,
+                objectType: auditLogData[columnObjectType] as String,
+                objectId: auditLogData[columnObjectId] as String,
+                changedBy: auditLogData[columnChangedBy] as String,
+                reasonCode: auditLogData[columnReasonCode] as String?,
+                comments: auditLogData[columnComments] as String?,
+                userToken: auditLogData[columnUserToken] as String,
+                history: auditLogData[columnHistory] != null
+                    ? {} // Simplified - would need proper parsing
+                    : null,
+              ),
+            );
+      }
+
+      // Build invoice models with their audit logs
+      final invoices = results.map((invoiceData) {
         final invoiceId = invoiceData[columnInvoiceId] as String;
+        final auditLogs = auditLogsByInvoiceId[invoiceId] ?? [];
 
-        // Get invoice audit logs for each invoice
-        final auditLogsResults = await db.query(
-          auditLogsTableName,
-          where: '$columnAuditLogInvoiceId = ?',
-          whereArgs: [invoiceId],
-        );
-
-        final auditLogs = auditLogsResults.map((auditLogData) {
-          return InvoiceAuditLogModel(
-            changeType: auditLogData[columnChangeType] as String,
-            changeDate: auditLogData[columnChangeDate] as String,
-            objectType: auditLogData[columnObjectType] as String,
-            objectId: auditLogData[columnObjectId] as String,
-            changedBy: auditLogData[columnChangedBy] as String,
-            reasonCode: auditLogData[columnReasonCode] as String?,
-            comments: auditLogData[columnComments] as String?,
-            userToken: auditLogData[columnUserToken] as String,
-            history: auditLogData[columnHistory] != null
-                ? {} // Simplified - would need proper parsing
-                : null,
-          );
-        }).toList();
-
-        final invoice = InvoiceModel(
+        return InvoiceModel(
           amount: invoiceData[columnAmount] as double,
           currency: invoiceData[columnCurrency] as String,
           status: invoiceData[columnStatus] as String,
           creditAdj: invoiceData[columnCreditAdj] as double,
           refundAdj: invoiceData[columnRefundAdj] as double,
-          invoiceId: invoiceData[columnInvoiceId] as String,
+          invoiceId: invoiceId,
           invoiceDate: invoiceData[columnInvoiceDate] as String,
           targetDate: invoiceData[columnTargetDate] as String,
           invoiceNumber: invoiceData[columnInvoiceNumber] as String,
@@ -445,9 +519,7 @@ class InvoiceDao {
           parentAccountId: invoiceData[columnParentAccountId] as String?,
           auditLogs: auditLogs,
         );
-
-        invoices.add(invoice);
-      }
+      }).toList();
 
       _logger.d('Found ${invoices.length} invoices matching "$searchQuery"');
       return invoices;
@@ -563,4 +635,3 @@ class InvoiceDao {
     }
   }
 }
-

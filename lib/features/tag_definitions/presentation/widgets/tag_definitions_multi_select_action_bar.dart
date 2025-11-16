@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/tag_definition.dart';
 import '../bloc/tag_definitions_bloc.dart';
 import '../bloc/tag_definitions_event.dart';
+import '../../../../core/widgets/delete_confirmation_dialog.dart';
 import 'export_tag_definitions_dialog.dart';
 
 class TagDefinitionsMultiSelectActionBar extends StatelessWidget {
@@ -109,18 +110,17 @@ class TagDefinitionsMultiSelectActionBar extends StatelessWidget {
     context.read<TagDefinitionsBloc>().add(SelectAllTagDefinitions());
   }
 
-  void _exportSelectedTagDefinitions(BuildContext context) {
-    showDialog(
+  Future<void> _exportSelectedTagDefinitions(BuildContext context) async {
+    final result = await showDialog(
       context: context,
       builder: (context) => ExportTagDefinitionsDialog(
         selectedTagDefinitions: selectedTagDefinitions,
       ),
-    ).then((result) async {
-      if (result != null) {
-        final selectedFormat = result['format'] as String;
-        await _performExport(context, selectedFormat);
-      }
-    });
+    );
+    if (result != null) {
+      final selectedFormat = result['format'] as String;
+      await _performExport(context, selectedFormat);
+    }
   }
 
   Future<void> _performExport(BuildContext context, String format) async {
@@ -130,32 +130,17 @@ class TagDefinitionsMultiSelectActionBar extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Selected Tag Definitions'),
-        content: Text(
-          'Are you sure you want to delete ${selectedTagDefinitions.length} selected tag definitions? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _deleteSelectedTagDefinitions(context);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+  Future<void> _showDeleteConfirmation(BuildContext context) async {
+    final confirmed = await DeleteConfirmationDialog.show(
+      context,
+      title: 'Delete Selected Tag Definitions',
+      itemName: 'tag definition(s)',
+      count: selectedTagDefinitions.length,
     );
+
+    if (confirmed) {
+      _deleteSelectedTagDefinitions(context);
+    }
   }
 
   void _deleteSelectedTagDefinitions(BuildContext context) {

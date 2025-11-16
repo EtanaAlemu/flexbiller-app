@@ -567,9 +567,19 @@ class AccountsLocalDataSourceImpl implements AccountsLocalDataSource {
 
   // Clean up stream controllers
   void dispose() {
-    _accountsStreamController.close();
-    _accountByIdStreamController.close();
-    _queryStreamController.close();
-    _searchStreamController.close();
+    _logger.d('🛑 [Accounts Local Data Source] Disposing resources...');
+    if (!_accountsStreamController.isClosed) {
+      _accountsStreamController.close();
+    }
+    if (!_accountByIdStreamController.isClosed) {
+      _accountByIdStreamController.close();
+    }
+    if (!_queryStreamController.isClosed) {
+      _queryStreamController.close();
+    }
+    if (!_searchStreamController.isClosed) {
+      _searchStreamController.close();
+    }
+    _logger.i('✅ [Accounts Local Data Source] All StreamControllers closed');
   }
 }

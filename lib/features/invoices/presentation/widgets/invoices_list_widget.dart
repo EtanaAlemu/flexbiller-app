@@ -50,7 +50,10 @@ class InvoicesListWidget extends StatelessWidget {
             itemCount: invoices.length,
             itemBuilder: (context, index) {
               final invoice = invoices[index];
-              return InvoiceListItem(invoice: invoice);
+              return InvoiceListItem(
+                key: ValueKey('invoice_${invoice.invoiceId}'),
+                invoice: invoice,
+              );
             },
           ),
         ),

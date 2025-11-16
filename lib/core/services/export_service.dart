@@ -3,24 +3,30 @@ import 'dart:typed_data';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 import 'package:excel/excel.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../features/accounts/domain/entities/account.dart';
 import '../../features/tags/domain/entities/tag.dart';
+import '../../features/bundles/domain/entities/bundle.dart';
 
 abstract class ExportService {
   Future<String> exportAccountsToCSV(List<Account> accounts);
   Future<String> exportAccountsToExcel(List<Account> accounts);
   Future<String> exportTagsToCSV(List<Tag> tags);
   Future<String> exportTagsToExcel(List<Tag> tags);
+  Future<String> exportBundlesToCSV(List<Bundle> bundles);
+  Future<String> exportBundlesToExcel(List<Bundle> bundles);
   Future<void> shareFile(String filePath, {String? subject, String? text});
 }
 
 @injectable
 @LazySingleton(as: ExportService)
 class ExportServiceImpl implements ExportService {
+  final Logger _logger = Logger();
+
   @override
   Future<String> exportAccountsToCSV(List<Account> accounts) async {
     try {
@@ -32,7 +38,7 @@ class ExportServiceImpl implements ExportService {
         }
       } catch (e) {
         // If external storage fails, fall back to internal storage
-        print('External storage failed, falling back to internal: $e');
+        _logger.w('External storage failed, falling back to internal: $e');
       }
 
       // Fallback to internal storage
@@ -64,7 +70,7 @@ class ExportServiceImpl implements ExportService {
         }
       } catch (e) {
         // If external storage fails, fall back to internal storage
-        print('External storage failed, falling back to internal: $e');
+        _logger.w('External storage failed, falling back to internal: $e');
       }
 
       // Fallback to internal storage
@@ -330,7 +336,7 @@ class ExportServiceImpl implements ExportService {
         }
       } catch (e) {
         // If external storage fails, fall back to internal storage
-        print('External storage failed, falling back to internal: $e');
+        _logger.w('External storage failed, falling back to internal: $e');
       }
 
       // Fallback to internal storage
@@ -362,7 +368,7 @@ class ExportServiceImpl implements ExportService {
         }
       } catch (e) {
         // If external storage fails, fall back to internal storage
-        print('External storage failed, falling back to internal: $e');
+        _logger.w('External storage failed, falling back to internal: $e');
       }
 
       // Fallback to internal storage
@@ -510,6 +516,260 @@ class ExportServiceImpl implements ExportService {
     return buffer.toString();
   }
 
+  @override
+  Future<String> exportBundlesToCSV(List<Bundle> bundles) async {
+    try {
+      // Try external storage first (with permissions)
+      try {
+        final externalPath = await _exportBundlesToExternalStorage(
+          bundles,
+          'csv',
+        );
+        if (externalPath != null) {
+          return externalPath;
+        }
+      } catch (e) {
+        // If external storage fails, fall back to internal storage
+        _logger.w('External storage failed, falling back to internal: $e');
+      }
+
+      // Fallback to internal storage
+      final directory = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'bundles_export_$timestamp.csv';
+      final file = File('${directory.path}/$fileName');
+
+      // Create CSV content
+      final csvContent = _generateBundlesCSVContent(bundles);
+
+      // Write to file with UTF-8 encoding
+      await file.writeAsString(csvContent, encoding: utf8);
+
+      return file.path;
+    } catch (e) {
+      throw Exception('Failed to export bundles CSV: $e');
+    }
+  }
+
+  @override
+  Future<String> exportBundlesToExcel(List<Bundle> bundles) async {
+    try {
+      // Try external storage first (with permissions)
+      try {
+        final externalPath = await _exportBundlesToExternalStorage(
+          bundles,
+          'xlsx',
+        );
+        if (externalPath != null) {
+          return externalPath;
+        }
+      } catch (e) {
+        // If external storage failed, fall back to internal storage
+        _logger.w('External storage failed, falling back to internal: $e');
+      }
+
+      // Fallback to internal storage
+      final directory = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'bundles_export_$timestamp.xlsx';
+      final file = File('${directory.path}/$fileName');
+
+      // Create actual Excel file
+      final excelBytes = _generateBundlesExcelContent(bundles);
+      await file.writeAsBytes(excelBytes);
+
+      return file.path;
+    } catch (e) {
+      throw Exception('Failed to export bundles Excel: $e');
+    }
+  }
+
+  Uint8List _generateBundlesExcelContent(List<Bundle> bundles) {
+    // Create a new Excel file
+    final excel = Excel.createExcel();
+
+    // Delete the default sheet
+    excel.delete('Sheet1');
+
+    // Create a new sheet for bundles
+    final sheet = excel['Bundles'];
+
+    // Define headers
+    final headers = [
+      'Bundle ID',
+      'Account ID',
+      'External Key',
+      'Subscriptions Count',
+      'Events Count',
+      'Audit Logs Count',
+    ];
+
+    // Add headers to the first row
+    for (int i = 0; i < headers.length; i++) {
+      final cell = sheet.cell(
+        CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
+      );
+      cell.value = TextCellValue(headers[i]);
+      cell.cellStyle = CellStyle(
+        bold: true,
+        backgroundColorHex: ExcelColor.blue50,
+        fontColorHex: ExcelColor.white,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+    }
+
+    // Add bundle data
+    for (int rowIndex = 0; rowIndex < bundles.length; rowIndex++) {
+      final bundle = bundles[rowIndex];
+      final row = rowIndex + 1; // +1 because headers are in row 0
+
+      // Bundle ID
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+          .value = TextCellValue(
+        bundle.bundleId,
+      );
+
+      // Account ID
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+          .value = TextCellValue(
+        bundle.accountId,
+      );
+
+      // External Key
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+          .value = TextCellValue(
+        bundle.externalKey,
+      );
+
+      // Subscriptions Count
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: row))
+          .value = IntCellValue(
+        bundle.subscriptions.length,
+      );
+
+      // Events Count
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: row))
+          .value = IntCellValue(
+        bundle.timeline.events.length,
+      );
+
+      // Audit Logs Count
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: row))
+          .value = IntCellValue(
+        bundle.auditLogs?.length ?? 0,
+      );
+    }
+
+    // Auto-fit columns
+    for (int i = 0; i < headers.length; i++) {
+      sheet.setColumnWidth(i, 20);
+    }
+
+    // Add some styling to the data rows
+    for (int rowIndex = 1; rowIndex <= bundles.length; rowIndex++) {
+      for (int colIndex = 0; colIndex < headers.length; colIndex++) {
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: colIndex, rowIndex: rowIndex),
+        );
+        cell.cellStyle = CellStyle(
+          horizontalAlign: HorizontalAlign.Left,
+          verticalAlign: VerticalAlign.Center,
+        );
+      }
+    }
+
+    // Save the Excel file
+    return Uint8List.fromList(excel.save()!);
+  }
+
+  String _generateBundlesCSVContent(List<Bundle> bundles) {
+    final buffer = StringBuffer();
+
+    // CSV Header
+    buffer.writeln(
+      'Bundle ID,Account ID,External Key,Subscriptions Count,Events Count,Audit Logs Count',
+    );
+
+    // CSV Data
+    for (final bundle in bundles) {
+      buffer.writeln(
+        [
+          _escapeCsvField(bundle.bundleId),
+          _escapeCsvField(bundle.accountId),
+          _escapeCsvField(bundle.externalKey),
+          _escapeCsvField(bundle.subscriptions.length.toString()),
+          _escapeCsvField(bundle.timeline.events.length.toString()),
+          _escapeCsvField((bundle.auditLogs?.length ?? 0).toString()),
+        ].join(','),
+      );
+    }
+
+    return buffer.toString();
+  }
+
+  Future<String?> _exportBundlesToExternalStorage(
+    List<Bundle> bundles,
+    String fileType,
+  ) async {
+    try {
+      // Request storage permission
+      final permission = await _requestStoragePermission();
+      if (!permission) {
+        throw Exception('Storage permission denied');
+      }
+
+      // Generate content based on file type
+      Uint8List fileBytes;
+      if (fileType == 'csv') {
+        final csvContent = _generateBundlesCSVContent(bundles);
+        fileBytes = Uint8List.fromList(utf8.encode(csvContent));
+      } else if (fileType == 'xlsx') {
+        fileBytes = _generateBundlesExcelContent(bundles);
+      } else {
+        throw Exception('Unsupported file type: $fileType');
+      }
+
+      // Try to save to Downloads first, fallback to app external directory
+      try {
+        // Let user choose save location with bytes parameter
+        final result = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Bundles ${fileType.toUpperCase()}',
+          fileName:
+              'bundles_export_${DateTime.now().millisecondsSinceEpoch}.$fileType',
+          type: FileType.custom,
+          allowedExtensions: [fileType],
+          bytes: fileBytes, // Pass bytes directly to file_picker
+        );
+
+        if (result != null) {
+          return result;
+        }
+      } catch (e) {
+        _logger.w('FilePicker save failed: $e');
+      }
+
+      // Fallback: Save to app external directory
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName =
+          'bundles_export_${DateTime.now().millisecondsSinceEpoch}.$fileType';
+      final file = File('${directory.path}/$fileName');
+      await file.writeAsBytes(fileBytes);
+
+      return file.path;
+    } catch (e) {
+      throw Exception(
+        'Failed to export bundles $fileType to external storage: $e',
+      );
+    }
+  }
+
   String _escapeCsvField(String? value) {
     if (value == null || value.isEmpty) return '';
 
@@ -586,7 +846,7 @@ class ExportServiceImpl implements ExportService {
           return result;
         }
       } catch (e) {
-        print('FilePicker failed, falling back to app directory: $e');
+        _logger.w('FilePicker failed, falling back to app directory: $e');
       }
 
       // Fallback: Save to app's external files directory
@@ -644,7 +904,7 @@ class ExportServiceImpl implements ExportService {
           return result;
         }
       } catch (e) {
-        print('FilePicker failed, falling back to app directory: $e');
+        _logger.w('FilePicker failed, falling back to app directory: $e');
       }
 
       // Fallback: Save to app's external files directory
@@ -724,7 +984,7 @@ class ExportServiceImpl implements ExportService {
       // If no media permissions, try manage external storage as fallback
       return await _requestManageExternalStorage();
     } catch (e) {
-      print('Media permissions failed: $e');
+      _logger.w('Media permissions failed: $e');
       // Fallback to traditional storage permissions
       return await _requestTraditionalStoragePermissions();
     }
@@ -739,12 +999,12 @@ class ExportServiceImpl implements ExportService {
       }
 
       // If manage external storage is denied, try traditional storage permissions
-      print(
+      _logger.d(
         'Manage external storage denied, trying traditional storage permissions',
       );
       return await _requestTraditionalStoragePermissions();
     } catch (e) {
-      print('Manage external storage failed: $e');
+      _logger.w('Manage external storage failed: $e');
       // Fallback to traditional storage permissions
       return await _requestTraditionalStoragePermissions();
     }
@@ -766,10 +1026,10 @@ class ExportServiceImpl implements ExportService {
         }
       }
 
-      print('Traditional storage permissions denied');
+      _logger.w('Traditional storage permissions denied');
       return false;
     } catch (e) {
-      print('Traditional storage permissions failed: $e');
+      _logger.w('Traditional storage permissions failed: $e');
       return false;
     }
   }
@@ -789,10 +1049,10 @@ class ExportServiceImpl implements ExportService {
       // Use the shareXFiles API
       await Share.shareXFiles([XFile(filePath)], subject: subject, text: text);
 
-      print('Share initiated successfully!');
+      _logger.i('Share initiated successfully!');
     } catch (e) {
       // Fallback to the non-result variant if the new API fails
-      print('New share API failed, falling back to non-result variant: $e');
+      _logger.w('New share API failed, falling back to non-result variant: $e');
 
       // Use the non-result variant without await
       Share.shareXFiles([XFile(filePath)], subject: subject, text: text);

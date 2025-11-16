@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/invoice.dart';
 import '../bloc/events/invoice_multiselect_events.dart';
 import '../bloc/states/invoice_multiselect_states.dart';
@@ -10,7 +11,8 @@ import '../bloc/states/invoice_multiselect_states.dart';
 /// BLoC for handling multi-select operations
 @injectable
 class InvoiceMultiSelectBloc
-    extends Bloc<InvoiceMultiSelectEvent, InvoiceMultiSelectState> {
+    extends Bloc<InvoiceMultiSelectEvent, InvoiceMultiSelectState>
+    with BlocErrorHandlerMixin {
   final Logger _logger = Logger();
 
   final List<Invoice> _selectedInvoices = [];
@@ -225,8 +227,8 @@ class InvoiceMultiSelectBloc
         emit(const BulkExportFailed(error: 'Export cancelled by user'));
       }
     } catch (e) {
-      _logger.e('Bulk export failed: $e');
-      emit(BulkExportFailed(error: e.toString()));
+      final message = handleException(e, context: 'bulk_export_invoices');
+      emit(BulkExportFailed(error: message));
     }
   }
 
@@ -284,8 +286,8 @@ class InvoiceMultiSelectBloc
       _logger.d('Bulk delete completed: $deletedCount invoices deleted');
       emit(BulkDeleteCompleted(deletedCount));
     } catch (e) {
-      _logger.e('Bulk delete failed: $e');
-      emit(BulkDeleteFailed(e.toString()));
+      final message = handleException(e, context: 'bulk_delete_invoices');
+      emit(BulkDeleteFailed(message));
     }
   }
 }

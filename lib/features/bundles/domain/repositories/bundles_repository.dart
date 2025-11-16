@@ -24,4 +24,7 @@ abstract class BundlesRepository {
 
   /// Clear all cached bundles
   Future<void> clearCachedBundles();
+
+  /// Delete a bundle
+  Future<void> deleteBundle(String bundleId);
 }

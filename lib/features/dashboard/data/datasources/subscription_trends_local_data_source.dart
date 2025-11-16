@@ -162,6 +162,17 @@ class SubscriptionTrendsLocalDataSourceImpl
     return _trendsStreamControllers[year]!;
   }
 
+  /// Dispose resources and close all stream controllers
+  void dispose() {
+    for (final controller in _trendsStreamControllers.values) {
+      if (!controller.isClosed) {
+        controller.close();
+      }
+    }
+    _trendsStreamControllers.clear();
+    _logger.d('✅ [Subscription Trends Local] All StreamControllers closed');
+  }
+
   SubscriptionTrendsModel _getDefaultTrends(int year) {
     final months = [
       'Jan',

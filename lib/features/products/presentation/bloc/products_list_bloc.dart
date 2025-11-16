@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
-import '../../../../core/errors/error_handler.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/products_query_params.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/products_repository.dart';
@@ -13,7 +13,8 @@ import '../bloc/states/products_list_states.dart';
 
 /// BLoC for handling product listing, searching, and filtering operations
 @injectable
-class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
+class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState>
+    with BlocErrorHandlerMixin {
   final GetProductsUseCase _getProductsUseCase;
   final SearchProductsUseCase _searchProductsUseCase;
   final ProductsRepository _productsRepository;
@@ -92,9 +93,7 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
         );
       }
     } catch (e) {
-      _logger.e('Error loading products: $e');
-
-      final appError = ErrorHandler.handleException(
+      final message = handleException(
         e,
         context: 'products',
         metadata: {
@@ -102,8 +101,7 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
           'params': event.params.toString(),
         },
       );
-
-      emit(ProductsListError(message: appError.message));
+      emit(ProductsListError(message: message));
     }
   }
 
@@ -155,15 +153,12 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
         );
       }
     } catch (e) {
-      _logger.e('Error searching products: $e');
-
-      final appError = ErrorHandler.handleException(
+      final message = handleException(
         e,
         context: 'search',
         metadata: {'action': 'search_products', 'searchKey': event.searchKey},
       );
-
-      emit(ProductsListError(message: appError.message));
+      emit(ProductsListError(message: message));
     }
   }
 
@@ -197,9 +192,7 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
         );
       }
     } catch (e) {
-      _logger.e('Error refreshing products: $e');
-
-      final appError = ErrorHandler.handleException(
+      final message = handleException(
         e,
         context: 'products',
         metadata: {
@@ -207,8 +200,7 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
           'params': event.params.toString(),
         },
       );
-
-      emit(ProductsListError(message: appError.message));
+      emit(ProductsListError(message: message));
     }
   }
 
@@ -287,15 +279,12 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
       final product = await _productsRepository.getProductById(event.productId);
       emit(ProductDetailLoaded(product: product));
     } catch (e) {
-      _logger.e('Error getting product by ID: $e');
-
-      final appError = ErrorHandler.handleException(
+      final message = handleException(
         e,
         context: 'product',
         metadata: {'action': 'get_product_by_id', 'productId': event.productId},
       );
-
-      emit(ProductsListError(message: appError.message));
+      emit(ProductsListError(message: message));
     }
   }
 
@@ -313,9 +302,7 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
       );
       emit(ProductCreated(product: createdProduct));
     } catch (e) {
-      _logger.e('Error creating product: $e');
-
-      final appError = ErrorHandler.handleException(
+      final message = handleException(
         e,
         context: 'product',
         metadata: {
@@ -323,8 +310,7 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
           'productName': event.product.productName,
         },
       );
-
-      emit(ProductsListError(message: appError.message));
+      emit(ProductsListError(message: message));
     }
   }
 
@@ -342,15 +328,12 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
       );
       emit(ProductUpdated(product: updatedProduct));
     } catch (e) {
-      _logger.e('Error updating product: $e');
-
-      final appError = ErrorHandler.handleException(
+      final message = handleException(
         e,
         context: 'product',
         metadata: {'action': 'update_product', 'productId': event.product.id},
       );
-
-      emit(ProductsListError(message: appError.message));
+      emit(ProductsListError(message: message));
     }
   }
 
@@ -366,15 +349,12 @@ class ProductsListBloc extends Bloc<ProductsListEvent, ProductsListState> {
       await _productsRepository.deleteProduct(event.productId);
       emit(ProductDeleted(productId: event.productId));
     } catch (e) {
-      _logger.e('Error deleting product: $e');
-
-      final appError = ErrorHandler.handleException(
+      final message = handleException(
         e,
         context: 'delete',
         metadata: {'action': 'delete_product', 'productId': event.productId},
       );
-
-      emit(ProductsListError(message: appError.message));
+      emit(ProductsListError(message: message));
     }
   }
 

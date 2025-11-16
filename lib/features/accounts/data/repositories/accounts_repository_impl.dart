@@ -823,10 +823,30 @@ class AccountsRepositoryImpl implements AccountsRepository {
 
   // Clean up stream controllers and subscriptions
   void dispose() {
-    _accountsStreamController.close();
-    _accountStreamController.close();
+    _logger.d('🛑 [Accounts Repository] Disposing resources...');
+
+    // Cancel local subscriptions
     _localAccountsSubscription?.cancel();
+    _localAccountsSubscription = null;
     _localAccountSubscription?.cancel();
-    _syncService.dispose();
+    _localAccountSubscription = null;
+
+    // Close stream controllers
+    if (!_accountsStreamController.isClosed) {
+      _accountsStreamController.close();
+    }
+    if (!_accountStreamController.isClosed) {
+      _accountStreamController.close();
+    }
+
+    // Clear tracking maps
+    _syncingAccounts.clear();
+    _lastSyncTime.clear();
+    _processingAccounts.clear();
+
+    // Note: _syncService is a shared service, don't dispose it here
+    // It will be disposed separately if needed
+
+    _logger.i('✅ [Accounts Repository] All resources disposed');
   }
 }

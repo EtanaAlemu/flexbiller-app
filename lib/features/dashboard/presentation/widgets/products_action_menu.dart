@@ -4,6 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
+import 'package:flexbiller_app/core/widgets/sort_options_bottom_sheet.dart';
+import 'package:flexbiller_app/core/widgets/view_mode_dialog.dart';
+import 'package:flexbiller_app/core/widgets/base_action_menu.dart';
 import '../../../products/presentation/bloc/products_list_bloc.dart';
 import '../../../products/presentation/bloc/events/products_list_events.dart';
 import '../../../products/presentation/bloc/states/products_list_states.dart';
@@ -16,114 +19,19 @@ class ProductsActionMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: Icon(
-        Icons.more_vert,
-        color: Theme.of(context).colorScheme.onSurface,
+    final menuItems = [
+      ...BaseActionMenu.buildFilterSortSection(
+        searchLabel: 'Search Products',
+        filterLabel: null,
+        showFilter: false,
       ),
-      onSelected: (value) => _handleMenuAction(context, value),
-      itemBuilder: (context) => [
-        // Filter section
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'FILTER & SORT',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'search',
-          child: Row(
-            children: [
-              Icon(
-                Icons.search_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Search Products'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'sort',
-          child: Row(
-            children: [
-              Icon(
-                Icons.sort_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Sort Options'),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        // Actions section
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'ACTIONS',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'export',
-          child: Row(
-            children: [
-              Icon(
-                Icons.download_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Export Products'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'refresh',
-          child: Row(
-            children: [
-              Icon(
-                Icons.refresh_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Refresh Data'),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        // Settings section
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'SETTINGS',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'view_mode',
-          child: Row(
-            children: [
-              Icon(
-                Icons.view_module_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('View Mode'),
-            ],
-          ),
-        ),
-      ],
+      ...BaseActionMenu.buildActionsSection(exportLabel: 'Export Products'),
+      ...BaseActionMenu.buildSettingsSection(),
+    ];
+
+    return BaseActionMenu(
+      menuItems: menuItems,
+      onActionSelected: (value) => _handleMenuAction(context, value),
     );
   }
 
@@ -154,68 +62,36 @@ class ProductsActionMenu extends StatelessWidget {
   }
 
   void _showSortOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Sort Products',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            _buildSortOption(
-              context,
-              'Name (A-Z)',
-              'productName',
-              'ASC',
-              Icons.sort_by_alpha,
-            ),
-            _buildSortOption(
-              context,
-              'Name (Z-A)',
-              'productName',
-              'DESC',
-              Icons.sort_by_alpha,
-            ),
-            _buildSortOption(
-              context,
-              'Created Date (Newest)',
-              'createdAt',
-              'DESC',
-              Icons.calendar_today,
-            ),
-            _buildSortOption(
-              context,
-              'Created Date (Oldest)',
-              'createdAt',
-              'ASC',
-              Icons.calendar_today,
-            ),
-            const SizedBox(height: 20),
-          ],
+    SortOptionsBottomSheet.show(
+      context,
+      title: 'Sort Products',
+      options: const [
+        SortOption(
+          title: 'Name (A-Z)',
+          sortBy: 'productName',
+          sortOrder: 'ASC',
+          icon: Icons.sort_by_alpha,
         ),
-      ),
-    );
-  }
-
-  Widget _buildSortOption(
-    BuildContext context,
-    String title,
-    String sortBy,
-    String sortOrder,
-    IconData icon,
-  ) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      onTap: () {
-        Navigator.pop(context);
+        SortOption(
+          title: 'Name (Z-A)',
+          sortBy: 'productName',
+          sortOrder: 'DESC',
+          icon: Icons.sort_by_alpha,
+        ),
+        SortOption(
+          title: 'Created Date (Newest)',
+          sortBy: 'createdAt',
+          sortOrder: 'DESC',
+          icon: Icons.calendar_today,
+        ),
+        SortOption(
+          title: 'Created Date (Oldest)',
+          sortBy: 'createdAt',
+          sortOrder: 'ASC',
+          icon: Icons.calendar_today,
+        ),
+      ],
+      onSortSelected: (sortBy, sortOrder) {
         _applySort(context, sortBy, sortOrder);
       },
     );
@@ -352,32 +228,13 @@ class ProductsActionMenu extends StatelessWidget {
   }
 
   void _showViewModeOptions(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('View Mode'),
-        content: const Text('Choose your preferred view mode:'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showSuccessMessage(context, 'View mode changed to List');
-            },
-            child: const Text('List View'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showSuccessMessage(context, 'View mode changed to Grid');
-            },
-            child: const Text('Grid View'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
+    ViewModeDialog.show(
+      context,
+      title: 'View Mode',
+      onModeSelected: (mode) {
+        final modeName = mode == ViewMode.list ? 'List' : 'Grid';
+        _showSuccessMessage(context, 'View mode changed to $modeName');
+      },
     );
   }
 

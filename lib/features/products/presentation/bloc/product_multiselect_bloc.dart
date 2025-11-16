@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/usecases/delete_product_usecase.dart';
 import '../bloc/events/product_multiselect_events.dart';
@@ -13,7 +14,8 @@ import '../bloc/states/product_multiselect_states.dart';
 /// BLoC for handling multi-select operations
 @injectable
 class ProductMultiSelectBloc
-    extends Bloc<ProductMultiSelectEvent, ProductMultiSelectState> {
+    extends Bloc<ProductMultiSelectEvent, ProductMultiSelectState>
+    with BlocErrorHandlerMixin {
   final DeleteProductUseCase _deleteProductUseCase;
   final Logger _logger = Logger();
 
@@ -173,7 +175,7 @@ class ProductMultiSelectBloc
           deletedCount++;
           _logger.d('Deleted product: ${product.productName}');
         } catch (e) {
-          _logger.e('Failed to delete product ${product.productName}: $e');
+          handleException(e, context: 'delete_product');
         }
       }
 
@@ -181,8 +183,8 @@ class ProductMultiSelectBloc
       emit(BulkDeleteCompleted(deletedCount: deletedCount));
       _logger.d('Bulk delete completed: $deletedCount products deleted');
     } catch (e) {
-      _logger.e('Bulk delete failed: $e');
-      emit(BulkDeleteFailed(error: e.toString()));
+      final message = handleException(e, context: 'bulk_delete_products');
+      emit(BulkDeleteFailed(error: message));
     }
   }
 
@@ -247,8 +249,8 @@ class ProductMultiSelectBloc
         emit(BulkExportFailed(error: 'Export cancelled by user'));
       }
     } catch (e) {
-      _logger.e('Bulk export failed: $e');
-      emit(BulkExportFailed(error: e.toString()));
+      final message = handleException(e, context: 'bulk_export_products');
+      emit(BulkExportFailed(error: message));
     }
   }
 

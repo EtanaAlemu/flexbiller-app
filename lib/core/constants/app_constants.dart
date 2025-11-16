@@ -14,6 +14,7 @@ class AppConstants {
   static const String tokenExpirationKey = 'token_expiration';
   static const String userIdKey = 'user_id';
   static const String userEmailKey = 'user_email';
+  static const String databaseEncryptionKey = 'database_encryption_key';
 
   // Database
   static const String databaseName = 'flexbiller.db';

@@ -175,6 +175,14 @@ class DashboardKPIsLocalDataSourceImpl implements DashboardKPIsLocalDataSource {
     return _kpisStreamController.stream;
   }
 
+  /// Dispose resources and close stream controller
+  void dispose() {
+    if (!_kpisStreamController.isClosed) {
+      _kpisStreamController.close();
+      _logger.d('✅ [Dashboard Local] StreamController closed');
+    }
+  }
+
   DashboardKPIModel _getDefaultKPIs() {
     return DashboardKPIModel(
       activeSubscriptions: const KPIMetricModel(

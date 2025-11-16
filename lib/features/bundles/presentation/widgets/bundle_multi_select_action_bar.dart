@@ -6,6 +6,7 @@ import '../bloc/bundle_multiselect_bloc.dart';
 import '../bloc/events/bundle_multiselect_events.dart';
 import '../bloc/states/bundle_multiselect_states.dart';
 import '../../../../core/widgets/custom_snackbar.dart';
+import '../../../../core/widgets/delete_confirmation_dialog.dart';
 import 'export_bundles_dialog.dart';
 
 class BundleMultiSelectActionBar extends StatelessWidget {
@@ -105,20 +106,19 @@ class BundleMultiSelectActionBar extends StatelessWidget {
     );
   }
 
-  void _showExportDialog(BuildContext context) {
+  Future<void> _showExportDialog(BuildContext context) async {
     final multiSelectBloc = context.read<BundleMultiSelectBloc>();
     final selectedBundles = multiSelectBloc.selectedBundles;
 
     // Show export dialog for better user experience
-    showDialog(
+    final result = await showDialog(
       context: context,
       builder: (context) => ExportBundlesDialog(bundles: selectedBundles),
-    ).then((result) async {
-      if (result != null) {
-        final selectedFormat = result['format'] as String;
-        await _performExport(context, selectedBundles, selectedFormat);
-      }
-    });
+    );
+    if (result != null) {
+      final selectedFormat = result['format'] as String;
+      await _performExport(context, selectedBundles, selectedFormat);
+    }
   }
 
   Future<void> _performExport(
@@ -131,12 +131,8 @@ class BundleMultiSelectActionBar extends StatelessWidget {
       String? outputFile = await FilePicker.platform.saveFile(
         dialogTitle: 'Save Bundle Export',
         fileName: 'bundles_export.${format.toLowerCase()}',
-        type: format.toLowerCase() == 'csv' 
-            ? FileType.custom 
-            : FileType.any,
-        allowedExtensions: format.toLowerCase() == 'csv' 
-            ? ['csv'] 
-            : null,
+        type: format.toLowerCase() == 'csv' ? FileType.custom : FileType.any,
+        allowedExtensions: format.toLowerCase() == 'csv' ? ['csv'] : null,
       );
 
       if (outputFile == null) {
@@ -182,41 +178,25 @@ class BundleMultiSelectActionBar extends StatelessWidget {
 
       // Show error message
       if (context.mounted) {
-        CustomSnackBar.showError(
-          context,
-          message: 'Export failed: $e',
-        );
+        CustomSnackBar.showError(context, message: 'Export failed: $e');
       }
     }
   }
 
-  void _showDeleteDialog(BuildContext context) {
+  Future<void> _showDeleteDialog(BuildContext context) async {
     final multiSelectBloc = context.read<BundleMultiSelectBloc>();
     final selectedCount = multiSelectBloc.selectedCount;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Bundles'),
-        content: Text(
-          'Are you sure you want to delete $selectedCount selected bundle(s)? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _performDelete(context);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await DeleteConfirmationDialog.show(
+      context,
+      title: 'Delete Bundles',
+      itemName: 'bundle(s)',
+      count: selectedCount,
     );
+
+    if (confirmed) {
+      _performDelete(context);
+    }
   }
 
   void _performDelete(BuildContext context) {

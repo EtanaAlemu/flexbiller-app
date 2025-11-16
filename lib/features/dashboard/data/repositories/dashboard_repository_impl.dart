@@ -64,19 +64,21 @@ class DashboardRepositoryImpl implements DashboardRepository {
   /// Initialize stream subscriptions for reactive updates from local data source
   void _initializeStreamSubscriptions() {
     // Listen to local KPIs changes and emit to repository stream
-    _localKPIsSubscription = dashboardKPIsLocalDataSource.watchDashboardKPIs().listen(
-      (kpiModel) {
-        _kpisStreamController.add(
-          RepositoryResponse.success(kpiModel.toEntity()),
+    _localKPIsSubscription = dashboardKPIsLocalDataSource
+        .watchDashboardKPIs()
+        .listen(
+          (kpiModel) {
+            _kpisStreamController.add(
+              RepositoryResponse.success(kpiModel.toEntity()),
+            );
+          },
+          onError: (error) {
+            _logger.e('Error in KPIs stream: $error');
+            _kpisStreamController.add(
+              RepositoryResponse.error(message: 'Failed to load KPIs: $error'),
+            );
+          },
         );
-      },
-      onError: (error) {
-        _logger.e('Error in KPIs stream: $error');
-        _kpisStreamController.add(
-          RepositoryResponse.error(message: 'Failed to load KPIs: $error'),
-        );
-      },
-    );
   }
 
   // Stream getters for reactive UI updates
@@ -105,7 +107,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
       _logger.d(
         '💾 [Dashboard Repository] Fetching cached KPIs from local storage',
       );
-      final cachedKPIs = await dashboardKPIsLocalDataSource.getCachedDashboardKPIs();
+      final cachedKPIs = await dashboardKPIsLocalDataSource
+          .getCachedDashboardKPIs();
       _logger.d('✅ [Dashboard Repository] Retrieved cached KPIs');
 
       // Emit cached data immediately to stream
@@ -505,5 +508,52 @@ class DashboardRepositoryImpl implements DashboardRepository {
       _logger.e('📚 [Dashboard Repository] Stack trace: $stackTrace');
       // Don't emit error to stream for unexpected errors during background sync
     }
+  }
+
+  /// Dispose resources and close all stream controllers and subscriptions
+  void dispose() {
+    _logger.d('🛑 [Dashboard Repository] Disposing resources...');
+
+    // Cancel local KPIs subscription
+    _localKPIsSubscription?.cancel();
+    _localKPIsSubscription = null;
+
+    // Close KPIs stream controller
+    if (!_kpisStreamController.isClosed) {
+      _kpisStreamController.close();
+    }
+
+    // Cancel and close all trends stream controllers and subscriptions
+    for (final subscription in _localTrendsSubscriptions.values) {
+      subscription.cancel();
+    }
+    _localTrendsSubscriptions.clear();
+
+    for (final controller in _trendsStreamControllers.values) {
+      if (!controller.isClosed) {
+        controller.close();
+      }
+    }
+    _trendsStreamControllers.clear();
+
+    // Cancel and close all overview stream controllers and subscriptions
+    for (final subscription in _localOverviewSubscriptions.values) {
+      subscription.cancel();
+    }
+    _localOverviewSubscriptions.clear();
+
+    for (final controller in _overviewStreamControllers.values) {
+      if (!controller.isClosed) {
+        controller.close();
+      }
+    }
+    _overviewStreamControllers.clear();
+
+    // Clear sync time tracking
+    _lastKPIsSyncTime = null;
+    _lastTrendsSyncTime.clear();
+    _lastOverviewSyncTime.clear();
+
+    _logger.i('✅ [Dashboard Repository] All resources disposed');
   }
 }

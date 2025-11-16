@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../../domain/entities/account.dart';
 import '../pages/account_details_page.dart';
 import '../widgets/delete_account_dialog.dart';
@@ -43,10 +44,10 @@ class SelectableAccountCardWidget extends StatelessWidget {
           }
         },
         onLongPressStart: (details) {
-          print('🐛 Long press start detected on account: ${account.name}');
+          // Long press start - no action needed
         },
         onLongPress: () {
-          print('🐛 Long press detected on account: ${account.name}');
+          // Long press handled below
           if (!isMultiSelectMode) {
             _enableMultiSelectModeAndSelect(context);
           }
@@ -302,9 +303,6 @@ class SelectableAccountCardWidget extends StatelessWidget {
   }
 
   void _enableMultiSelectModeAndSelect(BuildContext context) {
-    print(
-      '🐛 _enableMultiSelectModeAndSelect called for account: ${account.name}',
-    );
     // Provide haptic feedback for long press
     HapticFeedback.mediumImpact();
 

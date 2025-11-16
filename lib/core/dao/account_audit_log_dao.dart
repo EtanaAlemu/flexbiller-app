@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:logger/logger.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import '../../features/accounts/data/models/account_audit_log_model.dart';
 
 /// Data Access Object for AccountAuditLogModel
 class AccountAuditLogDao {
+  static final Logger _logger = Logger();
   // Table name
   static const String tableName = 'account_audit_logs';
 
@@ -91,8 +93,8 @@ class AccountAuditLogDao {
             : null,
       );
     } catch (e) {
-      print('Error parsing AccountAuditLogModel from database: $e');
-      print('Raw data: $map');
+      _logger.e('Error parsing AccountAuditLogModel from database: $e');
+      _logger.d('Raw data: $map');
       return null;
     }
   }

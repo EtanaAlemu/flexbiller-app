@@ -101,3 +101,28 @@ class BulkExportFailed extends PaymentMultiSelectState {
   @override
   List<Object?> get props => [error];
 }
+
+/// Bulk delete in progress state
+class BulkDeleteInProgress extends PaymentMultiSelectState {
+  const BulkDeleteInProgress();
+}
+
+/// Bulk delete completed state
+class BulkDeleteCompleted extends PaymentMultiSelectState {
+  final int count;
+
+  const BulkDeleteCompleted(this.count);
+
+  @override
+  List<Object?> get props => [count];
+}
+
+/// Bulk delete failed state
+class BulkDeleteFailed extends PaymentMultiSelectState {
+  final String error;
+
+  const BulkDeleteFailed({required this.error});
+
+  @override
+  List<Object?> get props => [error];
+}

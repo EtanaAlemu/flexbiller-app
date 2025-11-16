@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/plan.dart';
 import '../bloc/events/plans_multiselect_events.dart';
 import '../bloc/states/plans_multiselect_states.dart';
@@ -10,7 +11,8 @@ import '../bloc/states/plans_multiselect_states.dart';
 /// BLoC for handling multi-select operations
 @injectable
 class PlansMultiSelectBloc
-    extends Bloc<PlansMultiSelectEvent, PlansMultiSelectState> {
+    extends Bloc<PlansMultiSelectEvent, PlansMultiSelectState>
+    with BlocErrorHandlerMixin {
   final Logger _logger = Logger();
 
   final List<Plan> _selectedPlans = [];
@@ -189,8 +191,8 @@ class PlansMultiSelectBloc
         emit(const PlansMultiSelectInitial());
       }
     } catch (e) {
-      _logger.e('Error during bulk export: $e');
-      emit(BulkExportFailed(error: e.toString()));
+      final message = handleException(e, context: 'bulk_export_plans');
+      emit(BulkExportFailed(error: message));
     }
   }
 

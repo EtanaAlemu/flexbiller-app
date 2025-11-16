@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/tag_definition.dart';
 import '../../domain/usecases/get_tag_definitions_usecase.dart';
 import '../../domain/usecases/create_tag_definition_usecase.dart';
@@ -11,13 +13,12 @@ import '../../domain/usecases/get_tag_definition_audit_logs_with_history_usecase
 import '../../domain/usecases/delete_tag_definition_usecase.dart';
 import '../../data/datasources/tag_definitions_local_data_source.dart';
 import '../../data/models/tag_definition_model.dart';
-import '../../../../core/errors/error_handler.dart';
 import 'tag_definitions_event.dart';
 import 'tag_definitions_state.dart';
 
 @injectable
-class TagDefinitionsBloc
-    extends Bloc<TagDefinitionsEvent, TagDefinitionsState> {
+class TagDefinitionsBloc extends Bloc<TagDefinitionsEvent, TagDefinitionsState>
+    with BlocErrorHandlerMixin {
   final GetTagDefinitionsUseCase _getTagDefinitionsUseCase;
   final CreateTagDefinitionUseCase _createTagDefinitionUseCase;
   final GetTagDefinitionByIdUseCase _getTagDefinitionByIdUseCase;
@@ -25,6 +26,7 @@ class TagDefinitionsBloc
   _getTagDefinitionAuditLogsWithHistoryUseCase;
   final DeleteTagDefinitionUseCase _deleteTagDefinitionUseCase;
   final TagDefinitionsLocalDataSource _localDataSource;
+  final Logger _logger = Logger();
 
   List<TagDefinitionModel> _allTagDefinitions = [];
   List<TagDefinition> _allTagDefinitionEntities = [];
@@ -115,7 +117,8 @@ class TagDefinitionsBloc
         // Ignore cache error
       }
 
-      emit(TagDefinitionsError(e.toString()));
+      final message = handleException(e, context: 'load_tag_definitions');
+      emit(TagDefinitionsError(message));
     }
   }
 
@@ -150,7 +153,8 @@ class TagDefinitionsBloc
 
       emit(TagDefinitionsLoaded(tagDefinitions));
     } catch (e) {
-      emit(TagDefinitionsError(e.toString()));
+      final message = handleException(e, context: 'refresh_tag_definitions');
+      emit(TagDefinitionsError(message));
     }
   }
 
@@ -168,7 +172,7 @@ class TagDefinitionsBloc
       );
       emit(CreateTagDefinitionSuccess(tagDefinition));
     } catch (e) {
-      final appError = ErrorHandler.handleException(
+      final message = handleException(
         e,
         context: 'create_tag_definition',
         metadata: {
@@ -177,7 +181,7 @@ class TagDefinitionsBloc
           'applicableObjectTypes': event.applicableObjectTypes,
         },
       );
-      emit(CreateTagDefinitionError(appError.message));
+      emit(CreateTagDefinitionError(message));
     }
   }
 
@@ -190,7 +194,8 @@ class TagDefinitionsBloc
       final tagDefinition = await _getTagDefinitionByIdUseCase(event.id);
       emit(SingleTagDefinitionLoaded(tagDefinition));
     } catch (e) {
-      emit(SingleTagDefinitionError(e.toString(), event.id));
+      final message = handleException(e, context: 'get_tag_definition_by_id');
+      emit(SingleTagDefinitionError(message, event.id));
     }
   }
 
@@ -205,7 +210,11 @@ class TagDefinitionsBloc
       );
       emit(AuditLogsWithHistoryLoaded(auditLogs, event.id));
     } catch (e) {
-      emit(AuditLogsWithHistoryError(e.toString(), event.id));
+      final message = handleException(
+        e,
+        context: 'get_tag_definition_audit_logs',
+      );
+      emit(AuditLogsWithHistoryError(message, event.id));
     }
   }
 
@@ -213,24 +222,25 @@ class TagDefinitionsBloc
     DeleteTagDefinition event,
     Emitter<TagDefinitionsState> emit,
   ) async {
-    print('🔍 BLoC: _onDeleteTagDefinition called for ID: ${event.id}');
+    _logger.d('🔍 BLoC: _onDeleteTagDefinition called for ID: ${event.id}');
     emit(DeleteTagDefinitionLoading());
     try {
-      print('🔍 BLoC: Calling deleteTagDefinitionUseCase for ID: ${event.id}');
+      _logger.d(
+        '🔍 BLoC: Calling deleteTagDefinitionUseCase for ID: ${event.id}',
+      );
       await _deleteTagDefinitionUseCase(event.id);
-      print('🔍 BLoC: Delete successful, emitting DeleteTagDefinitionSuccess');
+      _logger.i(
+        '🔍 BLoC: Delete successful, emitting DeleteTagDefinitionSuccess',
+      );
       emit(DeleteTagDefinitionSuccess(event.id));
-      print('🔍 BLoC: DeleteTagDefinitionSuccess emitted');
+      _logger.d('🔍 BLoC: DeleteTagDefinitionSuccess emitted');
     } catch (e) {
-      print('🔍 BLoC: Delete failed with error: $e');
-      final appError = ErrorHandler.handleException(
+      final message = handleException(
         e,
         context: 'delete_tag_definition',
         metadata: {'tag_definition_id': event.id},
       );
-      print('🔍 BLoC: Emitting DeleteTagDefinitionError');
-      emit(DeleteTagDefinitionError(appError.message, event.id));
-      print('🔍 BLoC: DeleteTagDefinitionError emitted');
+      emit(DeleteTagDefinitionError(message, event.id));
     }
   }
 
@@ -267,13 +277,15 @@ class TagDefinitionsBloc
     EnableMultiSelectModeAndSelect event,
     Emitter<TagDefinitionsState> emit,
   ) {
-    print(
+    _logger.d(
       '🔍 BLoC: Enabling multi-select mode for tag: ${event.tagDefinition.name}',
     );
-    print(
+    _logger.d(
       '🔍 BLoC: _allTagDefinitionEntities count: ${_allTagDefinitionEntities.length}',
     );
-    print('🔍 BLoC: _allTagDefinitions count: ${_allTagDefinitions.length}');
+    _logger.d(
+      '🔍 BLoC: _allTagDefinitions count: ${_allTagDefinitions.length}',
+    );
 
     _isMultiSelectMode = true;
     _selectedTagDefinitions.clear();
@@ -289,7 +301,9 @@ class TagDefinitionsBloc
     final tagDefinitions = _allTagDefinitionEntities.isNotEmpty
         ? _allTagDefinitionEntities
         : _allTagDefinitions.map((model) => model.toEntity()).toList();
-    print('🔍 BLoC: Using ${tagDefinitions.length} entities for multi-select');
+    _logger.d(
+      '🔍 BLoC: Using ${tagDefinitions.length} entities for multi-select',
+    );
 
     emit(
       TagDefinitionsWithSelection(
@@ -304,8 +318,8 @@ class TagDefinitionsBloc
     SelectTagDefinition event,
     Emitter<TagDefinitionsState> emit,
   ) {
-    print('🔍 BLoC: Selecting tag: ${event.tagDefinition.name}');
-    print(
+    _logger.d('🔍 BLoC: Selecting tag: ${event.tagDefinition.name}');
+    _logger.d(
       '🔍 BLoC: Current selection count: ${_selectedTagDefinitions.length}',
     );
 
@@ -317,14 +331,14 @@ class TagDefinitionsBloc
 
     if (!_selectedTagDefinitions.contains(correspondingEntity)) {
       _selectedTagDefinitions.add(correspondingEntity);
-      print(
+      _logger.d(
         '🔍 BLoC: Added to selection. New count: ${_selectedTagDefinitions.length}',
       );
     } else {
-      print('🔍 BLoC: Tag already selected, skipping');
+      _logger.d('🔍 BLoC: Tag already selected, skipping');
     }
 
-    print(
+    _logger.d(
       '🔍 BLoC: Emitting TagDefinitionsWithSelection with ${_selectedTagDefinitions.length} selected items',
     );
 
@@ -470,11 +484,8 @@ class TagDefinitionsBloc
         ),
       );
     } catch (e) {
-      emit(
-        ExportTagDefinitionsError(
-          'Failed to export tag definitions: ${e.toString()}',
-        ),
-      );
+      final message = handleException(e, context: 'export_tag_definitions');
+      emit(ExportTagDefinitionsError(message));
     }
   }
 
@@ -513,7 +524,7 @@ class TagDefinitionsBloc
         ),
       );
     } catch (e) {
-      final appError = ErrorHandler.handleException(
+      final message = handleException(
         e,
         context: 'delete_tag_definition',
         metadata: {
@@ -521,7 +532,7 @@ class TagDefinitionsBloc
           'selected_ids': _selectedTagDefinitions.map((td) => td.id).toList(),
         },
       );
-      emit(DeleteSelectedTagDefinitionsError(appError.message));
+      emit(DeleteSelectedTagDefinitionsError(message));
     }
   }
 

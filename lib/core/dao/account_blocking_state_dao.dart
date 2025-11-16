@@ -1,8 +1,10 @@
+import 'package:logger/logger.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import '../../features/accounts/data/models/account_blocking_state_model.dart';
 
 /// Data Access Object for AccountBlockingStateModel
 class AccountBlockingStateDao {
+  static final Logger _logger = Logger();
   // Table name
   static const String tableName = 'account_blocking_states';
 
@@ -72,8 +74,8 @@ class AccountBlockingStateDao {
         type: map[columnType] as String,
       );
     } catch (e) {
-      print('Error parsing AccountBlockingStateModel from database: $e');
-      print('Raw data: $map');
+      _logger.e('Error parsing AccountBlockingStateModel from database: $e');
+      _logger.d('Raw data: $map');
       return null;
     }
   }

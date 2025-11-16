@@ -90,6 +90,17 @@ class PaymentDao {
     )
   ''';
 
+  static const String createIndexesSQL =
+      '''
+    CREATE INDEX IF NOT EXISTS idx_payments_account_id ON $tableName ($columnAccountId);
+    CREATE INDEX IF NOT EXISTS idx_payments_payment_number ON $tableName ($columnPaymentNumber);
+    CREATE INDEX IF NOT EXISTS idx_payments_payment_external_key ON $tableName ($columnPaymentExternalKey);
+    CREATE INDEX IF NOT EXISTS idx_payments_created_at ON $tableName ($columnCreatedAt);
+    CREATE INDEX IF NOT EXISTS idx_payment_transactions_payment_id ON $transactionsTableName ($columnTransactionPaymentId);
+    CREATE INDEX IF NOT EXISTS idx_payment_transactions_status ON $transactionsTableName ($columnStatus);
+    CREATE INDEX IF NOT EXISTS idx_payment_transactions_effective_date ON $transactionsTableName ($columnEffectiveDate);
+  ''';
+
   /// Insert or update a payment
   static Future<void> insertOrUpdate(Database db, PaymentModel payment) async {
     try {
@@ -340,6 +351,7 @@ class PaymentDao {
     String accountId,
   ) async {
     try {
+      // Fetch payments for the account
       final results = await db.query(
         tableName,
         where: '$columnAccountId = ?',
@@ -347,53 +359,78 @@ class PaymentDao {
         orderBy: '$columnCreatedAt DESC',
       );
 
-      final payments = <PaymentModel>[];
+      if (results.isEmpty) {
+        _logger.d('No payments found for account: $accountId');
+        return [];
+      }
 
-      for (final paymentData in results) {
+      // Extract payment IDs
+      final paymentIds = results
+          .map((row) => row[columnPaymentId] as String)
+          .toList();
+
+      // Fetch all transactions for all payments in a single query (optimized)
+      final transactionsResults = paymentIds.isEmpty
+          ? <Map<String, dynamic>>[]
+          : await db.query(
+              transactionsTableName,
+              where:
+                  '$columnTransactionPaymentId IN (${List.filled(paymentIds.length, '?').join(',')})',
+              whereArgs: paymentIds,
+              orderBy: '$columnEffectiveDate DESC',
+            );
+
+      // Group transactions by payment ID
+      final transactionsByPaymentId = <String, List<PaymentTransactionModel>>{};
+      for (final transactionData in transactionsResults) {
+        final paymentId = transactionData[columnTransactionPaymentId] as String;
+        transactionsByPaymentId
+            .putIfAbsent(paymentId, () => [])
+            .add(
+              PaymentTransactionModel(
+                transactionId: transactionData[columnTransactionId] as String,
+                transactionExternalKey:
+                    transactionData[columnTransactionExternalKey] as String,
+                paymentId: paymentId,
+                paymentExternalKey:
+                    transactionData[columnTransactionPaymentExternalKey]
+                        as String,
+                transactionType:
+                    transactionData[columnTransactionType] as String,
+                amount: transactionData[columnAmount] as double,
+                currency: transactionData[columnTransactionCurrency] as String,
+                effectiveDate: DateTime.parse(
+                  transactionData[columnEffectiveDate] as String,
+                ),
+                processedAmount:
+                    transactionData[columnProcessedAmount] as double,
+                processedCurrency:
+                    transactionData[columnProcessedCurrency] as String,
+                status: transactionData[columnStatus] as String,
+                gatewayErrorCode:
+                    transactionData[columnGatewayErrorCode] as String?,
+                gatewayErrorMsg:
+                    transactionData[columnGatewayErrorMsg] as String?,
+                firstPaymentReferenceId:
+                    transactionData[columnFirstPaymentReferenceId] as String?,
+                secondPaymentReferenceId:
+                    transactionData[columnSecondPaymentReferenceId] as String?,
+                properties: transactionData[columnProperties] != null
+                    ? {} // Simplified - would need proper parsing
+                    : null,
+                auditLogs: [], // Simplified - would need proper parsing
+              ),
+            );
+      }
+
+      // Build payment models with their transactions
+      final payments = results.map((paymentData) {
         final paymentId = paymentData[columnPaymentId] as String;
+        final transactions = transactionsByPaymentId[paymentId] ?? [];
 
-        // Get payment transactions for each payment
-        final transactionsResults = await db.query(
-          transactionsTableName,
-          where: '$columnTransactionPaymentId = ?',
-          whereArgs: [paymentId],
-        );
-
-        final transactions = transactionsResults.map((transactionData) {
-          return PaymentTransactionModel(
-            transactionId: transactionData[columnTransactionId] as String,
-            transactionExternalKey:
-                transactionData[columnTransactionExternalKey] as String,
-            paymentId: transactionData[columnTransactionPaymentId] as String,
-            paymentExternalKey:
-                transactionData[columnTransactionPaymentExternalKey] as String,
-            transactionType: transactionData[columnTransactionType] as String,
-            amount: transactionData[columnAmount] as double,
-            currency: transactionData[columnTransactionCurrency] as String,
-            effectiveDate: DateTime.parse(
-              transactionData[columnEffectiveDate] as String,
-            ),
-            processedAmount: transactionData[columnProcessedAmount] as double,
-            processedCurrency:
-                transactionData[columnProcessedCurrency] as String,
-            status: transactionData[columnStatus] as String,
-            gatewayErrorCode:
-                transactionData[columnGatewayErrorCode] as String?,
-            gatewayErrorMsg: transactionData[columnGatewayErrorMsg] as String?,
-            firstPaymentReferenceId:
-                transactionData[columnFirstPaymentReferenceId] as String?,
-            secondPaymentReferenceId:
-                transactionData[columnSecondPaymentReferenceId] as String?,
-            properties: transactionData[columnProperties] != null
-                ? {} // Simplified - would need proper parsing
-                : null,
-            auditLogs: [], // Simplified - would need proper parsing
-          );
-        }).toList();
-
-        final payment = PaymentModel(
+        return PaymentModel(
           accountId: paymentData[columnAccountId] as String,
-          paymentId: paymentData[columnPaymentId] as String,
+          paymentId: paymentId,
           paymentNumber: paymentData[columnPaymentNumber] as String,
           paymentExternalKey: paymentData[columnPaymentExternalKey] as String,
           authAmount: paymentData[columnAuthAmount] as double,
@@ -409,9 +446,7 @@ class PaymentDao {
               : null,
           auditLogs: [], // Simplified - would need proper parsing
         );
-
-        payments.add(payment);
-      }
+      }).toList();
 
       _logger.d(
         'Retrieved ${payments.length} payments for account: $accountId',

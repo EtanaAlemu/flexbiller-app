@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/localization/app_strings.dart';
 import 'package:flexbiller_app/core/widgets/custom_snackbar.dart';
@@ -25,6 +26,7 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
+  final Logger _logger = Logger();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -59,7 +61,7 @@ class _LoginFormState extends State<LoginForm> {
       }
     } catch (e) {
       // If we can't get the email, just continue without pre-populating
-      print('Error pre-populating email: $e');
+      _logger.w('Error pre-populating email: $e');
     }
   }
 

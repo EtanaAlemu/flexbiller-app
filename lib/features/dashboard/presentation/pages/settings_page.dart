@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/services/cache_service.dart';
+import '../../../../core/services/notification_preferences_service.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/presentation/pages/change_password_page.dart';
+import 'help_support_page.dart';
+import 'terms_of_service_page.dart';
+import 'privacy_policy_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -14,7 +18,42 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final CacheService _cacheService = getIt<CacheService>();
+  final NotificationPreferencesService _notificationPrefs =
+      getIt<NotificationPreferencesService>();
   bool _isClearingCache = false;
+  bool _emailNotifications = true;
+  bool _pushNotifications = false;
+  bool _reminderNotifications = true;
+  bool _isLoadingPreferences = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationPreferences();
+  }
+
+  Future<void> _loadNotificationPreferences() async {
+    setState(() {
+      _isLoadingPreferences = true;
+    });
+
+    try {
+      final email = await _notificationPrefs.getEmailNotifications();
+      final push = await _notificationPrefs.getPushNotifications();
+      final reminder = await _notificationPrefs.getReminderNotifications();
+
+      setState(() {
+        _emailNotifications = email;
+        _pushNotifications = push;
+        _reminderNotifications = reminder;
+        _isLoadingPreferences = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingPreferences = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,12 +160,23 @@ class _SettingsPageState extends State<SettingsPage> {
                   icon: Icons.email_outlined,
                   title: 'Email Notifications',
                   subtitle: 'Manage email notification preferences',
-                  trailing: Switch(
-                    value: true, // This would come from user preferences
-                    onChanged: (value) {
-                      // TODO: Implement email notification toggle
-                    },
-                  ),
+                  trailing: _isLoadingPreferences
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Switch(
+                          value: _emailNotifications,
+                          onChanged: (value) async {
+                            setState(() {
+                              _emailNotifications = value;
+                            });
+                            await _notificationPrefs.setEmailNotifications(
+                              value,
+                            );
+                          },
+                        ),
                 ),
                 _buildDivider(),
                 _buildSettingsTile(
@@ -134,12 +184,23 @@ class _SettingsPageState extends State<SettingsPage> {
                   icon: Icons.push_pin_outlined,
                   title: 'Push Notifications',
                   subtitle: 'Receive push notifications on your device',
-                  trailing: Switch(
-                    value: false, // This would come from user preferences
-                    onChanged: (value) {
-                      // TODO: Implement push notification toggle
-                    },
-                  ),
+                  trailing: _isLoadingPreferences
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Switch(
+                          value: _pushNotifications,
+                          onChanged: (value) async {
+                            setState(() {
+                              _pushNotifications = value;
+                            });
+                            await _notificationPrefs.setPushNotifications(
+                              value,
+                            );
+                          },
+                        ),
                 ),
                 _buildDivider(),
                 _buildSettingsTile(
@@ -147,12 +208,23 @@ class _SettingsPageState extends State<SettingsPage> {
                   icon: Icons.schedule_outlined,
                   title: 'Reminder Notifications',
                   subtitle: 'Get reminded about important tasks',
-                  trailing: Switch(
-                    value: true, // This would come from user preferences
-                    onChanged: (value) {
-                      // TODO: Implement reminder notification toggle
-                    },
-                  ),
+                  trailing: _isLoadingPreferences
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Switch(
+                          value: _reminderNotifications,
+                          onChanged: (value) async {
+                            setState(() {
+                              _reminderNotifications = value;
+                            });
+                            await _notificationPrefs.setReminderNotifications(
+                              value,
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
@@ -170,7 +242,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'Data Visibility',
                   subtitle: 'Control who can see your data',
                   onTap: () {
-                    // TODO: Implement data visibility settings
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Data visibility settings coming soon!'),
+                      ),
+                    );
                   },
                 ),
                 _buildDivider(),
@@ -180,7 +256,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'Data Storage',
                   subtitle: 'Manage your local data storage',
                   onTap: () {
-                    // TODO: Implement data storage settings
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Data storage settings coming soon!'),
+                      ),
+                    );
                   },
                 ),
                 _buildDivider(),
@@ -216,7 +296,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'Help & Support',
                   subtitle: 'Get help and contact support',
                   onTap: () {
-                    // TODO: Implement help and support
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const HelpSupportPage(),
+                      ),
+                    );
                   },
                 ),
                 _buildDivider(),
@@ -226,7 +310,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'Terms of Service',
                   subtitle: 'View terms and conditions',
                   onTap: () {
-                    // TODO: Implement terms of service
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const TermsOfServicePage(),
+                      ),
+                    );
                   },
                 ),
                 _buildDivider(),
@@ -236,7 +324,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'Privacy Policy',
                   subtitle: 'View our privacy policy',
                   onTap: () {
-                    // TODO: Implement privacy policy
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const PrivacyPolicyPage(),
+                      ),
+                    );
                   },
                 ),
                 _buildDivider(),

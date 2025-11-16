@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/usecases/get_all_bundles_usecase.dart';
 import '../../domain/usecases/get_bundle_by_id_usecase.dart';
 import '../../domain/usecases/get_bundles_for_account_usecase.dart';
@@ -9,7 +10,8 @@ import 'bundles_event.dart';
 import 'bundles_state.dart';
 
 @injectable
-class BundlesBloc extends Bloc<BundlesEvent, BundlesState> {
+class BundlesBloc extends Bloc<BundlesEvent, BundlesState>
+    with BlocErrorHandlerMixin {
   final GetAllBundlesUseCase _getAllBundlesUseCase;
   final GetBundleByIdUseCase _getBundleByIdUseCase;
   final GetBundlesForAccountUseCase _getBundlesForAccountUseCase;
@@ -51,7 +53,8 @@ class BundlesBloc extends Bloc<BundlesEvent, BundlesState> {
       // If API fails but we have cached data, keep showing cached data
       // Only show error if we have no cached data
       if (state is! BundlesLoaded) {
-        emit(BundlesError(e.toString()));
+        final message = handleException(e, context: 'load_bundles');
+        emit(BundlesError(message));
       }
     }
   }
@@ -65,7 +68,8 @@ class BundlesBloc extends Bloc<BundlesEvent, BundlesState> {
       final bundles = await _getAllBundlesUseCase();
       emit(BundlesLoaded(bundles));
     } catch (e) {
-      emit(BundlesError(e.toString()));
+      final message = handleException(e, context: 'refresh_bundles');
+      emit(BundlesError(message));
     }
   }
 
@@ -95,7 +99,12 @@ class BundlesBloc extends Bloc<BundlesEvent, BundlesState> {
       // If API fails but we have cached data, keep showing cached data
       // Only show error if we have no cached data
       if (state is! SingleBundleLoaded) {
-        emit(SingleBundleError(e.toString(), event.bundleId));
+        final message = handleException(
+          e,
+          context: 'get_bundle_by_id',
+          metadata: {'bundleId': event.bundleId},
+        );
+        emit(SingleBundleError(message, event.bundleId));
       }
     }
   }
@@ -109,7 +118,12 @@ class BundlesBloc extends Bloc<BundlesEvent, BundlesState> {
       final bundles = await _getBundlesForAccountUseCase(event.accountId);
       emit(AccountBundlesLoaded(bundles, event.accountId));
     } catch (e) {
-      emit(AccountBundlesError(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'get_bundles_for_account',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountBundlesError(message, event.accountId));
     }
   }
 
@@ -121,7 +135,8 @@ class BundlesBloc extends Bloc<BundlesEvent, BundlesState> {
       final bundles = await _getCachedBundlesUseCase();
       emit(BundlesLoaded(bundles));
     } catch (e) {
-      emit(BundlesError(e.toString()));
+      final message = handleException(e, context: 'load_cached_bundles');
+      emit(BundlesError(message));
     }
   }
 }

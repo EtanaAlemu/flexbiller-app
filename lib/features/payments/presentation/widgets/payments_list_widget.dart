@@ -48,7 +48,10 @@ class PaymentsListWidget extends StatelessWidget {
             itemCount: payments.length,
             itemBuilder: (context, index) {
               final payment = payments[index];
-              return PaymentListItem(payment: payment);
+              return PaymentListItem(
+                key: ValueKey('payment_${payment.paymentId}'),
+                payment: payment,
+              );
             },
           ),
         ),

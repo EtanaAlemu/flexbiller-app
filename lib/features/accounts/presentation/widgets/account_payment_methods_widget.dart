@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../../domain/entities/account_payment_method.dart';
 import '../bloc/account_payment_methods_bloc.dart';
 import '../bloc/events/account_payment_methods_events.dart';
@@ -19,10 +20,12 @@ class AccountPaymentMethodsWidget extends StatefulWidget {
 
 class _AccountPaymentMethodsWidgetState
     extends State<AccountPaymentMethodsWidget> {
+  final Logger _logger = Logger();
+
   @override
   void initState() {
     super.initState();
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsWidget: initState - triggering LoadAccountPaymentMethods',
     );
     // Trigger payment methods loading when widget initializes
@@ -35,16 +38,16 @@ class _AccountPaymentMethodsWidgetState
 
   @override
   Widget build(BuildContext context) {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsWidget: Building with accountId: ${widget.accountId}',
     );
 
     return BlocListener<AccountPaymentMethodsBloc, AccountPaymentMethodsState>(
       listener: (context, state) {
-        print(
+        _logger.d(
           '🔍 AccountPaymentMethodsWidget: Received state: ${state.runtimeType}',
         );
-        print('🔍 AccountPaymentMethodsWidget: State details: $state');
+        _logger.d('🔍 AccountPaymentMethodsWidget: State details: $state');
 
         if (state is DefaultPaymentMethodSet) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -120,16 +123,16 @@ class _AccountPaymentMethodsWidgetState
       },
       child: BlocBuilder<AccountPaymentMethodsBloc, AccountPaymentMethodsState>(
         builder: (context, state) {
-          print(
+          _logger.d(
             '🔍 AccountPaymentMethodsWidget: Building with state: ${state.runtimeType}',
           );
-          print(
+          _logger.d(
             '🔍 AccountPaymentMethodsWidget: State details in builder: $state',
           );
 
           // Check for AccountPaymentMethodsLoaded first to prioritize it
           if (state is AccountPaymentMethodsLoaded) {
-            print(
+            _logger.d(
               '🔍 AccountPaymentMethodsWidget: Building AccountPaymentMethodsLoaded with ${state.paymentMethods.length} payment methods',
             );
             return Column(

@@ -228,8 +228,33 @@ class ProductsRepositoryImpl implements ProductsRepository {
 
         // Register for sync
         _syncService.queueOperation(() async {
-          // TODO: Implement product creation sync
-          _logger.d('Syncing product creation: ${product.id}');
+          try {
+            _logger.d('🔄 Syncing product creation: ${product.id}');
+
+            // Get the cached product model
+            final cachedProduct = await _localDataSource.getCachedProductById(
+              product.id,
+            );
+            if (cachedProduct == null) {
+              _logger.w(
+                'Product ${product.id} not found in local cache for sync',
+              );
+              return;
+            }
+
+            // Create product on remote
+            final createdProduct = await _remoteDataSource.createProduct(
+              cachedProduct,
+            );
+            _logger.d('✅ Product created on remote: ${createdProduct.id}');
+
+            // Update local cache with the server response
+            await _localDataSource.updateCachedProduct(createdProduct);
+            _logger.d('✅ Product sync completed: ${createdProduct.id}');
+          } catch (e) {
+            _logger.e('❌ Failed to sync product creation ${product.id}: $e');
+            rethrow;
+          }
         });
 
         return product;
@@ -273,8 +298,33 @@ class ProductsRepositoryImpl implements ProductsRepository {
 
         // Register for sync
         _syncService.queueOperation(() async {
-          // TODO: Implement product update sync
-          _logger.d('Syncing product update: ${product.id}');
+          try {
+            _logger.d('🔄 Syncing product update: ${product.id}');
+
+            // Get the cached product model
+            final cachedProduct = await _localDataSource.getCachedProductById(
+              product.id,
+            );
+            if (cachedProduct == null) {
+              _logger.w(
+                'Product ${product.id} not found in local cache for sync',
+              );
+              return;
+            }
+
+            // Update product on remote
+            final updatedProduct = await _remoteDataSource.updateProduct(
+              cachedProduct,
+            );
+            _logger.d('✅ Product updated on remote: ${updatedProduct.id}');
+
+            // Update local cache with the server response
+            await _localDataSource.updateCachedProduct(updatedProduct);
+            _logger.d('✅ Product sync completed: ${updatedProduct.id}');
+          } catch (e) {
+            _logger.e('❌ Failed to sync product update ${product.id}: $e');
+            rethrow;
+          }
         });
 
         return product;
@@ -311,8 +361,21 @@ class ProductsRepositoryImpl implements ProductsRepository {
 
         // Register for sync
         _syncService.queueOperation(() async {
-          // TODO: Implement product deletion sync
-          _logger.d('Syncing product deletion: $productId');
+          try {
+            _logger.d('🔄 Syncing product deletion: $productId');
+
+            // Delete product on remote
+            await _remoteDataSource.deleteProduct(productId);
+            _logger.d('✅ Product deleted on remote: $productId');
+
+            // Product is already deleted from local cache, so we're done
+            _logger.d('✅ Product deletion sync completed: $productId');
+          } catch (e) {
+            _logger.e('❌ Failed to sync product deletion $productId: $e');
+            // If sync fails, the product will remain in local cache
+            // It will be retried later by the sync service
+            rethrow;
+          }
         });
       }
 
@@ -479,9 +542,19 @@ class ProductsRepositoryImpl implements ProductsRepository {
   }
 
   void dispose() {
+    _logger.d('🛑 [Products Repository] Disposing resources...');
     _localProductsSubscription?.cancel();
+    _localProductsSubscription = null;
     _localProductSubscription?.cancel();
-    _productsStreamController.close();
-    _productStreamController.close();
+    _localProductSubscription = null;
+    if (!_productsStreamController.isClosed) {
+      _productsStreamController.close();
+    }
+    if (!_productStreamController.isClosed) {
+      _productStreamController.close();
+    }
+    _lastSyncTime.clear();
+    _processingProducts.clear();
+    _logger.i('✅ [Products Repository] All resources disposed');
   }
 }

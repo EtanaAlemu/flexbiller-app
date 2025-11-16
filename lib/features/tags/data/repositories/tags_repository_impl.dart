@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 import '../../domain/entities/tag.dart';
 import '../../domain/repositories/tags_repository.dart';
 import '../datasources/tags_remote_data_source.dart';
@@ -11,6 +12,7 @@ class TagsRepositoryImpl implements TagsRepository {
   final TagsRemoteDataSource _remoteDataSource;
   final TagsLocalDataSource _localDataSource;
   final NetworkInfo _networkInfo;
+  final Logger _logger = Logger();
 
   TagsRepositoryImpl(
     this._remoteDataSource,
@@ -109,7 +111,7 @@ class TagsRepositoryImpl implements TagsRepository {
       }
     } catch (e) {
       // Log error but don't throw - this is background sync
-      print('Background sync failed: $e');
+      _logger.w('Background sync failed: $e');
     }
   }
 }

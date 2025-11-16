@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/usecases/get_recent_subscriptions_usecase.dart';
 import '../../domain/usecases/get_subscription_by_id_usecase.dart';
 import '../../domain/usecases/get_subscriptions_for_account_usecase.dart';
@@ -20,7 +21,8 @@ import 'subscriptions_event.dart';
 import 'subscriptions_state.dart';
 
 @injectable
-class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
+class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState>
+    with BlocErrorHandlerMixin {
   final GetRecentSubscriptionsUseCase _getRecentSubscriptionsUseCase;
   final GetSubscriptionByIdUseCase _getSubscriptionByIdUseCase;
   final GetSubscriptionsForAccountUseCase _getSubscriptionsForAccountUseCase;
@@ -29,11 +31,15 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   final CancelSubscriptionUseCase _cancelSubscriptionUseCase;
   final AddSubscriptionCustomFieldsUseCase _addSubscriptionCustomFieldsUseCase;
   final GetSubscriptionCustomFieldsUseCase _getSubscriptionCustomFieldsUseCase;
-  final UpdateSubscriptionCustomFieldsUseCase _updateSubscriptionCustomFieldsUseCase;
-  final RemoveSubscriptionCustomFieldsUseCase _removeSubscriptionCustomFieldsUseCase;
+  final UpdateSubscriptionCustomFieldsUseCase
+  _updateSubscriptionCustomFieldsUseCase;
+  final RemoveSubscriptionCustomFieldsUseCase
+  _removeSubscriptionCustomFieldsUseCase;
   final BlockSubscriptionUseCase _blockSubscriptionUseCase;
-  final CreateSubscriptionWithAddOnsUseCase _createSubscriptionWithAddOnsUseCase;
-  final GetSubscriptionAuditLogsWithHistoryUseCase _getSubscriptionAuditLogsWithHistoryUseCase;
+  final CreateSubscriptionWithAddOnsUseCase
+  _createSubscriptionWithAddOnsUseCase;
+  final GetSubscriptionAuditLogsWithHistoryUseCase
+  _getSubscriptionAuditLogsWithHistoryUseCase;
   final UpdateSubscriptionBcdUseCase _updateSubscriptionBcdUseCase;
 
   SubscriptionsBloc(
@@ -65,7 +71,9 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
     on<RemoveSubscriptionCustomFields>(_onRemoveSubscriptionCustomFields);
     on<BlockSubscription>(_onBlockSubscription);
     on<CreateSubscriptionWithAddOns>(_onCreateSubscriptionWithAddOns);
-    on<GetSubscriptionAuditLogsWithHistory>(_onGetSubscriptionAuditLogsWithHistory);
+    on<GetSubscriptionAuditLogsWithHistory>(
+      _onGetSubscriptionAuditLogsWithHistory,
+    );
     on<UpdateSubscriptionBcd>(_onUpdateSubscriptionBcd);
   }
 
@@ -78,7 +86,8 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       final subscriptions = await _getRecentSubscriptionsUseCase();
       emit(RecentSubscriptionsLoaded(subscriptions));
     } catch (e) {
-      emit(SubscriptionsError(e.toString()));
+      final message = handleException(e, context: 'load_recent_subscriptions');
+      emit(SubscriptionsError(message));
     }
   }
 
@@ -91,7 +100,8 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       final subscriptions = await _getRecentSubscriptionsUseCase();
       emit(RecentSubscriptionsLoaded(subscriptions));
     } catch (e) {
-      emit(SubscriptionsError(e.toString()));
+      final message = handleException(e, context: 'load_recent_subscriptions');
+      emit(SubscriptionsError(message));
     }
   }
 
@@ -104,7 +114,12 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       final subscription = await _getSubscriptionByIdUseCase(event.id);
       emit(SingleSubscriptionLoaded(subscription));
     } catch (e) {
-      emit(SingleSubscriptionError(e.toString(), event.id));
+      final message = handleException(
+        e,
+        context: 'get_subscription_by_id',
+        metadata: {'subscriptionId': event.id},
+      );
+      emit(SingleSubscriptionError(message, event.id));
     }
   }
 
@@ -114,10 +129,17 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   ) async {
     emit(AccountSubscriptionsLoading());
     try {
-      final subscriptions = await _getSubscriptionsForAccountUseCase(event.accountId);
+      final subscriptions = await _getSubscriptionsForAccountUseCase(
+        event.accountId,
+      );
       emit(AccountSubscriptionsLoaded(subscriptions, event.accountId));
     } catch (e) {
-      emit(AccountSubscriptionsError(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'get_subscriptions_for_account',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountSubscriptionsError(message, event.accountId));
     }
   }
 
@@ -133,7 +155,12 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       );
       emit(CreateSubscriptionSuccess(subscription));
     } catch (e) {
-      emit(CreateSubscriptionError(e.toString()));
+      final message = handleException(
+        e,
+        context: 'create_subscription',
+        metadata: {'accountId': event.accountId, 'planName': event.planName},
+      );
+      emit(CreateSubscriptionError(message));
     }
   }
 
@@ -149,7 +176,12 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       );
       emit(UpdateSubscriptionSuccess(subscription));
     } catch (e) {
-      emit(UpdateSubscriptionError(e.toString(), event.id));
+      final message = handleException(
+        e,
+        context: 'update_subscription',
+        metadata: {'subscriptionId': event.id},
+      );
+      emit(UpdateSubscriptionError(message, event.id));
     }
   }
 
@@ -162,7 +194,12 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       await _cancelSubscriptionUseCase(event.id);
       emit(CancelSubscriptionSuccess(event.id));
     } catch (e) {
-      emit(CancelSubscriptionError(e.toString(), event.id));
+      final message = handleException(
+        e,
+        context: 'cancel_subscription',
+        metadata: {'subscriptionId': event.id},
+      );
+      emit(CancelSubscriptionError(message, event.id));
     }
   }
 
@@ -176,9 +213,16 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
         subscriptionId: event.subscriptionId,
         customFields: event.customFields,
       );
-      emit(AddSubscriptionCustomFieldsSuccess(customFields, event.subscriptionId));
+      emit(
+        AddSubscriptionCustomFieldsSuccess(customFields, event.subscriptionId),
+      );
     } catch (e) {
-      emit(AddSubscriptionCustomFieldsError(e.toString(), event.subscriptionId));
+      final message = handleException(
+        e,
+        context: 'add_subscription_custom_fields',
+        metadata: {'subscriptionId': event.subscriptionId},
+      );
+      emit(AddSubscriptionCustomFieldsError(message, event.subscriptionId));
     }
   }
 
@@ -188,10 +232,17 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   ) async {
     emit(SubscriptionCustomFieldsLoading());
     try {
-      final customFields = await _getSubscriptionCustomFieldsUseCase(event.subscriptionId);
+      final customFields = await _getSubscriptionCustomFieldsUseCase(
+        event.subscriptionId,
+      );
       emit(SubscriptionCustomFieldsLoaded(customFields, event.subscriptionId));
     } catch (e) {
-      emit(SubscriptionCustomFieldsError(e.toString(), event.subscriptionId));
+      final message = handleException(
+        e,
+        context: 'get_subscription_custom_fields',
+        metadata: {'subscriptionId': event.subscriptionId},
+      );
+      emit(SubscriptionCustomFieldsError(message, event.subscriptionId));
     }
   }
 
@@ -205,9 +256,19 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
         subscriptionId: event.subscriptionId,
         customFields: event.customFields,
       );
-      emit(UpdateSubscriptionCustomFieldsSuccess(customFields, event.subscriptionId));
+      emit(
+        UpdateSubscriptionCustomFieldsSuccess(
+          customFields,
+          event.subscriptionId,
+        ),
+      );
     } catch (e) {
-      emit(UpdateSubscriptionCustomFieldsError(e.toString(), event.subscriptionId));
+      final message = handleException(
+        e,
+        context: 'update_subscription_custom_fields',
+        metadata: {'subscriptionId': event.subscriptionId},
+      );
+      emit(UpdateSubscriptionCustomFieldsError(message, event.subscriptionId));
     }
   }
 
@@ -223,7 +284,12 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       );
       emit(RemoveSubscriptionCustomFieldsSuccess(result, event.subscriptionId));
     } catch (e) {
-      emit(RemoveSubscriptionCustomFieldsError(e.toString(), event.subscriptionId));
+      final message = handleException(
+        e,
+        context: 'remove_subscription_custom_fields',
+        metadata: {'subscriptionId': event.subscriptionId},
+      );
+      emit(RemoveSubscriptionCustomFieldsError(message, event.subscriptionId));
     }
   }
 
@@ -239,7 +305,12 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       );
       emit(BlockSubscriptionSuccess(result, event.subscriptionId));
     } catch (e) {
-      emit(BlockSubscriptionError(e.toString(), event.subscriptionId));
+      final message = handleException(
+        e,
+        context: 'block_subscription',
+        metadata: {'subscriptionId': event.subscriptionId},
+      );
+      emit(BlockSubscriptionError(message, event.subscriptionId));
     }
   }
 
@@ -249,22 +320,28 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   ) async {
     emit(CreateSubscriptionWithAddOnsLoading());
     try {
-      final addonProducts = event.addonProducts.map((addon) => 
-        SubscriptionAddonProduct(
-          accountId: addon['accountId']!,
-          productName: addon['productName']!,
-          productCategory: addon['productCategory']!,
-          billingPeriod: addon['billingPeriod']!,
-          priceList: addon['priceList']!,
-        )
-      ).toList();
+      final addonProducts = event.addonProducts
+          .map(
+            (addon) => SubscriptionAddonProduct(
+              accountId: addon['accountId']!,
+              productName: addon['productName']!,
+              productCategory: addon['productCategory']!,
+              billingPeriod: addon['billingPeriod']!,
+              priceList: addon['priceList']!,
+            ),
+          )
+          .toList();
 
       final result = await _createSubscriptionWithAddOnsUseCase(
         addonProducts: addonProducts,
       );
       emit(CreateSubscriptionWithAddOnsSuccess(result));
     } catch (e) {
-      emit(CreateSubscriptionWithAddOnsError(e.toString()));
+      final message = handleException(
+        e,
+        context: 'create_subscription_with_addons',
+      );
+      emit(CreateSubscriptionWithAddOnsError(message));
     }
   }
 
@@ -274,10 +351,24 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
   ) async {
     emit(GetSubscriptionAuditLogsWithHistoryLoading());
     try {
-      final auditLogs = await _getSubscriptionAuditLogsWithHistoryUseCase(event.subscriptionId);
-      emit(GetSubscriptionAuditLogsWithHistorySuccess(auditLogs, event.subscriptionId));
+      final auditLogs = await _getSubscriptionAuditLogsWithHistoryUseCase(
+        event.subscriptionId,
+      );
+      emit(
+        GetSubscriptionAuditLogsWithHistorySuccess(
+          auditLogs,
+          event.subscriptionId,
+        ),
+      );
     } catch (e) {
-      emit(GetSubscriptionAuditLogsWithHistoryError(e.toString(), event.subscriptionId));
+      final message = handleException(
+        e,
+        context: 'get_subscription_audit_logs',
+        metadata: {'subscriptionId': event.subscriptionId},
+      );
+      emit(
+        GetSubscriptionAuditLogsWithHistoryError(message, event.subscriptionId),
+      );
     }
   }
 
@@ -306,7 +397,12 @@ class SubscriptionsBloc extends Bloc<SubscriptionsEvent, SubscriptionsState> {
       );
       emit(UpdateSubscriptionBcdSuccess(result, event.subscriptionId));
     } catch (e) {
-      emit(UpdateSubscriptionBcdError(e.toString(), event.subscriptionId));
+      final message = handleException(
+        e,
+        context: 'update_subscription_bcd',
+        metadata: {'subscriptionId': event.subscriptionId},
+      );
+      emit(UpdateSubscriptionBcdError(message, event.subscriptionId));
     }
   }
 }

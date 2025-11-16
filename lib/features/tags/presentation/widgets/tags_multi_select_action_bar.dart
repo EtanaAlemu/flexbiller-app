@@ -125,16 +125,15 @@ class TagsMultiSelectActionBar extends StatelessWidget {
     _showExportDialog(context);
   }
 
-  void _showExportDialog(BuildContext context) {
-    showDialog(
+  Future<void> _showExportDialog(BuildContext context) async {
+    final result = await showDialog(
       context: context,
       builder: (context) => ExportTagsDialog(tags: selectedTags),
-    ).then((result) async {
-      if (result != null) {
-        final selectedFormat = result['format'] as String;
-        await _performExport(context, selectedFormat);
-      }
-    });
+    );
+    if (result != null) {
+      final selectedFormat = result['format'] as String;
+      await _performExport(context, selectedFormat);
+    }
   }
 
   Future<void> _performExport(BuildContext context, String format) async {

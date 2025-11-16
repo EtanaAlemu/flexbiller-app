@@ -202,4 +202,36 @@ class BundlesRepositoryImpl implements BundlesRepository {
       throw const CacheFailure('Failed to clear cached bundles');
     }
   }
+
+  @override
+  Future<void> deleteBundle(String bundleId) async {
+    try {
+      // First, delete from local cache (local-first approach)
+      await _localDataSource.deleteCachedBundle(bundleId);
+
+      // If online, try to sync with remote
+      if (await _networkInfo.isConnected) {
+        try {
+          await _remoteDataSource.deleteBundle(bundleId);
+        } on ServerException {
+          // Server error - bundle is already deleted locally
+          // In a local-first architecture, local deletion is the source of truth
+          // Don't fail the operation
+        } on NetworkException {
+          // Network error - bundle is deleted locally, will sync when online
+          // Don't fail the operation
+        } catch (e) {
+          // Other errors - log but don't fail since local deletion succeeded
+          // The bundle will be synced later when network is available
+        }
+      }
+    } on CacheException catch (e) {
+      throw CacheFailure('Failed to delete bundle from cache: ${e.message}');
+    } catch (e) {
+      if (e is CacheFailure || e is ServerFailure || e is NetworkFailure) {
+        rethrow;
+      }
+      throw ServerFailure('Unexpected error deleting bundle: $e');
+    }
+  }
 }

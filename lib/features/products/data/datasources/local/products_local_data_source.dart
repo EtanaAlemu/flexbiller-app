@@ -551,9 +551,19 @@ class ProductsLocalDataSourceImpl implements ProductsLocalDataSource {
 
   // Clean up stream controllers
   void dispose() {
-    _productsStreamController.close();
-    _productByIdStreamController.close();
-    _queryStreamController.close();
-    _searchStreamController.close();
+    _logger.d('🛑 [Products Local Data Source] Disposing resources...');
+    if (!_productsStreamController.isClosed) {
+      _productsStreamController.close();
+    }
+    if (!_productByIdStreamController.isClosed) {
+      _productByIdStreamController.close();
+    }
+    if (!_queryStreamController.isClosed) {
+      _queryStreamController.close();
+    }
+    if (!_searchStreamController.isClosed) {
+      _searchStreamController.close();
+    }
+    _logger.i('✅ [Products Local Data Source] All StreamControllers closed');
   }
 }

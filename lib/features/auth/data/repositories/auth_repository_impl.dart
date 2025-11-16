@@ -469,25 +469,27 @@ class AuthRepositoryImpl implements AuthRepository {
       // Call remote data source to refresh token
       final authResponse = await _remoteDataSource.refreshToken(refreshToken);
 
-      // Store new tokens and expiration time
+      // Store new tokens
       await _secureStorage.saveAuthToken(authResponse.accessToken);
       await _secureStorage.saveRefreshToken(authResponse.refreshToken);
-      await _secureStorage.saveTokenExpiration(authResponse.expiresIn);
+
+      // Decode JWT token to get actual expiration time
+      final jwtToken = _jwtService.decodeToken(authResponse.accessToken);
+      final actualExpirationTime = DateTime.fromMillisecondsSinceEpoch(
+        jwtToken.exp! * 1000,
+      );
+      await _secureStorage.saveTokenExpirationDateTime(actualExpirationTime);
 
       // Update auth token in local database if user exists
       try {
-        final jwtToken = _jwtService.decodeToken(authResponse.accessToken);
         final userId = jwtToken.sub ?? '';
 
         if (userId.isNotEmpty) {
-          final expirationTime = DateTime.now().add(
-            Duration(seconds: authResponse.expiresIn),
-          );
           await _userLocalDataSource.updateAuthToken(
             userId,
             authResponse.accessToken,
             authResponse.refreshToken,
-            expirationTime,
+            actualExpirationTime,
           );
           _logger.d('Auth token updated in local database for user: $userId');
         }
@@ -568,7 +570,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> restoreUserContext() async {
     try {
       _logger.d('Restoring user context from stored user ID');
-      print('DEBUG: restoreUserContext called');
+      _logger.d('DEBUG: restoreUserContext called');
 
       // Restore the user session context
       await _userSessionService.restoreCurrentUserContext();

@@ -74,6 +74,17 @@ class AccountDao {
     )
   ''';
 
+  static const String createIndexesSQL =
+      '''
+    CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON $tableName ($columnUserId);
+    CREATE INDEX IF NOT EXISTS idx_accounts_email ON $tableName ($columnEmail);
+    CREATE INDEX IF NOT EXISTS idx_accounts_external_key ON $tableName ($columnExternalKey);
+    CREATE INDEX IF NOT EXISTS idx_accounts_parent_account_id ON $tableName ($columnParentAccountId);
+    CREATE INDEX IF NOT EXISTS idx_accounts_name ON $tableName ($columnName);
+    CREATE INDEX IF NOT EXISTS idx_accounts_created_at ON $tableName ($columnCreatedAt);
+    CREATE INDEX IF NOT EXISTS idx_accounts_sync_status ON $tableName ($columnSyncStatus);
+  ''';
+
   // Convert AccountModel to database map
   static Map<String, dynamic> toMap(AccountModel account, {String? userId}) {
     return {

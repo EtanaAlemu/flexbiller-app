@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/account_custom_field.dart';
 import '../../domain/repositories/account_custom_fields_repository.dart';
 import '../../domain/usecases/get_account_custom_fields_usecase.dart';
@@ -17,7 +18,8 @@ import 'states/account_custom_fields_states.dart';
 /// BLoC for handling account custom fields operations
 @injectable
 class AccountCustomFieldsBloc
-    extends Bloc<AccountCustomFieldsEvent, AccountCustomFieldsState> {
+    extends Bloc<AccountCustomFieldsEvent, AccountCustomFieldsState>
+    with BlocErrorHandlerMixin {
   final GetAccountCustomFieldsUseCase _getAccountCustomFieldsUseCase;
   final CreateAccountCustomFieldUseCase _createAccountCustomFieldUseCase;
   final CreateMultipleAccountCustomFieldsUseCase
@@ -75,14 +77,14 @@ class AccountCustomFieldsBloc
 
   /// Initialize stream subscriptions for reactive updates from repository
   void _initializeStreamSubscriptions() {
-    print('🔍 AccountCustomFieldsBloc: Initializing stream subscriptions');
-    print(
+    _logger.d('🔍 AccountCustomFieldsBloc: Initializing stream subscriptions');
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: Repository stream: ${_accountCustomFieldsRepository.customFieldsStream}',
     );
     // Listen to custom fields updates from repository background sync
     _customFieldsSubscription = _accountCustomFieldsRepository.customFieldsStream.listen(
       (updatedCustomFields) {
-        print(
+        _logger.d(
           '🔍 AccountCustomFieldsBloc: Stream update received with ${updatedCustomFields.length} custom fields, currentAccountId: $_currentAccountId',
         );
 
@@ -93,13 +95,13 @@ class AccountCustomFieldsBloc
               .where((field) => field.accountId == _currentAccountId)
               .toList();
 
-          print(
+          _logger.d(
             '🔍 AccountCustomFieldsBloc: Filtered ${currentAccountCustomFields.length} custom fields for current account',
           );
 
           // Update custom fields list with fresh data directly without triggering new events
           final currentState = state;
-          print(
+          _logger.d(
             '🔍 AccountCustomFieldsBloc: Current state: ${currentState.runtimeType}',
           );
 
@@ -111,7 +113,7 @@ class AccountCustomFieldsBloc
                 customFields: currentAccountCustomFields,
               ),
             );
-            print(
+            _logger.d(
               '🔍 AccountCustomFieldsBloc: Account custom fields updated from background sync: ${currentAccountCustomFields.length} custom fields',
             );
           } else if (currentState is AccountCustomFieldsLoading) {
@@ -122,22 +124,22 @@ class AccountCustomFieldsBloc
                 customFields: currentAccountCustomFields,
               ),
             );
-            print(
+            _logger.d(
               '🔍 AccountCustomFieldsBloc: Account custom fields loaded from background sync: ${currentAccountCustomFields.length} custom fields',
             );
           } else {
-            print(
+            _logger.d(
               '🔍 AccountCustomFieldsBloc: Ignoring stream update - current state is not loaded or loading: ${currentState.runtimeType}',
             );
           }
         } else {
-          print(
+          _logger.d(
             '🔍 AccountCustomFieldsBloc: Ignoring stream update - no current account ID set',
           );
         }
       },
       onError: (error) {
-        print('🔍 AccountCustomFieldsBloc: Stream error: $error');
+        _logger.e('🔍 AccountCustomFieldsBloc: Stream error: $error');
         if (_currentAccountId != null) {
           emit(
             AccountCustomFieldsFailure(
@@ -148,7 +150,7 @@ class AccountCustomFieldsBloc
         }
       },
     );
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: Stream subscription created successfully',
     );
   }
@@ -157,7 +159,7 @@ class AccountCustomFieldsBloc
     LoadAccountCustomFields event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: LoadAccountCustomFields called for accountId: ${event.accountId}',
     );
 
@@ -175,7 +177,7 @@ class AccountCustomFieldsBloc
       final customFields = await _getAccountCustomFieldsUseCase(
         event.accountId,
       );
-      print(
+      _logger.d(
         '🔍 AccountCustomFieldsBloc: LoadAccountCustomFields succeeded with ${customFields.length} custom fields from local cache',
       );
       emit(
@@ -188,7 +190,7 @@ class AccountCustomFieldsBloc
       // The repository will handle background sync and emit updates via stream
       // The UI will reactively update when new data arrives
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: LoadAccountCustomFields exception: $e',
       );
       emit(
@@ -204,7 +206,7 @@ class AccountCustomFieldsBloc
     RefreshAccountCustomFields event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: RefreshAccountCustomFields called for accountId: ${event.accountId}',
     );
 
@@ -216,7 +218,7 @@ class AccountCustomFieldsBloc
       final customFields = await _getAccountCustomFieldsUseCase(
         event.accountId,
       );
-      print(
+      _logger.d(
         '🔍 AccountCustomFieldsBloc: RefreshAccountCustomFields succeeded with ${customFields.length} custom fields from local cache',
       );
       emit(
@@ -229,7 +231,7 @@ class AccountCustomFieldsBloc
       // The repository will handle background sync and emit updates via stream
       // The UI will reactively update when new data arrives
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: RefreshAccountCustomFields exception: $e',
       );
       emit(
@@ -245,7 +247,7 @@ class AccountCustomFieldsBloc
     CreateAccountCustomField event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: CreateAccountCustomField called for accountId: ${event.accountId}',
     );
 
@@ -257,7 +259,7 @@ class AccountCustomFieldsBloc
         event.name,
         event.value,
       );
-      print(
+      _logger.i(
         '🔍 AccountCustomFieldsBloc: CreateAccountCustomField succeeded with customFieldId: ${customField.customFieldId}',
       );
       emit(
@@ -270,7 +272,7 @@ class AccountCustomFieldsBloc
       // Reload custom fields to get updated list
       add(LoadAccountCustomFields(event.accountId));
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: CreateAccountCustomField exception: $e',
       );
       emit(
@@ -286,7 +288,7 @@ class AccountCustomFieldsBloc
     CreateMultipleAccountCustomFields event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: CreateMultipleAccountCustomFields called for accountId: ${event.accountId}',
     );
 
@@ -297,7 +299,7 @@ class AccountCustomFieldsBloc
         event.accountId,
         event.customFields,
       );
-      print(
+      _logger.i(
         '🔍 AccountCustomFieldsBloc: CreateMultipleAccountCustomFields succeeded with ${customFields.length} custom fields',
       );
       emit(
@@ -310,7 +312,7 @@ class AccountCustomFieldsBloc
       // Reload custom fields to get updated list
       add(LoadAccountCustomFields(event.accountId));
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: CreateMultipleAccountCustomFields exception: $e',
       );
       emit(
@@ -326,7 +328,7 @@ class AccountCustomFieldsBloc
     UpdateAccountCustomField event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: UpdateAccountCustomField called for accountId: ${event.accountId}',
     );
 
@@ -339,7 +341,7 @@ class AccountCustomFieldsBloc
         event.name,
         event.value,
       );
-      print(
+      _logger.i(
         '🔍 AccountCustomFieldsBloc: UpdateAccountCustomField succeeded with customFieldId: ${customField.customFieldId}',
       );
       emit(
@@ -352,7 +354,7 @@ class AccountCustomFieldsBloc
       // Reload custom fields to get updated list
       add(LoadAccountCustomFields(event.accountId));
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: UpdateAccountCustomField exception: $e',
       );
       emit(
@@ -368,7 +370,7 @@ class AccountCustomFieldsBloc
     UpdateMultipleAccountCustomFields event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: UpdateMultipleAccountCustomFields called for accountId: ${event.accountId}',
     );
 
@@ -379,7 +381,7 @@ class AccountCustomFieldsBloc
         event.accountId,
         event.customFields,
       );
-      print(
+      _logger.i(
         '🔍 AccountCustomFieldsBloc: UpdateMultipleAccountCustomFields succeeded with ${customFields.length} custom fields',
       );
       emit(
@@ -392,7 +394,7 @@ class AccountCustomFieldsBloc
       // Reload custom fields to get updated list
       add(LoadAccountCustomFields(event.accountId));
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: UpdateMultipleAccountCustomFields exception: $e',
       );
       emit(
@@ -408,7 +410,7 @@ class AccountCustomFieldsBloc
     DeleteAccountCustomField event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: DeleteAccountCustomField called for accountId: ${event.accountId}',
     );
 
@@ -419,7 +421,7 @@ class AccountCustomFieldsBloc
         event.accountId,
         event.customFieldId,
       );
-      print(
+      _logger.i(
         '🔍 AccountCustomFieldsBloc: DeleteAccountCustomField succeeded for customFieldId: ${event.customFieldId}',
       );
       emit(
@@ -432,7 +434,7 @@ class AccountCustomFieldsBloc
       // Reload custom fields to get updated list
       add(LoadAccountCustomFields(event.accountId));
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: DeleteAccountCustomField exception: $e',
       );
       emit(
@@ -448,7 +450,7 @@ class AccountCustomFieldsBloc
     DeleteMultipleAccountCustomFields event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: DeleteMultipleAccountCustomFields called for accountId: ${event.accountId}',
     );
 
@@ -459,7 +461,7 @@ class AccountCustomFieldsBloc
         event.accountId,
         event.customFieldIds,
       );
-      print(
+      _logger.i(
         '🔍 AccountCustomFieldsBloc: DeleteMultipleAccountCustomFields succeeded for ${event.customFieldIds.length} custom fields',
       );
       emit(
@@ -472,7 +474,7 @@ class AccountCustomFieldsBloc
       // Reload custom fields to get updated list
       add(LoadAccountCustomFields(event.accountId));
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: DeleteMultipleAccountCustomFields exception: $e',
       );
       emit(
@@ -488,7 +490,7 @@ class AccountCustomFieldsBloc
     SearchCustomFieldsByName event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: SearchCustomFieldsByName called for accountId: ${event.accountId}',
     );
 
@@ -497,7 +499,7 @@ class AccountCustomFieldsBloc
     try {
       final customFields = await _accountCustomFieldsRepository
           .getCustomFieldsByName(event.accountId, event.name);
-      print(
+      _logger.d(
         '🔍 AccountCustomFieldsBloc: SearchCustomFieldsByName succeeded with ${customFields.length} custom fields',
       );
       emit(
@@ -508,7 +510,7 @@ class AccountCustomFieldsBloc
         ),
       );
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: SearchCustomFieldsByName exception: $e',
       );
       emit(
@@ -524,7 +526,7 @@ class AccountCustomFieldsBloc
     SearchCustomFieldsByValue event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: SearchCustomFieldsByValue called for accountId: ${event.accountId}',
     );
 
@@ -533,7 +535,7 @@ class AccountCustomFieldsBloc
     try {
       final customFields = await _accountCustomFieldsRepository
           .getCustomFieldsByValue(event.accountId, event.value);
-      print(
+      _logger.d(
         '🔍 AccountCustomFieldsBloc: SearchCustomFieldsByValue succeeded with ${customFields.length} custom fields',
       );
       emit(
@@ -544,7 +546,7 @@ class AccountCustomFieldsBloc
         ),
       );
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: SearchCustomFieldsByValue exception: $e',
       );
       emit(
@@ -560,7 +562,7 @@ class AccountCustomFieldsBloc
     SyncAccountCustomFields event,
     Emitter<AccountCustomFieldsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: SyncAccountCustomFields called for accountId: ${event.accountId}',
     );
 
@@ -570,7 +572,7 @@ class AccountCustomFieldsBloc
       // Trigger refresh which will handle background sync
       add(RefreshAccountCustomFields(event.accountId));
     } catch (e) {
-      print(
+      _logger.e(
         '🔍 AccountCustomFieldsBloc: SyncAccountCustomFields exception: $e',
       );
       emit(
@@ -586,7 +588,7 @@ class AccountCustomFieldsBloc
     ClearAccountCustomFields event,
     Emitter<AccountCustomFieldsState> emit,
   ) {
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsBloc: ClearAccountCustomFields called for accountId: ${event.accountId}',
     );
     emit(AccountCustomFieldsInitial(event.accountId));

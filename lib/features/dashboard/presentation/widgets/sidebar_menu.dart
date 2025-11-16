@@ -61,14 +61,6 @@ class _SidebarMenuState extends State<SidebarMenu>
       isAvailable: true,
       badge: null,
     ),
-    SidebarMenuItem(
-      icon: Icons.settings_outlined,
-      activeIcon: Icons.settings,
-      title: 'Settings',
-      index: 11,
-      isAvailable: true,
-      badge: null,
-    ),
   ];
 
   // Catalog category items
@@ -199,8 +191,17 @@ class _SidebarMenuState extends State<SidebarMenu>
     ),
   ];
 
-  // Profile and Logout items
+  // Footer items (Settings, Profile, and Logout)
   final List<SidebarMenuItem> _bottomItems = [
+    SidebarMenuItem(
+      icon: Icons.settings_outlined,
+      activeIcon: Icons.settings,
+      title: 'Settings',
+      index: 11,
+      isAvailable: true,
+      badge: null,
+      isSpecial: false,
+    ),
     SidebarMenuItem(
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
@@ -288,6 +289,22 @@ class _SidebarMenuState extends State<SidebarMenu>
             ),
           ),
           Expanded(child: _buildMenuItems(context)),
+          // Footer separator
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+          // Footer items (Settings, Profile, Logout)
+          _buildFooterItems(context),
         ],
       ),
     );
@@ -405,10 +422,19 @@ class _SidebarMenuState extends State<SidebarMenu>
         ),
 
         const SizedBox(height: 8),
-
-        // Bottom items (Profile and Logout)
-        ..._bottomItems.map((item) => _buildMenuItem(context, item)),
       ],
+    );
+  }
+
+  Widget _buildFooterItems(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: _bottomItems
+            .map((item) => _buildMenuItem(context, item))
+            .toList(),
+      ),
     );
   }
 

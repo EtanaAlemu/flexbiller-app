@@ -30,7 +30,7 @@ class UserSessionService {
   Future<void> setCurrentUser(User user) async {
     try {
       _logger.d('Setting current user: ${user.email} (ID: ${user.id})');
-      print('DEBUG: setCurrentUser called with user: ${user.email}');
+      _logger.d('DEBUG: setCurrentUser called with user: ${user.email}');
 
       _currentUser = user;
       _currentUserId = user.id;
@@ -68,7 +68,7 @@ class UserSessionService {
   Future<void> restoreCurrentUserContext() async {
     try {
       _logger.d('Restoring current user context from secure storage');
-      print('DEBUG: restoreCurrentUserContext called');
+      _logger.d('DEBUG: restoreCurrentUserContext called');
 
       final userId = await _secureStorage.read('current_user_id');
       if (userId != null) {
@@ -115,7 +115,7 @@ class UserSessionService {
 
   /// Get current user ID without throwing exception (returns null if no user)
   String? getCurrentUserIdOrNull() {
-    print(
+    _logger.d(
       'DEBUG: getCurrentUserIdOrNull called - hasActiveUser: $hasActiveUser, currentUserId: $_currentUserId',
     );
     return _currentUserId;

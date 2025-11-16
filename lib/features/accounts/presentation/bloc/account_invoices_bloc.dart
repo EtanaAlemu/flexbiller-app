@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/usecases/get_invoices_usecase.dart';
 import 'events/account_invoices_event.dart';
 import 'states/account_invoices_state.dart';
@@ -8,7 +9,8 @@ import 'package:logger/logger.dart';
 
 @injectable
 class AccountInvoicesBloc
-    extends Bloc<AccountInvoicesEvent, AccountInvoicesState> {
+    extends Bloc<AccountInvoicesEvent, AccountInvoicesState>
+    with BlocErrorHandlerMixin {
   final GetInvoicesUseCase _getInvoicesUseCase;
   final Logger _logger = Logger();
 
@@ -52,10 +54,14 @@ class AccountInvoicesBloc
       _logger.d('🔍 State hashCode: ${loadedState.hashCode}');
       _logger.d('🔍 State props: ${loadedState.props}');
     } catch (e) {
-      _logger.e('🔍 Error in _onLoadAccountInvoices: $e');
+      final message = handleException(
+        e,
+        context: 'load_account_invoices',
+        metadata: {'accountId': event.accountId},
+      );
       emit(
         AccountInvoicesFailure(
-          message: e.toString(),
+          message: message,
           accountId: event.accountId,
         ),
       );
@@ -84,9 +90,14 @@ class AccountInvoicesBloc
         AccountInvoicesLoaded(accountId: event.accountId, invoices: invoices),
       );
     } catch (e) {
+      final message = handleException(
+        e,
+        context: 'refresh_account_invoices',
+        metadata: {'accountId': event.accountId},
+      );
       emit(
         AccountInvoicesFailure(
-          message: e.toString(),
+          message: message,
           accountId: event.accountId,
         ),
       );

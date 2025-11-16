@@ -11,10 +11,16 @@ abstract class AccountPaymentsRepository {
   Future<AccountPayment> getAccountPayment(String accountId, String paymentId);
 
   /// Get payments by status for an account
-  Future<List<AccountPayment>> getAccountPaymentsByStatus(String accountId, String status);
+  Future<List<AccountPayment>> getAccountPaymentsByStatus(
+    String accountId,
+    String status,
+  );
 
   /// Get payments by type for an account
-  Future<List<AccountPayment>> getAccountPaymentsByType(String accountId, String type);
+  Future<List<AccountPayment>> getAccountPaymentsByType(
+    String accountId,
+    String type,
+  );
 
   /// Get payments by date range for an account
   Future<List<AccountPayment>> getAccountPaymentsByDateRange(
@@ -34,7 +40,10 @@ abstract class AccountPaymentsRepository {
   Future<Map<String, dynamic>> getAccountPaymentStatistics(String accountId);
 
   /// Search payments for an account
-  Future<List<AccountPayment>> searchAccountPayments(String accountId, String searchTerm);
+  Future<List<AccountPayment>> searchAccountPayments(
+    String accountId,
+    String searchTerm,
+  );
 
   /// Get refunded payments for an account
   Future<List<AccountPayment>> getRefundedPayments(String accountId);
@@ -71,5 +80,13 @@ abstract class AccountPaymentsRepository {
     required String currency,
     required DateTime effectiveDate,
     List<Map<String, dynamic>>? properties,
+  });
+
+  /// Refund a payment for an account
+  Future<void> refundPayment({
+    required String accountId,
+    required String paymentId,
+    required double refundAmount,
+    required String reason,
   });
 }

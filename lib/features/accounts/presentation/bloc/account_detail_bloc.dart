@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/usecases/get_account_by_id_usecase.dart';
 import '../../domain/usecases/create_account_usecase.dart';
@@ -30,7 +31,8 @@ import '../../../tags/domain/entities/tag.dart';
 
 /// BLoC for handling single account operations
 @injectable
-class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
+class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState>
+    with BlocErrorHandlerMixin {
   final GetAccountByIdUseCase _getAccountByIdUseCase;
   final CreateAccountUseCase _createAccountUseCase;
   final UpdateAccountUseCase _updateAccountUseCase;
@@ -218,8 +220,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       // If we got data immediately (from cache), emit loaded state directly
       emit(AccountDetailsLoaded(account));
     } catch (e) {
-      _logger.e('Error loading account details: $e');
-      emit(AccountDetailsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_account_details',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountDetailsFailure(message, event.accountId));
     }
   }
 
@@ -234,8 +240,8 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
 
       emit(AccountCreated(newAccount));
     } catch (e) {
-      _logger.e('Error creating account: $e');
-      emit(AccountCreationFailure(e.toString()));
+      final message = handleException(e, context: 'create_account');
+      emit(AccountCreationFailure(message));
     }
   }
 
@@ -250,8 +256,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
 
       emit(AccountUpdated(updatedAccount));
     } catch (e) {
-      _logger.e('Error updating account: $e');
-      emit(AccountUpdateFailure(e.toString()));
+      final message = handleException(
+        e,
+        context: 'update_account',
+        metadata: {'accountId': event.account.accountId},
+      );
+      emit(AccountUpdateFailure(message));
     }
   }
 
@@ -266,8 +276,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
 
       emit(AccountDeleted(event.accountId));
     } catch (e) {
-      _logger.e('Error deleting account: $e');
-      emit(AccountDeleteFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'delete_account',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountDeleteFailure(message, event.accountId));
     }
   }
 
@@ -280,8 +294,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       final timeline = await _getAccountTimelineUseCase(event.accountId);
       emit(AccountTimelineLoaded(event.accountId, [timeline]));
     } catch (e) {
-      _logger.e('Error loading account timeline: $e');
-      emit(AccountTimelineFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_account_timeline',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountTimelineFailure(message, event.accountId));
     }
   }
 
@@ -294,8 +312,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       final timeline = await _getAccountTimelineUseCase(event.accountId);
       emit(AccountTimelineLoaded(event.accountId, [timeline]));
     } catch (e) {
-      _logger.e('Error refreshing account timeline: $e');
-      emit(AccountTimelineFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'refresh_account_timeline',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountTimelineFailure(message, event.accountId));
     }
   }
 
@@ -320,8 +342,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
           .toList();
       emit(AccountTagsLoaded(event.accountId, tags));
     } catch (e) {
-      _logger.e('Error loading account tags: $e');
-      emit(AccountTagsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_account_tags',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountTagsFailure(message, event.accountId));
     }
   }
 
@@ -346,8 +372,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
           .toList();
       emit(AccountTagsLoaded(event.accountId, tags));
     } catch (e) {
-      _logger.e('Error refreshing account tags: $e');
-      emit(AccountTagsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'refresh_account_tags',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountTagsFailure(message, event.accountId));
     }
   }
 
@@ -383,8 +413,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
         emit(TagAssigned(event.accountId, tagId));
       }
     } catch (e) {
-      _logger.e('Error assigning multiple tags to account: $e');
-      emit(AccountTagsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'assign_multiple_tags_to_account',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountTagsFailure(message, event.accountId));
     }
   }
 
@@ -401,8 +435,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
         emit(TagRemoved(event.accountId, tagId));
       }
     } catch (e) {
-      _logger.e('Error removing multiple tags from account: $e');
-      emit(AccountTagsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'remove_multiple_tags_from_account',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountTagsFailure(message, event.accountId));
     }
   }
 
@@ -427,8 +465,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
           .toList();
       emit(AccountTagsLoaded(event.accountId, tags));
     } catch (e) {
-      _logger.e('Error loading all tags for account: $e');
-      emit(AccountTagsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_all_tags_for_account',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountTagsFailure(message, event.accountId));
     }
   }
 
@@ -443,8 +485,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       );
       emit(AccountCustomFieldsLoaded(event.accountId, customFields));
     } catch (e) {
-      _logger.e('Error loading account custom fields: $e');
-      emit(AccountCustomFieldsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_account_custom_fields',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountCustomFieldsFailure(message, event.accountId));
     }
   }
 
@@ -461,8 +507,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       // Reload custom fields after creation
       add(LoadAccountCustomFields(event.accountId));
     } catch (e) {
-      _logger.e('Error creating account custom field: $e');
-      emit(AccountCustomFieldsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'create_account_custom_field',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountCustomFieldsFailure(message, event.accountId));
     }
   }
 
@@ -480,8 +530,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       // Reload custom fields after update
       add(LoadAccountCustomFields(event.accountId));
     } catch (e) {
-      _logger.e('Error updating account custom field: $e');
-      emit(AccountCustomFieldsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'update_account_custom_field',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountCustomFieldsFailure(message, event.accountId));
     }
   }
 
@@ -497,8 +551,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       // Reload custom fields after deletion
       add(LoadAccountCustomFields(event.accountId));
     } catch (e) {
-      _logger.e('Error deleting account custom field: $e');
-      emit(AccountCustomFieldsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'delete_account_custom_field',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountCustomFieldsFailure(message, event.accountId));
     }
   }
 
@@ -512,8 +570,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       final emails = accountEmails.map((email) => email.email).toList();
       emit(AccountEmailsLoaded(event.accountId, emails));
     } catch (e) {
-      _logger.e('Error loading account emails: $e');
-      emit(AccountEmailsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_account_emails',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountEmailsFailure(message, event.accountId));
     }
   }
 
@@ -528,8 +590,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       );
       emit(AccountBlockingStatesLoaded(event.accountId, blockingStates));
     } catch (e) {
-      _logger.e('Error loading account blocking states: $e');
-      emit(AccountBlockingStatesFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_account_blocking_states',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountBlockingStatesFailure(message, event.accountId));
     }
   }
 
@@ -564,8 +630,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
           .toList();
       emit(AccountInvoicePaymentsLoaded(event.accountId, payments));
     } catch (e) {
-      _logger.e('Error loading account invoice payments: $e');
-      emit(AccountInvoicePaymentsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_account_invoice_payments',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountInvoicePaymentsFailure(message, event.accountId));
     }
   }
 
@@ -578,8 +648,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       final auditLogs = await _getAccountAuditLogsUseCase(event.accountId);
       emit(AccountAuditLogsLoaded(event.accountId, auditLogs));
     } catch (e) {
-      _logger.e('Error loading account audit logs: $e');
-      emit(AccountAuditLogsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_account_audit_logs',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountAuditLogsFailure(message, event.accountId));
     }
   }
 
@@ -594,8 +668,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       );
       emit(AccountPaymentMethodsLoaded(event.accountId, paymentMethods));
     } catch (e) {
-      _logger.e('Error loading account payment methods: $e');
-      emit(AccountPaymentMethodsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_account_payment_methods',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountPaymentMethodsFailure(message, event.accountId));
     }
   }
 
@@ -603,23 +681,26 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
     LoadAccountPayments event,
     Emitter<AccountDetailState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountDetailBloc: Received LoadAccountPayments for accountId: ${event.accountId}',
     );
     try {
-      print('🔍 AccountDetailBloc: Emitting AccountPaymentsLoading');
+      _logger.d('🔍 AccountDetailBloc: Emitting AccountPaymentsLoading');
       emit(AccountPaymentsLoading(event.accountId));
-      print('🔍 AccountDetailBloc: Calling _getAccountPaymentsUseCase');
+      _logger.d('🔍 AccountDetailBloc: Calling _getAccountPaymentsUseCase');
       final payments = await _getAccountPaymentsUseCase(event.accountId);
-      print(
+      _logger.d(
         '🔍 AccountDetailBloc: Use case returned ${payments.length} payments',
       );
-      print('🔍 AccountDetailBloc: Emitting AccountPaymentsLoaded');
+      _logger.d('🔍 AccountDetailBloc: Emitting AccountPaymentsLoaded');
       emit(AccountPaymentsLoaded(event.accountId, payments));
     } catch (e) {
-      print('🔍 AccountDetailBloc: Error loading account payments: $e');
-      _logger.e('Error loading account payments: $e');
-      emit(AccountPaymentsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'load_account_payments',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountPaymentsFailure(message, event.accountId));
     }
   }
 
@@ -632,8 +713,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       final payments = await _getAccountPaymentsUseCase(event.accountId);
       emit(AccountPaymentsLoaded(event.accountId, payments));
     } catch (e) {
-      _logger.e('Error refreshing account payments: $e');
-      emit(AccountPaymentsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'refresh_account_payments',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountPaymentsFailure(message, event.accountId));
     }
   }
 
@@ -655,8 +740,12 @@ class AccountDetailBloc extends Bloc<AccountDetailEvent, AccountDetailState> {
       // Reload payments after creation
       add(LoadAccountPayments(event.accountId));
     } catch (e) {
-      _logger.e('Error creating account payment: $e');
-      emit(AccountPaymentsFailure(e.toString(), event.accountId));
+      final message = handleException(
+        e,
+        context: 'create_account_payment',
+        metadata: {'accountId': event.accountId},
+      );
+      emit(AccountPaymentsFailure(message, event.accountId));
     }
   }
 

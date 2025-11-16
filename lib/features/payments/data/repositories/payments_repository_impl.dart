@@ -324,4 +324,38 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
       // print('Background sync failed for account $accountId: $e');
     }
   }
+
+  @override
+  Future<Either<Failure, void>> deletePayment(String paymentId) async {
+    try {
+      _logger.d('PaymentsRepository: Deleting payment: $paymentId');
+
+      // Local-first: Delete from local cache first
+      await _localDataSource.deleteCachedPayment(paymentId);
+      _logger.d('PaymentsRepository: Payment deleted from local cache');
+
+      // If online, try to sync with remote
+      if (await _networkInfo.isConnected) {
+        try {
+          await _remoteDataSource.deletePayment(paymentId);
+          _logger.d('PaymentsRepository: Payment deleted on remote');
+        } catch (e) {
+          _logger.w(
+            'PaymentsRepository: Failed to delete payment on remote: $e',
+          );
+          // In local-first architecture, local deletion is the source of truth
+          // Don't fail the operation if remote deletion fails
+        }
+      } else {
+        _logger.d(
+          'PaymentsRepository: Offline - payment deleted locally, will sync when online',
+        );
+      }
+
+      return const Right(null);
+    } catch (e) {
+      _logger.e('PaymentsRepository: Error deleting payment: $e');
+      return Left(CacheFailure('Failed to delete payment: $e'));
+    }
+  }
 }

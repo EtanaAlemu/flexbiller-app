@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/usecases/get_account_payment_methods_usecase.dart';
 import '../../domain/usecases/set_default_payment_method_use_case.dart';
 import '../../domain/usecases/refresh_payment_methods_usecase.dart';
@@ -8,10 +10,12 @@ import 'states/account_payment_methods_states.dart';
 
 @injectable
 class AccountPaymentMethodsBloc
-    extends Bloc<AccountPaymentMethodsEvent, AccountPaymentMethodsState> {
+    extends Bloc<AccountPaymentMethodsEvent, AccountPaymentMethodsState>
+    with BlocErrorHandlerMixin {
   final GetAccountPaymentMethodsUseCase _getAccountPaymentMethodsUseCase;
   final SetDefaultPaymentMethodUseCase _setDefaultPaymentMethodUseCase;
   final RefreshPaymentMethodsUseCase _refreshPaymentMethodsUseCase;
+  final Logger _logger = Logger();
 
   AccountPaymentMethodsBloc({
     required GetAccountPaymentMethodsUseCase getAccountPaymentMethodsUseCase,
@@ -37,7 +41,7 @@ class AccountPaymentMethodsBloc
     LoadAccountPaymentMethods event,
     Emitter<AccountPaymentMethodsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsBloc: LoadAccountPaymentMethods called for accountId: ${event.accountId}',
     );
 
@@ -48,7 +52,7 @@ class AccountPaymentMethodsBloc
       final paymentMethods = await _getAccountPaymentMethodsUseCase(
         event.accountId,
       );
-      print(
+      _logger.d(
         '🔍 AccountPaymentMethodsBloc: LoadAccountPaymentMethods succeeded with ${paymentMethods.length} payment methods from local cache',
       );
       emit(
@@ -61,13 +65,15 @@ class AccountPaymentMethodsBloc
       // The repository will handle background sync and emit updates via stream
       // The UI will reactively update when new data arrives
     } catch (e) {
-      print(
-        '🔍 AccountPaymentMethodsBloc: LoadAccountPaymentMethods exception: $e',
+      final message = handleException(
+        e,
+        context: 'load_account_payment_methods',
+        metadata: {'accountId': event.accountId},
       );
       emit(
         AccountPaymentMethodsFailure(
           accountId: event.accountId,
-          message: 'An unexpected error occurred: $e',
+          message: message,
         ),
       );
     }
@@ -77,7 +83,7 @@ class AccountPaymentMethodsBloc
     RefreshAccountPaymentMethods event,
     Emitter<AccountPaymentMethodsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsBloc: RefreshAccountPaymentMethods called for accountId: ${event.accountId}',
     );
 
@@ -99,7 +105,7 @@ class AccountPaymentMethodsBloc
       final paymentMethods = await _getAccountPaymentMethodsUseCase(
         event.accountId,
       );
-      print(
+      _logger.d(
         '🔍 AccountPaymentMethodsBloc: RefreshAccountPaymentMethods succeeded with ${paymentMethods.length} payment methods from local cache',
       );
       emit(
@@ -112,13 +118,15 @@ class AccountPaymentMethodsBloc
       // The repository will handle background sync and emit updates via stream
       // The UI will reactively update when fresh data arrives
     } catch (e) {
-      print(
-        '🔍 AccountPaymentMethodsBloc: RefreshAccountPaymentMethods exception: $e',
+      final message = handleException(
+        e,
+        context: 'refresh_account_payment_methods',
+        metadata: {'accountId': event.accountId},
       );
       emit(
         AccountPaymentMethodsFailure(
           accountId: event.accountId,
-          message: 'An unexpected error occurred: $e',
+          message: message,
         ),
       );
     }
@@ -128,7 +136,7 @@ class AccountPaymentMethodsBloc
     SetDefaultPaymentMethod event,
     Emitter<AccountPaymentMethodsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsBloc: SetDefaultPaymentMethod called for accountId: ${event.accountId}, paymentMethodId: ${event.paymentMethodId}',
     );
 
@@ -146,7 +154,9 @@ class AccountPaymentMethodsBloc
         event.payAllUnpaidInvoices,
       );
 
-      print('🔍 AccountPaymentMethodsBloc: SetDefaultPaymentMethod succeeded');
+      _logger.i(
+        '🔍 AccountPaymentMethodsBloc: SetDefaultPaymentMethod succeeded',
+      );
       emit(
         DefaultPaymentMethodSet(
           accountId: event.accountId,
@@ -157,14 +167,19 @@ class AccountPaymentMethodsBloc
       // Reload payment methods to get updated list
       add(LoadAccountPaymentMethods(event.accountId));
     } catch (e) {
-      print(
-        '🔍 AccountPaymentMethodsBloc: SetDefaultPaymentMethod exception: $e',
+      final message = handleException(
+        e,
+        context: 'set_default_payment_method',
+        metadata: {
+          'accountId': event.accountId,
+          'paymentMethodId': event.paymentMethodId,
+        },
       );
       emit(
         DefaultPaymentMethodSetFailure(
           accountId: event.accountId,
           paymentMethodId: event.paymentMethodId,
-          message: 'An unexpected error occurred: $e',
+          message: message,
         ),
       );
     }
@@ -174,7 +189,7 @@ class AccountPaymentMethodsBloc
     CreatePaymentMethod event,
     Emitter<AccountPaymentMethodsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsBloc: CreatePaymentMethod called for accountId: ${event.accountId}',
     );
 
@@ -185,11 +200,15 @@ class AccountPaymentMethodsBloc
       // For now, we'll just reload the payment methods
       add(LoadAccountPaymentMethods(event.accountId));
     } catch (e) {
-      print('🔍 AccountPaymentMethodsBloc: CreatePaymentMethod exception: $e');
+      final message = handleException(
+        e,
+        context: 'create_payment_method',
+        metadata: {'accountId': event.accountId},
+      );
       emit(
         PaymentMethodCreationFailure(
           accountId: event.accountId,
-          message: 'An unexpected error occurred: $e',
+          message: message,
         ),
       );
     }
@@ -199,7 +218,7 @@ class AccountPaymentMethodsBloc
     UpdatePaymentMethod event,
     Emitter<AccountPaymentMethodsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsBloc: UpdatePaymentMethod called for accountId: ${event.accountId}, paymentMethodId: ${event.paymentMethodId}',
     );
 
@@ -215,12 +234,19 @@ class AccountPaymentMethodsBloc
       // For now, we'll just reload the payment methods
       add(LoadAccountPaymentMethods(event.accountId));
     } catch (e) {
-      print('🔍 AccountPaymentMethodsBloc: UpdatePaymentMethod exception: $e');
+      final message = handleException(
+        e,
+        context: 'update_payment_method',
+        metadata: {
+          'accountId': event.accountId,
+          'paymentMethodId': event.paymentMethodId,
+        },
+      );
       emit(
         PaymentMethodUpdateFailure(
           accountId: event.accountId,
           paymentMethodId: event.paymentMethodId,
-          message: 'An unexpected error occurred: $e',
+          message: message,
         ),
       );
     }
@@ -230,7 +256,7 @@ class AccountPaymentMethodsBloc
     DeletePaymentMethod event,
     Emitter<AccountPaymentMethodsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsBloc: DeletePaymentMethod called for accountId: ${event.accountId}, paymentMethodId: ${event.paymentMethodId}',
     );
 
@@ -246,12 +272,19 @@ class AccountPaymentMethodsBloc
       // For now, we'll just reload the payment methods
       add(LoadAccountPaymentMethods(event.accountId));
     } catch (e) {
-      print('🔍 AccountPaymentMethodsBloc: DeletePaymentMethod exception: $e');
+      final message = handleException(
+        e,
+        context: 'delete_payment_method',
+        metadata: {
+          'accountId': event.accountId,
+          'paymentMethodId': event.paymentMethodId,
+        },
+      );
       emit(
         PaymentMethodDeletionFailure(
           accountId: event.accountId,
           paymentMethodId: event.paymentMethodId,
-          message: 'An unexpected error occurred: $e',
+          message: message,
         ),
       );
     }
@@ -261,7 +294,7 @@ class AccountPaymentMethodsBloc
     DeactivatePaymentMethod event,
     Emitter<AccountPaymentMethodsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsBloc: DeactivatePaymentMethod called for accountId: ${event.accountId}, paymentMethodId: ${event.paymentMethodId}',
     );
 
@@ -277,14 +310,19 @@ class AccountPaymentMethodsBloc
       // For now, we'll just reload the payment methods
       add(LoadAccountPaymentMethods(event.accountId));
     } catch (e) {
-      print(
-        '🔍 AccountPaymentMethodsBloc: DeactivatePaymentMethod exception: $e',
+      final message = handleException(
+        e,
+        context: 'deactivate_payment_method',
+        metadata: {
+          'accountId': event.accountId,
+          'paymentMethodId': event.paymentMethodId,
+        },
       );
       emit(
         PaymentMethodDeactivationFailure(
           accountId: event.accountId,
           paymentMethodId: event.paymentMethodId,
-          message: 'An unexpected error occurred: $e',
+          message: message,
         ),
       );
     }
@@ -294,7 +332,7 @@ class AccountPaymentMethodsBloc
     ReactivatePaymentMethod event,
     Emitter<AccountPaymentMethodsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsBloc: ReactivatePaymentMethod called for accountId: ${event.accountId}, paymentMethodId: ${event.paymentMethodId}',
     );
 
@@ -310,14 +348,19 @@ class AccountPaymentMethodsBloc
       // For now, we'll just reload the payment methods
       add(LoadAccountPaymentMethods(event.accountId));
     } catch (e) {
-      print(
-        '🔍 AccountPaymentMethodsBloc: ReactivatePaymentMethod exception: $e',
+      final message = handleException(
+        e,
+        context: 'reactivate_payment_method',
+        metadata: {
+          'accountId': event.accountId,
+          'paymentMethodId': event.paymentMethodId,
+        },
       );
       emit(
         PaymentMethodReactivationFailure(
           accountId: event.accountId,
           paymentMethodId: event.paymentMethodId,
-          message: 'An unexpected error occurred: $e',
+          message: message,
         ),
       );
     }
@@ -327,7 +370,7 @@ class AccountPaymentMethodsBloc
     SyncPaymentMethods event,
     Emitter<AccountPaymentMethodsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountPaymentMethodsBloc: SyncPaymentMethods called for accountId: ${event.accountId}',
     );
 
@@ -337,7 +380,7 @@ class AccountPaymentMethodsBloc
       final paymentMethods = await _refreshPaymentMethodsUseCase(
         event.accountId,
       );
-      print(
+      _logger.i(
         '🔍 AccountPaymentMethodsBloc: SyncPaymentMethods succeeded with ${paymentMethods.length} payment methods',
       );
       emit(
@@ -347,12 +390,13 @@ class AccountPaymentMethodsBloc
         ),
       );
     } catch (e) {
-      print('🔍 AccountPaymentMethodsBloc: SyncPaymentMethods exception: $e');
+      final message = handleException(
+        e,
+        context: 'sync_payment_methods',
+        metadata: {'accountId': event.accountId},
+      );
       emit(
-        PaymentMethodsSyncFailure(
-          accountId: event.accountId,
-          message: 'An unexpected error occurred: $e',
-        ),
+        PaymentMethodsSyncFailure(accountId: event.accountId, message: message),
       );
     }
   }

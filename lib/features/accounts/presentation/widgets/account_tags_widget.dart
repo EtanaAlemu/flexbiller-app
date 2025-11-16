@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../../domain/entities/account_tag.dart';
 import '../bloc/account_tags_bloc.dart';
 import '../bloc/events/account_tags_events.dart';
@@ -16,10 +17,12 @@ class AccountTagsWidget extends StatefulWidget {
 }
 
 class _AccountTagsWidgetState extends State<AccountTagsWidget> {
+  final Logger _logger = Logger();
+
   @override
   void initState() {
     super.initState();
-    print('🔍 AccountTagsWidget: initState - triggering LoadAccountTags');
+    _logger.d('🔍 AccountTagsWidget: initState - triggering LoadAccountTags');
     context.read<AccountTagsBloc>().add(LoadAccountTags(widget.accountId));
   }
 
@@ -27,8 +30,8 @@ class _AccountTagsWidgetState extends State<AccountTagsWidget> {
   Widget build(BuildContext context) {
     return BlocListener<AccountTagsBloc, AccountTagsState>(
       listener: (context, state) {
-        print('🔍 AccountTagsWidget: Received state: ${state.runtimeType}');
-        print('🔍 AccountTagsWidget: State details: $state');
+        _logger.d('🔍 AccountTagsWidget: Received state: ${state.runtimeType}');
+        _logger.d('🔍 AccountTagsWidget: State details: $state');
 
         if (state is TagAssigned) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -102,10 +105,10 @@ class _AccountTagsWidgetState extends State<AccountTagsWidget> {
       },
       child: BlocBuilder<AccountTagsBloc, AccountTagsState>(
         builder: (context, state) {
-          print(
+          _logger.d(
             '🔍 AccountTagsWidget: Building with state: ${state.runtimeType}',
           );
-          print('🔍 AccountTagsWidget: State details in builder: $state');
+          _logger.d('🔍 AccountTagsWidget: State details in builder: $state');
 
           if (state is AccountTagsLoading) {
             return const Center(
@@ -277,36 +280,35 @@ class _AccountTagsWidgetState extends State<AccountTagsWidget> {
     );
   }
 
-  void _showAddTagDialog(BuildContext context) {
+  Future<void> _showAddTagDialog(BuildContext context) async {
     // Load all available tags first
     context.read<AccountTagsBloc>().add(
       LoadAllTagsForAccount(widget.accountId),
     );
 
-    showDialog(
+    final selectedTagIds = await showDialog(
       context: context,
       builder: (context) => AddTagDialog(accountId: widget.accountId),
-    ).then((selectedTagIds) {
-      if (selectedTagIds != null && selectedTagIds is List<String>) {
-        if (selectedTagIds.length == 1) {
-          // Single tag assignment
-          context.read<AccountTagsBloc>().add(
-            AssignTagToAccount(
-              accountId: widget.accountId,
-              tagId: selectedTagIds.first,
-            ),
-          );
-        } else {
-          // Multiple tag assignment
-          context.read<AccountTagsBloc>().add(
-            AssignMultipleTagsToAccount(
-              accountId: widget.accountId,
-              tagIds: selectedTagIds,
-            ),
-          );
-        }
+    );
+    if (selectedTagIds != null && selectedTagIds is List<String>) {
+      if (selectedTagIds.length == 1) {
+        // Single tag assignment
+        context.read<AccountTagsBloc>().add(
+          AssignTagToAccount(
+            accountId: widget.accountId,
+            tagId: selectedTagIds.first,
+          ),
+        );
+      } else {
+        // Multiple tag assignment
+        context.read<AccountTagsBloc>().add(
+          AssignMultipleTagsToAccount(
+            accountId: widget.accountId,
+            tagIds: selectedTagIds,
+          ),
+        );
       }
-    });
+    }
   }
 
   void _removeTag(BuildContext context, AccountTagAssignment tag) {

@@ -4,6 +4,8 @@ import '../../../invoices/presentation/bloc/invoice_multiselect_bloc.dart';
 import '../../../invoices/presentation/bloc/events/invoice_multiselect_events.dart';
 import '../../../invoices/presentation/widgets/export_invoices_dialog.dart';
 import '../../../invoices/domain/entities/invoice.dart';
+import '../../../../core/widgets/base_action_menu.dart';
+import '../../../../core/widgets/sort_options_bottom_sheet.dart';
 
 class InvoicesActionMenu extends StatelessWidget {
   final GlobalKey? invoicesViewKey;
@@ -12,125 +14,25 @@ class InvoicesActionMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert_rounded),
-      tooltip: 'More options',
-      onSelected: (value) => _handleMenuAction(context, value),
-      itemBuilder: (context) => [
-        // Filter section
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'FILTER & SORT',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'search',
-          child: Row(
-            children: [
-              Icon(
-                Icons.search_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Search Invoices'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'filter',
-          child: Row(
-            children: [
-              Icon(
-                Icons.filter_list_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Filter by Status'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'sort',
-          child: Row(
-            children: [
-              Icon(
-                Icons.sort_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Sort Options'),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        // Actions section
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'ACTIONS',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'export',
-          child: Row(
-            children: [
-              Icon(
-                Icons.download_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Export Invoices'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'refresh',
-          child: Row(
-            children: [
-              Icon(
-                Icons.refresh_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Refresh Data'),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        // Analytics section
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'ANALYTICS',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'statistics',
-          child: Row(
-            children: [
-              Icon(
-                Icons.analytics_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Invoice Statistics'),
-            ],
-          ),
-        ),
-      ],
+    final menuItems = [
+      ...BaseActionMenu.buildFilterSortSection(
+        searchLabel: 'Search Invoices',
+        filterLabel: 'Filter by Status',
+      ),
+      ...BaseActionMenu.buildActionsSection(exportLabel: 'Export Invoices'),
+      const ActionMenuItem.divider(),
+      const ActionMenuItem.sectionHeader('ANALYTICS'),
+      const ActionMenuItem(
+        value: 'statistics',
+        label: 'Invoice Statistics',
+        icon: Icons.analytics_rounded,
+      ),
+    ];
+
+    return BaseActionMenu(
+      menuItems: menuItems,
+      onActionSelected: (value) => _handleMenuAction(context, value),
+      icon: Icons.more_vert_rounded,
     );
   }
 
@@ -222,71 +124,47 @@ class InvoicesActionMenu extends StatelessWidget {
   }
 
   void _showSortOptions(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sort Options'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Date (Newest First)'),
-              onTap: () {
-                Navigator.pop(context);
-                if (invoicesViewKey?.currentState != null) {
-                  (invoicesViewKey!.currentState as dynamic).sortInvoices(
-                    'date_desc',
-                  );
-                }
-              },
-            ),
-            ListTile(
-              title: const Text('Date (Oldest First)'),
-              onTap: () {
-                Navigator.pop(context);
-                if (invoicesViewKey?.currentState != null) {
-                  (invoicesViewKey!.currentState as dynamic).sortInvoices(
-                    'date_asc',
-                  );
-                }
-              },
-            ),
-            ListTile(
-              title: const Text('Amount (Highest First)'),
-              onTap: () {
-                Navigator.pop(context);
-                if (invoicesViewKey?.currentState != null) {
-                  (invoicesViewKey!.currentState as dynamic).sortInvoices(
-                    'amount_desc',
-                  );
-                }
-              },
-            ),
-            ListTile(
-              title: const Text('Amount (Lowest First)'),
-              onTap: () {
-                Navigator.pop(context);
-                if (invoicesViewKey?.currentState != null) {
-                  (invoicesViewKey!.currentState as dynamic).sortInvoices(
-                    'amount_asc',
-                  );
-                }
-              },
-            ),
-            ListTile(
-              title: const Text('Invoice Number'),
-              onTap: () {
-                Navigator.pop(context);
-                if (invoicesViewKey?.currentState != null) {
-                  (invoicesViewKey!.currentState as dynamic).sortInvoices(
-                    'number',
-                  );
-                }
-              },
-            ),
-          ],
+    SortOptionsBottomSheet.show(
+      context,
+      title: 'Sort Invoices',
+      options: const [
+        SortOption(
+          title: 'Date (Newest First)',
+          sortBy: 'date',
+          sortOrder: 'desc',
+          icon: Icons.calendar_today,
         ),
-      ),
+        SortOption(
+          title: 'Date (Oldest First)',
+          sortBy: 'date',
+          sortOrder: 'asc',
+          icon: Icons.calendar_today,
+        ),
+        SortOption(
+          title: 'Amount (Highest First)',
+          sortBy: 'amount',
+          sortOrder: 'desc',
+          icon: Icons.attach_money,
+        ),
+        SortOption(
+          title: 'Amount (Lowest First)',
+          sortBy: 'amount',
+          sortOrder: 'asc',
+          icon: Icons.attach_money,
+        ),
+        SortOption(
+          title: 'Invoice Number',
+          sortBy: 'number',
+          sortOrder: 'asc',
+          icon: Icons.numbers,
+        ),
+      ],
+      onSortSelected: (sortBy, sortOrder) {
+        if (invoicesViewKey?.currentState != null) {
+          final sortType = '${sortBy}_$sortOrder';
+          (invoicesViewKey!.currentState as dynamic).sortInvoices(sortType);
+        }
+      },
     );
   }
 
@@ -315,7 +193,7 @@ class InvoicesActionMenu extends StatelessWidget {
     }
   }
 
-  void _showExportDialog(BuildContext context) {
+  Future<void> _showExportDialog(BuildContext context) async {
     // Get all invoices from the InvoicesView
     final invoicesViewState = invoicesViewKey?.currentState;
     if (invoicesViewState != null) {
@@ -324,18 +202,17 @@ class InvoicesActionMenu extends StatelessWidget {
           (invoicesViewState as dynamic).allInvoices as List<Invoice>;
 
       // Show export dialog for better user experience
-      showDialog(
+      final result = await showDialog(
         context: context,
         builder: (context) => ExportInvoicesDialog(invoices: allInvoices),
-      ).then((result) async {
-        if (result != null) {
-          final selectedFormat = result['format'] as String;
-          // Dispatch export event to BLoC
-          context.read<InvoiceMultiSelectBloc>().add(
-            BulkExportInvoices(selectedFormat),
-          );
-        }
-      });
+      );
+      if (result != null) {
+        final selectedFormat = result['format'] as String;
+        // Dispatch export event to BLoC
+        context.read<InvoiceMultiSelectBloc>().add(
+          BulkExportInvoices(selectedFormat),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to access invoices data')),

@@ -537,7 +537,14 @@ class AccountInvoicePaymentsRepositoryImpl
 
   /// Dispose resources
   void dispose() {
-    _accountInvoicePaymentsController.close();
-    _logger.d('AccountInvoicePaymentsRepositoryImpl disposed');
+    _logger.d(
+      '🛑 [Account Invoice Payments Repository] Disposing resources...',
+    );
+    if (!_accountInvoicePaymentsController.isClosed) {
+      _accountInvoicePaymentsController.close();
+    }
+    _logger.i(
+      '✅ [Account Invoice Payments Repository] StreamController closed',
+    );
   }
 }

@@ -31,4 +31,7 @@ abstract class PaymentsRepository {
   Future<Either<Failure, List<Payment>>> getCachedPaymentsByAccountId(
     String accountId,
   );
+
+  /// Delete a payment
+  Future<Either<Failure, void>> deletePayment(String paymentId);
 }

@@ -1063,6 +1063,7 @@ class _AccountsListWidgetState extends State<AccountsListWidget> {
 
                 final account = accounts[index];
                 return Padding(
+                  key: ValueKey('account_${account.accountId}'),
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: SelectableAccountCardWidget(
                     account: account,

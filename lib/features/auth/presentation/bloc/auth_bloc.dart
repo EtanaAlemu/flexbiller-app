@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
@@ -8,21 +9,23 @@ import '../../domain/usecases/forgot_password_usecase.dart';
 import '../../domain/usecases/change_password_usecase.dart';
 import '../../domain/usecases/reset_password_usecase.dart';
 import '../../domain/usecases/update_user_usecase.dart';
+import '../../domain/usecases/refresh_token_usecase.dart';
+import '../../domain/usecases/get_current_user_usecase.dart';
 import '../../../../core/errors/exceptions.dart';
-import '../../../../core/utils/error_handler.dart';
-import 'package:dio/dio.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 
 @injectable
-class AuthBloc extends Bloc<AuthEvent, AuthState> {
+class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorHandlerMixin {
   final LoginUseCase _loginUseCase;
   final LogoutUseCase _logoutUseCase;
   final ForgotPasswordUseCase _forgotPasswordUseCase;
   final ChangePasswordUseCase _changePasswordUseCase;
   final ResetPasswordUseCase _resetPasswordUseCase;
   final UpdateUserUseCase _updateUserUseCase;
+  final RefreshTokenUseCase _refreshTokenUseCase;
+  final GetCurrentUserUseCase _getCurrentUserUseCase;
   final Logger _logger = Logger();
 
   AuthBloc({
@@ -32,12 +35,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required ChangePasswordUseCase changePasswordUseCase,
     required ResetPasswordUseCase resetPasswordUseCase,
     required UpdateUserUseCase updateUserUseCase,
+    required RefreshTokenUseCase refreshTokenUseCase,
+    required GetCurrentUserUseCase getCurrentUserUseCase,
   }) : _loginUseCase = loginUseCase,
        _logoutUseCase = logoutUseCase,
        _forgotPasswordUseCase = forgotPasswordUseCase,
        _changePasswordUseCase = changePasswordUseCase,
        _resetPasswordUseCase = resetPasswordUseCase,
        _updateUserUseCase = updateUserUseCase,
+       _refreshTokenUseCase = refreshTokenUseCase,
+       _getCurrentUserUseCase = getCurrentUserUseCase,
        super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<LogoutRequested>(_onLogoutRequested);
@@ -85,35 +92,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           ),
         );
       } else {
-        final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-          e,
-          context: 'login',
-        );
+        final userFriendlyMessage = handleException(e, context: 'login');
         emit(LoginFailure('Authentication Failed', userFriendlyMessage));
       }
-    } on DioException catch (e) {
-      final userFriendlyMessage = ErrorHandler.convertDioExceptionToUserMessage(
-        e,
-        context: 'login',
-      );
-      emit(LoginFailure('Connection Error', userFriendlyMessage));
-    } on ServerException catch (e) {
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-        e.message,
-        context: 'login',
-      );
-      emit(LoginFailure('Server Error', userFriendlyMessage));
-    } on NetworkException catch (e) {
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-        e.message,
-        context: 'login',
-      );
-      emit(LoginFailure('Network Error', userFriendlyMessage));
     } catch (e) {
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-        e,
-        context: 'login',
-      );
+      final userFriendlyMessage = handleException(e, context: 'login');
       emit(LoginFailure('Error', userFriendlyMessage));
     }
   }
@@ -132,7 +115,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       _logger.i('✅ Logout completed successfully');
       emit(AuthUnauthenticated());
     } catch (e) {
-      _logger.e('❌ Error during logout: $e');
+      handleException(e, context: 'logout');
       // Even if logout fails, we should still emit unauthenticated state
       emit(AuthUnauthenticated());
     }
@@ -144,16 +127,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      // TODO: Implement check auth status use case
-      // final user = await _getCurrentUserUseCase();
-      // if (user != null) {
-      //   emit(AuthSuccess(user));
-      // } else {
-      //   emit(AuthUnauthenticated());
-      // }
-      emit(AuthUnauthenticated());
+      _logger.d('🔍 Checking authentication status...');
+      final user = await _getCurrentUserUseCase();
+      if (user != null) {
+        _logger.i('✅ User is authenticated: ${user.email}');
+        emit(AuthSuccess(user));
+      } else {
+        _logger.d('ℹ️ No authenticated user found');
+        emit(AuthUnauthenticated());
+      }
     } catch (e) {
-      emit(AuthFailure(e.toString()));
+      final message = handleException(e, context: 'check_auth_status');
+      emit(AuthFailure(message));
     }
   }
 
@@ -163,11 +148,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      // TODO: Implement refresh token use case
-      // await _refreshTokenUseCase();
-      emit(AuthUnauthenticated());
+      _logger.i('🔄 Refreshing authentication token...');
+
+      // Call refresh token use case
+      await _refreshTokenUseCase();
+
+      _logger.i('✅ Token refreshed successfully');
+
+      // Get the updated user after token refresh
+      // The repository should have updated the user data with the new token
+      final user = await _getCurrentUserUseCase();
+
+      if (user != null) {
+        _logger.i('✅ User authenticated after token refresh: ${user.email}');
+        emit(AuthSuccess(user));
+      } else {
+        _logger.w('⚠️ No user found after token refresh');
+        emit(AuthUnauthenticated());
+      }
     } catch (e) {
-      emit(AuthFailure(e.toString()));
+      final message = handleException(e, context: 'token_refresh');
+      emit(AuthFailure(message));
     }
   }
 
@@ -225,7 +226,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } catch (e) {
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+      final userFriendlyMessage = handleException(
         e,
         context: 'forgot_password',
       );
@@ -258,41 +259,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
       _logger.i('🎉 ChangePasswordSuccess State Emitted');
-    } on AuthException catch (e) {
-      _logger.e('❌ AuthException during password change: ${e.message}');
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-        e,
-        context: 'change_password',
-      );
-      emit(ChangePasswordFailure(userFriendlyMessage));
-      _logger.i('💥 ChangePasswordFailure State Emitted (AuthException)');
-    } on ValidationException catch (e) {
-      _logger.e('❌ ValidationException during password change: ${e.message}');
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-        e,
-        context: 'change_password',
-      );
-      emit(ChangePasswordFailure(userFriendlyMessage));
-      _logger.i('💥 ChangePasswordFailure State Emitted (ValidationException)');
-    } on NetworkException catch (e) {
-      _logger.e('❌ NetworkException during password change: ${e.message}');
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-        e,
-        context: 'change_password',
-      );
-      emit(ChangePasswordFailure(userFriendlyMessage));
-      _logger.i('💥 ChangePasswordFailure State Emitted (NetworkException)');
-    } on ServerException catch (e) {
-      _logger.e('❌ ServerException during password change: ${e.message}');
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-        e,
-        context: 'change_password',
-      );
-      emit(ChangePasswordFailure(userFriendlyMessage));
-      _logger.i('💥 ChangePasswordFailure State Emitted (ServerException)');
     } catch (e) {
-      _logger.e('❌ Unexpected error during password change: $e');
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
+      final userFriendlyMessage = handleException(
         e,
         context: 'change_password',
       );
@@ -314,10 +282,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } catch (e) {
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-        e,
-        context: 'reset_password',
-      );
+      final userFriendlyMessage = handleException(e, context: 'reset_password');
       emit(ResetPasswordFailure(userFriendlyMessage));
     }
   }
@@ -336,10 +301,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } catch (e) {
-      final userFriendlyMessage = ErrorHandler.getUserFriendlyMessage(
-        e,
-        context: 'update_user',
-      );
+      final userFriendlyMessage = handleException(e, context: 'update_user');
       emit(UpdateUserFailure(userFriendlyMessage));
     }
   }

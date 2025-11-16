@@ -109,17 +109,16 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void _showEditProfileDialog() {
+  Future<void> _showEditProfileDialog() async {
     if (_currentUser != null) {
-      showDialog(
+      final result = await showDialog(
         context: context,
         builder: (context) => EditProfileDialog(user: _currentUser!),
-      ).then((result) {
-        if (result == true) {
-          // Profile was updated successfully, reload the data
-          _loadUserData();
-        }
-      });
+      );
+      if (result == true) {
+        // Profile was updated successfully, reload the data
+        _loadUserData();
+      }
     }
   }
 

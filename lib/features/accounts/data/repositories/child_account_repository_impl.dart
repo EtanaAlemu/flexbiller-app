@@ -152,7 +152,13 @@ class ChildAccountRepositoryImpl implements ChildAccountRepository {
 
   // Clean up stream controllers
   void dispose() {
-    _childAccountsStreamController.close();
-    _childAccountStreamController.close();
+    _logger.d('🛑 [Child Account Repository] Disposing resources...');
+    if (!_childAccountsStreamController.isClosed) {
+      _childAccountsStreamController.close();
+    }
+    if (!_childAccountStreamController.isClosed) {
+      _childAccountStreamController.close();
+    }
+    _logger.i('✅ [Child Account Repository] All StreamControllers closed');
   }
 }

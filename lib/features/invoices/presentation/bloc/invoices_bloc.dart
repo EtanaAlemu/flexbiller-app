@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/invoice.dart';
 import '../../domain/usecases/get_invoices.dart';
 import '../../domain/usecases/search_invoices.dart';
@@ -11,7 +12,8 @@ part 'events/invoices_event.dart';
 part 'states/invoices_state.dart';
 
 @injectable
-class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState> {
+class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState>
+    with BlocErrorHandlerMixin {
   final GetInvoices _getInvoices;
   final SearchInvoices _searchInvoices;
   final Logger _logger;
@@ -43,24 +45,23 @@ class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState> {
       final result = await _getInvoices();
       _logger.d('InvoicesBloc: Received result from _getInvoices');
 
-      result.fold(
-        (failure) {
-          _logger.e(
-            'InvoicesBloc: GetInvoices failed with error: ${failure.message}',
-          );
-          emit(InvoicesError(failure.message));
-        },
-        (invoices) {
-          _logger.d(
-            'InvoicesBloc: GetInvoices successful, received ${invoices.length} invoices',
-          );
-          emit(InvoicesLoaded(invoices));
+      final invoices = handleEitherResult(
+        result,
+        context: 'get_invoices',
+        onError: (message) {
+          emit(InvoicesError(message));
         },
       );
-    } catch (e, stackTrace) {
-      _logger.e('InvoicesBloc: Unexpected error in _onGetInvoices: $e');
-      _logger.e('InvoicesBloc: Stack trace: $stackTrace');
-      emit(InvoicesError('Unexpected error occurred: $e'));
+
+      if (invoices != null) {
+        _logger.d(
+          'InvoicesBloc: GetInvoices successful, received ${invoices.length} invoices',
+        );
+        emit(InvoicesLoaded(invoices));
+      }
+    } catch (e) {
+      final message = handleException(e, context: 'get_invoices');
+      emit(InvoicesError(message));
     }
   }
 
@@ -86,24 +87,23 @@ class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState> {
       final result = await _getInvoices();
       _logger.d('InvoicesBloc: Received result from _getInvoices for refresh');
 
-      result.fold(
-        (failure) {
-          _logger.e(
-            'InvoicesBloc: RefreshInvoices failed with error: ${failure.message}',
-          );
-          emit(InvoicesError(failure.message));
-        },
-        (invoices) {
-          _logger.d(
-            'InvoicesBloc: RefreshInvoices successful, received ${invoices.length} invoices',
-          );
-          emit(InvoicesLoaded(invoices));
+      final invoices = handleEitherResult(
+        result,
+        context: 'refresh_invoices',
+        onError: (message) {
+          emit(InvoicesError(message));
         },
       );
-    } catch (e, stackTrace) {
-      _logger.e('InvoicesBloc: Unexpected error in _onRefreshInvoices: $e');
-      _logger.e('InvoicesBloc: Stack trace: $stackTrace');
-      emit(InvoicesError('Unexpected error occurred: $e'));
+
+      if (invoices != null) {
+        _logger.d(
+          'InvoicesBloc: RefreshInvoices successful, received ${invoices.length} invoices',
+        );
+        emit(InvoicesLoaded(invoices));
+      }
+    } catch (e) {
+      final message = handleException(e, context: 'refresh_invoices');
+      emit(InvoicesError(message));
     }
   }
 
@@ -138,10 +138,13 @@ class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState> {
         );
         emit(InvoicesLoaded(invoices));
       }
-    } catch (e, stackTrace) {
-      _logger.e('InvoicesBloc: Unexpected error in _onSearchInvoices: $e');
-      _logger.e('InvoicesBloc: Stack trace: $stackTrace');
-      emit(InvoicesError('Search failed: $e'));
+    } catch (e) {
+      final message = handleException(
+        e,
+        context: 'search_invoices',
+        metadata: {'searchKey': event.searchKey},
+      );
+      emit(InvoicesError(message));
     }
   }
 }

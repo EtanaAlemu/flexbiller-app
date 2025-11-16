@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/accounts_query_params.dart';
 import '../../domain/repositories/accounts_repository.dart';
 import '../../domain/usecases/get_accounts_usecase.dart';
@@ -11,7 +12,8 @@ import '../bloc/states/accounts_list_states.dart';
 
 /// BLoC for handling account listing, searching, and filtering operations
 @injectable
-class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
+class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState>
+    with BlocErrorHandlerMixin {
   final GetAccountsUseCase _getAccountsUseCase;
   final SearchAccountsUseCase _searchAccountsUseCase;
   final AccountsRepository _accountsRepository;
@@ -123,8 +125,12 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
 
       _logger.d('Loaded ${accounts.length} accounts');
     } catch (e) {
-      _logger.e('Error loading accounts: $e');
-      emit(AccountsListFailure(e.toString()));
+      final message = handleException(
+        e,
+        context: 'load_accounts',
+        metadata: {'params': event.params.toString()},
+      );
+      emit(AccountsListFailure(message));
     }
   }
 
@@ -137,8 +143,8 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
       final accounts = await _getAccountsUseCase(const AccountsQueryParams());
       emit(AllAccountsLoaded(accounts: accounts, totalCount: accounts.length));
     } catch (e) {
-      _logger.e('Error getting all accounts: $e');
-      emit(AccountsListFailure(e.toString()));
+      final message = handleException(e, context: 'get_all_accounts');
+      emit(AccountsListFailure(message));
     }
   }
 
@@ -151,8 +157,8 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
       final accounts = await _getAccountsUseCase(const AccountsQueryParams());
       emit(AllAccountsLoaded(accounts: accounts, totalCount: accounts.length));
     } catch (e) {
-      _logger.e('Error refreshing all accounts: $e');
-      emit(AccountsListFailure(e.toString()));
+      final message = handleException(e, context: 'refresh_all_accounts');
+      emit(AccountsListFailure(message));
     }
   }
 
@@ -179,8 +185,12 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
         'Found ${accounts.length} accounts for search: ${event.searchKey}',
       );
     } catch (e) {
-      _logger.e('Error searching accounts: $e');
-      emit(AccountsListFailure(e.toString()));
+      final message = handleException(
+        e,
+        context: 'search_accounts',
+        metadata: {'searchKey': event.searchKey},
+      );
+      emit(AccountsListFailure(message));
     }
   }
 
@@ -205,8 +215,8 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
 
       _logger.d('Refreshed ${accounts.length} accounts');
     } catch (e) {
-      _logger.e('Error refreshing accounts: $e');
-      emit(AccountsListFailure(e.toString()));
+      final message = handleException(e, context: 'refresh_accounts');
+      emit(AccountsListFailure(message));
     }
   }
 
@@ -239,8 +249,8 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
         _logger.d('Loaded ${moreAccounts.length} more accounts');
       }
     } catch (e) {
-      _logger.e('Error loading more accounts: $e');
-      emit(AccountsListFailure(e.toString()));
+      final message = handleException(e, context: 'load_more_accounts');
+      emit(AccountsListFailure(message));
     }
   }
 
@@ -269,17 +279,18 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
         );
       }
     } catch (e) {
-      _logger.e('Error filtering accounts by company: $e');
+      final message = handleException(
+        e,
+        context: 'filter_accounts_by_company',
+        metadata: {'company': event.company},
+      );
       final currentState = state;
       if (currentState is AccountsFiltered) {
         emit(
-          AccountsListFailure(
-            e.toString(),
-            previousAccounts: currentState.accounts,
-          ),
+          AccountsListFailure(message, previousAccounts: currentState.accounts),
         );
       } else {
-        emit(AccountsListFailure(e.toString()));
+        emit(AccountsListFailure(message));
       }
     }
   }
@@ -316,17 +327,21 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
         );
       }
     } catch (e) {
-      _logger.e('Error filtering accounts by balance: $e');
+      final message = handleException(
+        e,
+        context: 'filter_accounts_by_balance',
+        metadata: {
+          'minBalance': event.minBalance.toString(),
+          'maxBalance': event.maxBalance.toString(),
+        },
+      );
       final currentState = state;
       if (currentState is AccountsFiltered) {
         emit(
-          AccountsListFailure(
-            e.toString(),
-            previousAccounts: currentState.accounts,
-          ),
+          AccountsListFailure(message, previousAccounts: currentState.accounts),
         );
       } else {
-        emit(AccountsListFailure(e.toString()));
+        emit(AccountsListFailure(message));
       }
     }
   }
@@ -358,17 +373,18 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
         );
       }
     } catch (e) {
-      _logger.e('Error filtering accounts by audit level: $e');
+      final message = handleException(
+        e,
+        context: 'filter_accounts_by_audit_level',
+        metadata: {'auditLevel': event.auditLevel},
+      );
       final currentState = state;
       if (currentState is AccountsFiltered) {
         emit(
-          AccountsListFailure(
-            e.toString(),
-            previousAccounts: currentState.accounts,
-          ),
+          AccountsListFailure(message, previousAccounts: currentState.accounts),
         );
       } else {
-        emit(AccountsListFailure(e.toString()));
+        emit(AccountsListFailure(message));
       }
     }
   }
@@ -392,8 +408,8 @@ class AccountsListBloc extends Bloc<ListAccountsEvent, AccountsListState> {
         ),
       );
     } catch (e) {
-      _logger.e('Error clearing filters: $e');
-      emit(AccountsListFailure(e.toString()));
+      final message = handleException(e, context: 'clear_filters');
+      emit(AccountsListFailure(message));
     }
   }
 

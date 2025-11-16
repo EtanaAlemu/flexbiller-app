@@ -8,49 +8,51 @@ class DashboardKPICards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _buildKPICard(
-          context,
-          title: 'Active Subscriptions',
-          value: kpis.activeSubscriptions.value.toString(),
-          change: kpis.activeSubscriptions.change,
-          changePercent: kpis.activeSubscriptions.changePercent,
-          icon: Icons.people,
-          color: Colors.green,
-        ),
-        const SizedBox(height: 12),
-        _buildKPICard(
-          context,
-          title: 'Pending Invoices',
-          value: kpis.pendingInvoices.value.toString(),
-          change: kpis.pendingInvoices.change,
-          changePercent: kpis.pendingInvoices.changePercent,
-          icon: Icons.description,
-          color: Colors.orange,
-        ),
-        const SizedBox(height: 12),
-        _buildKPICard(
-          context,
-          title: 'Failed Payments',
-          value: kpis.failedPayments.value.toString(),
-          change: kpis.failedPayments.change,
-          changePercent: kpis.failedPayments.changePercent,
-          icon: Icons.error_outline,
-          color: Colors.purple,
-        ),
-        const SizedBox(height: 12),
-        _buildKPICard(
-          context,
-          title: 'Monthly Revenue',
-          value: kpis.monthlyRevenue.value,
-          change: kpis.monthlyRevenue.change,
-          changePercent: kpis.monthlyRevenue.changePercent,
-          currency: kpis.monthlyRevenue.currency,
-          icon: Icons.attach_money,
-          color: Colors.blue,
-        ),
-      ],
+    return RepaintBoundary(
+      child: Column(
+        children: [
+          _buildKPICard(
+            context,
+            title: 'Active Subscriptions',
+            value: kpis.activeSubscriptions.value.toString(),
+            change: kpis.activeSubscriptions.change,
+            changePercent: kpis.activeSubscriptions.changePercent,
+            icon: Icons.people,
+            color: Colors.green,
+          ),
+          const SizedBox(height: 12),
+          _buildKPICard(
+            context,
+            title: 'Pending Invoices',
+            value: kpis.pendingInvoices.value.toString(),
+            change: kpis.pendingInvoices.change,
+            changePercent: kpis.pendingInvoices.changePercent,
+            icon: Icons.description,
+            color: Colors.orange,
+          ),
+          const SizedBox(height: 12),
+          _buildKPICard(
+            context,
+            title: 'Failed Payments',
+            value: kpis.failedPayments.value.toString(),
+            change: kpis.failedPayments.change,
+            changePercent: kpis.failedPayments.changePercent,
+            icon: Icons.error_outline,
+            color: Colors.purple,
+          ),
+          const SizedBox(height: 12),
+          _buildKPICard(
+            context,
+            title: 'Monthly Revenue',
+            value: kpis.monthlyRevenue.value,
+            change: kpis.monthlyRevenue.change,
+            changePercent: kpis.monthlyRevenue.changePercent,
+            currency: kpis.monthlyRevenue.currency,
+            icon: Icons.attach_money,
+            color: Colors.blue,
+          ),
+        ],
+      ),
     );
   }
 

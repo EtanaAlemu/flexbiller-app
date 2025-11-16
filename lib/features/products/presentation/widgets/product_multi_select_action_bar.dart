@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/product.dart';
 import '../bloc/product_multiselect_bloc.dart';
 import '../bloc/events/product_multiselect_events.dart';
+import '../../../../core/widgets/delete_confirmation_dialog.dart';
 import 'export_products_dialog.dart';
 
 class ProductMultiSelectActionBar extends StatefulWidget {
@@ -128,52 +129,30 @@ class _ProductMultiSelectActionBarState
     );
   }
 
-  void _showExportDialog() {
+  Future<void> _showExportDialog() async {
     // Show export dialog for better user experience
-    showDialog(
+    final result = await showDialog(
       context: context,
       builder: (context) =>
           ExportProductsDialog(products: widget.selectedProducts),
-    ).then((result) async {
-      if (result != null) {
-        final selectedFormat = result['format'] as String;
-        await _performExport(context, widget.selectedProducts, selectedFormat);
-      }
-    });
+    );
+    if (result != null) {
+      final selectedFormat = result['format'] as String;
+      await _performExport(context, widget.selectedProducts, selectedFormat);
+    }
   }
 
-  void _showDeleteDialog() {
-    // Capture the BLoC reference before showing the dialog
-    final bloc = context.read<ProductMultiSelectBloc>();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Products'),
-          content: Text(
-            'Are you sure you want to delete ${widget.selectedProducts.length} selected products? This action cannot be undone.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Use the captured BLoC reference
-                bloc.add(const BulkDeleteProducts());
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
+  Future<void> _showDeleteDialog() async {
+    final confirmed = await DeleteConfirmationDialog.show(
+      context,
+      title: 'Delete Products',
+      itemName: 'product(s)',
+      count: widget.selectedProducts.length,
     );
+
+    if (confirmed) {
+      context.read<ProductMultiSelectBloc>().add(const BulkDeleteProducts());
+    }
   }
 
   Future<void> _performExport(

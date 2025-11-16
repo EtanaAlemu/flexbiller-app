@@ -32,18 +32,18 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
   @override
   Future<List<AccountTagAssignment>> getAccountTags(String accountId) async {
     try {
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: getAccountTags called for accountId: $accountId',
       );
 
       // LOCAL-FIRST: Try to get cached data first for immediate UI response
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: Getting cached tags from local data source',
       );
       final cachedTags = await _localDataSource.getCachedTagsForAccount(
         accountId,
       );
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: Found ${cachedTags.length} cached tags',
       );
 
@@ -66,33 +66,33 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
           )
           .toList();
 
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: Emitting cached data to stream immediately',
       );
       _accountTagsController.add(assignments);
 
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: Returning ${assignments.length} tag assignments from local cache',
       );
 
       // BACKGROUND SYNC: Check if device is online for background synchronization
-      print('🔍 AccountTagsRepositoryImpl: Checking network connectivity');
+      _logger.d('🔍 AccountTagsRepositoryImpl: Checking network connectivity');
       if (await _networkInfo.isConnected) {
-        print(
+        _logger.d(
           '🔍 AccountTagsRepositoryImpl: Device is online, starting background sync',
         );
 
         // Perform background sync without blocking the UI
         _performBackgroundSync(accountId);
       } else {
-        print(
+        _logger.d(
           '🔍 AccountTagsRepositoryImpl: Device is offline, using cached data only',
         );
       }
 
       return assignments;
     } catch (e) {
-      print('🔍 AccountTagsRepositoryImpl: Error in getAccountTags: $e');
+      _logger.e('🔍 AccountTagsRepositoryImpl: Error in getAccountTags: $e');
       _logger.e('Error getting account tags for account $accountId: $e');
       rethrow;
     }
@@ -101,16 +101,16 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
   /// Perform background synchronization with remote data source
   Future<void> _performBackgroundSync(String accountId) async {
     try {
-      print('🔍 AccountTagsRepositoryImpl: Starting background sync');
+      _logger.d('🔍 AccountTagsRepositoryImpl: Starting background sync');
 
       // Fetch fresh data from remote source
       final remoteTagModels = await _remoteDataSource.getAccountTags(accountId);
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: Remote data source returned ${remoteTagModels.length} tag assignments',
       );
 
       // Cache the fresh data locally (this becomes the new source of truth)
-      print('🔍 AccountTagsRepositoryImpl: Caching remote data locally');
+      _logger.d('🔍 AccountTagsRepositoryImpl: Caching remote data locally');
 
       // Convert assignments to tag models and cache them
       final tagModels = <AccountTagModel>[];
@@ -135,14 +135,16 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
       final entities = remoteTagModels
           .map((model) => model.toEntity())
           .toList();
-      print('🔍 AccountTagsRepositoryImpl: Emitting updated data to stream');
+      _logger.d(
+        '🔍 AccountTagsRepositoryImpl: Emitting updated data to stream',
+      );
       _accountTagsController.add(entities);
 
-      print(
+      _logger.i(
         '🔍 AccountTagsRepositoryImpl: Background sync completed for account: $accountId',
       );
     } catch (e) {
-      print(
+      _logger.w(
         '🔍 AccountTagsRepositoryImpl: Background sync failed for account $accountId: $e',
       );
       _logger.w('Background sync failed for account $accountId: $e');
@@ -340,12 +342,12 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
     String tagId,
   ) async {
     try {
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: assignTagToAccount called for accountId: $accountId, tagId: $tagId',
       );
 
       // LOCAL-FIRST: Create optimistic assignment locally first
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: Creating optimistic assignment locally',
       );
       final optimisticAssignment = AccountTagAssignment(
@@ -396,25 +398,27 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
           .toList();
       _accountTagsController.add(assignments);
 
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: Optimistic assignment created and cached',
       );
 
       // BACKGROUND SYNC: Sync with remote server
       if (await _networkInfo.isConnected) {
-        print(
+        _logger.d(
           '🔍 AccountTagsRepositoryImpl: Device is online, starting background sync',
         );
         _performBackgroundAssignTag(accountId, tagId);
       } else {
-        print(
+        _logger.d(
           '🔍 AccountTagsRepositoryImpl: Device is offline, assignment will sync when online',
         );
       }
 
       return optimisticAssignment;
     } catch (e) {
-      print('🔍 AccountTagsRepositoryImpl: Error in assignTagToAccount: $e');
+      _logger.e(
+        '🔍 AccountTagsRepositoryImpl: Error in assignTagToAccount: $e',
+      );
       _logger.e('Error assigning tag $tagId to account $accountId: $e');
       rethrow;
     }
@@ -426,7 +430,7 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
     String tagId,
   ) async {
     try {
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: Starting background tag assignment sync',
       );
 
@@ -471,11 +475,11 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
           .toList();
       _accountTagsController.add(assignments);
 
-      print(
+      _logger.i(
         '🔍 AccountTagsRepositoryImpl: Background tag assignment sync completed',
       );
     } catch (e) {
-      print(
+      _logger.w(
         '🔍 AccountTagsRepositoryImpl: Background tag assignment sync failed: $e',
       );
       _logger.w('Background tag assignment sync failed: $e');
@@ -524,12 +528,12 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
   @override
   Future<void> removeTagFromAccount(String accountId, String tagId) async {
     try {
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: removeTagFromAccount called for accountId: $accountId, tagId: $tagId',
       );
 
       // LOCAL-FIRST: Remove from local cache immediately
-      print('🔍 AccountTagsRepositoryImpl: Removing tag from local cache');
+      _logger.d('🔍 AccountTagsRepositoryImpl: Removing tag from local cache');
       await _localDataSource.deleteCachedTag(tagId);
 
       // Emit updated data immediately for instant UI response
@@ -553,21 +557,23 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
           .toList();
       _accountTagsController.add(assignments);
 
-      print('🔍 AccountTagsRepositoryImpl: Tag removed from local cache');
+      _logger.d('🔍 AccountTagsRepositoryImpl: Tag removed from local cache');
 
       // BACKGROUND SYNC: Sync with remote server
       if (await _networkInfo.isConnected) {
-        print(
+        _logger.d(
           '🔍 AccountTagsRepositoryImpl: Device is online, starting background sync',
         );
         _performBackgroundRemoveTag(accountId, tagId);
       } else {
-        print(
+        _logger.d(
           '🔍 AccountTagsRepositoryImpl: Device is offline, removal will sync when online',
         );
       }
     } catch (e) {
-      print('🔍 AccountTagsRepositoryImpl: Error in removeTagFromAccount: $e');
+      _logger.e(
+        '🔍 AccountTagsRepositoryImpl: Error in removeTagFromAccount: $e',
+      );
       _logger.e('Error removing tag $tagId from account $accountId: $e');
       rethrow;
     }
@@ -579,18 +585,18 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
     String tagId,
   ) async {
     try {
-      print(
+      _logger.d(
         '🔍 AccountTagsRepositoryImpl: Starting background tag removal sync',
       );
 
       // Remove from remote server
       await _remoteDataSource.removeTagFromAccount(accountId, tagId);
 
-      print(
+      _logger.i(
         '🔍 AccountTagsRepositoryImpl: Background tag removal sync completed',
       );
     } catch (e) {
-      print(
+      _logger.w(
         '🔍 AccountTagsRepositoryImpl: Background tag removal sync failed: $e',
       );
       _logger.w('Background tag removal sync failed: $e');
@@ -657,6 +663,10 @@ class AccountTagsRepositoryImpl implements AccountTagsRepository {
 
   /// Dispose of the stream controller
   void dispose() {
-    _accountTagsController.close();
+    _logger.d('🛑 [Account Tags Repository] Disposing resources...');
+    if (!_accountTagsController.isClosed) {
+      _accountTagsController.close();
+      _logger.i('✅ [Account Tags Repository] StreamController closed');
+    }
   }
 }

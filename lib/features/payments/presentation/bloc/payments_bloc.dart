@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/payment.dart';
 import '../../domain/usecases/get_payments.dart';
 import '../../domain/usecases/get_payment_by_id.dart';
@@ -13,7 +14,8 @@ part 'events/payments_event.dart';
 part 'states/payments_state.dart';
 
 @injectable
-class PaymentsBloc extends Bloc<PaymentsEvent, PaymentsState> {
+class PaymentsBloc extends Bloc<PaymentsEvent, PaymentsState>
+    with BlocErrorHandlerMixin {
   final GetPayments _getPayments;
   final GetPaymentById _getPaymentById;
   final GetPaymentsByAccountId _getPaymentsByAccountId;
@@ -53,24 +55,23 @@ class PaymentsBloc extends Bloc<PaymentsEvent, PaymentsState> {
       final result = await _getPayments();
       _logger.d('PaymentsBloc: Received result from _getPayments');
 
-      result.fold(
-        (failure) {
-          _logger.e(
-            'PaymentsBloc: GetPayments failed with error: ${failure.message}',
-          );
-          emit(PaymentsError(failure.message));
-        },
-        (payments) {
-          _logger.d(
-            'PaymentsBloc: GetPayments successful, received ${payments.length} payments',
-          );
-          emit(PaymentsLoaded(payments));
+      final payments = handleEitherResult(
+        result,
+        context: 'get_payments',
+        onError: (message) {
+          emit(PaymentsError(message));
         },
       );
-    } catch (e, stackTrace) {
-      _logger.e('PaymentsBloc: Unexpected error in _onGetPayments: $e');
-      _logger.e('PaymentsBloc: Stack trace: $stackTrace');
-      emit(PaymentsError('Unexpected error occurred: $e'));
+
+      if (payments != null) {
+        _logger.d(
+          'PaymentsBloc: GetPayments successful, received ${payments.length} payments',
+        );
+        emit(PaymentsLoaded(payments));
+      }
+    } catch (e) {
+      final message = handleException(e, context: 'get_payments');
+      emit(PaymentsError(message));
     }
   }
 
@@ -89,24 +90,27 @@ class PaymentsBloc extends Bloc<PaymentsEvent, PaymentsState> {
       final result = await _getPaymentById(event.paymentId);
       _logger.d('PaymentsBloc: Received result from _getPaymentById');
 
-      result.fold(
-        (failure) {
-          _logger.e(
-            'PaymentsBloc: GetPaymentById failed with error: ${failure.message}',
-          );
-          emit(PaymentError(failure.message));
-        },
-        (payment) {
-          _logger.d(
-            'PaymentsBloc: GetPaymentById successful, received payment: ${payment.paymentId}',
-          );
-          emit(PaymentLoaded(payment));
+      final payment = handleEitherResult(
+        result,
+        context: 'get_payment_by_id',
+        onError: (message) {
+          emit(PaymentError(message));
         },
       );
-    } catch (e, stackTrace) {
-      _logger.e('PaymentsBloc: Unexpected error in _onGetPaymentById: $e');
-      _logger.e('PaymentsBloc: Stack trace: $stackTrace');
-      emit(PaymentError('Unexpected error occurred: $e'));
+
+      if (payment != null) {
+        _logger.d(
+          'PaymentsBloc: GetPaymentById successful, received payment: ${payment.paymentId}',
+        );
+        emit(PaymentLoaded(payment));
+      }
+    } catch (e) {
+      final message = handleException(
+        e,
+        context: 'get_payment_by_id',
+        metadata: {'paymentId': event.paymentId},
+      );
+      emit(PaymentError(message));
     }
   }
 
@@ -125,26 +129,27 @@ class PaymentsBloc extends Bloc<PaymentsEvent, PaymentsState> {
       final result = await _getPaymentsByAccountId(event.accountId);
       _logger.d('PaymentsBloc: Received result from _getPaymentsByAccountId');
 
-      result.fold(
-        (failure) {
-          _logger.e(
-            'PaymentsBloc: GetPaymentsByAccountId failed with error: ${failure.message}',
-          );
-          emit(PaymentsError(failure.message));
-        },
-        (payments) {
-          _logger.d(
-            'PaymentsBloc: GetPaymentsByAccountId successful, received ${payments.length} payments',
-          );
-          emit(PaymentsLoaded(payments));
+      final payments = handleEitherResult(
+        result,
+        context: 'get_payments_by_account_id',
+        onError: (message) {
+          emit(PaymentsError(message));
         },
       );
-    } catch (e, stackTrace) {
-      _logger.e(
-        'PaymentsBloc: Unexpected error in _onGetPaymentsByAccountId: $e',
+
+      if (payments != null) {
+        _logger.d(
+          'PaymentsBloc: GetPaymentsByAccountId successful, received ${payments.length} payments',
+        );
+        emit(PaymentsLoaded(payments));
+      }
+    } catch (e) {
+      final message = handleException(
+        e,
+        context: 'get_payments_by_account_id',
+        metadata: {'accountId': event.accountId},
       );
-      _logger.e('PaymentsBloc: Stack trace: $stackTrace');
-      emit(PaymentsError('Unexpected error occurred: $e'));
+      emit(PaymentsError(message));
     }
   }
 
@@ -170,24 +175,23 @@ class PaymentsBloc extends Bloc<PaymentsEvent, PaymentsState> {
       final result = await _getPayments();
       _logger.d('PaymentsBloc: Received result from _getPayments for refresh');
 
-      result.fold(
-        (failure) {
-          _logger.e(
-            'PaymentsBloc: RefreshPayments failed with error: ${failure.message}',
-          );
-          emit(PaymentsError(failure.message));
-        },
-        (payments) {
-          _logger.d(
-            'PaymentsBloc: RefreshPayments successful, received ${payments.length} payments',
-          );
-          emit(PaymentsLoaded(payments));
+      final payments = handleEitherResult(
+        result,
+        context: 'refresh_payments',
+        onError: (message) {
+          emit(PaymentsError(message));
         },
       );
-    } catch (e, stackTrace) {
-      _logger.e('PaymentsBloc: Unexpected error in _onRefreshPayments: $e');
-      _logger.e('PaymentsBloc: Stack trace: $stackTrace');
-      emit(PaymentsError('Unexpected error occurred: $e'));
+
+      if (payments != null) {
+        _logger.d(
+          'PaymentsBloc: RefreshPayments successful, received ${payments.length} payments',
+        );
+        emit(PaymentsLoaded(payments));
+      }
+    } catch (e) {
+      final message = handleException(e, context: 'refresh_payments');
+      emit(PaymentsError(message));
     }
   }
 
@@ -222,10 +226,13 @@ class PaymentsBloc extends Bloc<PaymentsEvent, PaymentsState> {
         );
         emit(PaymentsLoaded(payments));
       }
-    } catch (e, stackTrace) {
-      _logger.e('PaymentsBloc: Unexpected error in _onSearchPayments: $e');
-      _logger.e('PaymentsBloc: Stack trace: $stackTrace');
-      emit(PaymentsError('Search failed: $e'));
+    } catch (e) {
+      final message = handleException(
+        e,
+        context: 'search_payments',
+        metadata: {'searchKey': event.searchKey},
+      );
+      emit(PaymentsError(message));
     }
   }
 }

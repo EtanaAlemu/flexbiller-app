@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../bloc/account_payments_bloc.dart';
 import '../bloc/events/account_payments_events.dart';
 import '../bloc/states/account_payments_states.dart';
@@ -18,12 +19,13 @@ class AccountPaymentsWidget extends StatefulWidget {
 class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
   bool _paymentsLoaded = false;
   AccountPaymentsLoaded? _lastPaymentsState;
+  final Logger _logger = Logger();
 
   @override
   void initState() {
     super.initState();
     _paymentsLoaded = false;
-    print(
+    _logger.d(
       '🔍 AccountPaymentsWidget: initState - triggering LoadAccountPayments',
     );
     // Trigger payments loading when widget initializes
@@ -41,20 +43,25 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    print(
+    _logger.d(
       '🔍 AccountPaymentsWidget: Building with accountId: ${widget.accountId}',
     );
 
     return BlocListener<AccountPaymentsBloc, AccountPaymentsState>(
       listener: (context, state) {
-        print('🔍 AccountPaymentsWidget: Received state: ${state.runtimeType}');
-        print('🔍 AccountPaymentsWidget: State details: $state');
+        _logger.d(
+          '🔍 AccountPaymentsWidget: Received state: ${state.runtimeType}',
+        );
+        _logger.d('🔍 AccountPaymentsWidget: State details: $state');
         if (state is AccountPaymentsLoaded) {
-          print(
+          _logger.d(
             '🔍 AccountPaymentsWidget: Received AccountPaymentsLoaded with ${state.payments.length} payments',
           );
           _paymentsLoaded = true;
           _lastPaymentsState = state;
+        } else if (state is AccountPaymentRefunding) {
+          // Show loading indicator for refund in progress
+          _logger.d('Refunding payment: ${state.paymentId}');
         } else if (state is AccountPaymentRefunded) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -62,6 +69,10 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
               backgroundColor: Colors.green,
               duration: Duration(seconds: 3),
             ),
+          );
+          // Reload payments to show updated list
+          context.read<AccountPaymentsBloc>().add(
+            LoadAccountPayments(widget.accountId),
           );
         } else if (state is AccountPaymentRefundFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -74,18 +85,33 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
         }
       },
       child: BlocBuilder<AccountPaymentsBloc, AccountPaymentsState>(
+        buildWhen: (previous, current) {
+          // Only rebuild when state type changes or data changes
+          if (previous.runtimeType != current.runtimeType) {
+            return true;
+          }
+          // Rebuild if both are loaded states but payments changed
+          if (previous is AccountPaymentsLoaded &&
+              current is AccountPaymentsLoaded) {
+            return previous.payments.length != current.payments.length ||
+                previous.payments != current.payments;
+          }
+          return false;
+        },
         builder: (context, state) {
-          print(
+          _logger.d(
             '🔍 AccountPaymentsWidget: Building with state: ${state.runtimeType}',
           );
-          print('🔍 AccountPaymentsWidget: State details in builder: $state');
-          print(
+          _logger.d(
+            '🔍 AccountPaymentsWidget: State details in builder: $state',
+          );
+          _logger.d(
             '🔍 AccountPaymentsWidget: _paymentsLoaded: $_paymentsLoaded, _lastPaymentsState: ${_lastPaymentsState?.payments.length ?? 'null'}',
           );
 
           // Check for AccountPaymentsLoaded first to prioritize it over AccountDetailsLoaded
           if (state is AccountPaymentsLoaded) {
-            print(
+            _logger.d(
               '🔍 AccountPaymentsWidget: Building AccountPaymentsLoaded with ${state.payments.length} payments',
             );
             return Column(
@@ -127,7 +153,7 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
           }
 
           if (state is AccountPaymentsLoading) {
-            print('🔍 AccountPaymentsWidget: Showing loading indicator');
+            _logger.d('🔍 AccountPaymentsWidget: Showing loading indicator');
             return Column(
               children: [
                 // Header
@@ -166,7 +192,7 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
           }
 
           if (state is AccountPaymentsFailure) {
-            print('🔍 AccountPaymentsWidget: Showing failure state');
+            _logger.w('🔍 AccountPaymentsWidget: Showing failure state');
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -206,7 +232,7 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
           }
 
           // Default state - show loading
-          print(
+          _logger.d(
             '🔍 AccountPaymentsWidget: Fallback case - showing loading for state: ${state.runtimeType}',
           );
           return Column(
@@ -459,15 +485,46 @@ class _AccountPaymentsWidgetState extends State<AccountPaymentsWidget> {
             onPressed: () {
               final refundAmount =
                   double.tryParse(refundController.text) ?? 0.0;
-              if (refundAmount > 0) {
-                // TODO: Implement refund functionality when RefundAccountPayment event is available
+              final reason = reasonController.text.trim();
+
+              if (refundAmount > 0 && refundAmount <= payment.amount) {
+                if (reason.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please provide a refund reason'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.pop(context);
+
+                // Dispatch refund event to BLoC
+                context.read<AccountPaymentsBloc>().add(
+                  RefundAccountPayment(
+                    accountId: widget.accountId,
+                    paymentId: payment.id,
+                    refundAmount: refundAmount,
+                    reason: reason,
+                  ),
+                );
+              } else if (refundAmount > payment.amount) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Refund amount cannot exceed payment amount of ${_formatCurrency(payment.amount, payment.currency)}',
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Refund functionality coming soon'),
+                    content: Text('Please enter a valid refund amount'),
                     backgroundColor: Colors.orange,
                   ),
                 );
-                Navigator.pop(context);
               }
             },
             child: const Text('Refund'),

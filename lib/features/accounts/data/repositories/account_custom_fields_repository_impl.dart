@@ -45,7 +45,7 @@ class AccountCustomFieldsRepositoryImpl
       );
 
       _logger.d('Found ${cachedCustomFields.length} cached custom fields');
-      
+
       // Convert models to entities
       final entities = cachedCustomFields
           .map((model) => model.toEntity())
@@ -355,13 +355,15 @@ class AccountCustomFieldsRepositoryImpl
       if (await _networkInfo.isConnected) {
         _logger.d('Device is online, starting background sync');
         _logger.d('Starting background sync');
-        
+
         final remoteCustomFields = await _remoteDataSource
             .getAccountCustomFields(accountId);
 
-        _logger.d('Remote data source returned ${remoteCustomFields.length} custom fields');
+        _logger.d(
+          'Remote data source returned ${remoteCustomFields.length} custom fields',
+        );
         _logger.d('Caching remote data locally');
-        
+
         // Update local cache
         await _localDataSource.cacheCustomFields(remoteCustomFields);
 
@@ -369,7 +371,7 @@ class AccountCustomFieldsRepositoryImpl
         final entities = remoteCustomFields
             .map((model) => model.toEntity())
             .toList();
-        
+
         _logger.d('Emitting updated data to stream');
         _customFieldsStreamController.add(entities);
 
@@ -384,6 +386,10 @@ class AccountCustomFieldsRepositoryImpl
 
   /// Dispose method to clean up stream controllers
   void dispose() {
-    _customFieldsStreamController.close();
+    _logger.d('🛑 [Account Custom Fields Repository] Disposing resources...');
+    if (!_customFieldsStreamController.isClosed) {
+      _customFieldsStreamController.close();
+    }
+    _logger.i('✅ [Account Custom Fields Repository] StreamController closed');
   }
 }

@@ -63,9 +63,9 @@ class TagsLocalDataSourceImpl implements TagsLocalDataSource {
     try {
       final db = await _databaseService.database;
       final tagMaps = await TagsDao.getAllTags(db);
-      
+
       _logger.d('Raw database maps: $tagMaps');
-      
+
       final tags = tagMaps.map((map) {
         _logger.d('Converting map: $map');
         return TagModel.fromJson(map);
@@ -275,8 +275,16 @@ class TagsLocalDataSourceImpl implements TagsLocalDataSource {
 
   // Dispose method to close stream controllers
   void dispose() {
-    _tagsStreamController.close();
-    _tagByIdStreamController.close();
-    _searchStreamController.close();
+    _logger.d('🛑 [Tags Local Data Source] Disposing resources...');
+    if (!_tagsStreamController.isClosed) {
+      _tagsStreamController.close();
+    }
+    if (!_tagByIdStreamController.isClosed) {
+      _tagByIdStreamController.close();
+    }
+    if (!_searchStreamController.isClosed) {
+      _searchStreamController.close();
+    }
+    _logger.i('✅ [Tags Local Data Source] All StreamControllers closed');
   }
 }

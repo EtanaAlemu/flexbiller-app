@@ -4,13 +4,15 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/account.dart';
 import '../bloc/events/account_export_events.dart';
 import '../bloc/states/account_export_states.dart';
 
 /// BLoC for handling export operations
 @injectable
-class AccountExportBloc extends Bloc<ExportEvent, AccountExportState> {
+class AccountExportBloc extends Bloc<ExportEvent, AccountExportState>
+    with BlocErrorHandlerMixin {
   final Logger _logger = Logger();
 
   AccountExportBloc() : super(const AccountExportInitial()) {
@@ -60,8 +62,15 @@ class AccountExportBloc extends Bloc<ExportEvent, AccountExportState> {
 
       _logger.d('Export completed successfully: $fileName');
     } catch (e) {
-      _logger.e('Error exporting accounts: $e');
-      emit(AccountsExportFailure('Failed to export accounts: $e'));
+      final message = handleException(
+        e,
+        context: 'export_accounts',
+        metadata: {
+          'accountCount': event.accounts.length,
+          'format': event.format,
+        },
+      );
+      emit(AccountsExportFailure(message));
     }
   }
 
@@ -81,8 +90,12 @@ class AccountExportBloc extends Bloc<ExportEvent, AccountExportState> {
       emit(FileSharingSuccess(filePath: event.filePath));
       _logger.d('File shared successfully: ${event.fileName}');
     } catch (e) {
-      _logger.e('Error sharing file: $e');
-      emit(FileSharingFailure('Failed to share file: $e'));
+      final message = handleException(
+        e,
+        context: 'share_file',
+        metadata: {'fileName': event.fileName},
+      );
+      emit(FileSharingFailure(message));
     }
   }
 
@@ -101,17 +114,24 @@ class AccountExportBloc extends Bloc<ExportEvent, AccountExportState> {
         ),
       );
     } catch (e) {
-      _logger.e('Error in bulk export: $e');
-      emit(AccountsExportFailure('Bulk export failed: $e'));
+      final message = handleException(
+        e,
+        context: 'bulk_export_accounts',
+        metadata: {'format': event.format},
+      );
+      emit(AccountsExportFailure(message));
     }
   }
 
   /// Export accounts to Excel format
-  Future<Map<String, String>> _exportToExcel(List<Account> accounts, String? customFilePath) async {
+  Future<Map<String, String>> _exportToExcel(
+    List<Account> accounts,
+    String? customFilePath,
+  ) async {
     try {
       String filePath;
       String fileName;
-      
+
       if (customFilePath != null) {
         filePath = customFilePath;
         fileName = customFilePath.split('/').last;
@@ -137,11 +157,14 @@ class AccountExportBloc extends Bloc<ExportEvent, AccountExportState> {
   }
 
   /// Export accounts to CSV format
-  Future<Map<String, String>> _exportToCSV(List<Account> accounts, String? customFilePath) async {
+  Future<Map<String, String>> _exportToCSV(
+    List<Account> accounts,
+    String? customFilePath,
+  ) async {
     try {
       String filePath;
       String fileName;
-      
+
       if (customFilePath != null) {
         filePath = customFilePath;
         fileName = customFilePath.split('/').last;

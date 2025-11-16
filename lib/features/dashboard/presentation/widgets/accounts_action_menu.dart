@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -17,6 +18,7 @@ import '../../../accounts/domain/entities/account.dart';
 
 class AccountsActionMenu extends StatelessWidget {
   final GlobalKey? accountsViewKey;
+  static final Logger _logger = Logger();
 
   const AccountsActionMenu({Key? key, this.accountsViewKey}) : super(key: key);
 
@@ -214,7 +216,7 @@ class AccountsActionMenu extends StatelessWidget {
     );
   }
 
-  void _showExportDialog(BuildContext context) {
+  Future<void> _showExportDialog(BuildContext context) async {
     // Get current accounts from the BLoC state
     final currentState = context.read<AccountsListBloc>().state;
     List<Account> accountsToExport = [];
@@ -237,15 +239,14 @@ class AccountsActionMenu extends StatelessWidget {
       return;
     }
 
-    showDialog(
+    final result = await showDialog(
       context: context,
       builder: (context) => ExportAccountsDialog(accounts: accountsToExport),
-    ).then((result) async {
-      if (result != null) {
-        final format = result['format'] as String;
-        await _performExport(context, accountsToExport, format);
-      }
-    });
+    );
+    if (result != null) {
+      final format = result['format'] as String;
+      await _performExport(context, accountsToExport, format);
+    }
   }
 
   Future<void> _performExport(
@@ -370,13 +371,13 @@ class AccountsActionMenu extends StatelessWidget {
     String fileName,
   ) async {
     try {
-      // Debug: Print the file path we're trying to open
-      print('Attempting to open file: $filePath');
+      // Debug: Log the file path we're trying to open
+      _logger.d('Attempting to open file: $filePath');
 
       // Check if file exists at the specified path
       final file = File(filePath);
       final fileExists = await file.exists();
-      print('File exists at path: $fileExists');
+      _logger.d('File exists at path: $fileExists');
 
       if (!fileExists) {
         // File doesn't exist at the specified path, try to find it
@@ -411,7 +412,7 @@ class AccountsActionMenu extends StatelessWidget {
         }
 
         if (foundPath != null) {
-          print('Found file at: $foundPath');
+          _logger.d('Found file at: $foundPath');
           final result = await OpenFile.open(foundPath);
           if (result.type == ResultType.done) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -519,7 +520,7 @@ class AccountsActionMenu extends StatelessWidget {
       }
     } catch (e) {
       // If OpenFile fails completely, show file location
-      print('Error opening file: $e');
+      _logger.e('Error opening file: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

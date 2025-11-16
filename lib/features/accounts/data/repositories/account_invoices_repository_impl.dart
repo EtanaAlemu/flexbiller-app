@@ -179,7 +179,10 @@ class AccountInvoicesRepositoryImpl implements AccountInvoicesRepository {
 
   /// Dispose resources
   void dispose() {
-    _accountInvoicesController.close();
-    _logger.d('AccountInvoicesRepositoryImpl disposed');
+    _logger.d('🛑 [Account Invoices Repository] Disposing resources...');
+    if (!_accountInvoicesController.isClosed) {
+      _accountInvoicesController.close();
+    }
+    _logger.i('✅ [Account Invoices Repository] StreamController closed');
   }
 }

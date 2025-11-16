@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import 'accounts_list_bloc.dart';
 import 'account_detail_bloc.dart';
 import 'account_multiselect_bloc.dart';
@@ -18,11 +20,13 @@ import '../../domain/entities/accounts_query_params.dart';
 
 /// Main orchestrator BLoC that coordinates between specialized BLoCs
 @injectable
-class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
+class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState>
+    with BlocErrorHandlerMixin {
   final AccountsListBloc _accountsListBloc;
   final AccountDetailBloc _accountDetailBloc;
   final AccountMultiSelectBloc _accountMultiSelectBloc;
   final AccountExportBloc _accountExportBloc;
+  final Logger _logger = Logger();
 
   StreamSubscription? _accountsListSubscription;
   StreamSubscription? _accountDetailSubscription;
@@ -104,27 +108,27 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
   }
 
   void _initializeStreamSubscriptions() {
-    print('🔍 AccountsOrchestratorBloc: Initializing stream subscriptions');
+    _logger.d('🔍 AccountsOrchestratorBloc: Initializing stream subscriptions');
 
     // Listen to multi-select state changes and forward them to the UI
     _accountMultiSelectSubscription = _accountMultiSelectBloc.stream.listen((
       state,
     ) {
-      print(
+      _logger.d(
         '🔍 AccountsOrchestratorBloc: Multi-select stream received state: ${state.runtimeType}',
       );
       if (state is multiselect_states.MultiSelectModeEnabled) {
-        print(
+        _logger.d(
           '🔍 AccountsOrchestratorBloc: Forwarding MultiSelectModeEnabled with ${state.selectedAccounts.length} selected accounts',
         );
         emit(MultiSelectModeEnabled(selectedAccounts: state.selectedAccounts));
       } else if (state is multiselect_states.MultiSelectModeDisabled) {
-        print(
+        _logger.d(
           '🔍 AccountsOrchestratorBloc: Forwarding MultiSelectModeDisabled',
         );
         emit(MultiSelectModeDisabled());
       } else if (state is multiselect_states.AccountSelected) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountSelected');
+        _logger.d('🔍 AccountsOrchestratorBloc: Forwarding AccountSelected');
         emit(
           AccountSelected(
             account: state.account,
@@ -132,7 +136,7 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
           ),
         );
       } else if (state is multiselect_states.AccountDeselected) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDeselected');
+        _logger.d('🔍 AccountsOrchestratorBloc: Forwarding AccountDeselected');
         emit(
           AccountDeselected(
             account: state.account,
@@ -140,22 +144,28 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
           ),
         );
       } else if (state is multiselect_states.AllAccountsSelected) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AllAccountsSelected');
+        _logger.d(
+          '🔍 AccountsOrchestratorBloc: Forwarding AllAccountsSelected',
+        );
         emit(AllAccountsSelected(selectedAccounts: state.selectedAccounts));
       } else if (state is multiselect_states.AllAccountsDeselected) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AllAccountsDeselected');
+        _logger.d(
+          '🔍 AccountsOrchestratorBloc: Forwarding AllAccountsDeselected',
+        );
         emit(AllAccountsDeselected());
       } else if (state is multiselect_states.BulkDeleteInProgress) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding BulkDeleteInProgress');
-        print(
+        _logger.d(
+          '🔍 AccountsOrchestratorBloc: Forwarding BulkDeleteInProgress',
+        );
+        _logger.d(
           '🔍 AccountsOrchestratorBloc: Emitting BulkAccountsDeleting with ${state.accountsToDelete.length} accounts',
         );
         emit(BulkAccountsDeleting(accountsToDelete: state.accountsToDelete));
       } else if (state is multiselect_states.BulkDeleteCompleted) {
-        print(
+        _logger.d(
           '🔍 AccountsOrchestratorBloc: Forwarding BulkDeleteCompleted with ${state.deletedCount} deleted accounts',
         );
-        print(
+        _logger.d(
           '🔍 AccountsOrchestratorBloc: Emitting BulkAccountsDeleted state',
         );
         emit(
@@ -167,7 +177,7 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
           ),
         ); // Generate placeholder IDs for the count
       } else if (state is multiselect_states.BulkDeleteFailure) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding BulkDeleteFailure');
+        _logger.d('🔍 AccountsOrchestratorBloc: Forwarding BulkDeleteFailure');
         emit(
           BulkAccountsDeletionFailure(
             message: state.message,
@@ -175,7 +185,7 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
           ),
         );
       } else {
-        print(
+        _logger.w(
           '🔍 AccountsOrchestratorBloc: Unknown multi-select state type: ${state.runtimeType}',
         );
       }
@@ -183,50 +193,64 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
 
     // Listen to account detail state changes and forward them to the UI
     _accountDetailSubscription = _accountDetailBloc.stream.listen((state) {
-      print(
+      _logger.d(
         '🔍 AccountsOrchestratorBloc: Stream received state: ${state.runtimeType}',
       );
       // Forward the state to the UI by emitting it directly
       if (state is detail_states.AccountDetailsLoaded) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDetailsLoaded');
+        _logger.d(
+          '🔍 AccountsOrchestratorBloc: Forwarding AccountDetailsLoaded',
+        );
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountDetailsLoading) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDetailsLoading');
+        _logger.d(
+          '🔍 AccountsOrchestratorBloc: Forwarding AccountDetailsLoading',
+        );
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountDetailsFailure) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDetailsFailure');
+        _logger.d(
+          '🔍 AccountsOrchestratorBloc: Forwarding AccountDetailsFailure',
+        );
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountPaymentsLoading) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountPaymentsLoading');
+        _logger.d(
+          '🔍 AccountsOrchestratorBloc: Forwarding AccountPaymentsLoading',
+        );
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountPaymentsLoaded) {
-        print(
+        _logger.d(
           '🔍 AccountsOrchestratorBloc: Received AccountPaymentsLoaded from AccountDetailBloc with ${state.payments.length} payments, forwarding...',
         );
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountPaymentsFailure) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountPaymentsFailure');
+        _logger.d(
+          '🔍 AccountsOrchestratorBloc: Forwarding AccountPaymentsFailure',
+        );
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountDeleting) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDeleting');
+        _logger.d('🔍 AccountsOrchestratorBloc: Forwarding AccountDeleting');
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountDeleted) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDeleted');
+        _logger.d('🔍 AccountsOrchestratorBloc: Forwarding AccountDeleted');
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountDeleteFailure) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountDeleteFailure');
+        _logger.d(
+          '🔍 AccountsOrchestratorBloc: Forwarding AccountDeleteFailure',
+        );
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountUpdating) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountUpdating');
+        _logger.d('🔍 AccountsOrchestratorBloc: Forwarding AccountUpdating');
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountUpdated) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountUpdated');
+        _logger.d('🔍 AccountsOrchestratorBloc: Forwarding AccountUpdated');
         add(ForwardAccountDetailState(state));
       } else if (state is detail_states.AccountUpdateFailure) {
-        print('🔍 AccountsOrchestratorBloc: Forwarding AccountUpdateFailure');
+        _logger.d(
+          '🔍 AccountsOrchestratorBloc: Forwarding AccountUpdateFailure',
+        );
         add(ForwardAccountDetailState(state));
       } else {
-        print(
+        _logger.w(
           '🔍 AccountsOrchestratorBloc: Unknown state type: ${state.runtimeType}',
         );
       }
@@ -234,11 +258,11 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
 
     // Listen to export state changes
     _accountExportSubscription = _accountExportBloc.stream.listen((state) {
-      print(
+      _logger.d(
         '🔍 AccountsOrchestratorBloc: Export stream received state: ${state.runtimeType}',
       );
       if (state is export_states.AccountsExportSuccess) {
-        print(
+        _logger.d(
           '🔍 AccountsOrchestratorBloc: Export successful, disabling multi-select mode',
         );
         // Disable multi-select mode after successful export
@@ -246,7 +270,9 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
           multiselect_events.DisableMultiSelectMode(),
         );
       } else if (state is export_states.AccountsExportFailure) {
-        print('🔍 AccountsOrchestratorBloc: Export failed: ${state.message}');
+        _logger.w(
+          '🔍 AccountsOrchestratorBloc: Export failed: ${state.message}',
+        );
         // Optionally disable multi-select mode on failure too
         _accountMultiSelectBloc.add(
           multiselect_events.DisableMultiSelectMode(),
@@ -517,10 +543,10 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
     LoadAccountPayments event,
     Emitter<AccountsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountsOrchestratorBloc: Received LoadAccountPayments for accountId: ${event.accountId}',
     );
-    print('🔍 AccountsOrchestratorBloc: Forwarding to AccountDetailBloc');
+    _logger.d('🔍 AccountsOrchestratorBloc: Forwarding to AccountDetailBloc');
     _accountDetailBloc.add(detail_events.LoadAccountPayments(event.accountId));
   }
 
@@ -639,11 +665,11 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
     final selectedAccounts = _accountMultiSelectBloc.selectedAccounts;
 
     if (selectedAccounts.isEmpty) {
-      print('🔍 AccountsOrchestratorBloc: No accounts selected for export');
+      _logger.w('🔍 AccountsOrchestratorBloc: No accounts selected for export');
       return;
     }
 
-    print(
+    _logger.i(
       '🔍 AccountsOrchestratorBloc: Exporting ${selectedAccounts.length} accounts in ${event.format} format',
     );
 
@@ -701,72 +727,72 @@ class AccountsOrchestratorBloc extends Bloc<AccountsEvent, AccountsState> {
     ForwardAccountDetailState event,
     Emitter<AccountsState> emit,
   ) async {
-    print(
+    _logger.d(
       '🔍 AccountsOrchestratorBloc: _onForwardAccountDetailState called with state: ${event.state.runtimeType}',
     );
     // Convert AccountDetailState to AccountsState and emit
     if (event.state is detail_states.AccountDetailsLoaded) {
       final loadedState = event.state as detail_states.AccountDetailsLoaded;
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountDetailsLoaded');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountDetailsLoaded');
       emit(AccountDetailsLoaded(loadedState.account));
     } else if (event.state is detail_states.AccountDetailsLoading) {
       final loadingState = event.state as detail_states.AccountDetailsLoading;
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountDetailsLoading');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountDetailsLoading');
       emit(AccountDetailsLoading(loadingState.accountId));
     } else if (event.state is detail_states.AccountDetailsFailure) {
       final failureState = event.state as detail_states.AccountDetailsFailure;
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountDetailsFailure');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountDetailsFailure');
       emit(AccountDetailsFailure(failureState.message, failureState.accountId));
     } else if (event.state is detail_states.AccountPaymentsLoading) {
       final loadingState = event.state as detail_states.AccountPaymentsLoading;
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountPaymentsLoading');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountPaymentsLoading');
       emit(AccountPaymentsLoading(loadingState.accountId));
     } else if (event.state is detail_states.AccountPaymentsLoaded) {
       final loadedState = event.state as detail_states.AccountPaymentsLoaded;
-      print(
+      _logger.d(
         '🔍 AccountsOrchestratorBloc: Emitting AccountPaymentsLoaded with ${loadedState.payments.length} payments',
       );
       emit(AccountPaymentsLoaded(loadedState.accountId, loadedState.payments));
     } else if (event.state is detail_states.AccountPaymentsFailure) {
       final failureState = event.state as detail_states.AccountPaymentsFailure;
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountPaymentsFailure');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountPaymentsFailure');
       emit(
         AccountPaymentsFailure(failureState.message, failureState.accountId),
       );
     } else if (event.state is detail_states.AccountDeleting) {
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountDeleting');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountDeleting');
       emit(AccountDeleting());
     } else if (event.state is detail_states.AccountDeleted) {
       final deletedState = event.state as detail_states.AccountDeleted;
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountDeleted');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountDeleted');
       emit(AccountDeleted(deletedState.accountId));
 
       // Also refresh the accounts list to remove the deleted account
-      print(
+      _logger.d(
         '🔍 AccountsOrchestratorBloc: Refreshing accounts list after deletion',
       );
       _accountsListBloc.add(list_events.RefreshAccounts());
     } else if (event.state is detail_states.AccountDeleteFailure) {
       final failureState = event.state as detail_states.AccountDeleteFailure;
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountDeletionFailure');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountDeletionFailure');
       emit(
         AccountDeletionFailure(failureState.message, failureState.accountId),
       );
     } else if (event.state is detail_states.AccountUpdating) {
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountUpdating');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountUpdating');
       emit(AccountUpdating());
     } else if (event.state is detail_states.AccountUpdated) {
       final updatedState = event.state as detail_states.AccountUpdated;
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountUpdated');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountUpdated');
       emit(AccountUpdated(updatedState.account));
 
       // Note: No need to refresh accounts list as the stream will update the UI automatically
     } else if (event.state is detail_states.AccountUpdateFailure) {
       final failureState = event.state as detail_states.AccountUpdateFailure;
-      print('🔍 AccountsOrchestratorBloc: Emitting AccountUpdateFailure');
+      _logger.d('🔍 AccountsOrchestratorBloc: Emitting AccountUpdateFailure');
       emit(AccountUpdateFailure(failureState.message));
     } else {
-      print(
+      _logger.w(
         '🔍 AccountsOrchestratorBloc: Unknown state type in _onForwardAccountDetailState: ${event.state.runtimeType}',
       );
     }

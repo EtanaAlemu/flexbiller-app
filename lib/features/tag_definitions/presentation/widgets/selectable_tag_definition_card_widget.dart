@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../bloc/tag_definitions_bloc.dart';
 import '../bloc/tag_definitions_event.dart';
 import '../pages/tag_definition_details_page.dart';
 
 class SelectableTagDefinitionCardWidget extends StatelessWidget {
+  static final Logger _logger = Logger();
   final dynamic tagDefinition;
   final bool isSelected;
   final bool isMultiSelectMode;
@@ -131,7 +133,7 @@ class SelectableTagDefinitionCardWidget extends StatelessWidget {
   }
 
   void _enableMultiSelectModeAndSelect(BuildContext context) {
-    print('🔍 Widget: Long press detected for tag: ${tagDefinition.name}');
+    _logger.d('🔍 Widget: Long press detected for tag: ${tagDefinition.name}');
     HapticFeedback.mediumImpact();
     context.read<TagDefinitionsBloc>().add(
       EnableMultiSelectModeAndSelect(tagDefinition),
@@ -139,16 +141,16 @@ class SelectableTagDefinitionCardWidget extends StatelessWidget {
   }
 
   void _toggleSelection(BuildContext context) {
-    print(
+    _logger.d(
       '🔍 Widget: Toggle selection for tag: ${tagDefinition.name}, isSelected: $isSelected',
     );
     if (isSelected) {
-      print('🔍 Widget: Deselecting tag');
+      _logger.d('🔍 Widget: Deselecting tag');
       context.read<TagDefinitionsBloc>().add(
         DeselectTagDefinition(tagDefinition),
       );
     } else {
-      print('🔍 Widget: Selecting tag');
+      _logger.d('🔍 Widget: Selecting tag');
       context.read<TagDefinitionsBloc>().add(
         SelectTagDefinition(tagDefinition),
       );

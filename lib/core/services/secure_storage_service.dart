@@ -66,7 +66,8 @@ class SecureStorageService {
 
   // Get all keys
   Future<List<String>> getAllKeys() async {
-    return await _storage.readAll().then((map) => map.keys.toList());
+    final map = await _storage.readAll();
+    return map.keys.toList();
   }
 
   // Auth token specific methods

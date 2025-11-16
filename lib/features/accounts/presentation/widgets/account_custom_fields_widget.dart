@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../../domain/entities/account_custom_field.dart';
 import '../bloc/account_custom_fields_bloc.dart';
 import '../bloc/events/account_custom_fields_events.dart';
@@ -18,10 +19,12 @@ class AccountCustomFieldsWidget extends StatefulWidget {
 }
 
 class _AccountCustomFieldsWidgetState extends State<AccountCustomFieldsWidget> {
+  final Logger _logger = Logger();
+
   @override
   void initState() {
     super.initState();
-    print(
+    _logger.d(
       '🔍 AccountCustomFieldsWidget: initState - triggering LoadAccountCustomFields',
     );
     context.read<AccountCustomFieldsBloc>().add(
@@ -33,10 +36,10 @@ class _AccountCustomFieldsWidgetState extends State<AccountCustomFieldsWidget> {
   Widget build(BuildContext context) {
     return BlocListener<AccountCustomFieldsBloc, AccountCustomFieldsState>(
       listener: (context, state) {
-        print(
+        _logger.d(
           '🔍 AccountCustomFieldsWidget: Received state: ${state.runtimeType}',
         );
-        print('🔍 AccountCustomFieldsWidget: State details: $state');
+        _logger.d('🔍 AccountCustomFieldsWidget: State details: $state');
 
         if (state is AccountCustomFieldCreated) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -40,6 +40,20 @@ class _AccountTimelineWidgetState extends State<AccountTimelineWidget> {
         _logger.d('AccountTimelineWidget: State details: $state');
       },
       child: BlocBuilder<AccountTimelineBloc, AccountTimelineState>(
+        buildWhen: (previous, current) {
+          // Only rebuild when state type changes or data changes
+          if (previous.runtimeType != current.runtimeType) {
+            return true;
+          }
+          // Rebuild if both are loaded states but timeline changed
+          if (previous is AccountTimelineLoaded &&
+              current is AccountTimelineLoaded) {
+            return previous.timeline.events.length !=
+                    current.timeline.events.length ||
+                previous.timeline.events != current.timeline.events;
+          }
+          return false;
+        },
         builder: (context, state) {
           _logger.d(
             'AccountTimelineWidget: Building with state: ${state.runtimeType}',
@@ -130,11 +144,14 @@ class _AccountTimelineWidgetState extends State<AccountTimelineWidget> {
                 itemCount: state.timeline.events.length,
                 itemBuilder: (context, index) {
                   final event = state.timeline.events[index];
-                  return _buildTimelineEvent(
-                    context,
-                    event,
-                    index,
-                    state.timeline.events.length,
+                  return RepaintBoundary(
+                    key: ValueKey('timeline_event_${event.id}_$index'),
+                    child: _buildTimelineEvent(
+                      context,
+                      event,
+                      index,
+                      state.timeline.events.length,
+                    ),
                   );
                 },
               ),

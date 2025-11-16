@@ -258,6 +258,27 @@ class InvoicesViewState extends State<InvoicesView> {
                     }
                   },
                   child: BlocBuilder<InvoicesBloc, InvoicesState>(
+                    buildWhen: (previous, current) {
+                      // Only rebuild when state type changes or data changes
+                      if (previous.runtimeType != current.runtimeType) {
+                        return true;
+                      }
+                      // Rebuild if both are loaded states but data changed
+                      if (previous is InvoicesLoaded &&
+                          current is InvoicesLoaded) {
+                        return previous.invoices.length !=
+                                current.invoices.length ||
+                            previous.invoices != current.invoices;
+                      }
+                      // Rebuild if both are refreshing states but data changed
+                      if (previous is InvoicesRefreshing &&
+                          current is InvoicesRefreshing) {
+                        return previous.invoices.length !=
+                                current.invoices.length ||
+                            previous.invoices != current.invoices;
+                      }
+                      return false;
+                    },
                     builder: (context, state) {
                       _logger.d(
                         'InvoicesView: BlocBuilder called with state: ${state.runtimeType}',

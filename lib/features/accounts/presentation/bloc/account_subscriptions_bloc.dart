@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../../subscriptions/domain/usecases/get_subscriptions_for_account_usecase.dart';
 import 'events/account_subscriptions_event.dart';
 import 'states/account_subscriptions_state.dart';
@@ -8,7 +9,8 @@ import 'package:logger/logger.dart';
 
 @injectable
 class AccountSubscriptionsBloc
-    extends Bloc<AccountSubscriptionsEvent, AccountSubscriptionsState> {
+    extends Bloc<AccountSubscriptionsEvent, AccountSubscriptionsState>
+    with BlocErrorHandlerMixin {
   final GetSubscriptionsForAccountUseCase _getSubscriptionsForAccountUseCase;
   final Logger _logger = Logger();
 
@@ -56,10 +58,14 @@ class AccountSubscriptionsBloc
       _logger.d('🔍 State hashCode: ${loadedState.hashCode}');
       _logger.d('🔍 State props: ${loadedState.props}');
     } catch (e) {
-      _logger.e('🔍 Error in _onLoadAccountSubscriptions: $e');
+      final message = handleException(
+        e,
+        context: 'load_account_subscriptions',
+        metadata: {'accountId': event.accountId},
+      );
       emit(
         AccountSubscriptionsFailure(
-          message: e.toString(),
+          message: message,
           accountId: event.accountId,
         ),
       );
@@ -93,9 +99,14 @@ class AccountSubscriptionsBloc
         ),
       );
     } catch (e) {
+      final message = handleException(
+        e,
+        context: 'refresh_account_subscriptions',
+        metadata: {'accountId': event.accountId},
+      );
       emit(
         AccountSubscriptionsFailure(
-          message: e.toString(),
+          message: message,
           accountId: event.accountId,
         ),
       );

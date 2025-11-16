@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../../../core/services/export_service.dart';
 import '../../domain/entities/tag.dart';
 import '../../domain/usecases/get_all_tags_usecase.dart';
@@ -11,11 +13,12 @@ import 'tags_event.dart';
 import 'tags_state.dart';
 
 @injectable
-class TagsBloc extends Bloc<TagsEvent, TagsState> {
+class TagsBloc extends Bloc<TagsEvent, TagsState> with BlocErrorHandlerMixin {
   final GetAllTagsUseCase _getAllTagsUseCase;
   final SearchTagsUseCase _searchTagsUseCase;
   final ExportService _exportService;
   final TagsLocalDataSource _localDataSource;
+  final Logger _logger = Logger();
 
   List<Tag> _selectedTags = [];
   List<Tag> _allTags = [];
@@ -80,7 +83,8 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
         _startListeningToLocalData();
       }
     } catch (e) {
-      emit(TagsError(e.toString()));
+      final message = handleException(e, context: 'load_all_tags');
+      emit(TagsError(message));
     }
   }
 
@@ -94,7 +98,8 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
       _allTags = tags;
       emit(TagsLoaded(tags));
     } catch (e) {
-      emit(TagsError(e.toString()));
+      final message = handleException(e, context: 'refresh_tags');
+      emit(TagsError(message));
     }
   }
 
@@ -117,7 +122,12 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
         ),
       );
     } catch (e) {
-      emit(TagsSearchError(e.toString(), event.tagDefinitionName));
+      final message = handleException(
+        e,
+        context: 'search_tags',
+        metadata: {'tagDefinitionName': event.tagDefinitionName},
+      );
+      emit(TagsSearchError(message, event.tagDefinitionName));
     }
   }
 
@@ -259,7 +269,8 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
         ),
       );
     } catch (e) {
-      emit(TagsExportFailure('Failed to export tags: $e'));
+      final message = handleException(e, context: 'export_all_tags');
+      emit(TagsExportFailure('Failed to export tags: $message'));
     }
   }
 
@@ -293,7 +304,8 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
       _selectedTags.clear();
       emit(TagsLoaded(_allTags));
     } catch (e) {
-      emit(TagsExportFailure('Failed to export selected tags: $e'));
+      final message = handleException(e, context: 'export_selected_tags');
+      emit(TagsExportFailure('Failed to export selected tags: $message'));
     }
   }
 
@@ -320,9 +332,10 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
       _selectedTags.clear();
       emit(TagsLoaded(_allTags));
     } catch (e) {
+      final message = handleException(e, context: 'delete_selected_tags');
       emit(
         TagsDeleteFailure(
-          message: 'Failed to delete selected tags: $e',
+          message: 'Failed to delete selected tags: $message',
           tagsToDelete: event.tags,
         ),
       );
@@ -355,9 +368,10 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
         ),
       );
     } catch (e) {
+      final message = handleException(e, context: 'bulk_delete_tags');
       emit(
         TagsDeleteFailure(
-          message: 'Failed to bulk delete tags: $e',
+          message: 'Failed to bulk delete tags: $message',
           tagsToDelete: event.tags,
         ),
       );
@@ -404,7 +418,7 @@ class TagsBloc extends Bloc<TagsEvent, TagsState> {
       // when new data is cached, triggering UI updates
     } catch (e) {
       // Log error but don't throw - this is background sync
-      print('Background sync failed: $e');
+      _logger.w('Background sync failed: $e');
     }
   }
 

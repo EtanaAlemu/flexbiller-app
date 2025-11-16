@@ -7,6 +7,9 @@ import '../pages/product_detail_page.dart';
 import '../pages/edit_product_page.dart';
 import '../bloc/product_multiselect_bloc.dart';
 import '../bloc/events/product_multiselect_events.dart';
+import '../bloc/products_list_bloc.dart';
+import '../bloc/events/products_list_events.dart';
+import '../bloc/states/products_list_states.dart';
 import 'product_list_item.dart';
 
 class SelectableProductCardWidget extends StatelessWidget {
@@ -44,12 +47,10 @@ class SelectableProductCardWidget extends StatelessWidget {
           }
         },
         onLongPressStart: (details) {
-          print(
-            '🐛 Long press start detected on product: ${product.productName}',
-          );
+          // Long press start - no action needed
         },
         onLongPress: () {
-          print('🐛 Long press detected on product: ${product.productName}');
+          // Long press handled below
           if (!isMultiSelectMode) {
             _enableMultiSelectModeAndSelect(context);
           }
@@ -157,11 +158,7 @@ class SelectableProductCardWidget extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                // TODO: Implement delete functionality
-                CustomSnackBar.showInfo(
-                  context,
-                  message: 'Delete functionality not implemented yet',
-                );
+                _performDelete(context);
               },
               style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
@@ -172,5 +169,25 @@ class SelectableProductCardWidget extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _performDelete(BuildContext context) {
+    // Dispatch delete event to ProductsListBloc
+    context.read<ProductsListBloc>().add(DeleteProduct(productId: product.id));
+
+    // Listen for delete completion
+    context.read<ProductsListBloc>().stream.listen((state) {
+      if (state is ProductDeleted) {
+        CustomSnackBar.showSuccess(
+          context,
+          message: 'Product "${product.productName}" deleted successfully',
+        );
+      } else if (state is ProductsListError) {
+        CustomSnackBar.showError(
+          context,
+          message: 'Failed to delete product: ${state.message}',
+        );
+      }
+    });
   }
 }

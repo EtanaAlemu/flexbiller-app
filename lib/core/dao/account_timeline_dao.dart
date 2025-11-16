@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:logger/logger.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import '../../features/accounts/data/models/account_timeline_model.dart';
 
 class AccountTimelineDao {
+  static final Logger _logger = Logger();
   static const String tableName = 'account_timelines';
 
   // Column names
@@ -53,9 +55,9 @@ class AccountTimelineDao {
       // Use the fromJson factory to create the AccountTimelineModel
       return AccountTimelineModel.fromJson(timelineData);
     } catch (e) {
-      // Log the error for debugging (in production, you might want to use a proper logger)
-      print('Error parsing AccountTimelineModel from database: $e');
-      print('Raw data: ${map[columnTimelineData]}');
+      // Log the error for debugging
+      _logger.e('Error parsing AccountTimelineModel from database: $e');
+      _logger.d('Raw data: ${map[columnTimelineData]}');
       return null;
     }
   }

@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/account.dart';
 import '../../domain/usecases/delete_account_usecase.dart';
 import '../bloc/events/account_multiselect_events.dart';
@@ -9,7 +10,8 @@ import '../bloc/states/account_multiselect_states.dart';
 /// BLoC for handling multi-select operations
 @injectable
 class AccountMultiSelectBloc
-    extends Bloc<MultiSelectEvent, AccountMultiSelectState> {
+    extends Bloc<MultiSelectEvent, AccountMultiSelectState>
+    with BlocErrorHandlerMixin {
   final DeleteAccountUseCase _deleteAccountUseCase;
   final Logger _logger = Logger();
 
@@ -193,7 +195,11 @@ class AccountMultiSelectBloc
           deletedCount++;
           _logger.d('Successfully deleted account: ${account.accountId}');
         } catch (e) {
-          _logger.e('Failed to delete account ${account.accountId}: $e');
+          handleException(
+            e,
+            context: 'delete_account',
+            metadata: {'accountId': account.accountId},
+          );
           failedAccounts.add(account);
         }
       }
@@ -221,10 +227,10 @@ class AccountMultiSelectBloc
         );
       }
     } catch (e) {
-      _logger.e('Error during bulk delete: $e');
+      final message = handleException(e, context: 'bulk_delete_accounts');
       emit(
         BulkDeleteFailure(
-          message: 'Bulk delete failed: $e',
+          message: message,
           failedAccounts: List.from(_selectedAccounts),
         ),
       );

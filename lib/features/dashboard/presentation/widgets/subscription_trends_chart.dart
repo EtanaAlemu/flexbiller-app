@@ -17,153 +17,157 @@ class SubscriptionTrendsChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0.2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header with title and year selector
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8.0,
-                vertical: 4.0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title section - flexible to prevent overflow
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Subscription Trends',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$selectedYear yearly data',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.6),
-                                fontSize: 11,
-                              ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Year picker button
-                  OutlinedButton.icon(
-                    onPressed: () => _showYearPicker(context),
-                    icon: const Icon(Icons.calendar_today, size: 16),
-                    label: Text(
-                      selectedYear.toString(),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      minimumSize: const Size(0, 32),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Chart
-            SizedBox(
-              height: 350,
-              child: SfCartesianChart(
-                primaryXAxis: CategoryAxis(labelRotation: -45),
-                primaryYAxis: NumericAxis(numberFormat: NumberFormat.compact()),
-                legend: Legend(
-                  isVisible: true,
-                  position: LegendPosition.bottom,
-                  overflowMode: LegendItemOverflowMode.scroll,
+    return RepaintBoundary(
+      child: Card(
+        elevation: 0.2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with title and year selector
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
                 ),
-                tooltipBehavior: TooltipBehavior(enable: true),
-                series: <CartesianSeries>[
-                  // New Subscriptions spline (smooth continuous curve)
-                  SplineSeries<SubscriptionTrend, String>(
-                    dataSource: trends.trends,
-                    xValueMapper: (SubscriptionTrend data, _) => data.month,
-                    yValueMapper: (SubscriptionTrend data, _) =>
-                        data.newSubscriptions,
-                    name: 'New Subscriptions',
-                    color: Colors.green,
-                    width: 3,
-                    splineType: SplineType.cardinal,
-                    markerSettings: const MarkerSettings(
-                      isVisible: true,
-                      height: 6,
-                      width: 6,
-                      shape: DataMarkerType.circle,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title section - flexible to prevent overflow
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Subscription Trends',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$selectedYear yearly data',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
+                                  fontSize: 11,
+                                ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  // Churned Subscriptions spline (smooth continuous curve)
-                  SplineSeries<SubscriptionTrend, String>(
-                    dataSource: trends.trends,
-                    xValueMapper: (SubscriptionTrend data, _) => data.month,
-                    yValueMapper: (SubscriptionTrend data, _) =>
-                        data.churnedSubscriptions,
-                    name: 'Churned Subscriptions',
-                    color: Colors.red,
-                    width: 3,
-                    splineType: SplineType.cardinal,
-                    markerSettings: const MarkerSettings(
-                      isVisible: true,
-                      height: 6,
-                      width: 6,
-                      shape: DataMarkerType.circle,
+                    const SizedBox(width: 8),
+                    // Year picker button
+                    OutlinedButton.icon(
+                      onPressed: () => _showYearPicker(context),
+                      icon: const Icon(Icons.calendar_today, size: 16),
+                      label: Text(
+                        selectedYear.toString(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        minimumSize: const Size(0, 32),
+                      ),
                     ),
-                  ),
-                  // Revenue spline (smooth continuous curve)
-                  SplineSeries<SubscriptionTrend, String>(
-                    dataSource: trends.trends,
-                    xValueMapper: (SubscriptionTrend data, _) => data.month,
-                    yValueMapper: (SubscriptionTrend data, _) => data.revenue,
-                    name: 'Revenue (\$)',
-                    color: Colors.blue,
-                    width: 3,
-                    splineType: SplineType.cardinal,
-                    yAxisName: 'secondary',
-                    markerSettings: const MarkerSettings(
-                      isVisible: true,
-                      height: 6,
-                      width: 6,
-                      shape: DataMarkerType.circle,
-                    ),
-                  ),
-                ],
-                // Secondary Y-axis for Revenue
-                axes: <ChartAxis>[
-                  NumericAxis(
-                    name: 'secondary',
-                    opposedPosition: true,
-                    numberFormat: NumberFormat.currency(symbol: '\$'),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              // Chart
+              SizedBox(
+                height: 350,
+                child: SfCartesianChart(
+                  primaryXAxis: CategoryAxis(labelRotation: -45),
+                  primaryYAxis: NumericAxis(
+                    numberFormat: NumberFormat.compact(),
+                  ),
+                  legend: Legend(
+                    isVisible: true,
+                    position: LegendPosition.bottom,
+                    overflowMode: LegendItemOverflowMode.scroll,
+                  ),
+                  tooltipBehavior: TooltipBehavior(enable: true),
+                  series: <CartesianSeries>[
+                    // New Subscriptions spline (smooth continuous curve)
+                    SplineSeries<SubscriptionTrend, String>(
+                      dataSource: trends.trends,
+                      xValueMapper: (SubscriptionTrend data, _) => data.month,
+                      yValueMapper: (SubscriptionTrend data, _) =>
+                          data.newSubscriptions,
+                      name: 'New Subscriptions',
+                      color: Colors.green,
+                      width: 3,
+                      splineType: SplineType.natural,
+                      markerSettings: const MarkerSettings(
+                        isVisible: true,
+                        height: 6,
+                        width: 6,
+                        shape: DataMarkerType.circle,
+                      ),
+                    ),
+                    // Churned Subscriptions spline (smooth continuous curve)
+                    SplineSeries<SubscriptionTrend, String>(
+                      dataSource: trends.trends,
+                      xValueMapper: (SubscriptionTrend data, _) => data.month,
+                      yValueMapper: (SubscriptionTrend data, _) =>
+                          data.churnedSubscriptions,
+                      name: 'Churned Subscriptions',
+                      color: Colors.red,
+                      width: 3,
+                      splineType: SplineType.natural,
+                      markerSettings: const MarkerSettings(
+                        isVisible: true,
+                        height: 6,
+                        width: 6,
+                        shape: DataMarkerType.circle,
+                      ),
+                    ),
+                    // Revenue spline (smooth continuous curve)
+                    SplineSeries<SubscriptionTrend, String>(
+                      dataSource: trends.trends,
+                      xValueMapper: (SubscriptionTrend data, _) => data.month,
+                      yValueMapper: (SubscriptionTrend data, _) => data.revenue,
+                      name: 'Revenue (\$)',
+                      color: Colors.blue,
+                      width: 3,
+                      splineType: SplineType.natural,
+                      yAxisName: 'secondary',
+                      markerSettings: const MarkerSettings(
+                        isVisible: true,
+                        height: 6,
+                        width: 6,
+                        shape: DataMarkerType.circle,
+                      ),
+                    ),
+                  ],
+                  // Secondary Y-axis for Revenue
+                  axes: <ChartAxis>[
+                    NumericAxis(
+                      name: 'secondary',
+                      opposedPosition: true,
+                      numberFormat: NumberFormat.currency(symbol: '\$'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

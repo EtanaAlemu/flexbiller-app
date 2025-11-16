@@ -126,6 +126,25 @@ class _TagsPageState extends State<TagsPage> with TickerProviderStateMixin {
           }
         },
         child: BlocBuilder<TagsBloc, TagsState>(
+          buildWhen: (previous, current) {
+            // Only rebuild when state type changes or relevant data changes
+            if (previous.runtimeType != current.runtimeType) {
+              return true;
+            }
+            // Rebuild if both are TagsWithSelection but selection changed
+            if (previous is TagsWithSelection && current is TagsWithSelection) {
+              return previous.selectedTags.length !=
+                      current.selectedTags.length ||
+                  previous.isMultiSelectMode != current.isMultiSelectMode ||
+                  previous.tags.length != current.tags.length;
+            }
+            // Rebuild if both are TagsLoaded but tags changed
+            if (previous is TagsLoaded && current is TagsLoaded) {
+              return previous.tags.length != current.tags.length ||
+                  previous.tags != current.tags;
+            }
+            return false;
+          },
           builder: (context, state) {
             // Handle export states
             if (state is TagsExporting) {

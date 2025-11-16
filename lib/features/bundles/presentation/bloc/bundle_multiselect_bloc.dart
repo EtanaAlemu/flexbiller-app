@@ -1,20 +1,27 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import '../../../../core/services/export_service.dart';
+import '../../../../core/bloc/bloc_error_handler_mixin.dart';
 import '../../domain/entities/bundle.dart';
+import '../../domain/usecases/delete_bundle_usecase.dart';
 import '../bloc/events/bundle_multiselect_events.dart';
 import '../bloc/states/bundle_multiselect_states.dart';
 
 /// BLoC for handling multi-select operations
 @injectable
 class BundleMultiSelectBloc
-    extends Bloc<BundleMultiSelectEvent, BundleMultiSelectState> {
+    extends Bloc<BundleMultiSelectEvent, BundleMultiSelectState>
+    with BlocErrorHandlerMixin {
   final Logger _logger = Logger();
+  final ExportService _exportService;
+  final DeleteBundleUseCase _deleteBundleUseCase;
 
   final List<Bundle> _selectedBundles = [];
   bool _isMultiSelectMode = false;
 
-  BundleMultiSelectBloc() : super(const BundleMultiSelectInitial()) {
+  BundleMultiSelectBloc(this._exportService, this._deleteBundleUseCase)
+    : super(const BundleMultiSelectInitial()) {
     // Register event handlers
     on<EnableMultiSelectMode>(_onEnableMultiSelectMode);
     on<EnableMultiSelectModeAndSelect>(_onEnableMultiSelectModeAndSelect);
@@ -163,17 +170,23 @@ class BundleMultiSelectBloc
     emit(BulkExportInProgress(event.format));
 
     try {
-      // TODO: Implement actual export functionality
-      await Future.delayed(const Duration(seconds: 2)); // Simulate export
+      String filePath;
+      if (event.format.toLowerCase() == 'csv') {
+        filePath = await _exportService.exportBundlesToCSV(_selectedBundles);
+      } else if (event.format.toLowerCase() == 'excel' ||
+          event.format.toLowerCase() == 'xlsx') {
+        filePath = await _exportService.exportBundlesToExcel(_selectedBundles);
+      } else {
+        throw Exception('Unsupported export format: ${event.format}');
+      }
 
-      final filePath = '/path/to/exported_bundles.${event.format}';
       _logger.d('Bulk export completed: $filePath');
       emit(
         BulkExportCompleted(filePath: filePath, count: _selectedBundles.length),
       );
     } catch (e) {
-      _logger.e('Bulk export failed: $e');
-      emit(BulkExportFailed(e.toString()));
+      final message = handleException(e, context: 'bulk_export_bundles');
+      emit(BulkExportFailed(message));
     }
   }
 
@@ -185,18 +198,43 @@ class BundleMultiSelectBloc
     emit(const BulkDeleteInProgress());
 
     try {
-      // TODO: Implement actual delete functionality
-      await Future.delayed(const Duration(seconds: 1)); // Simulate delete
+      final bundlesToDelete = List<Bundle>.from(_selectedBundles);
+      int deletedCount = 0;
+      final List<Bundle> failedBundles = [];
 
-      final deletedCount = _selectedBundles.length;
+      for (final bundle in bundlesToDelete) {
+        try {
+          await _deleteBundleUseCase(bundle.bundleId);
+          deletedCount++;
+          _logger.d('Successfully deleted bundle: ${bundle.bundleId}');
+        } catch (e) {
+          handleException(e, context: 'delete_bundle');
+          failedBundles.add(bundle);
+        }
+      }
+
+      // Clear selected bundles
       _selectedBundles.clear();
-      _isMultiSelectMode = false;
 
-      _logger.d('Bulk delete completed: $deletedCount bundles deleted');
-      emit(BulkDeleteCompleted(deletedCount));
+      if (failedBundles.isEmpty) {
+        // Disable multi-select mode after successful deletion
+        _isMultiSelectMode = false;
+        _logger.d(
+          'Bulk delete completed successfully: $deletedCount bundles deleted, multi-select mode disabled',
+        );
+        emit(BulkDeleteCompleted(deletedCount));
+        emit(const MultiSelectModeDisabled());
+      } else {
+        _logger.w(
+          'Bulk delete completed with failures: $deletedCount deleted, ${failedBundles.length} failed',
+        );
+        emit(
+          BulkDeleteFailed('Failed to delete ${failedBundles.length} bundles'),
+        );
+      }
     } catch (e) {
-      _logger.e('Bulk delete failed: $e');
-      emit(BulkDeleteFailed(e.toString()));
+      final message = handleException(e, context: 'bulk_delete_bundles');
+      emit(BulkDeleteFailed(message));
     }
   }
 }

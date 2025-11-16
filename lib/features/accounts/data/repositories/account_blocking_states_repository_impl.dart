@@ -363,7 +363,15 @@ class AccountBlockingStatesRepositoryImpl
 
   /// Dispose method to clean up stream controllers
   void dispose() {
-    _blockingStatesStreamController.close();
-    _activeBlockingStatesStreamController.close();
+    _logger.d('🛑 [Account Blocking States Repository] Disposing resources...');
+    if (!_blockingStatesStreamController.isClosed) {
+      _blockingStatesStreamController.close();
+    }
+    if (!_activeBlockingStatesStreamController.isClosed) {
+      _activeBlockingStatesStreamController.close();
+    }
+    _logger.i(
+      '✅ [Account Blocking States Repository] All StreamControllers closed',
+    );
   }
 }

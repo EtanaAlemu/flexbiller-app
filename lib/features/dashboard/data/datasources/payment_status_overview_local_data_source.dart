@@ -165,6 +165,17 @@ class PaymentStatusOverviewLocalDataSourceImpl
     return _overviewStreamControllers[year]!;
   }
 
+  /// Dispose resources and close all stream controllers
+  void dispose() {
+    for (final controller in _overviewStreamControllers.values) {
+      if (!controller.isClosed) {
+        controller.close();
+      }
+    }
+    _overviewStreamControllers.clear();
+    _logger.d('✅ [Payment Status Overview Local] All StreamControllers closed');
+  }
+
   PaymentStatusOverviewsModel _getDefaultOverview(int year) {
     final months = [
       'Jan',

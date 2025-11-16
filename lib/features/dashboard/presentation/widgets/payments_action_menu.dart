@@ -4,6 +4,8 @@ import '../../../payments/presentation/bloc/payment_multiselect_bloc.dart';
 import '../../../payments/presentation/bloc/events/payment_multiselect_events.dart';
 import '../../../payments/presentation/widgets/export_payments_dialog.dart';
 import '../../../payments/domain/entities/payment.dart';
+import '../../../../core/widgets/base_action_menu.dart';
+import '../../../../core/widgets/sort_options_bottom_sheet.dart';
 
 class PaymentsActionMenu extends StatelessWidget {
   final GlobalKey? paymentsViewKey;
@@ -12,125 +14,25 @@ class PaymentsActionMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert_rounded),
-      tooltip: 'More options',
-      onSelected: (value) => _handleMenuAction(context, value),
-      itemBuilder: (context) => [
-        // Filter section
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'FILTER & SORT',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'search',
-          child: Row(
-            children: [
-              Icon(
-                Icons.search_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Search Payments'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'filter',
-          child: Row(
-            children: [
-              Icon(
-                Icons.filter_list_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Filter by Status'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'sort',
-          child: Row(
-            children: [
-              Icon(
-                Icons.sort_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Sort Options'),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        // Actions section
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'ACTIONS',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'export',
-          child: Row(
-            children: [
-              Icon(
-                Icons.download_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Export Payments'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'refresh',
-          child: Row(
-            children: [
-              Icon(
-                Icons.refresh_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Refresh Data'),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        // Analytics section
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'ANALYTICS',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'statistics',
-          child: Row(
-            children: [
-              Icon(
-                Icons.analytics_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: 12),
-              const Text('Payment Statistics'),
-            ],
-          ),
-        ),
-      ],
+    final menuItems = [
+      ...BaseActionMenu.buildFilterSortSection(
+        searchLabel: 'Search Payments',
+        filterLabel: 'Filter by Status',
+      ),
+      ...BaseActionMenu.buildActionsSection(exportLabel: 'Export Payments'),
+      const ActionMenuItem.divider(),
+      const ActionMenuItem.sectionHeader('ANALYTICS'),
+      const ActionMenuItem(
+        value: 'statistics',
+        label: 'Payment Statistics',
+        icon: Icons.analytics_rounded,
+      ),
+    ];
+
+    return BaseActionMenu(
+      menuItems: menuItems,
+      onActionSelected: (value) => _handleMenuAction(context, value),
+      icon: Icons.more_vert_rounded,
     );
   }
 
@@ -212,51 +114,45 @@ class PaymentsActionMenu extends StatelessWidget {
   }
 
   void _showSortOptions(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sort Options'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Date (Newest First)'),
-              onTap: () {
-                Navigator.pop(context);
-                _sortPayments(context, 'date_desc');
-              },
-            ),
-            ListTile(
-              title: const Text('Date (Oldest First)'),
-              onTap: () {
-                Navigator.pop(context);
-                _sortPayments(context, 'date_asc');
-              },
-            ),
-            ListTile(
-              title: const Text('Amount (Highest First)'),
-              onTap: () {
-                Navigator.pop(context);
-                _sortPayments(context, 'amount_desc');
-              },
-            ),
-            ListTile(
-              title: const Text('Amount (Lowest First)'),
-              onTap: () {
-                Navigator.pop(context);
-                _sortPayments(context, 'amount_asc');
-              },
-            ),
-            ListTile(
-              title: const Text('Payment Number'),
-              onTap: () {
-                Navigator.pop(context);
-                _sortPayments(context, 'number');
-              },
-            ),
-          ],
+    SortOptionsBottomSheet.show(
+      context,
+      title: 'Sort Payments',
+      options: const [
+        SortOption(
+          title: 'Date (Newest First)',
+          sortBy: 'date',
+          sortOrder: 'desc',
+          icon: Icons.calendar_today,
         ),
-      ),
+        SortOption(
+          title: 'Date (Oldest First)',
+          sortBy: 'date',
+          sortOrder: 'asc',
+          icon: Icons.calendar_today,
+        ),
+        SortOption(
+          title: 'Amount (Highest First)',
+          sortBy: 'amount',
+          sortOrder: 'desc',
+          icon: Icons.attach_money,
+        ),
+        SortOption(
+          title: 'Amount (Lowest First)',
+          sortBy: 'amount',
+          sortOrder: 'asc',
+          icon: Icons.attach_money,
+        ),
+        SortOption(
+          title: 'Payment Number',
+          sortBy: 'number',
+          sortOrder: 'asc',
+          icon: Icons.numbers,
+        ),
+      ],
+      onSortSelected: (sortBy, sortOrder) {
+        final sortType = '${sortBy}_$sortOrder';
+        _sortPayments(context, sortType);
+      },
     );
   }
 
@@ -291,7 +187,7 @@ class PaymentsActionMenu extends StatelessWidget {
     }
   }
 
-  void _showExportDialog(BuildContext context) {
+  Future<void> _showExportDialog(BuildContext context) async {
     // Get all payments from the PaymentsView
     final paymentsViewState = paymentsViewKey?.currentState;
     if (paymentsViewState != null) {
@@ -300,15 +196,14 @@ class PaymentsActionMenu extends StatelessWidget {
           (paymentsViewState as dynamic).allPayments as List<Payment>;
 
       // Show export dialog for better user experience
-      showDialog(
+      final result = await showDialog(
         context: context,
         builder: (context) => ExportPaymentsDialog(payments: allPayments),
-      ).then((result) async {
-        if (result != null) {
-          final selectedFormat = result['format'] as String;
-          await _performExport(context, allPayments, selectedFormat);
-        }
-      });
+      );
+      if (result != null) {
+        final selectedFormat = result['format'] as String;
+        await _performExport(context, allPayments, selectedFormat);
+      }
     } else {
       // Fallback: show message if PaymentsView is not available
       ScaffoldMessenger.of(context).showSnackBar(

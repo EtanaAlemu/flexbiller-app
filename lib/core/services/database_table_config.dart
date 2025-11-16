@@ -51,6 +51,7 @@ class DatabaseTableConfig {
       TableConfig(
         tableName: 'accounts',
         createTableSQL: AccountDao.createTableSQL,
+        createIndexesSQL: AccountDao.createIndexesSQL,
       ),
     );
 
@@ -136,6 +137,7 @@ class DatabaseTableConfig {
       TableConfig(
         tableName: 'subscriptions',
         createTableSQL: SubscriptionDao.createTableSQL,
+        createIndexesSQL: SubscriptionDao.createIndexesSQL,
       ),
     );
 
@@ -170,6 +172,7 @@ class DatabaseTableConfig {
       TableConfig(
         tableName: 'payments',
         createTableSQL: PaymentDao.createTableSQL,
+        createIndexesSQL: PaymentDao.createIndexesSQL,
       ),
     );
 
@@ -196,6 +199,7 @@ class DatabaseTableConfig {
       TableConfig(
         tableName: 'invoices',
         createTableSQL: InvoiceDao.createTableSQL,
+        createIndexesSQL: InvoiceDao.createIndexesSQL,
       ),
     );
 
